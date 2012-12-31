@@ -1,0 +1,10 @@
+﻿<ad:DockableContent xmlns:my="clr-namespace:X13.CC" x:Class="X13.CC.PropertyView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ad="clr-namespace:AvalonDock;assembly=AvalonDock"
+        xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit.PropertyGrid;assembly=WPFToolkit.Extended"
+       Title="Properties" Height="300" Width="240" x:Name="PropertyPanel" TextOptions.TextRenderingMode="Grayscale" FontSize="12">
+    <Grid>
+        <xctk:PropertyGrid x:Name="PropertyGrid1" ShowSearchBox="False" ShowSortOptions="False" />
+    </Grid>
+</ad:DockableContent>

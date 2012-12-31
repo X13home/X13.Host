@@ -1,0 +1,196 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="NameAndType">
+  <Class Name="X13.CC.Schema">
+    <Position X="0.5" Y="1" Width="3" />
+    <Members>
+      <Field Name="_backgroundVisual" Hidden="true" />
+      <Field Name="_map" Hidden="true" />
+      <Field Name="_mSelected" Hidden="true" />
+      <Field Name="_mSelectVisual" Hidden="true" />
+      <Field Name="_multipleSelection" Hidden="true" />
+      <Field Name="_selected" Hidden="true" />
+      <Field Name="_transformGroup" Hidden="true" />
+      <Field Name="_translateTransform" Hidden="true" />
+      <Field Name="_zoom" Hidden="true" />
+      <Field Name="_zoomTransform" Hidden="true" />
+      <Method Name="GetVisual" Hidden="true" />
+      <Method Name="GetVisualChild" Hidden="true" />
+      <Method Name="ModelChanged" Hidden="true" />
+      <Method Name="ModelItemChanged" Hidden="true" />
+      <Field Name="move" Hidden="true" />
+      <Method Name="OnKeyUp" Hidden="true" />
+      <Method Name="OnMouseDown" Hidden="true" />
+      <Method Name="OnMouseMove" Hidden="true" />
+      <Method Name="OnMouseUp" Hidden="true" />
+      <Method Name="OnMouseWheel" Hidden="true" />
+      <Method Name="OnRenderSizeChanged" Hidden="true" />
+      <Method Name="RenderBackground" Hidden="true" />
+      <Field Name="ScreenStartPoint" Hidden="true" />
+      <Field Name="SelectionPen" Hidden="true" />
+      <Field Name="startOffset" Hidden="true" />
+      <Property Name="VisualChildrenCount" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>BAQYCADAgkChEQCAAAAQgIACAJAAAAEBIECAAgIKEAQ=</HashCode>
+      <FileName>Schema.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="X13.CC.uiItem">
+    <Position X="4" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAAAAAAAAAAAAAAAAAEAABAAQAAAAAA=</HashCode>
+      <FileName>uiItems.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="X13.CC.uiPin">
+    <Position X="5.5" Y="4.75" Width="2" />
+    <Members>
+      <Field Name="_connections" Hidden="true" />
+      <Field Name="_ownerOffset" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAMAAAAgCAgAAAACAAAAAAAAAAAAAgABAAAAAJBAA=</HashCode>
+      <FileName>uiItems.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="X13.CC.uiWire">
+    <Position X="8.25" Y="4.75" Width="1.75" />
+    <Members>
+      <Field Name="_cur" Hidden="true" />
+      <Field Name="_owner" Hidden="true" />
+      <Field Name="_track" Hidden="true" />
+      <Field Name="direction" Hidden="true" />
+      <Method Name="FindPath" Hidden="true" />
+      <Method Name="GetWeigt" Hidden="true" />
+      <Method Name="model_changed" Hidden="true" />
+    </Members>
+    <NestedTypes>
+      <Class Name="X13.CC.uiWire.ComparePFNode" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>uiItems.cs</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+      <Struct Name="X13.CC.uiWire.PathFinderNode" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>uiItems.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAQAgAAAAAKAIAAAAAAAAAAAAAQAgIAAABAAIAEIIAg=</HashCode>
+      <FileName>uiItems.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="X13.CC.SchemaElement">
+    <Position X="1.75" Y="4.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAACAAAAAAAAAAAgAAAAAAAAAAA=</HashCode>
+      <FileName>uiItems.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="X13.CC.uiAlias">
+    <Position X="0.5" Y="6.75" Width="1.75" />
+    <Members>
+      <Field Name="_oldH" Hidden="true" />
+      <Field Name="_oldX" Hidden="true" />
+      <Field Name="_oldY" Hidden="true" />
+      <Field Name="_owner" Hidden="true" />
+      <Field Name="_pin" Hidden="true" />
+      <Method Name="Remove" Hidden="true" />
+      <Method Name="value_changed" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAoAAAAACAAQAgAAAQBAAQAAEAAAAgABAgAAAIAAA=</HashCode>
+      <FileName>uiItems.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="X13.CC.uiStatement">
+    <Position X="3" Y="6.75" Width="2" />
+    <Members>
+      <Field Name="_oldH" Hidden="true" />
+      <Field Name="_oldW" Hidden="true" />
+      <Field Name="_oldX" Hidden="true" />
+      <Field Name="_oldY" Hidden="true" />
+      <Field Name="_owner" Hidden="true" />
+      <Field Name="_pins" Hidden="true" />
+      <Field Name="MAX_PINS" Hidden="true" />
+      <Method Name="model_changed" Hidden="true" />
+      <Method Name="Remove" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>EAAAoAAAAACAAQAAAAAABAAIAAEAgAQgABAAAAAIAgA=</HashCode>
+      <FileName>uiItems.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="X13.CC.DataStorageView">
+    <Position X="11" Y="1.25" Width="2.25" />
+    <Members>
+      <Method Name="_root_changed" Hidden="true" />
+      <Method Name="AddItem" Hidden="true" />
+      <Method Name="DataStorageView" Hidden="true" />
+      <Method Name="FindAncestorOrSelf" Hidden="true" />
+      <Method Name="FindMenuItem" Hidden="true" />
+      <Method Name="GetParent" Hidden="true" />
+      <Method Name="mi_Click" Hidden="true" />
+      <Method Name="ProccessChanges" Hidden="true" />
+      <Field Name="rootNodes" Hidden="true" />
+      <Method Name="StackPanel_ContextMenuOpening" Hidden="true" />
+      <Method Name="TextBox_Loaded" Hidden="true" />
+      <Method Name="TextBox_LostFocus" Hidden="true" />
+      <Method Name="TextBox_PreviewKeyDown" Hidden="true" />
+      <Method Name="tvDataStorage_SelectedItemChanged" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAQAAACEAIAAAAAAAAACAAAhiAgAAAAAAAEAUYCAAI=</HashCode>
+      <FileName>DataStorageView.xaml.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Property Name="RootNodes" />
+    </ShowAsCollectionAssociation>
+  </Class>
+  <Class Name="X13.CC.TopicView">
+    <Position X="14.25" Y="4" Width="3.25" />
+    <Members>
+      <Field Name="_action" Hidden="true" />
+      <Field Name="_children" Hidden="true" />
+      <Field Name="_declarer" Hidden="true" />
+      <Field Name="_parent" Hidden="true" />
+      <Method Name="AttrChanged" Hidden="true" />
+      <Method Name="DefDeclarer" Hidden="true" />
+      <Method Name="GetActions" Hidden="true" />
+      <Field Name="isExpanded" Hidden="true" />
+      <Method Name="OnPropertyChanged" Hidden="true" />
+      <Method Name="TopicView" Hidden="true" />
+    </Members>
+    <NestedTypes>
+      <Enum Name="X13.CC.TopicView.RcUse" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>DataStorageView.xaml.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Struct Name="X13.CC.TopicView.ItemActionStr" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>DataStorageView.xaml.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAAQAQAAIAAAAARAIAAgBAAwkAAEAEAAQAEAgAAAAAE=</HashCode>
+      <FileName>DataStorageView.xaml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="X13.CC.LogramView">
+    <Position X="7.25" Y="0.5" Width="2.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAgAAAQAAAAAAgAgQABAAAEAAAgQABAAAAAAKAAA=</HashCode>
+      <FileName>LogramView.xaml.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>

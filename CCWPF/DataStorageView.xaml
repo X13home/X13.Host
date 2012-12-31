@@ -1,0 +1,46 @@
+﻿<ad:DockableContent x:Class="X13.CC.DataStorageView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ad="clr-namespace:AvalonDock;assembly=AvalonDock"
+        xmlns:my="clr-namespace:X13.CC"
+        Title="Data Storage" Height="250" Width="250" x:Name="DataStoragePanel" TextOptions.TextRenderingMode="Grayscale" FontSize="12">
+    <Grid>
+        <TreeView x:Name="tvDataStorage" SelectedItemChanged="tvDataStorage_SelectedItemChanged" ItemsSource="{Binding RootNodes}" MouseDoubleClick="tvDataStorage_MouseDoubleClick">
+            <TreeView.Resources>
+                <DataTemplate x:Key="NormalTemplate">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" ContextMenuOpening="StackPanel_ContextMenuOpening" Margin="0, 2" MouseLeave="StackPanel_MouseLeave">
+                        <StackPanel.ContextMenu>
+                            <ContextMenu />
+                        </StackPanel.ContextMenu>
+                        <Image Source="{Binding image}" Height="16" Width="16" Margin="0,0,6,0"/>
+                        <TextBlock Text="{Binding name}" />
+                    </StackPanel>
+                </DataTemplate>
+                <DataTemplate x:Key="EditTemplate">
+                   <TextBox Text="{Binding name}" Loaded="TextBox_Loaded" MaxLines="1" UndoLimit="10" LostFocus="TextBox_LostFocus" PreviewKeyDown="TextBox_PreviewKeyDown" Margin="0,2" />
+                </DataTemplate>
+            </TreeView.Resources>
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="{x:Type TreeViewItem}">
+                    <Setter Property="IsExpanded" Value="{Binding Path=IsExpanded, Mode=TwoWay}"/>
+                </Style>
+            </TreeView.ItemContainerStyle>
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding children}">
+                    <ContentPresenter Content="{Binding}">
+                        <ContentPresenter.Style>
+                            <Style TargetType="{x:Type ContentPresenter}">
+                                <Setter Property="ContentTemplate" Value="{StaticResource NormalTemplate}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding edited}" Value="True">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource EditTemplate}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentPresenter.Style>
+                    </ContentPresenter>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+    </Grid>
+</ad:DockableContent>

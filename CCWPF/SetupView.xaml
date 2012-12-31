@@ -1,0 +1,32 @@
+﻿<ad:DocumentContent x:Class="X13.CC.SetupView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ad="clr-namespace:AvalonDock;assembly=AvalonDock"
+        xmlns:x13="clr-namespace:X13;assembly=X13Engine"
+        Title="Setup" TextOptions.TextRenderingMode="Grayscale"  FontSize="14" Height="220" Width="450">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <TabControl Grid.Row="0" TabStripPlacement="Left">
+      <TabItem Header="*">
+      <GroupBox Header="Select Engine">
+      <StackPanel>
+        <RadioButton Name="EngineEmbedded" Content="Embedded Engine" Margin="5,10,5,5"/>
+        <RadioButton Name="EngineInstall" Content="Install Engine local (need Administator rights)"  Margin="5" IsChecked="True" />
+        <RadioButton Name="EngineUrl" Margin="5">
+          <RadioButton.Content>
+            <StackPanel>
+              <TextBlock Text="Use remote engine" />
+              <TextBox Name="RemoteUrl" Text="enter url here" TextWrapping="Wrap" IsEnabled="{Binding Path=IsChecked, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" GotFocus="RemoteUrl_GotFocus" LostKeyboardFocus="RemoteUrl_LostKeyboardFocus" MaxLines="1" Margin="5" />
+            </StackPanel>
+          </RadioButton.Content>
+        </RadioButton>
+      </StackPanel>
+    </GroupBox>
+      </TabItem>
+    </TabControl>
+    <Button Content="Save" Grid.Row="1" HorizontalAlignment="Right" Margin="5" Padding="20,3,20,5" Click="Button_Click"></Button>
+  </Grid>
+</ad:DocumentContent>

@@ -1,0 +1,103 @@
+﻿<ad:DockableContent xmlns:my="clr-namespace:X13.CC" x:Class="X13.CC.LogView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ad="clr-namespace:AvalonDock;assembly=AvalonDock"
+        xmlns:x13="clr-namespace:X13;assembly=X13Engine"
+        x:Name="LogPanel" Title="Output" Height="160" Width="600" MouseLeave="DockableContent_MouseLeave"  TextOptions.TextRenderingMode="Grayscale" FontSize="12">
+  <Grid>
+    <ListView Name="lvLog" VirtualizingStackPanel.IsVirtualizing="True" ScrollViewer.VerticalScrollBarVisibility="Visible" BorderThickness="0" 
+                  IsTextSearchEnabled="False">
+      <ListView.Resources>
+        <DataTemplate x:Key="Cell"  DataType="x:Type x13:LogWatcher.LogEntry">
+          <Image x:Name="Icon" Width="16" Height="16"/>
+          <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding Path=ll}">
+              <DataTrigger.Value>
+                <x13:LogLevel>Debug</x13:LogLevel>
+              </DataTrigger.Value>
+              <Setter TargetName="Icon" Property="Source"  Value="/CC;component/Images/log_deb.png"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Path=ll}">
+              <DataTrigger.Value>
+                <x13:LogLevel>Info</x13:LogLevel>
+              </DataTrigger.Value>
+              <Setter TargetName="Icon" Property="Source"  Value="/CC;component/Images/log_info.png"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Path=ll}">
+              <DataTrigger.Value>
+                <x13:LogLevel>Warning</x13:LogLevel>
+              </DataTrigger.Value>
+              <Setter TargetName="Icon" Property="Source"  Value="/CC;component/Images/log_warn.png"/>
+            </DataTrigger>
+            <DataTrigger Binding="{Binding Path=ll}">
+              <DataTrigger.Value>
+                <x13:LogLevel>Error</x13:LogLevel>
+              </DataTrigger.Value>
+              <Setter TargetName="Icon" Property="Source"  Value="/CC;component/Images/log_err.png"/>
+            </DataTrigger>
+          </DataTemplate.Triggers>
+        </DataTemplate>
+        <my:GridColumnSpringConverter x:Key="ColumnSpringConverter"/>
+        <Style x:Key="hcs" TargetType="{x:Type GridViewColumnHeader}">
+          <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
+          <Setter Property="Padding" Value="10,0" />
+        </Style>
+        <Style x:Key="ExpandCollapseToggleStyle" TargetType="{x:Type ToggleButton}">
+          <Setter Property="Template">
+            <Setter.Value>
+              <ControlTemplate TargetType="{x:Type ToggleButton}">
+                <Image x:Name="ExpandImg" Width="16" Height="16" Source="/CC;component/Images/log_info.png" />
+                <ControlTemplate.Triggers>
+                  <Trigger Property="IsChecked" Value="True">
+                    <Setter Property="Source" TargetName="ExpandImg" Value="/CC;component/Images/log_deb.png"/>
+                  </Trigger>
+                </ControlTemplate.Triggers>
+              </ControlTemplate>
+            </Setter.Value>
+          </Setter>
+        </Style>
+        <Style TargetType="DataGridCell" x:Name="TimeCellStyle">
+          <Style.Triggers>
+            <DataTrigger Binding="{Binding Path=local}" Value="true">
+              <Setter Property="Foreground" Value="Blue"/>
+            </DataTrigger>
+          </Style.Triggers>
+        </Style>
+      </ListView.Resources>
+      <ListView.ItemContainerStyle>
+        <Style TargetType="ListViewItem">
+          <Style.Resources>
+            <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="{x:Static SystemColors.WindowColor}"/>
+            <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="{x:Static SystemColors.WindowTextColor}"/>
+          </Style.Resources>
+          <Style.Triggers>
+            <DataTrigger Binding="{Binding Path=local}"  Value="True">
+              <Setter Property="Foreground" Value="Gray" />
+            </DataTrigger>
+          </Style.Triggers>
+        </Style>
+      </ListView.ItemContainerStyle>
+      <ListView.View>
+        <GridView AllowsColumnReorder="False">
+          <GridViewColumn Header="Time" x:Name="gcTime" DisplayMemberBinding="{Binding Path=dt, StringFormat=HH:mm:ss.ff}" Width="80" />
+          <GridViewColumn Width="30" CellTemplate="{DynamicResource Cell}" x:Name="gcLevel">
+            <GridViewColumn.Header>
+              <GridViewColumnHeader>
+                <ToggleButton x:Name="tbShowDebug" Style="{StaticResource ExpandCollapseToggleStyle}" ClickMode="Release" Unchecked="ToggleButton_Changed" Checked="ToggleButton_Changed" Focusable="False" />
+              </GridViewColumnHeader>
+            </GridViewColumn.Header>
+          </GridViewColumn>
+          <GridViewColumn DisplayMemberBinding="{Binding message}" HeaderContainerStyle="{StaticResource hcs}" Header="Message">
+            <GridViewColumn.Width>
+              <MultiBinding Converter="{StaticResource ColumnSpringConverter}">
+                <Binding ElementName="lvLog" Path="ActualWidth" Mode="OneWay"/>
+                <Binding ElementName="gcLevel" Path="ActualWidth" Mode="OneWay"/>
+                <Binding ElementName="gcTime" Path="ActualWidth" Mode="OneWay"/>
+              </MultiBinding>
+            </GridViewColumn.Width>
+          </GridViewColumn>
+        </GridView>
+      </ListView.View>
+    </ListView>
+  </Grid>
+</ad:DockableContent>
