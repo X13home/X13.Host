@@ -34,7 +34,7 @@ namespace X13.CC {
       _tryCounter=3;
       Topic.Import(_settPath, "/local/settings");
       Topic brokerSettings=Topic.root.Get("/local/settings/Broker");
-      //X13.PLC.Topic.root.changed+=new Action<PLC.Topic, PLC.TopicChanged>(root_changed);
+      //Topic.root.Subscribe("/#", root_changed);
       brokerSettings.Subscribe("_URL", BrokerUrlChanged);
       BrokerState="OFFLINE";
       _clState=0;   // offline
