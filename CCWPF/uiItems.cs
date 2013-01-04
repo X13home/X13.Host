@@ -512,7 +512,9 @@ namespace X13.CC {
       }
     }
     private void LocationChanged(Topic sender, TopicChanged param) {
-      this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);
+      if(param.Art==TopicChanged.ChangeArt.Value) {
+        this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);
+      }
     }
     private void Remove() {
       _owner.DeleteVisual(_pin);

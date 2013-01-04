@@ -171,10 +171,10 @@ namespace X13.PLC {
 
       }
       if(Topic.brokerMode && _a!=null && _b!=null) {
-        if(_b.saved && !_a.saved) {
-          _b.Publish(_b, TopicChanged.ChangeArt.Value);
+        if(Direction!=2) {
+          _b.SetValue(_a.GetValue(), new TopicChanged(TopicChanged.ChangeArt.Value, _a));
         } else {
-          _a.Publish(_a, TopicChanged.ChangeArt.Value);
+          _a.SetValue(_b.GetValue(), new TopicChanged(TopicChanged.ChangeArt.Value, _b));
         }
       }
     }

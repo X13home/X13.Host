@@ -96,18 +96,16 @@ namespace X13.PLC {
       return cur;
     }
     private static void PubAction(TopicChanged tc) {
-      Topic sender=tc.Sender;
-
       if(tc.Task!=null){
         tc.Source=tc.Task.Current;
-        sender.PublishSubs(tc, tc.Subscription.func);
+        tc.Sender.PublishSubs(tc, tc.Subscription.func);
         if(tc.Task.MoveNext()) {
           _publishQueue.Enqueue(new TopicChanged(tc));
         }
       } else {
-        sender.onChange(sender, tc);
-        if((tc.Sender=sender.parent)!=null) {
-          _publishQueue.Enqueue(tc);
+        while(tc.Sender!=null) {
+          tc.Sender.onChange(tc.Sender, tc);
+          tc.Sender=tc.Sender.parent;
         }
       }
     }

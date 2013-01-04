@@ -440,7 +440,7 @@ namespace X13.MQTT {
       case TypeCode.String: {
           string v=(string)t.GetValue();
           if(!string.IsNullOrEmpty(v)) {
-            ret.AddRange(Encoding.UTF8.GetBytes(v));
+            ret.AddRange(Encoding.Default.GetBytes(v));
           }
         }
         break;
