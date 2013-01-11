@@ -32,7 +32,7 @@ namespace X13.MQTT {
     private Timer _tLoaded;
     private int _keepAliveMS=89950;  // 90 sec
     private Action<bool> _statusDelegate;
-    private X13Svc _svc; // for embedded mode
+    private X13.Svc.X13Svc _svc; // for embedded mode
 
     public ushort KeepAlive {
       get { return (ushort)(_keepAliveMS>0?(_keepAliveMS+50)/1000:0); }
@@ -61,7 +61,7 @@ namespace X13.MQTT {
         connectionstring="localhost";
       }
       if(connectionstring=="#local") {
-        _svc=new X13Svc();
+        _svc=new X13.Svc.X13Svc();
         _svc.StartUp();
         BrokerName=connectionstring;
         if(_statusDelegate!=null) {

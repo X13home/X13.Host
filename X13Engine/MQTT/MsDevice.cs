@@ -335,24 +335,6 @@ namespace X13.MQTT {
         menu["Add/int"]="4I";
         menu["Add/string"]="5S";
 
-        menu["1.02/Ip08"]="6zX15";
-        menu["1.02/Ip08/_description"]="Digital input, 1.02";
-        menu["1.02/In08"] ="7zX15";
-        menu["1.02/In08/_description"]="Digital Pull-Up inverted input, 1.02";
-        menu["1.02/Op08"]="8zX15";
-        menu["1.02/Op08/_description"]="Digital output, 1.02";
-        menu["1.02/On08"]="9zX15";
-        menu["1.02/On08/_description"]="Digital inverted output, 1.02";
-
-        menu["1.03/Ip09"]="6zX16";
-        menu["1.03/Ip09/_description"]="Digital input, 1.03";
-        menu["1.03/In09"] ="7zX16";
-        menu["1.03/In09/_description"]="Digital Pull-Up inverted input, 1.03";
-        menu["1.03/Op09"]="8zX16";
-        menu["1.03/Op09/_description"]="Digital output, 1.03";
-        menu["1.03/On09"]="9zX16";
-        menu["1.03/On09/_description"]="Digital inverted output, 1.03";
-
         menu["1.04/Ip16"]="6zX1";
         menu["1.04/Ip16/_description"]="Digital input, 1.04";
         menu["1.04/In16"] ="7zX1";
@@ -484,8 +466,8 @@ namespace X13.MQTT {
         menu["2.09/Op24/_description"]="Digital output, 2.09";
         menu["2.09/On24"]="9zX7";
         menu["2.09/On24/_description"]="Digital inverted output, 2.09";
-        menu["2.09/St4"]="AsX7";
-        menu["2.09/St4/_description"]="TxD 38400, 2.09";
+        menu["2.09/Sr4"]="AsX7";
+        menu["2.09/Sr4/_description"]="RxD 38400, 2.09";
 
         menu["2.08/Ip25"]="6zX8";
         menu["2.08/Ip25/_description"]="Digital input, 2.08";
@@ -495,8 +477,8 @@ namespace X13.MQTT {
         menu["2.08/Op25/_description"]="Digital output, 2.08";
         menu["2.08/On25"]="9zX8";
         menu["2.08/On25/_description"]="Digital inverted output, 2.08";
-        menu["2.08/Sr4"]="AsX8";
-        menu["2.08/Sr4/_description"]="RxD 38400, 2.08";
+        menu["2.08/St4"]="AsX8";
+        menu["2.08/St4/_description"]="TxD 38400, 2.08";
 
         StoreDeclarer(menu, "/system/declarers/PS_Node", "/CC;component/Images/ty_jnode.png");
         #endregion uGate/uNode

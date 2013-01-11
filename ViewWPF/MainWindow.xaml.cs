@@ -61,7 +61,6 @@ namespace X13.View {
             if(!_setted) {
               _sayTime=new SayTimeRu();
               _setted=true;
-              _sayTime.SayTime();
             }
           }
         }

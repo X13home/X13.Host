@@ -8,7 +8,7 @@
 //See LICENSE.txt file for license details.
 #endregion license
 
-namespace X13 {
+namespace X13.Svc {
   partial class ProjectInstaller {
     /// <summary>
     /// Required designer variable.

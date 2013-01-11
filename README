@@ -1,0 +1,13 @@
+X13.Host
+========
+
+X13.Home - an Open Source Home Automation system
+
+See http://x13home.github.com/
+
+***
+Quick Start
+
+1. Unpack X13.Home.zip.
+2. Run bin\CC.exe
+3. Select Embedded Engine and click Save

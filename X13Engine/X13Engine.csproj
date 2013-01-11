@@ -123,7 +123,6 @@
     <Compile Include="SQLite\SqliteRowUpdatingEventArgs.cs" />
     <Compile Include="SQLite\SqliteRowUpdatingEventHandler.cs" />
     <Compile Include="SQLite\SqliteTransaction.cs" />
-    <Compile Include="Svc\HttpServer.cs" />
     <Compile Include="Svc\ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
