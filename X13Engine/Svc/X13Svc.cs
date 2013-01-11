@@ -93,14 +93,20 @@ namespace X13.Svc {
       Topic.paused=true;
       _pStorage=new PersistentStorage();
       bool db=_pStorage.Open(pmPath);
-      string dbVersion="0.2.1.0";
+      string dbVersion="0.2.1.08";
       if(!db || Topic.root.Get<string>("/local/system/db/version").value!=dbVersion) {
         var dbVer=Topic.root.Get<string>("/local/system/db/version");
         dbVer.saved=true;
         dbVer.value=dbVersion;
         _lThreshold.saved=true;
         _lThreshold.value=LogLevel.Info;
-
+        Log.Info("Load default declarers");
+        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.PLC.declarers.xst");
+        if(st!=null) {
+          using(var sr=new StreamReader(st)){
+            Topic.Import(sr, null);
+          }
+        }
       }
       var rf12=root.Get<MsGateway>("/rf12");
       if(rf12.value==null) {
