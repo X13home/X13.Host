@@ -111,8 +111,10 @@ namespace X13.PLC {
     }
     internal static void Import(StreamReader reader, string path) {
       XDocument doc=XDocument.Load(reader);
+      bool clear=false;
       if(string.IsNullOrEmpty(path) && doc.Root.Attribute("head")!=null) {
         path=doc.Root.Attribute("head").Value;
+        clear=true;
       }
       Type tp;
       if(doc.Root.Attribute("type")!=null) {
@@ -122,6 +124,11 @@ namespace X13.PLC {
       }
 
       Topic owner=GetP(path, tp, null);
+      if(clear) {
+        //foreach(Topic t in owner.children.Reverse().ToArray()) {
+        //  t.Remove();
+        //}
+      }
       foreach(var xNext in doc.Root.Elements("item")) {
         Import(xNext, owner);
       }

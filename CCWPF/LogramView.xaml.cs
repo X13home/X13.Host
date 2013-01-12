@@ -15,6 +15,8 @@ using System.Windows.Media;
 using AvalonDock;
 using X13.PLC;
 using X13.WOUM;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace X13.CC {
   /// <summary>Interaction logic for LogramView.xaml</summary>
@@ -22,10 +24,6 @@ namespace X13.CC {
     #region Settings
     private static Topic _settings;
     private static Lazy<Typeface> _ftFont=new Lazy<Typeface>(() => new Typeface("Times New Roman"));
-
-    static LogramView() {
-      _settings=Topic.root.Get("/local/settings/Logram");
-    }
 
     public static int CellSize {
       get {
@@ -39,6 +37,53 @@ namespace X13.CC {
     }
     public static Typeface FtFont { get { return _ftFont.Value; } }
     #endregion Settings
+
+    static LogramView() {
+      _settings=Topic.root.Get("/local/settings/Logram");
+      _statements=new ObservableCollection<StatementDescription>();
+      Topic decls=Topic.root.Get("/system/declarers");
+      //decls.Subscribe("+", DeclarerChanged);
+      TopicChanged p=new TopicChanged(TopicChanged.ChangeArt.Add);
+      foreach(Topic d in decls.children) {
+        DeclarerChanged(d, p);
+      }
+    }
+    private static void DeclarerChanged(Topic sender, TopicChanged param) {
+      DVar<string> dec=sender as DVar<string>;
+      Topic infoT;
+      DVar<string> infoD;
+      if(dec==null || !dec.Exist("_type", out infoT) || (infoD=(infoT as DVar<string>))==null || infoD.value!="X13.PLC.PiStatemen") {
+        return;
+      }
+
+      StatementDescription stR=null;
+
+      if(param.Art==TopicChanged.ChangeArt.Remove) {
+        stR=_statements.FirstOrDefault(z => z.name==dec.name);
+        if(stR!=null) {
+          _statements.Remove(stR);
+        }
+      } else {
+        if(param.Art==TopicChanged.ChangeArt.Value) {
+          stR=_statements.FirstOrDefault(z => z.name==dec.name);
+        }
+        if(stR==null) {
+          stR=new StatementDescription() { name=dec.name };
+          _statements.Add(stR);
+        }
+        stR.image=dec.value;
+        if(dec.Exist("_description", out infoT) && (infoD=(infoT as DVar<string>))!=null) {
+          stR.info=infoD.value;
+        }
+      }
+    }
+    private class StatementDescription {
+      public string name{get; set;}
+      public string info { get; set; }
+      public string image { get; set; }
+    }
+
+    private static ObservableCollection<StatementDescription> _statements;
 
     public DVar<PiLogram> model { get { return uiLogram.model; } }
 
@@ -55,7 +100,7 @@ namespace X13.CC {
       if(m!=null) {
         uiLogram.Attach(m);
       }
-
+      this.statemebtsList.ItemsSource=_statements;
       m.changed+=ModelChanged;
     }
 
@@ -65,12 +110,11 @@ namespace X13.CC {
       }
     }
 
-    private Button _selectedButton;
+    private Image _selectedImage;
     private Point _MouseDownPoint;
     private bool _readyToDrag;
     private void WrapPanel_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e) {
-      Image img;
-      if((_selectedButton=e.OriginalSource as Button)!=null || ((img=e.OriginalSource as Image)!=null && (_selectedButton=img.Parent as Button)!=null)) {
+      if((_selectedImage=e.OriginalSource as Image)!=null) {
         _MouseDownPoint=e.GetPosition(this);
         _readyToDrag=true;
       }
@@ -79,16 +123,16 @@ namespace X13.CC {
     private void WrapPanel_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e) {
       string tag;
       Point pos=e.GetPosition(this);
-      if(_readyToDrag && _selectedButton!=null && (Math.Abs(_MouseDownPoint.X-pos.X)>SystemParameters.MinimumHorizontalDragDistance || Math.Abs(_MouseDownPoint.Y-pos.Y)>SystemParameters.MinimumVerticalDragDistance) && !string.IsNullOrEmpty(tag=_selectedButton.Tag as string)) {
+      if(_readyToDrag && _selectedImage!=null && (Math.Abs(_MouseDownPoint.X-pos.X)>SystemParameters.MinimumHorizontalDragDistance || Math.Abs(_MouseDownPoint.Y-pos.Y)>SystemParameters.MinimumVerticalDragDistance) && !string.IsNullOrEmpty(tag=_selectedImage.Tag as string)) {
         _readyToDrag=false;
         PiStatement st=new PiStatement(tag);
-        DragDrop.DoDragDrop(_selectedButton, st, DragDropEffects.Copy);
+        DragDrop.DoDragDrop(_selectedImage, st, DragDropEffects.Copy);
       }
     }
 
     private void WrapPanel_PreviewMouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e) {
       string tag;
-      if(_selectedButton!=null && !string.IsNullOrEmpty(tag=_selectedButton.Tag as string)) {
+      if(_selectedImage!=null && !string.IsNullOrEmpty(tag=_selectedImage.Tag as string)) {
         _readyToDrag=false;
         if(model!=null) {
           int i=1;
@@ -101,7 +145,7 @@ namespace X13.CC {
           c.saved=true;
           c.value=new PiStatement(tag);
         }
-        _selectedButton=null;
+        _selectedImage=null;
       }
 
     }
