@@ -1,1 +1,9 @@
 # git ignore file
+/bin/*.exe
+/bin/*.pdb
+/bin/*.manifest
+/Data/*
+/log/*
+/CCWPF/obj/*
+/ViewWPF/obj/*
+/X13Engine/obj/*
