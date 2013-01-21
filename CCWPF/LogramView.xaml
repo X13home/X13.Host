@@ -14,95 +14,18 @@
         <!-- used in Schema-->
       </ContextMenu>
     </Grid.ContextMenu>
-    <WrapPanel Orientation="Vertical" ItemHeight="24" ItemWidth="24" Margin="8" Panel.ZIndex="1" PreviewMouseLeftButtonDown="WrapPanel_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="WrapPanel_PreviewMouseLeftButtonUp" PreviewMouseMove="WrapPanel_PreviewMouseMove">
-      <WrapPanel.Resources>
-        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
-          <Setter Property="BorderThickness" Value="0" />
-          <Setter Property="Margin" Value="2"/>
-        </Style>
-      </WrapPanel.Resources>
-      <Button Tag="NOT" ToolTip="NOT" >
-        <Image Source="/CC;component/Images/bi_not.png" />
-      </Button>
-      <Button Tag="ANDI" ToolTip="AND">
-        <Image Source="/CC;component/Images/bi_and.png" />
-      </Button>
-      <Button Tag="ORI" ToolTip="OR">
-        <Image Source="/CC;component/Images/bi_or.png" />
-      </Button>
-      <Button Tag="XORI" ToolTip="XOR">
-        <Image Source="/CC;component/Images/bi_xor.png" />
-      </Button>
-      <Button Tag="SHL" ToolTip="Shift links">
-        <Image Source="/CC;component/Images/bi_shl.png" />
-      </Button>
-      <Button Tag="SHR" ToolTip="Shift rigts">
-        <Image Source="/CC;component/Images/bi_shr.png" />
-      </Button>
-      <Button ToolTip="Triger" Tag="DTriger">
-        <Image Source="/CC;component/Images/bi_triger.png" />
-      </Button>
-      <Button ToolTip="Counter" Tag="Counter">
-        <Image Source="/CC;component/Images/bi_counter.png" />
-      </Button>
-      <Button ToolTip="Impulse" Tag="Pulse">
-        <Image Source="/CC;component/Images/bi_impulse.png" />
-      </Button>
-      <Button ToolTip="Oscillator" Tag="SqPulse">
-        <Image Source="/CC;component/Images/bi_oscillator.png" />
-      </Button>
-      <Button ToolTip="Math Expression" Tag="MathExpr" >
-        <Image Source="/CC;component/Images/ty_func.png" />
-      </Button>
-      <Button ToolTip="Summe" Tag="Sum">
-        <Image Source="/CC;component/Images/ar_sum.png" />
-      </Button>
-      <Button ToolTip="Substract" Tag="Sub" >
-        <Image Source="/CC;component/Images/ar_sub.png" />
-      </Button>
-      <Button ToolTip="Multiple" Tag="Mul" >
-        <Image Source="/CC;component/Images/ar_mul.png" />
-      </Button>
-      <Button ToolTip="Division" Tag="Div" >
-        <Image Source="/CC;component/Images/ar_div.png" />
-      </Button>
-      <Button ToolTip="Remainder" Tag="Remainder" >
-        <Image Source="/CC;component/Images/ar_mod.png" />
-      </Button>
-      <Button ToolTip="if large" Tag="comp_gr">
-        <Image Source="/CC;component/Images/ar_comp_gr.png" />
-      </Button>
-      <Button ToolTip="if equal" Tag="comp_eq">
-        <Image Source="/CC;component/Images/ar_eq.png" />
-      </Button>
-      <Button ToolTip="if less" Tag="comp_le">
-        <Image Source="/CC;component/Images/ar_comp_le.png" />
-      </Button>
-      <Button ToolTip="Average" Tag="Average">
-        <Image Source="/CC;component/Images/ar_avr.png" />
-      </Button>
-      <Button ToolTip="Switch" Tag="Switch">
-        <Image Source="/CC;component/Images/ar_switch.png" />
-      </Button>
-      <Button ToolTip="Tri-State Buffer" Tag="BreakerO">
-        <Image Source="/CC;component/Images/ar_breaker.png" />
-      </Button>
-      <Button ToolTip="StrFormat" Tag="StrFormat" >
-        <Image Source="/CC;component/Images/st_fmt.png" />
-      </Button>
-      <Button ToolTip="Export to .csv" Tag="Pile" >
-        <Image Source="/CC;component/Images/ar_pile.png" />
-      </Button>
-      <Button ToolTip="Export to cosm.com" Tag="Cosm" >
-        <Image Source="/CC;component/Images/fu_cosm.png" />
-      </Button>
-      <Button ToolTip="Sun" Tag="Sun" >
-        <Image Source="/CC;component/Images/fu_sun.png" />
-      </Button>
-      <Button ToolTip="Execute" Tag="Execute" >
-        <Image Source="/CC;component/Images/fu_exec.png" />
-      </Button>
-    </WrapPanel>
+    <ItemsControl Name="statemebtsList" Panel.ZIndex="1">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <WrapPanel Orientation="Vertical" ItemHeight="24" ItemWidth="24" Margin="8" PreviewMouseLeftButtonDown="WrapPanel_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="WrapPanel_PreviewMouseLeftButtonUp" PreviewMouseMove="WrapPanel_PreviewMouseMove"/>
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Image Tag="{Binding name}" ToolTip="{Binding info}" Source="{Binding image}" Margin="4" Stretch="None" />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
     <my:Schema x:Name="uiLogram" HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" Grid.Column="1" Panel.ZIndex="0" Focusable="True">
     </my:Schema>
   </Grid>

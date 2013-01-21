@@ -236,10 +236,10 @@
             </Style>
           </Grid.Resources>
           <TextBlock Text="{Binding Source={StaticResource wpCurSecond}, Path=value, StringFormat=\{0:D2\}}" Grid.Column="1" Grid.Row="0" Foreground="LightGray" />
-          <TextBlock Text="{Binding Source={StaticResource wtCur}, Path=value, StringFormat=\{0:F1\} °C}" Grid.Column="5" Grid.Row="0" />
-          <TextBlock Text="{Binding Source={StaticResource wtCurDelta}, Path=value, StringFormat=\{0:F1\}}" Grid.Column="6" Grid.Row="0" />
-          <TextBlock Text="{Binding Source={StaticResource wpCur}, Path=value, StringFormat=\{0:F0\} mm}" Grid.Column="7" Grid.Row="0" />
-          <TextBlock Text="{Binding Source={StaticResource wpCurDelta}, Path=value, StringFormat=\{0:F1\}}" Grid.Column="8" Grid.Row="0" />
+          <TextBlock Text="{Binding Source={StaticResource wtCur}, Path=value, StringFormat=\{0:F1\} °C}" Grid.Column="5" Grid.Row="0" FontWeight="Bold" FontSize="14" Background="Gainsboro" />
+          <TextBlock Text="{Binding Source={StaticResource wtCurDelta}, Path=value, StringFormat=\{0:F1\}}" Grid.Column="6" Grid.Row="0" Background="Gainsboro" />
+          <TextBlock Text="{Binding Source={StaticResource wpCur}, Path=value, StringFormat=\{0:F0\} mm}" Grid.Column="7" Grid.Row="0" FontSize="14" FontWeight="Bold" Background="Gainsboro" />
+          <TextBlock Text="{Binding Source={StaticResource wpCurDelta}, Path=value, StringFormat=\{0:F1\}}" Grid.Column="8" Grid.Row="0" Background="Gainsboro" />
           <Image Source="{Binding Source={StaticResource wf0img}, Path=value}" Stretch="None" Grid.Row="2" Grid.Column="9" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" />
           <Image Source="{Binding Source={StaticResource wf1img}, Path=value}" Stretch="None" Grid.Row="2" Grid.Column="10" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" />
           <Image Source="{Binding Source={StaticResource wf2img}, Path=value}" Stretch="None" Grid.Row="2" Grid.Column="11" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" />

@@ -22,8 +22,9 @@ using X13.PLC;
 using X13.WOUM;
 using System.IO;
 using System.Reflection;
+using X13;
 
-namespace X13 {
+namespace X13.Svc {
   public partial class X13Svc : ServiceBase {
     private static BlockingQueue<LogEntry> _log;
     private Timer _1SecTimer;
@@ -31,9 +32,6 @@ namespace X13 {
     private DateTime _firstDT;
     private DVar<LogLevel> _lThreshold;
     private PersistentStorage _pStorage;
-#if HTTP_SERVER
-    private X13.Svc.HttpServer _http;
-#endif
     public X13Svc() {
       InitializeComponent();
     }
@@ -95,10 +93,20 @@ namespace X13 {
       Topic.paused=true;
       _pStorage=new PersistentStorage();
       bool db=_pStorage.Open(pmPath);
-      Topic.paused=false;
-      if(!db) {
+      string dbVersion="0.2.1";
+      var dbVer=Topic.root.Get<string>("/system/db/version");
+      if(!db || dbVer.value!=dbVersion) {
+        dbVer.saved=true;
+        dbVer.value=dbVersion;
         _lThreshold.saved=true;
         _lThreshold.value=LogLevel.Info;
+        Log.Info("Load default declarers");
+        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.PLC.declarers.xst");
+        if(st!=null) {
+          using(var sr=new StreamReader(st)){
+            Topic.Import(sr, null);
+          }
+        }
       }
       var rf12=root.Get<MsGateway>("/rf12");
       if(rf12.value==null) {
@@ -112,12 +120,9 @@ namespace X13 {
       foreach(Topic acl in Topic.root.Get("/local/security/acls").children){
         SetAcl(acl, Topic.root);
       }
+      Topic.paused=false;
       //root.Subscribe("/#", MQTT_Main_changed);
       MqBroker.Open();
-#if HTTP_SERVER
-      _http=new X13.Svc.HttpServer();
-      _http.Start();
-#endif
     }
     private void SetTopic<T>(string path, T value, Topic mp) {
       if(mp==null) {
@@ -149,9 +154,6 @@ namespace X13 {
   
     protected override void OnStop() {
       _1SecTimer.Change(Timeout.Infinite, Timeout.Infinite);
-#if HTTP_SERVER
-      _http.Stop();
-#endif
       MqBroker.Close();
       _pStorage.Close();
       _log.Dispose();

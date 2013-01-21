@@ -109,6 +109,34 @@ namespace X13.PLC {
         }
       }
     }
+    internal static void Import(StreamReader reader, string path) {
+      XDocument doc=XDocument.Load(reader);
+      bool clear=false;
+      if(string.IsNullOrEmpty(path) && doc.Root.Attribute("head")!=null) {
+        path=doc.Root.Attribute("head").Value;
+        clear=true;
+      }
+      Type tp;
+      if(doc.Root.Attribute("type")!=null) {
+        tp=Type.GetType(doc.Root.Attribute("type").Value);
+      } else {
+        tp=null;
+      }
+
+      Topic owner=GetP(path, tp, null);
+      if(clear) {
+        //foreach(Topic t in owner.children.Reverse().ToArray()) {
+        //  t.Remove();
+        //}
+      }
+      foreach(var xNext in doc.Root.Elements("item")) {
+        Import(xNext, owner);
+      }
+      owner.saved=doc.Root.Attribute("saved")!=null && doc.Root.Attribute("saved").Value==bool.TrueString;
+      if(tp!=null && doc.Root.Attribute("value")!=null) {
+        owner.FromJson(doc.Root.Attribute("value").Value);
+      }
+    }
     private static void Import(XElement xElement, Topic owner) {
       if(xElement==null || owner==null) {
         return;

@@ -22,38 +22,33 @@ using SoftCircuits;
 namespace X13.PLC {
   public class BiultInStatements {
     public static void Initialize() {
-      PiStatement.AddStatemen("AND", typeof(And));
-      PiStatement.AddStatemen("ANDI", typeof(AndI));
-      PiStatement.AddStatemen("OR", typeof(Or));
-      PiStatement.AddStatemen("ORI", typeof(OrI));
-      PiStatement.AddStatemen("XOR", typeof(Xor));
-      PiStatement.AddStatemen("XORI", typeof(XorI));
-      PiStatement.AddStatemen("NOT", typeof(Not));
+      PiStatement.AddStatemen("NOT", typeof(bNot));
+      PiStatement.AddStatemen("DTriger", typeof(DTriger));
+      PiStatement.AddStatemen("ANDI", typeof(dAnd));
+      PiStatement.AddStatemen("ORI", typeof(dOr));
+      PiStatement.AddStatemen("XORI", typeof(dXor));
       PiStatement.AddStatemen("SHL", typeof(Shl));
       PiStatement.AddStatemen("SHR", typeof(Shr));
-      PiStatement.AddStatemen("DTriger", typeof(DTriger));
-      PiStatement.AddStatemen("Pulse", typeof(Impuls));
-      PiStatement.AddStatemen("SqPulse", typeof(PulseGenerator));
-      PiStatement.AddStatemen("Comparer", typeof(Comparer));
+      PiStatement.AddStatemen("Counter", typeof(Counter));
       PiStatement.AddStatemen("comp_gr", typeof(Comparer));
       PiStatement.AddStatemen("comp_eq", typeof(Comparer));
       PiStatement.AddStatemen("comp_le", typeof(Comparer));
-      PiStatement.AddStatemen("Counter", typeof(Counter));
-      PiStatement.AddStatemen("Average", typeof(Average));
+      PiStatement.AddStatemen("MathExpr", typeof(MathExpr));
       PiStatement.AddStatemen("Switch", typeof(Switch));
+      PiStatement.AddStatemen("Average", typeof(Average));
       PiStatement.AddStatemen("Sum", typeof(MathOp));
       PiStatement.AddStatemen("Sub", typeof(MathOp));
       PiStatement.AddStatemen("Mul", typeof(MathOp));
       PiStatement.AddStatemen("Div", typeof(MathOp));
       PiStatement.AddStatemen("Remainder", typeof(MathOp));
+      PiStatement.AddStatemen("Pulse", typeof(Impuls));
+      PiStatement.AddStatemen("SqPulse", typeof(PulseGenerator));
+      PiStatement.AddStatemen("BreakerO", typeof(Breaker));
       PiStatement.AddStatemen("Pile", typeof(Pile));
       PiStatement.AddStatemen("Cosm", typeof(Cosm));
       PiStatement.AddStatemen("Sun", typeof(Sun));
       PiStatement.AddStatemen("StrFormat", typeof(StrFormat));
-      PiStatement.AddStatemen("MathExpr", typeof(MathExpr));
       PiStatement.AddStatemen("Execute", typeof(Execute));
-      PiStatement.AddStatemen("Breaker", typeof(Breaker));
-      PiStatement.AddStatemen("BreakerO", typeof(BreakerO));
     }
 
     public static DVar<T> AddPin<T>(DVar<PiStatement> model, string name) {
@@ -63,58 +58,7 @@ namespace X13.PLC {
       return pin;
     }
 
-    private class And : IStatement {
-      static And() {
-        var t1=Topic.root.Get<string>("/system/declarers/AND");
-        t1.value="/CC;component/Images/bi_and.png";
-        t1.Get<string>("A").value="Az";
-        t1.Get<string>("B").value="Bz";
-        t1.Get<string>("C").value="Cz";
-        t1.Get<string>("D").value="Dz";
-        t1.Get<string>("E").value="Ez";
-        t1.Get<string>("F").value="Fz";
-        t1.Get<string>("G").value="Gz";
-        t1.Get<string>("H").value="Hz";
-        t1.Get<string>("Q").value="az";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-      public void Init(DVar<PiStatement> model) {
-        AddPin<bool>(model, "A");
-        AddPin<bool>(model, "B");
-        AddPin<bool>(model, "Q");
-      }
-
-      public void Calculate(DVar<PiStatement> model, Topic source) {
-        bool ret=true;
-        foreach(DVar<bool> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(bool) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<bool>>()) {
-          ret&=pin;
-        }
-        DVar<bool> op=model.Get<bool>("Q");
-        op.saved=true;
-        op.value=ret;
-      }
-
-      public void DeInit() {
-      }
-    }
-    private class AndI : IStatement {
-      static AndI() {
-        var t1=Topic.root.Get<string>("/system/declarers/ANDI");
-        t1.value="/CC;component/Images/bi_and.png";
-        t1.Get<string>("A").value="Ai";
-        t1.Get<string>("B").value="Bi";
-        t1.Get<string>("C").value="Ci";
-        t1.Get<string>("D").value="Di";
-        t1.Get<string>("E").value="Ei";
-        t1.Get<string>("F").value="Fi";
-        t1.Get<string>("G").value="Gi";
-        t1.Get<string>("H").value="Hi";
-        t1.Get<string>("Q").value="ai";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
+    private class dAnd : IStatement {
       public void Init(DVar<PiStatement> model) {
         AddPin<int>(model, "A");
         AddPin<int>(model, "B");
@@ -133,59 +77,7 @@ namespace X13.PLC {
       }
     }
 
-    private class Or : IStatement {
-      static Or() {
-        var t1=Topic.root.Get<string>("/system/declarers/OR");
-        t1.value="/CC;component/Images/bi_or.png";
-        t1.Get<string>("A").value="Az";
-        t1.Get<string>("B").value="Bz";
-        t1.Get<string>("C").value="Cz";
-        t1.Get<string>("D").value="Dz";
-        t1.Get<string>("E").value="Ez";
-        t1.Get<string>("F").value="Fz";
-        t1.Get<string>("G").value="Gz";
-        t1.Get<string>("H").value="Hz";
-        t1.Get<string>("Q").value="az";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
-      public void Init(DVar<PiStatement> model) {
-        AddPin<bool>(model, "A");
-        AddPin<bool>(model, "B");
-        AddPin<bool>(model, "Q");
-      }
-
-      public void Calculate(DVar<PiStatement> model, Topic source) {
-        bool ret=false;
-        foreach(DVar<bool> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(bool) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<bool>>()) {
-          ret|=pin;
-        }
-        DVar<bool> op=model.Get<bool>("Q");
-        op.saved=true;
-        op.value=ret;
-      }
-
-      public void DeInit() {
-      }
-    }
-    private class OrI : IStatement {
-      static OrI() {
-        var t1=Topic.root.Get<string>("/system/declarers/ORI");
-        t1.value="/CC;component/Images/bi_or.png";
-        t1.Get<string>("A").value="Ai";
-        t1.Get<string>("B").value="Bi";
-        t1.Get<string>("C").value="Ci";
-        t1.Get<string>("D").value="Di";
-        t1.Get<string>("E").value="Ei";
-        t1.Get<string>("F").value="Fi";
-        t1.Get<string>("G").value="Gi";
-        t1.Get<string>("H").value="Hi";
-        t1.Get<string>("Q").value="ai";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
+    private class dOr : IStatement {
       public void Init(DVar<PiStatement> model) {
         AddPin<int>(model, "A");
         AddPin<int>(model, "B");
@@ -204,59 +96,7 @@ namespace X13.PLC {
       }
     }
 
-    private class Xor : IStatement {
-      static Xor() {
-        var t1=Topic.root.Get<string>("/system/declarers/XOR");
-        t1.value="/CC;component/Images/bi_xor.png";
-        t1.Get<string>("A").value="Az";
-        t1.Get<string>("B").value="Bz";
-        t1.Get<string>("C").value="Cz";
-        t1.Get<string>("D").value="Dz";
-        t1.Get<string>("E").value="Ez";
-        t1.Get<string>("F").value="Fz";
-        t1.Get<string>("G").value="Gz";
-        t1.Get<string>("H").value="Hz";
-        t1.Get<string>("Q").value="az";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
-      public void Init(DVar<PiStatement> model) {
-        AddPin<bool>(model, "A");
-        AddPin<bool>(model, "B");
-        AddPin<bool>(model, "Q");
-      }
-
-      public void Calculate(DVar<PiStatement> model, Topic source) {
-        bool ret=false;
-        foreach(DVar<bool> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(bool) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<bool>>()) {
-          ret^=pin;
-        }
-        DVar<bool> op=model.Get<bool>("Q");
-        op.saved=true;
-        op.value=ret;
-      }
-
-      public void DeInit() {
-      }
-    }
-    private class XorI : IStatement {
-      static XorI() {
-        var t1=Topic.root.Get<string>("/system/declarers/XORI");
-        t1.value="/CC;component/Images/bi_xor.png";
-        t1.Get<string>("A").value="Ai";
-        t1.Get<string>("B").value="Bi";
-        t1.Get<string>("C").value="Ci";
-        t1.Get<string>("D").value="Di";
-        t1.Get<string>("E").value="Ei";
-        t1.Get<string>("F").value="Fi";
-        t1.Get<string>("G").value="Gi";
-        t1.Get<string>("H").value="Hi";
-        t1.Get<string>("Q").value="ai";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
+    private class dXor : IStatement {
       public void Init(DVar<PiStatement> model) {
         AddPin<int>(model, "A");
         AddPin<int>(model, "B");
@@ -275,16 +115,7 @@ namespace X13.PLC {
       }
     }
 
-    private class Not : IStatement {
-      static Not() {
-        var t1=Topic.root.Get<string>("/system/declarers/NOT");
-        t1.value="/CC;component/Images/bi_not.png";
-        t1.Get<string>("A").value="Az";
-        t1.Get<string>("Q").value="az";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
+    private class bNot : IStatement {
       public void Init(DVar<PiStatement> model) {
         AddPin<bool>(model, "A");
         AddPin<bool>(model, "Q");
@@ -301,16 +132,6 @@ namespace X13.PLC {
     }
 
     private class Shl : IStatement {
-      static Shl() {
-        var t1=Topic.root.Get<string>("/system/declarers/SHL");
-        t1.value="/CC;component/Images/bi_shl.png";
-        t1.Get<string>("A").value="Ai";
-        t1.Get<string>("B").value="Bi";
-        t1.Get<string>("Q").value="ai";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
       public void Init(DVar<PiStatement> model) {
         AddPin<int>(model, "A");
         AddPin<int>(model, "B");
@@ -325,16 +146,6 @@ namespace X13.PLC {
       }
     }
     private class Shr : IStatement {
-      static Shr() {
-        var t1=Topic.root.Get<string>("/system/declarers/SHR");
-        t1.value="/CC;component/Images/bi_shr.png";
-        t1.Get<string>("A").value="Ai";
-        t1.Get<string>("B").value="Bi";
-        t1.Get<string>("Q").value="ai";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
       public void Init(DVar<PiStatement> model) {
         AddPin<int>(model, "A");
         AddPin<int>(model, "B");
@@ -350,19 +161,6 @@ namespace X13.PLC {
     }
 
     private class DTriger : IStatement {
-      static DTriger() {
-        var t1=Topic.root.Get<string>("/system/declarers/DTriger");
-        t1.value="/CC;component/Images/bi_triger.png";
-        t1.Get<string>("S").value="Az";
-        t1.Get<string>("D").value="Bz";
-        t1.Get<string>("C").value="Cz";
-        t1.Get<string>("R").value="Dz";
-        t1.Get<string>("Q").value="az";
-        t1.Get<string>("!Q").value="bz";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
       public void Init(DVar<PiStatement> model) {
         AddPin<bool>(model, "S");
         AddPin<bool>(model, "C");
@@ -398,16 +196,6 @@ namespace X13.PLC {
     }
 
     private class Impuls : IStatement {
-      static Impuls() {
-        var t1=Topic.root.Get<string>("/system/declarers/Pulse");
-        t1.value="/CC;component/Images/bi_impulse.png";
-        t1.Get<string>("Stb").value="Az";
-        t1.Get<string>("Q").value="az";
-        t1.Get<string>("!Q").value="bz";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
       private DVar<bool> _input;
       private DVar<bool> _output;
       private DVar<bool> _iOutput;
@@ -470,16 +258,6 @@ namespace X13.PLC {
     }
 
     private class PulseGenerator : IStatement {
-      static PulseGenerator() {
-        var t1=Topic.root.Get<string>("/system/declarers/SqPulse");
-        t1.value="/CC;component/Images/bi_oscillator.png";
-        t1.Get<string>("En").value="Az";
-        t1.Get<string>("Q").value="az";
-        t1.Get<string>("!Q").value="bz";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-
-      }
       private DVar<bool> _enable;
       private DVar<bool> _output;
       private DVar<bool> _iOutput;
@@ -541,20 +319,6 @@ namespace X13.PLC {
     }
 
     private class Comparer : IStatement {
-      static Comparer() {
-        var t1=Topic.root.Get<string>("/system/declarers/Comparer");
-        t1.value="/CC;component/Images/ty_func.png";
-        t1.Get<string>("A").value="Ac";
-        t1.Get<string>("B").value="Cc";
-        t1.Get<string>("<").value="az";
-        t1.Get<string>("=").value="bz";
-        t1.Get<string>(">").value="cz";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-        FillDecl(Topic.root.Get<string>("/system/declarers/comp_gr"), "ar_comp_gr");
-        FillDecl(Topic.root.Get<string>("/system/declarers/comp_eq"), "ar_eq");
-        FillDecl(Topic.root.Get<string>("/system/declarers/comp_le"), "ar_comp_le");
-      }
       private static void FillDecl(DVar<string> t1, string icon) {
         t1.value="/CC;component/Images/"+icon+".png";
         t1.Get<string>("A").value="Ac";
@@ -573,24 +337,13 @@ namespace X13.PLC {
         _a=AddPin<Decimal>(model, "A");
         _b=AddPin<Decimal>(model, "B");
         declarer=model.Get<string>("_declarer");
-        if(declarer.value=="Comparer") {
-          AddPin<bool>(model, ">");
-          AddPin<bool>(model, "=");
-          AddPin<bool>(model, "<");
-        } else {
           AddPin<bool>(model, "Q");
           AddPin<bool>(model, "!Q");
-        }
         Calculate(model, _a);
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         if(source==_a || source==_b) {
           switch(declarer.value) {
-          case "Comparer":
-            model.Get<bool>(">").value=_a.value>_b.value;
-            model.Get<bool>("=").value=_a.value==_b.value;
-            model.Get<bool>("<").value=_a.value<_b.value;
-            break;
           case "comp_gr":
             model.Get<bool>("Q").value=_a.value>_b.value;
             model.Get<bool>("!Q").value=!model.Get<bool>("Q").value;
@@ -611,19 +364,6 @@ namespace X13.PLC {
     }
 
     private class Counter : IStatement {
-      static Counter() {
-        var t1=Topic.root.Get<string>("/system/declarers/Counter");
-        t1.value="/CC;component/Images/bi_counter.png";
-        t1.Get<string>("+1").value="Az";
-        t1.Get<string>("Set").value="Bz";
-        t1.Get<string>("Value").value="Ci";
-        t1.Get<string>("Reset").value="Dz";
-        t1.Get<string>("-1").value="Ez";
-        t1.Get<string>("Out").value="ci";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
       private DVar<bool> _inc, _set, _reset, _dec;
       private DVar<int> _val, _out;
       public void Init(DVar<PiStatement> model) {
@@ -651,16 +391,6 @@ namespace X13.PLC {
     }
 
     private class Average : IStatement {
-      static Average() {
-        var t1=Topic.root.Get<string>("/system/declarers/Average");
-        t1.value="/CC;component/Images/ar_avr.png";
-        t1.Get<string>("In").value="Ac";
-        t1.Get<string>("Stb").value="Bz";
-        t1.Get<string>("Out").value="az";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
       private DVar<Decimal> _in, _out;
       private DVar<bool> _strobe;
       private DVar<uint> _capacity;
@@ -687,22 +417,6 @@ namespace X13.PLC {
     }
 
     private class Switch : IStatement {
-      static Switch() {
-        var t1=Topic.root.Get<string>("/system/declarers/Switch");
-        t1.value="/CC;component/Images/ar_switch.png";
-        t1.Get<string>("Sel").value="Ai";
-        t1.Get<string>("0").value="Bc";
-        t1.Get<string>("1").value="Cc";
-        t1.Get<string>("2").value="Dc";
-        t1.Get<string>("3").value="Ec";
-        t1.Get<string>("4").value="Fc";
-        t1.Get<string>("5").value="Gc";
-        t1.Get<string>("6").value="Hc";
-        t1.Get<string>("Out").value="bc";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
       public void Init(DVar<PiStatement> model) {
         AddPin<byte>(model, "Sel");
         AddPin<Decimal>(model, "0");
@@ -722,20 +436,6 @@ namespace X13.PLC {
       }
     }
     private class Pile : IStatement {
-      static Pile() {
-        var t1=Topic.root.Get<string>("/system/declarers/Pile");
-        t1.value="/CC;component/Images/ar_pile.png";
-        t1.Get<string>("Push").value="Az";
-        t1.Get<string>("A").value="Bc";
-        t1.Get<string>("B").value="Cc";
-        t1.Get<string>("C").value="Dc";
-        t1.Get<string>("D").value="Ec";
-        t1.Get<string>("E").value="Fc";
-        t1.Get<string>("F").value="Gc";
-        t1.Get<string>("G").value="Hc";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
       public void Init(DVar<PiStatement> model) {
         AddPin<Decimal>(model, "A");
         AddPin<bool>(model, "Push");
@@ -807,21 +507,6 @@ namespace X13.PLC {
       }
     }
     private class Cosm : IStatement {
-      static Cosm() {
-        var t1=Topic.root.Get<string>("/system/declarers/Cosm");
-        t1.value="/CC;component/Images/fu_cosm.png";
-        t1.Get<string>("Push").value="Az";
-        t1.Get<string>("A").value="Bc";
-        t1.Get<string>("B").value="Cc";
-        t1.Get<string>("C").value="Dc";
-        t1.Get<string>("D").value="Ec";
-        t1.Get<string>("E").value="Fc";
-        t1.Get<string>("F").value="Gc";
-        t1.Get<string>("G").value="Hc";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
       private DVar<bool> _push;
       private DVar<string> _feed;
       private DVar<string> _key;
@@ -886,18 +571,6 @@ namespace X13.PLC {
     }
 
     private class Sun : IStatement {
-      static Sun() {
-        var t1=Topic.root.Get<string>("/system/declarers/Sun");
-        t1.value="/CC;component/Images/fu_sun.png";
-        t1.Get<string>("Lat").value="Ac";
-        t1.Get<string>("Lon").value="Bc";
-        t1.Get<string>("Sunrise").value="ac";
-        t1.Get<string>("Out").value="bz";
-        t1.Get<string>("Sunset").value="cc";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
       private DVar<Decimal> _dLat;
       private DVar<Decimal> _dLon;
       private DVar<bool> _dOut;
@@ -973,13 +646,6 @@ namespace X13.PLC {
     }
 
     private class MathOp : IStatement {
-      static MathOp() {
-        FillDecl(Topic.root.Get<string>("/system/declarers/Sum"), "ar_sum");
-        FillDecl(Topic.root.Get<string>("/system/declarers/Sub"), "ar_sub");
-        FillDecl(Topic.root.Get<string>("/system/declarers/Mul"), "ar_mul");
-        FillDecl(Topic.root.Get<string>("/system/declarers/Div"), "ar_div");
-        FillDecl(Topic.root.Get<string>("/system/declarers/Remainder"), "ar_mod");
-      }
       private static void FillDecl(DVar<string> t1, string icon) {
         t1.value="/CC;component/Images/"+icon+".png";
         t1.Get<string>("A").value="Ac";
@@ -1039,21 +705,6 @@ namespace X13.PLC {
     }
 
     private class StrFormat : IStatement {
-      static StrFormat() {
-        var t1=Topic.root.Get<string>("/system/declarers/StrFormat");
-        t1.value="/CC;component/Images/st_fmt.png";
-        t1.Get<string>("0").value="Ao";
-        t1.Get<string>("1").value="Bo";
-        t1.Get<string>("2").value="Co";
-        t1.Get<string>("3").value="Do";
-        t1.Get<string>("4").value="Eo";
-        t1.Get<string>("5").value="Fo";
-        t1.Get<string>("6").value="Go";
-        t1.Get<string>("7").value="Ho";
-        t1.Get<string>("O").value="ao";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
       private DVar<string> _dFmt;
       private DVar<string> _out;
 
@@ -1083,21 +734,6 @@ namespace X13.PLC {
     }
 
     private class MathExpr : IStatement {
-      static MathExpr() {
-        var t1=Topic.root.Get<string>("/system/declarers/MathExpr");
-        t1.value="/CC;component/Images/ty_func.png";
-        t1.Get<string>("A").value="Ag";
-        t1.Get<string>("B").value="Bg";
-        t1.Get<string>("C").value="Cg";
-        t1.Get<string>("D").value="Dg";
-        t1.Get<string>("E").value="Eg";
-        t1.Get<string>("F").value="Fg";
-        t1.Get<string>("G").value="Gg";
-        t1.Get<string>("H").value="Hg";
-        t1.Get<string>("Out").value="ag";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
       private DVar<PiStatement> _model;
       private Eval eval;
       private DVar<string> _dFunc;
@@ -1239,16 +875,6 @@ namespace X13.PLC {
     }
 
     private class Execute : IStatement {
-      static Execute() {
-        var t1=Topic.root.Get<string>("/system/declarers/Execute");
-        t1.value="/CC;component/Images/fu_exec.png";
-        t1.Get<string>("process").value="As";
-        t1.Get<string>("arguments").value="Bs";
-        t1.Get<string>("start").value="Cz";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-
       private DVar<string> _proc;
       private DVar<string> _args;
       private DVar<bool> _start;
@@ -1282,43 +908,6 @@ namespace X13.PLC {
       }
     }
     private class Breaker : IStatement {
-      static Breaker() {
-        var t1=Topic.root.Get<string>("/system/declarers/Breaker");
-        t1.value="/CC;component/Images/ar_breaker.png";
-        t1.Get<string>("In").value="Ac";
-        t1.Get<string>("OE").value="Bz";
-        t1.Get<string>("Out").value="ac";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
-      DVar<Decimal> _in;
-      DVar<Decimal> _out;
-      DVar<bool> _oe;
-      public void Init(DVar<PiStatement> model) {
-        _in=AddPin<decimal>(model, "In");
-        _oe=AddPin<bool>(model, "OE");
-        _out=AddPin<decimal>(model, "Out");
-      }
-
-      public void Calculate(DVar<PiStatement> model, Topic source) {
-        if(_oe.value) {
-          _out.SetValue(_in.value, new TopicChanged(TopicChanged.ChangeArt.Value, model));
-        }
-      }
-
-      public void DeInit() {
-      }
-    }
-    private class BreakerO : IStatement {
-      static BreakerO() {
-        var t1=Topic.root.Get<string>("/system/declarers/BreakerO");
-        t1.value="/CC;component/Images/ar_breaker.png";
-        t1.Get<string>("In").value="Ao";
-        t1.Get<string>("OE").value="Bz";
-        t1.Get<string>("Out").value="ao";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
-      }
       DVar<object> _in;
       DVar<object> _out;
       DVar<bool> _oe;

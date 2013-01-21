@@ -22,7 +22,7 @@ namespace X13.View {
       if(hour<7)    // time of still between 21:01 and 7:59
         Interval+=3600000*(6-hour);
       else if (hour>21)
-        Interval+=3600000*(31-hour);
+        Interval+=3600000*(30-hour);
 
       Log.Debug("SayTimeRu.Interval={0}", Interval);
       t=new System.Threading.Timer(timeCB, (object)true, Interval, Timeout.Infinite);
@@ -40,12 +40,12 @@ namespace X13.View {
       DateTime DTNow=DateTime.Now;
       int hour=DTNow.Hour;
       int min=DTNow.Minute;
-      int Interval=60000*(59-DTNow.Minute)+1000*(62-DTNow.Second);
+      int Interval=60000*(59-min)+1000*(62-DTNow.Second);
 
       if(hour<7)    // time of still between 22:01 and 6:59
         Interval+=3600000*(6-hour);
       else if(hour>21)
-        Interval+=3600000*(31-hour);
+        Interval+=3600000*(30-hour);
 
       Log.Debug("SayTimeRu.Interval={0}", Interval);
       t.Change(Interval, Timeout.Infinite);

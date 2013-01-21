@@ -105,7 +105,7 @@ namespace X13.MQTT {
 
 
     private void OwnerChanged(Topic sender, TopicChanged param) {
-      if(param.Art==TopicChanged.ChangeArt.Add || param.Visited(_mq, false) || param.Visited(_owner, true) || !CheckAcl(ConnInfo.userName, sender, TopicAcl.Subscribe)) {
+      if(param.Art==TopicChanged.ChangeArt.Add || sender.path.StartsWith("/local") || param.Visited(_mq, false) || param.Visited(_owner, true) || !CheckAcl(ConnInfo.userName, sender, TopicAcl.Subscribe)) {
         return;
       }
       MqPublish pm;
