@@ -22,33 +22,33 @@ using SoftCircuits;
 namespace X13.PLC {
   public class BiultInStatements {
     public static void Initialize() {
-      PiStatement.AddStatemen("aNOT", typeof(bNot));
-      PiStatement.AddStatemen("bDTriger", typeof(DTriger));
-      PiStatement.AddStatemen("cANDI", typeof(dAnd));
-      PiStatement.AddStatemen("cORI", typeof(dOr));
-      PiStatement.AddStatemen("cXORI", typeof(dXor));
-      PiStatement.AddStatemen("cSHL", typeof(Shl));
-      PiStatement.AddStatemen("cSHR", typeof(Shr));
-      PiStatement.AddStatemen("dCounter", typeof(Counter));
-      PiStatement.AddStatemen("fcomp_gr", typeof(Comparer));
-      PiStatement.AddStatemen("fcomp_eq", typeof(Comparer));
-      PiStatement.AddStatemen("fcomp_le", typeof(Comparer));
-      PiStatement.AddStatemen("fMathExpr", typeof(MathExpr));
-      PiStatement.AddStatemen("fSwitch", typeof(Switch));
-      PiStatement.AddStatemen("gAverage", typeof(Average));
-      PiStatement.AddStatemen("gSum", typeof(MathOp));
-      PiStatement.AddStatemen("gSub", typeof(MathOp));
-      PiStatement.AddStatemen("gMul", typeof(MathOp));
-      PiStatement.AddStatemen("gDiv", typeof(MathOp));
-      PiStatement.AddStatemen("gRemainder", typeof(MathOp));
-      PiStatement.AddStatemen("tPulse", typeof(Impuls));
-      PiStatement.AddStatemen("tSqPulse", typeof(PulseGenerator));
-      PiStatement.AddStatemen("oBreaker", typeof(Breaker));
-      PiStatement.AddStatemen("vPile", typeof(Pile));
-      PiStatement.AddStatemen("vCosm", typeof(Cosm));
-      PiStatement.AddStatemen("vSun", typeof(Sun));
-      PiStatement.AddStatemen("sStrFormat", typeof(StrFormat));
-      PiStatement.AddStatemen("vExecute", typeof(Execute));
+      PiStatement.AddStatemen("NOT", typeof(bNot));
+      PiStatement.AddStatemen("DTriger", typeof(DTriger));
+      PiStatement.AddStatemen("ANDI", typeof(dAnd));
+      PiStatement.AddStatemen("ORI", typeof(dOr));
+      PiStatement.AddStatemen("XORI", typeof(dXor));
+      PiStatement.AddStatemen("SHL", typeof(Shl));
+      PiStatement.AddStatemen("SHR", typeof(Shr));
+      PiStatement.AddStatemen("Counter", typeof(Counter));
+      PiStatement.AddStatemen("comp_gr", typeof(Comparer));
+      PiStatement.AddStatemen("comp_eq", typeof(Comparer));
+      PiStatement.AddStatemen("comp_le", typeof(Comparer));
+      PiStatement.AddStatemen("MathExpr", typeof(MathExpr));
+      PiStatement.AddStatemen("Switch", typeof(Switch));
+      PiStatement.AddStatemen("Average", typeof(Average));
+      PiStatement.AddStatemen("Sum", typeof(MathOp));
+      PiStatement.AddStatemen("Sub", typeof(MathOp));
+      PiStatement.AddStatemen("Mul", typeof(MathOp));
+      PiStatement.AddStatemen("Div", typeof(MathOp));
+      PiStatement.AddStatemen("Remainder", typeof(MathOp));
+      PiStatement.AddStatemen("Pulse", typeof(Impuls));
+      PiStatement.AddStatemen("SqPulse", typeof(PulseGenerator));
+      PiStatement.AddStatemen("BreakerO", typeof(Breaker));
+      PiStatement.AddStatemen("Pile", typeof(Pile));
+      PiStatement.AddStatemen("Cosm", typeof(Cosm));
+      PiStatement.AddStatemen("Sun", typeof(Sun));
+      PiStatement.AddStatemen("StrFormat", typeof(StrFormat));
+      PiStatement.AddStatemen("Execute", typeof(Execute));
     }
 
     public static DVar<T> AddPin<T>(DVar<PiStatement> model, string name) {
@@ -344,15 +344,15 @@ namespace X13.PLC {
       public void Calculate(DVar<PiStatement> model, Topic source) {
         if(source==_a || source==_b) {
           switch(declarer.value) {
-          case "gcomp_gr":
+          case "comp_gr":
             model.Get<bool>("Q").value=_a.value>_b.value;
             model.Get<bool>("!Q").value=!model.Get<bool>("Q").value;
             break;
-          case "gcomp_le":
+          case "comp_le":
             model.Get<bool>("Q").value=_a.value<_b.value;
             model.Get<bool>("!Q").value=!model.Get<bool>("Q").value;
             break;
-          case "gcomp_eq":
+          case "comp_eq":
             model.Get<bool>("Q").value=_a.value==_b.value;
             model.Get<bool>("!Q").value=!model.Get<bool>("Q").value;
             break;
@@ -672,23 +672,23 @@ namespace X13.PLC {
         string op=model.Get<string>("_declarer");
         foreach(DVar<decimal> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(decimal) && z.name[0]>'A' && z.name[0]<='H')).Cast<DVar<decimal>>()) {
           switch(op) {
-          case "gSum":
+          case "Sum":
             ret+=pin.value;
             break;
-          case "gSub":
+          case "Sub":
             ret-=pin.value;
             break;
-          case "gMul":
+          case "Mul":
             ret*=pin.value;
             break;
-          case "gDiv":
+          case "Div":
             if(pin.value!=0) {
               ret/=pin.value;
             } else {
               ret=decimal.MaxValue;
             }
             break;
-          case "gRemainder":
+          case "Remainder":
             if(pin.value!=0) {
               ret%=pin.value;
             }

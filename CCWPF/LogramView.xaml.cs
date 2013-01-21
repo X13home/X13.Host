@@ -17,6 +17,7 @@ using X13.PLC;
 using X13.WOUM;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace X13.CC {
   /// <summary>Interaction logic for LogramView.xaml</summary>
@@ -40,7 +41,7 @@ namespace X13.CC {
 
     static LogramView() {
       _settings=Topic.root.Get("/local/settings/Logram");
-      _statements=new ObservableCollection<StatementDescription>();
+      _statements=new List<StatementDescription>();
       Topic decls=Topic.root.Get("/system/declarers");
       //decls.Subscribe("+", DeclarerChanged);
       TopicChanged p=new TopicChanged(TopicChanged.ChangeArt.Add);
@@ -72,18 +73,20 @@ namespace X13.CC {
           _statements.Add(stR);
         }
         stR.image=dec.value;
-        if(dec.Exist("_description", out infoT) && (infoD=(infoT as DVar<string>))!=null) {
-          stR.info=infoD.value;
+        if(dec.Exist("_description", out infoT) && (infoD=(infoT as DVar<string>))!=null && !string.IsNullOrEmpty(infoD.value)) {
+          stR.sortKey=infoD.value.Substring(0, 2);
+          stR.info=infoD.value.Substring(2);
         }
       }
     }
     private class StatementDescription {
+      public string sortKey;
       public string name{get; set;}
       public string info { get; set; }
       public string image { get; set; }
     }
 
-    private static ObservableCollection<StatementDescription> _statements;
+    private static List<StatementDescription> _statements;
 
     public DVar<PiLogram> model { get { return uiLogram.model; } }
 
@@ -100,7 +103,7 @@ namespace X13.CC {
       if(m!=null) {
         uiLogram.Attach(m);
       }
-      this.statemebtsList.ItemsSource=_statements;
+      this.statemebtsList.ItemsSource=_statements.OrderBy(z => z.sortKey);
       m.changed+=ModelChanged;
     }
 

@@ -94,8 +94,8 @@ namespace X13.Svc {
       _pStorage=new PersistentStorage();
       bool db=_pStorage.Open(pmPath);
       string dbVersion="0.2.1";
-      if(!db || Topic.root.Get<string>("/local/system/db/version").value!=dbVersion) {
-        var dbVer=Topic.root.Get<string>("/local/system/db/version");
+      var dbVer=Topic.root.Get<string>("/system/db/version");
+      if(!db || dbVer.value!=dbVersion) {
         dbVer.saved=true;
         dbVer.value=dbVersion;
         _lThreshold.saved=true;

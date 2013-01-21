@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root head="/system/declarers">
-  <item name="aNOT" value="&quot;/CC;component/Images/bi_not.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Logical negation&quot;" saved="True" type="System.String" />
+  <item name="NOT" value="&quot;/CC;component/Images/bi_not.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;a Logical negation&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Az&quot;" saved="True" type="System.String" />
     <item name="Q" value="&quot;az&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="bDTriger" value="&quot;/CC;component/Images/bi_triger.png&quot;" saved="True" type="System.String">
+  <item name="DTriger" value="&quot;/CC;component/Images/bi_triger.png&quot;" saved="True" type="System.String">
     <item name="!Q" value="&quot;bz&quot;" saved="True" type="System.String" />
-    <item name="_description" value="&quot;RS-DC Triger&quot;" saved="True" type="System.String" />
+    <item name="_description" value="&quot;b RS-DC Triger&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="C" value="&quot;Cz&quot;" saved="True" type="System.String" />
     <item name="D" value="&quot;Bz&quot;" saved="True" type="System.String" />
@@ -20,8 +20,8 @@
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
     <item name="S" value="&quot;Az&quot;" saved="True" type="System.String" />
   </item>
-  <item name="cANDI" value="&quot;/CC;component/Images/bi_and.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Bitwise AND&quot;" saved="True" type="System.String" />
+  <item name="ANDI" value="&quot;/CC;component/Images/bi_and.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;c1Bitwise AND&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ai&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bi&quot;" saved="True" type="System.String" />
@@ -35,8 +35,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="cORI" value="&quot;/CC;component/Images/bi_or.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Bitwise OR&quot;" saved="True" type="System.String" />
+  <item name="ORI" value="&quot;/CC;component/Images/bi_or.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;c2Bitwise OR&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ai&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bi&quot;" saved="True" type="System.String" />
@@ -50,8 +50,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="cSHL" value="&quot;/CC;component/Images/bi_shl.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Bitwise left shift&quot;" saved="True" type="System.String" />
+  <item name="SHL" value="&quot;/CC;component/Images/bi_shl.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;c4Bitwise left shift&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ai&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bi&quot;" saved="True" type="System.String" />
@@ -59,8 +59,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="cSHR" value="&quot;/CC;component/Images/bi_shr.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Bitwise right shift&quot;" saved="True" type="System.String" />
+  <item name="SHR" value="&quot;/CC;component/Images/bi_shr.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;c5Bitwise right shift&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ai&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bi&quot;" saved="True" type="System.String" />
@@ -68,8 +68,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="cXORI" value="&quot;/CC;component/Images/bi_xor.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Bitwise XOR&quot;" saved="True" type="System.String" />
+  <item name="XORI" value="&quot;/CC;component/Images/bi_xor.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;c3Bitwise XOR&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ai&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bi&quot;" saved="True" type="System.String" />
@@ -83,8 +83,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="dCounter" value="&quot;/CC;component/Images/bi_counter.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Counter&quot;" saved="True" type="System.String" />
+  <item name="Counter" value="&quot;/CC;component/Images/bi_counter.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;d Counter&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="+1" value="&quot;Az&quot;" saved="True" type="System.String" />
     <item name="-1" value="&quot;Ez&quot;" saved="True" type="System.String" />
@@ -95,9 +95,9 @@
     <item name="Set" value="&quot;Bz&quot;" saved="True" type="System.String" />
     <item name="Value" value="&quot;Ci&quot;" saved="True" type="System.String" />
   </item>
-  <item name="fcomp_eq" value="&quot;/CC;component/Images/ar_eq.png&quot;" saved="True" type="System.String">
+  <item name="comp_eq" value="&quot;/CC;component/Images/ar_eq.png&quot;" saved="True" type="System.String">
     <item name="!Q" value="&quot;bz&quot;" saved="True" type="System.String" />
-    <item name="_description" value="&quot;Equal&quot;" saved="True" type="System.String" />
+    <item name="_description" value="&quot;f Equal&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
@@ -105,9 +105,9 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="fcomp_gr" value="&quot;/CC;component/Images/ar_comp_gr.png&quot;" saved="True" type="System.String">
+  <item name="comp_gr" value="&quot;/CC;component/Images/ar_comp_gr.png&quot;" saved="True" type="System.String">
     <item name="!Q" value="&quot;bz&quot;" saved="True" type="System.String" />
-    <item name="_description" value="&quot;Greater&quot;" saved="True" type="System.String" />
+    <item name="_description" value="&quot;f Greater&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
@@ -115,9 +115,9 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="fcomp_le" value="&quot;/CC;component/Images/ar_comp_le.png&quot;" saved="True" type="System.String">
+  <item name="comp_le" value="&quot;/CC;component/Images/ar_comp_le.png&quot;" saved="True" type="System.String">
     <item name="!Q" value="&quot;bz&quot;" saved="True" type="System.String" />
-    <item name="_description" value="&quot;Less&quot;" type="System.String" />
+    <item name="_description" value="&quot;f Less&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
@@ -125,8 +125,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="fMathExpr" value="&quot;/CC;component/Images/ty_func.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Math expression&quot;" saved="True" type="System.String" />
+  <item name="MathExpr" value="&quot;/CC;component/Images/ty_func.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;f1Math expression&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ag&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bg&quot;" saved="True" type="System.String" />
@@ -140,8 +140,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="fSwitch" value="&quot;/CC;component/Images/ar_switch.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Multiplexer&quot;" saved="True" type="System.String" />
+  <item name="Switch" value="&quot;/CC;component/Images/ar_switch.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;f2Multiplexer&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="0" value="&quot;Bc&quot;" saved="True" type="System.String" />
     <item name="1" value="&quot;Cc&quot;" saved="True" type="System.String" />
@@ -155,8 +155,8 @@
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
     <item name="Sel" value="&quot;Ai&quot;" saved="True" type="System.String" />
   </item>
-  <item name="gAverage" value="&quot;/CC;component/Images/ar_avr.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Average&quot;" saved="True" type="System.String" />
+  <item name="Average" value="&quot;/CC;component/Images/ar_avr.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;g Average&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="In" value="&quot;Ac&quot;" saved="True" type="System.String" />
     <item name="Out" value="&quot;az&quot;" saved="True" type="System.String" />
@@ -164,8 +164,8 @@
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
     <item name="Stb" value="&quot;Bz&quot;" saved="True" type="System.String" />
   </item>
-  <item name="gDiv" value="&quot;/CC;component/Images/ar_div.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Division&quot;" saved="True" type="System.String" />
+  <item name="Div" value="&quot;/CC;component/Images/ar_div.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;g4Division&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
@@ -179,8 +179,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="gMul" value="&quot;/CC;component/Images/ar_mul.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Multiplication&quot;" saved="True" type="System.String" />
+  <item name="Mul" value="&quot;/CC;component/Images/ar_mul.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;g3Multiplication&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
@@ -194,8 +194,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="gRemainder" value="&quot;/CC;component/Images/ar_mod.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Modulo&quot;" saved="True" type="System.String" />
+  <item name="Remainder" value="&quot;/CC;component/Images/ar_mod.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;g5Modulo&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
@@ -209,8 +209,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="gSub" value="&quot;/CC;component/Images/ar_sub.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Subtraction&quot;" saved="True" type="System.String" />
+  <item name="Sub" value="&quot;/CC;component/Images/ar_sub.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;g2Subtraction&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
@@ -224,8 +224,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="gSum" value="&quot;/CC;component/Images/ar_sum.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Addition&quot;" saved="True" type="System.String" />
+  <item name="Sum" value="&quot;/CC;component/Images/ar_sum.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;g1Addition&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
@@ -638,8 +638,8 @@
   <item name="MsGateway" value="&quot;/CC;component/Images/ty_gateway.png&quot;" saved="True" type="System.String">
     <item name="remove" value="&quot;1D&quot;" saved="True" type="System.String" />
   </item>
-  <item name="oBreaker" value="&quot;/CC;component/Images/ar_breaker.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Switch&quot;" saved="True" type="System.String" />
+  <item name="BreakerO" value="&quot;/CC;component/Images/ar_breaker.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;o Switch&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="In" value="&quot;Ao&quot;" saved="True" type="System.String" />
     <item name="OE" value="&quot;Bz&quot;" saved="True" type="System.String" />
@@ -1069,8 +1069,8 @@
       </item>
     </item>
   </item>
-  <item name="sStrFormat" value="&quot;/CC;component/Images/st_fmt.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;string.Format&quot;" saved="True" type="System.String" />
+  <item name="StrFormat" value="&quot;/CC;component/Images/st_fmt.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;s string.Format&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="0" value="&quot;Ao&quot;" saved="True" type="System.String" />
     <item name="1" value="&quot;Bo&quot;" saved="True" type="System.String" />
@@ -1084,18 +1084,18 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="tPulse" value="&quot;/CC;component/Images/bi_impulse.png&quot;" saved="True" type="System.String">
+  <item name="Pulse" value="&quot;/CC;component/Images/bi_impulse.png&quot;" saved="True" type="System.String">
     <item name="!Q" value="&quot;bz&quot;" saved="True" type="System.String" />
-    <item name="_description" value="&quot;Univibrator&quot;" saved="True" type="System.String" />
+    <item name="_description" value="&quot;t Univibrator&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="Q" value="&quot;az&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
     <item name="Stb" value="&quot;Az&quot;" saved="True" type="System.String" />
   </item>
-  <item name="tSqPulse" value="&quot;/CC;component/Images/bi_oscillator.png&quot;" saved="True" type="System.String">
+  <item name="SqPulse" value="&quot;/CC;component/Images/bi_oscillator.png&quot;" saved="True" type="System.String">
     <item name="!Q" value="&quot;bz&quot;" saved="True" type="System.String" />
-    <item name="_description" value="&quot;Period oscilator&quot;" saved="True" type="System.String" />
+    <item name="_description" value="&quot;t Period oscilator&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="En" value="&quot;Az&quot;" saved="True" type="System.String" />
     <item name="Q" value="&quot;az&quot;" saved="True" type="System.String" />
@@ -1536,8 +1536,8 @@
       </item>
     </item>
   </item>
-  <item name="vCosm" value="&quot;/CC;component/Images/fu_cosm.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Export to cosm.com&quot;" saved="True" type="System.String" />
+  <item name="Cosm" value="&quot;/CC;component/Images/fu_cosm.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;v Export to cosm.com&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Bc&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Cc&quot;" saved="True" type="System.String" />
@@ -1550,8 +1550,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="vExecute" value="&quot;/CC;component/Images/fu_exec.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Execute process&quot;" saved="True" type="System.String" />
+  <item name="Execute" value="&quot;/CC;component/Images/fu_exec.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;v Execute process&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="arguments" value="&quot;Bs&quot;" saved="True" type="System.String" />
     <item name="process" value="&quot;As&quot;" saved="True" type="System.String" />
@@ -1559,8 +1559,8 @@
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
     <item name="start" value="&quot;Cz&quot;" saved="True" type="System.String" />
   </item>
-  <item name="vPile" value="&quot;/CC;component/Images/ar_pile.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Export to csv&quot;" saved="True" type="System.String" />
+  <item name="Pile" value="&quot;/CC;component/Images/ar_pile.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;v Export to csv&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="A" value="&quot;Bc&quot;" saved="True" type="System.String" />
     <item name="B" value="&quot;Cc&quot;" saved="True" type="System.String" />
@@ -1573,8 +1573,8 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="vSun" value="&quot;/CC;component/Images/fu_sun.png&quot;" saved="True" type="System.String">
-    <item name="_description" value="&quot;Sunruse/sunset calculator&quot;" saved="True" type="System.String" />
+  <item name="Sun" value="&quot;/CC;component/Images/fu_sun.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;v Sunruse/sunset calculator&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
     <item name="Lat" value="&quot;Ac&quot;" saved="True" type="System.String" />
     <item name="Lon" value="&quot;Bc&quot;" saved="True" type="System.String" />
