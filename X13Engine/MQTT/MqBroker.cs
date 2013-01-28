@@ -214,7 +214,6 @@ namespace X13.MQTT {
 
     private void ProccessPublishMsg(MqPublish pm) {
       Topic cur=Topic.root;
-      string v3=null;
       Type vt=null;
 
       string[] pt=pm.Path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
@@ -225,17 +224,13 @@ namespace X13.MQTT {
       while(i<pt.Length && cur.Exist(pt[i])) {
         cur=cur.Get(pt[i++]);
       }
-      if(pm.Payload==null || pm.Payload.Length==0) {                      // Remove
+      if(string.IsNullOrEmpty(pm.Payload)) {                      // Remove
         if(i==pt.Length && CheckAcl(ConnInfo.userName, cur, TopicAcl.Delete)) {
           cur.Remove(_owner);
         }
         return;
       }
-      int dl=pm.Payload.IndexOf(',');
-      if(dl>1) {      // id type==null, not need parse value
-        v3 = pm.Payload.Substring(dl+1);
-        vt=dl==0?null:Type.GetType(pm.Payload.Substring(0, dl));
-      }
+      vt=X13.WOUM.ExConverter.Json2Type(pm.Payload);
       if(i<pt.Length || cur.valueType!=vt) {                             // pm.Path not exist
         if(!CheckAcl(ConnInfo.userName, cur, TopicAcl.Create)) {
           return;
@@ -243,10 +238,10 @@ namespace X13.MQTT {
         cur=Topic.GetP(pm.Path, vt, _owner);        // Create
       }
 
-      if(!string.IsNullOrEmpty(v3)) {                 // Publish
+      if(vt!=null) {                 // Publish
         if(CheckAcl(ConnInfo.userName, cur, TopicAcl.Change)) {
           cur.saved=pm.Retained;
-          cur.FromJson(v3, _owner);
+          cur.FromJson(pm.Payload, _owner);
         }
       }
     }

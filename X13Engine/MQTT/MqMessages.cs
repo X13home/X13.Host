@@ -425,7 +425,7 @@ namespace X13.MQTT {
     public string Path { get { return (DataSource!=null?DataSource.path:_path); } set { _path=value; } }
     public string Payload { 
       get { 
-        return _payload??string.Format("{0},{1}", DataSource.valueType==null?string.Empty:DataSource.valueType.FullName, DataSource.ToJson()); 
+        return _payload??DataSource.ToJson(); 
       } 
       set { 
         _payload=value; 

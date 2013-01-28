@@ -144,27 +144,16 @@ namespace X13.CC {
       switch(((TopicView.ItemActionStr)ci.Tag).action) {
       case ItemAction.createNodeMask:
       case ItemAction.createBoolMask:
-      case ItemAction.createByteMask:
-      case ItemAction.createShortMask:
-      case ItemAction.createIntMask:
-      case ItemAction.createDecimalMask:
+      case ItemAction.createLongMask:
+      case ItemAction.createDoubleMask:
       case ItemAction.createStringMask:
         AddItem(ci.DataContext as StackPanel, ((TopicView.ItemActionStr)ci.Tag).action);
         break;
       case ItemAction.createBoolDef:
         cur.Get<bool>(ci.Header as string);
         break;
-      case ItemAction.createByteDef:
-        cur.Get<byte>(ci.Header as string);
-        break;
-      case ItemAction.createShortDef:
-        cur.Get<short>(ci.Header as string);
-        break;
-      case ItemAction.createIntDef:
-        cur.Get<int>(ci.Header as string);
-        break;
-      case ItemAction.createDecimalDef:
-        cur.Get<decimal>(ci.Header as string);
+      case ItemAction.createLongDef:
+        cur.Get<long>(ci.Header as string);
         break;
       case ItemAction.createDoubleDef:
         cur.Get<double>(ci.Header as string);
@@ -499,10 +488,8 @@ namespace X13.CC {
       } else {
         actions.Add(new ItemActionStr("Add/Node", ItemAction.createNodeMask, null));
         actions.Add(new ItemActionStr("Add/bool", ItemAction.createBoolMask, null));
-        actions.Add(new ItemActionStr("Add/byte", ItemAction.createByteMask, null));
-        actions.Add(new ItemActionStr("Add/short", ItemAction.createShortMask, null));
-        actions.Add(new ItemActionStr("Add/int", ItemAction.createIntMask, null));
-        actions.Add(new ItemActionStr("Add/decimal", ItemAction.createDecimalMask, null));
+        actions.Add(new ItemActionStr("Add/long", ItemAction.createLongMask, null));
+        actions.Add(new ItemActionStr("Add/double", ItemAction.createDoubleMask, null));
         actions.Add(new ItemActionStr("Add/string", ItemAction.createStringMask, null));
         if(ptr.valueType!=null && Type.GetTypeCode(ptr.valueType)!=TypeCode.Object) {
           actions.Add(new ItemActionStr("Attach to Logram", ItemAction.addToLogram, null));
@@ -542,17 +529,11 @@ namespace X13.CC {
         case ItemAction.createBoolMask:
           _parent.ptr.Get<bool>(name);
           break;
-        case ItemAction.createByteMask:
-          _parent.ptr.Get<byte>(name);
+        case ItemAction.createLongMask:
+          _parent.ptr.Get<long>(name);
           break;
-        case ItemAction.createShortMask:
-          _parent.ptr.Get<short>(name);
-          break;
-        case ItemAction.createIntMask:
-          _parent.ptr.Get<int>(name);
-          break;
-        case ItemAction.createDecimalMask:
-          _parent.ptr.Get<Decimal>(name);
+        case ItemAction.createDoubleMask:
+          _parent.ptr.Get<double>(name);
           break;
         case ItemAction.createStringMask:
           _parent.ptr.Get<string>(name);

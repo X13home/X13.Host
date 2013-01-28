@@ -33,45 +33,52 @@ namespace X13.CC {
     }
 
     public static System.Windows.WindowState MainWindowState {
-      get { return (System.Windows.WindowState)_settings.Get<int>("MainWindow/_State").value; }
+      get { return (System.Windows.WindowState)_settings.Get<long>("MainWindow/_State").value; }
       set {
-        _settings.Get<int>("MainWindow/_State").saved=true;
-        _settings.Get<int>("MainWindow/_State").value=(int)value; 
+        _settings.Get<long>("MainWindow/_State").saved=true;
+        _settings.Get<long>("MainWindow/_State").value=(long)value; 
       }
     }
     public static int MainWindowTop {
-      get { return _settings.Get<int>("MainWindow/_Top").value; }
+      get { return (int)_settings.Get<long>("MainWindow/_Top").value; }
       set {
-        _settings.Get<int>("MainWindow/_Top").saved=true;
-        _settings.Get<int>("MainWindow/_Top").value=value; 
+        var dv=_settings.Get<long>("MainWindow/_Top");
+        dv.saved=true;
+        dv.value=value; 
       }
     }
     public static int MainWindowLeft {
-      get { return _settings.Get<int>("MainWindow/_Left").value; }
+      get { return (int)_settings.Get<long>("MainWindow/_Left").value; }
       set {
-        _settings.Get<int>("MainWindow/_Left").saved=true;
-        _settings.Get<int>("MainWindow/_Left").value=value;
+        var dv=_settings.Get<long>("MainWindow/_Left");
+        dv.saved=true;
+        dv.value=value;
       }
     }
     public static int MainWindowHeight {
-      get { return _settings.Get<int>("MainWindow/_Height").value; }
+      get { return (int)_settings.Get<long>("MainWindow/_Height").value; }
       set {
-        _settings.Get<int>("MainWindow/_Height").saved=true;
-        _settings.Get<int>("MainWindow/_Height").value=value; 
+        var dv=_settings.Get<long>("MainWindow/_Height");
+        dv.saved=true;
+        dv.value=value; 
       }
     }
     public static int MainWindowWidth {
-      get { return _settings.Get<int>("MainWindow/_Width").value; }
+      get { return (int)_settings.Get<long>("MainWindow/_Width").value; }
       set {
-        _settings.Get<int>("MainWindow/_Width").saved=true;   
-        _settings.Get<int>("MainWindow/_Width").value=value; 
+        var dv=_settings.Get<long>("MainWindow/_Width");
+        dv.saved=true;   
+        dv.value=value; 
       }
     }
     public static byte[] Layout {
-      get { return _settings.Get<byte[]>("MainWindow/_layout").value; }
+      get { 
+        var dv=_settings.Get<string>("MainWindow/_layout");
+        return string.IsNullOrEmpty(dv.value)?null:Convert.FromBase64String(dv.value); }
       set {
-        _settings.Get<byte[]>("MainWindow/_layout").saved=true;
-        _settings.Get<byte[]>("MainWindow/_layout").value=value;
+        var dv=_settings.Get<string>("MainWindow/_layout");
+        dv.saved=true;
+        dv.value=Convert.ToBase64String(value);
       }
     }
   }

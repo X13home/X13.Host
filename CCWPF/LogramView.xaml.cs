@@ -28,12 +28,12 @@ namespace X13.CC {
 
     public static int CellSize {
       get {
-        var s=_settings.Get<int>("_CellSize");
+        var s=_settings.Get<long>("_CellSize");
         if(s.value<=4) {
           s.saved=true;
           s.value=16;
         }
-        return s.value;
+        return (int)s.value;
       }
     }
     public static Typeface FtFont { get { return _ftFont.Value; } }

@@ -99,8 +99,8 @@
     <item name="!Q" value="&quot;bz&quot;" saved="True" type="System.String" />
     <item name="_description" value="&quot;f Equal&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
-    <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
+    <item name="A" value="&quot;Ag&quot;" saved="True" type="System.String" />
+    <item name="B" value="&quot;Bg&quot;" saved="True" type="System.String" />
     <item name="Q" value="&quot;az&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
@@ -109,8 +109,8 @@
     <item name="!Q" value="&quot;bz&quot;" saved="True" type="System.String" />
     <item name="_description" value="&quot;f Greater&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
-    <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
+    <item name="A" value="&quot;Ag&quot;" saved="True" type="System.String" />
+    <item name="B" value="&quot;Bg&quot;" saved="True" type="System.String" />
     <item name="Q" value="&quot;az&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
@@ -119,8 +119,8 @@
     <item name="!Q" value="&quot;bz&quot;" saved="True" type="System.String" />
     <item name="_description" value="&quot;f Less&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
-    <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
+    <item name="A" value="&quot;Ag&quot;" saved="True" type="System.String" />
+    <item name="B" value="&quot;Bg&quot;" saved="True" type="System.String" />
     <item name="Q" value="&quot;az&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
@@ -143,14 +143,14 @@
   <item name="Switch" value="&quot;/CC;component/Images/ar_switch.png&quot;" saved="True" type="System.String">
     <item name="_description" value="&quot;f2Multiplexer&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="0" value="&quot;Bc&quot;" saved="True" type="System.String" />
-    <item name="1" value="&quot;Cc&quot;" saved="True" type="System.String" />
-    <item name="2" value="&quot;Dc&quot;" saved="True" type="System.String" />
-    <item name="3" value="&quot;Ec&quot;" saved="True" type="System.String" />
-    <item name="4" value="&quot;Fc&quot;" saved="True" type="System.String" />
-    <item name="5" value="&quot;Gc&quot;" saved="True" type="System.String" />
-    <item name="6" value="&quot;Hc&quot;" saved="True" type="System.String" />
-    <item name="Out" value="&quot;bc&quot;" saved="True" type="System.String" />
+    <item name="0" value="&quot;Bg&quot;" saved="True" type="System.String" />
+    <item name="1" value="&quot;Cg&quot;" saved="True" type="System.String" />
+    <item name="2" value="&quot;Dg&quot;" saved="True" type="System.String" />
+    <item name="3" value="&quot;Eg&quot;" saved="True" type="System.String" />
+    <item name="4" value="&quot;Fg&quot;" saved="True" type="System.String" />
+    <item name="5" value="&quot;Gg&quot;" saved="True" type="System.String" />
+    <item name="6" value="&quot;Hg&quot;" saved="True" type="System.String" />
+    <item name="Out" value="&quot;bg&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
     <item name="Sel" value="&quot;Ai&quot;" saved="True" type="System.String" />
@@ -158,7 +158,7 @@
   <item name="Average" value="&quot;/CC;component/Images/ar_avr.png&quot;" saved="True" type="System.String">
     <item name="_description" value="&quot;g Average&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="In" value="&quot;Ac&quot;" saved="True" type="System.String" />
+    <item name="In" value="&quot;Ag&quot;" saved="True" type="System.String" />
     <item name="Out" value="&quot;az&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
@@ -167,84 +167,82 @@
   <item name="Div" value="&quot;/CC;component/Images/ar_div.png&quot;" saved="True" type="System.String">
     <item name="_description" value="&quot;g4Division&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
-    <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
-    <item name="C" value="&quot;Cc&quot;" saved="True" type="System.String" />
-    <item name="D" value="&quot;Dc&quot;" saved="True" type="System.String" />
-    <item name="E" value="&quot;Ec&quot;" saved="True" type="System.String" />
-    <item name="F" value="&quot;Fc&quot;" saved="True" type="System.String" />
-    <item name="G" value="&quot;Gc&quot;" saved="True" type="System.String" />
-    <item name="H" value="&quot;Hc&quot;" saved="True" type="System.String" />
-    <item name="Q" value="&quot;ac&quot;" saved="True" type="System.String" />
+    <item name="A" value="&quot;Ag&quot;" saved="True" type="System.String" />
+    <item name="B" value="&quot;Bg&quot;" saved="True" type="System.String" />
+    <item name="C" value="&quot;Cg&quot;" saved="True" type="System.String" />
+    <item name="D" value="&quot;Dg&quot;" saved="True" type="System.String" />
+    <item name="E" value="&quot;Eg&quot;" saved="True" type="System.String" />
+    <item name="F" value="&quot;Fg&quot;" saved="True" type="System.String" />
+    <item name="G" value="&quot;Gg&quot;" saved="True" type="System.String" />
+    <item name="H" value="&quot;Hg&quot;" saved="True" type="System.String" />
+    <item name="Q" value="&quot;ag&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
   <item name="Mul" value="&quot;/CC;component/Images/ar_mul.png&quot;" saved="True" type="System.String">
     <item name="_description" value="&quot;g3Multiplication&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
-    <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
-    <item name="C" value="&quot;Cc&quot;" saved="True" type="System.String" />
-    <item name="D" value="&quot;Dc&quot;" saved="True" type="System.String" />
-    <item name="E" value="&quot;Ec&quot;" saved="True" type="System.String" />
-    <item name="F" value="&quot;Fc&quot;" saved="True" type="System.String" />
-    <item name="G" value="&quot;Gc&quot;" saved="True" type="System.String" />
-    <item name="H" value="&quot;Hc&quot;" saved="True" type="System.String" />
-    <item name="Q" value="&quot;ac&quot;" saved="True" type="System.String" />
+    <item name="A" value="&quot;Ag&quot;" saved="True" type="System.String" />
+    <item name="B" value="&quot;Bg&quot;" saved="True" type="System.String" />
+    <item name="C" value="&quot;Cg&quot;" saved="True" type="System.String" />
+    <item name="D" value="&quot;Dg&quot;" saved="True" type="System.String" />
+    <item name="E" value="&quot;Eg&quot;" saved="True" type="System.String" />
+    <item name="F" value="&quot;Fg&quot;" saved="True" type="System.String" />
+    <item name="G" value="&quot;Gg&quot;" saved="True" type="System.String" />
+    <item name="H" value="&quot;Hg&quot;" saved="True" type="System.String" />
+    <item name="Q" value="&quot;ag&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
   <item name="Remainder" value="&quot;/CC;component/Images/ar_mod.png&quot;" saved="True" type="System.String">
     <item name="_description" value="&quot;g5Modulo&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
-    <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
-    <item name="C" value="&quot;Cc&quot;" saved="True" type="System.String" />
-    <item name="D" value="&quot;Dc&quot;" saved="True" type="System.String" />
-    <item name="E" value="&quot;Ec&quot;" saved="True" type="System.String" />
-    <item name="F" value="&quot;Fc&quot;" saved="True" type="System.String" />
-    <item name="G" value="&quot;Gc&quot;" saved="True" type="System.String" />
-    <item name="H" value="&quot;Hc&quot;" saved="True" type="System.String" />
-    <item name="Q" value="&quot;ac&quot;" saved="True" type="System.String" />
+    <item name="A" value="&quot;Ag&quot;" saved="True" type="System.String" />
+    <item name="B" value="&quot;Bg&quot;" saved="True" type="System.String" />
+    <item name="C" value="&quot;Cg&quot;" saved="True" type="System.String" />
+    <item name="D" value="&quot;Dg&quot;" saved="True" type="System.String" />
+    <item name="E" value="&quot;Eg&quot;" saved="True" type="System.String" />
+    <item name="F" value="&quot;Fg&quot;" saved="True" type="System.String" />
+    <item name="G" value="&quot;Gg&quot;" saved="True" type="System.String" />
+    <item name="H" value="&quot;Hg&quot;" saved="True" type="System.String" />
+    <item name="Q" value="&quot;ag&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
   <item name="Sub" value="&quot;/CC;component/Images/ar_sub.png&quot;" saved="True" type="System.String">
     <item name="_description" value="&quot;g2Subtraction&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
-    <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
-    <item name="C" value="&quot;Cc&quot;" saved="True" type="System.String" />
-    <item name="D" value="&quot;Dc&quot;" saved="True" type="System.String" />
-    <item name="E" value="&quot;Ec&quot;" saved="True" type="System.String" />
-    <item name="F" value="&quot;Fc&quot;" saved="True" type="System.String" />
-    <item name="G" value="&quot;Gc&quot;" saved="True" type="System.String" />
-    <item name="H" value="&quot;Hc&quot;" saved="True" type="System.String" />
-    <item name="Q" value="&quot;ac&quot;" saved="True" type="System.String" />
+    <item name="A" value="&quot;Ag&quot;" saved="True" type="System.String" />
+    <item name="B" value="&quot;Bg&quot;" saved="True" type="System.String" />
+    <item name="C" value="&quot;Cg&quot;" saved="True" type="System.String" />
+    <item name="D" value="&quot;Dg&quot;" saved="True" type="System.String" />
+    <item name="E" value="&quot;Eg&quot;" saved="True" type="System.String" />
+    <item name="F" value="&quot;Fg&quot;" saved="True" type="System.String" />
+    <item name="G" value="&quot;Gg&quot;" saved="True" type="System.String" />
+    <item name="H" value="&quot;Hg&quot;" saved="True" type="System.String" />
+    <item name="Q" value="&quot;ag&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
   <item name="Sum" value="&quot;/CC;component/Images/ar_sum.png&quot;" saved="True" type="System.String">
     <item name="_description" value="&quot;g1Addition&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="A" value="&quot;Ac&quot;" saved="True" type="System.String" />
-    <item name="B" value="&quot;Bc&quot;" saved="True" type="System.String" />
-    <item name="C" value="&quot;Cc&quot;" saved="True" type="System.String" />
-    <item name="D" value="&quot;Dc&quot;" saved="True" type="System.String" />
-    <item name="E" value="&quot;Ec&quot;" saved="True" type="System.String" />
-    <item name="F" value="&quot;Fc&quot;" saved="True" type="System.String" />
-    <item name="G" value="&quot;Gc&quot;" saved="True" type="System.String" />
-    <item name="H" value="&quot;Hc&quot;" saved="True" type="System.String" />
-    <item name="Q" value="&quot;ac&quot;" saved="True" type="System.String" />
+    <item name="A" value="&quot;Ag&quot;" saved="True" type="System.String" />
+    <item name="B" value="&quot;Bg&quot;" saved="True" type="System.String" />
+    <item name="C" value="&quot;Cg&quot;" saved="True" type="System.String" />
+    <item name="D" value="&quot;Dg&quot;" saved="True" type="System.String" />
+    <item name="E" value="&quot;Eg&quot;" saved="True" type="System.String" />
+    <item name="F" value="&quot;Fg&quot;" saved="True" type="System.String" />
+    <item name="G" value="&quot;Gg&quot;" saved="True" type="System.String" />
+    <item name="H" value="&quot;Hg&quot;" saved="True" type="System.String" />
+    <item name="Q" value="&quot;ag&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
   <item name="J_Gate" value="&quot;/CC;component/Images/ty_jgate.png&quot;" saved="True" type="System.String">
     <item name="Add">
       <item name="bool" value="&quot;1Z&quot;" saved="True" type="System.String" />
-      <item name="byte" value="&quot;2B&quot;" saved="True" type="System.String" />
-      <item name="int" value="&quot;4I&quot;" saved="True" type="System.String" />
-      <item name="short" value="&quot;3W&quot;" saved="True" type="System.String" />
+      <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />
       <item name="string" value="&quot;5S&quot;" saved="True" type="System.String" />
     </item>
     <item name="P?.I">
@@ -262,10 +260,10 @@
       </item>
     </item>
     <item name="P1.A">
-      <item name="Ai0" value="&quot;AwX1&quot;" saved="True" type="System.String">
+      <item name="Ai0" value="&quot;AiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, P1.A&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av0" value="&quot;BwX1&quot;" saved="True" type="System.String">
+      <item name="Av0" value="&quot;BiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, P1.A&quot;" saved="True" type="System.String" />
       </item>
       <item name="In16" value="&quot;7zX1&quot;" saved="True" type="System.String">
@@ -296,10 +294,10 @@
       </item>
     </item>
     <item name="P2.A">
-      <item name="Ai1" value="&quot;AwX2&quot;" saved="True" type="System.String">
+      <item name="Ai1" value="&quot;AiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, P2.A&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av1" value="&quot;BwX2&quot;" saved="True" type="System.String">
+      <item name="Av1" value="&quot;BiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, P2.A&quot;" saved="True" type="System.String" />
       </item>
       <item name="In17" value="&quot;7zX2&quot;" saved="True" type="System.String">
@@ -328,18 +326,18 @@
       <item name="Op29" value="&quot;8zX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, P2.D&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn29" value="&quot;9bX12&quot;" saved="True" type="System.String">
+      <item name="Pn29" value="&quot;9iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, P2.D&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp29" value="&quot;8bX12&quot;" saved="True" type="System.String">
+      <item name="Pp29" value="&quot;8iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, P2.D&quot;" saved="True" type="System.String" />
       </item>
     </item>
     <item name="P3.A">
-      <item name="Ai2" value="&quot;AwX3&quot;" saved="True" type="System.String">
+      <item name="Ai2" value="&quot;AiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, P3.A&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av2" value="&quot;BwX3&quot;" saved="True" type="System.String">
+      <item name="Av2" value="&quot;BiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, P3.A&quot;" saved="True" type="System.String" />
       </item>
       <item name="In18" value="&quot;7zX3&quot;" saved="True" type="System.String">
@@ -368,18 +366,18 @@
       <item name="Op30" value="&quot;8zX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, P3.D&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn30" value="&quot;9bX13&quot;" saved="True" type="System.String">
+      <item name="Pn30" value="&quot;9iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, P3.D&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp30" value="&quot;8bX13&quot;" saved="True" type="System.String">
+      <item name="Pp30" value="&quot;8iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, P3.D&quot;" saved="True" type="System.String" />
       </item>
     </item>
     <item name="P4.A">
-      <item name="Ai3" value="&quot;AwX4&quot;" saved="True" type="System.String">
+      <item name="Ai3" value="&quot;AiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, P4.A&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av3" value="&quot;BwX4&quot;" saved="True" type="System.String">
+      <item name="Av3" value="&quot;BiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, P4.A&quot;" saved="True" type="System.String" />
       </item>
       <item name="In19" value="&quot;7zX4&quot;" saved="True" type="System.String">
@@ -412,7 +410,7 @@
     <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;YR&quot;" saved="True" type="System.String" />
     <item name="Vcc">
-      <item name="Av14" value="&quot;BwX15&quot;" saved="True" type="System.String">
+      <item name="Av14" value="&quot;BiX15&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog value, Vcc=1.1*1024/Av14&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -420,9 +418,7 @@
   <item name="J_Node" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
     <item name="Add">
       <item name="bool" value="&quot;1Z&quot;" saved="True" type="System.String" />
-      <item name="byte" value="&quot;2B&quot;" saved="True" type="System.String" />
-      <item name="int" value="&quot;4I&quot;" saved="True" type="System.String" />
-      <item name="short" value="&quot;3W&quot;" saved="True" type="System.String" />
+      <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />
       <item name="string" value="&quot;5S&quot;" saved="True" type="System.String" />
     </item>
     <item name="P?.I">
@@ -440,10 +436,10 @@
       </item>
     </item>
     <item name="P1.A">
-      <item name="Ai0" value="&quot;AwX1&quot;" saved="True" type="System.String">
+      <item name="Ai0" value="&quot;AiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, P1.A&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av0" value="&quot;BwX1&quot;" saved="True" type="System.String">
+      <item name="Av0" value="&quot;BiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, P1.A&quot;" saved="True" type="System.String" />
       </item>
       <item name="In16" value="&quot;7zX1&quot;" saved="True" type="System.String">
@@ -474,10 +470,10 @@
       </item>
     </item>
     <item name="P2.A">
-      <item name="Ai1" value="&quot;AwX2&quot;" saved="True" type="System.String">
+      <item name="Ai1" value="&quot;AiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, P2.A&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av1" value="&quot;BwX2&quot;" saved="True" type="System.String">
+      <item name="Av1" value="&quot;BiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, P2.A&quot;" saved="True" type="System.String" />
       </item>
       <item name="In17" value="&quot;7zX2&quot;" saved="True" type="System.String">
@@ -506,18 +502,18 @@
       <item name="Op29" value="&quot;8zX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, P2.D&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn29" value="&quot;9bX12&quot;" saved="True" type="System.String">
+      <item name="Pn29" value="&quot;9iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, P2.D&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp29" value="&quot;8bX12&quot;" saved="True" type="System.String">
+      <item name="Pp29" value="&quot;8iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, P2.D&quot;" saved="True" type="System.String" />
       </item>
     </item>
     <item name="P3.A">
-      <item name="Ai2" value="&quot;AwX3&quot;" saved="True" type="System.String">
+      <item name="Ai2" value="&quot;AiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, P3.A&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av2" value="&quot;BwX3&quot;" saved="True" type="System.String">
+      <item name="Av2" value="&quot;BiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, P3.A&quot;" saved="True" type="System.String" />
       </item>
       <item name="In18" value="&quot;7zX3&quot;" saved="True" type="System.String">
@@ -546,18 +542,18 @@
       <item name="Op30" value="&quot;8zX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, P3.D&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn30" value="&quot;9bX13&quot;" saved="True" type="System.String">
+      <item name="Pn30" value="&quot;9iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, P3.D&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp30" value="&quot;8bX13&quot;" saved="True" type="System.String">
+      <item name="Pp30" value="&quot;8iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, P3.D&quot;" saved="True" type="System.String" />
       </item>
     </item>
     <item name="P4.A">
-      <item name="Ai3" value="&quot;AwX4&quot;" saved="True" type="System.String">
+      <item name="Ai3" value="&quot;AiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, P4.A&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av3" value="&quot;BwX4&quot;" saved="True" type="System.String">
+      <item name="Av3" value="&quot;BiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, P4.A&quot;" saved="True" type="System.String" />
       </item>
       <item name="In19" value="&quot;7zX4&quot;" saved="True" type="System.String">
@@ -624,7 +620,7 @@
       </item>
     </item>
     <item name="Vcc">
-      <item name="Av14" value="&quot;BwX15&quot;" saved="True" type="System.String">
+      <item name="Av14" value="&quot;BiX15&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog value, Vcc=1.1*1024/Av14&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -649,10 +645,10 @@
   </item>
   <item name="PS_Gate" value="&quot;/CC;component/Images/ty_jgate.png&quot;" saved="True" type="System.String">
     <item name="1.04">
-      <item name="Ai0" value="&quot;AwX1&quot;" saved="True" type="System.String">
+      <item name="Ai0" value="&quot;AiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.04&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av0" value="&quot;BwX1&quot;" saved="True" type="System.String">
+      <item name="Av0" value="&quot;BiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.04&quot;" saved="True" type="System.String" />
       </item>
       <item name="In16" value="&quot;7zX1&quot;" saved="True" type="System.String">
@@ -669,10 +665,10 @@
       </item>
     </item>
     <item name="1.05">
-      <item name="Ai1" value="&quot;AwX2&quot;" saved="True" type="System.String">
+      <item name="Ai1" value="&quot;AiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.05&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av1" value="&quot;BwX2&quot;" saved="True" type="System.String">
+      <item name="Av1" value="&quot;BiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.05&quot;" saved="True" type="System.String" />
       </item>
       <item name="In17" value="&quot;7zX2&quot;" saved="True" type="System.String">
@@ -689,10 +685,10 @@
       </item>
     </item>
     <item name="1.06">
-      <item name="Ai2" value="&quot;AwX3&quot;" saved="True" type="System.String">
+      <item name="Ai2" value="&quot;AiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.06&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av2" value="&quot;BwX3&quot;" saved="True" type="System.String">
+      <item name="Av2" value="&quot;BiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.06&quot;" saved="True" type="System.String" />
       </item>
       <item name="In18" value="&quot;7zX3&quot;" saved="True" type="System.String">
@@ -709,10 +705,10 @@
       </item>
     </item>
     <item name="1.08">
-      <item name="Ai3" value="&quot;AwX4&quot;" saved="True" type="System.String">
+      <item name="Ai3" value="&quot;AiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.08&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av3" value="&quot;BwX4&quot;" saved="True" type="System.String">
+      <item name="Av3" value="&quot;BiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.08&quot;" saved="True" type="System.String" />
       </item>
       <item name="In19" value="&quot;7zX4&quot;" saved="True" type="System.String">
@@ -729,18 +725,18 @@
       </item>
     </item>
     <item name="1.11">
-      <item name="Ai6" value="&quot;6wX5&quot;" saved="True" type="System.String">
+      <item name="Ai6" value="&quot;6iX5&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.11&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av6" value="&quot;7wX5&quot;" saved="True" type="System.String">
+      <item name="Av6" value="&quot;7iX5&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.11&quot;" saved="True" type="System.String" />
       </item>
     </item>
     <item name="1.12">
-      <item name="Ai7" value="&quot;6wX6&quot;" saved="True" type="System.String">
+      <item name="Ai7" value="&quot;6iX6&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.12&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av7" value="&quot;7wX6&quot;" saved="True" type="System.String">
+      <item name="Av7" value="&quot;7iX6&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.12&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -771,10 +767,10 @@
       <item name="Op30" value="&quot;8zX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, 2.04&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn30" value="&quot;9bX13&quot;" saved="True" type="System.String">
+      <item name="Pn30" value="&quot;9iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, 2.04&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp30" value="&quot;8bX13&quot;" saved="True" type="System.String">
+      <item name="Pp30" value="&quot;8iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, 2.04&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -791,10 +787,10 @@
       <item name="Op29" value="&quot;8zX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, 2.05&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn29" value="&quot;9bX12&quot;" saved="True" type="System.String">
+      <item name="Pn29" value="&quot;9iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, 2.05&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp29" value="&quot;8bX12&quot;" saved="True" type="System.String">
+      <item name="Pp29" value="&quot;8iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, 2.05&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -828,25 +824,23 @@
     </item>
     <item name="Add">
       <item name="bool" value="&quot;1Z&quot;" saved="True" type="System.String" />
-      <item name="byte" value="&quot;2B&quot;" saved="True" type="System.String" />
-      <item name="int" value="&quot;4I&quot;" saved="True" type="System.String" />
-      <item name="short" value="&quot;3W&quot;" saved="True" type="System.String" />
+      <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />
       <item name="string" value="&quot;5S&quot;" saved="True" type="System.String" />
     </item>
     <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;YR&quot;" saved="True" type="System.String" />
     <item name="Vcc">
-      <item name="Av14" value="&quot;BwX17&quot;" saved="True" type="System.String">
+      <item name="Av14" value="&quot;BiX17&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog value, Vcc=1.1*1024/Av14&quot;" saved="True" type="System.String" />
       </item>
     </item>
   </item>
   <item name="PS_Node" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
     <item name="1.04">
-      <item name="Ai0" value="&quot;AwX1&quot;" saved="True" type="System.String">
+      <item name="Ai0" value="&quot;AiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.04&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av0" value="&quot;BwX1&quot;" saved="True" type="System.String">
+      <item name="Av0" value="&quot;BiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.04&quot;" saved="True" type="System.String" />
       </item>
       <item name="In16" value="&quot;7zX1&quot;" saved="True" type="System.String">
@@ -863,10 +857,10 @@
       </item>
     </item>
     <item name="1.05">
-      <item name="Ai1" value="&quot;AwX2&quot;" saved="True" type="System.String">
+      <item name="Ai1" value="&quot;AiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.05&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av1" value="&quot;BwX2&quot;" saved="True" type="System.String">
+      <item name="Av1" value="&quot;BiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.05&quot;" saved="True" type="System.String" />
       </item>
       <item name="In17" value="&quot;7zX2&quot;" saved="True" type="System.String">
@@ -883,10 +877,10 @@
       </item>
     </item>
     <item name="1.06">
-      <item name="Ai2" value="&quot;AwX3&quot;" saved="True" type="System.String">
+      <item name="Ai2" value="&quot;AiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.06&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av2" value="&quot;BwX3&quot;" saved="True" type="System.String">
+      <item name="Av2" value="&quot;BiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.06&quot;" saved="True" type="System.String" />
       </item>
       <item name="In18" value="&quot;7zX3&quot;" saved="True" type="System.String">
@@ -903,10 +897,10 @@
       </item>
     </item>
     <item name="1.08">
-      <item name="Ai3" value="&quot;AwX4&quot;" saved="True" type="System.String">
+      <item name="Ai3" value="&quot;AiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.08&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av3" value="&quot;BwX4&quot;" saved="True" type="System.String">
+      <item name="Av3" value="&quot;BiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.08&quot;" saved="True" type="System.String" />
       </item>
       <item name="In19" value="&quot;7zX4&quot;" saved="True" type="System.String">
@@ -923,18 +917,18 @@
       </item>
     </item>
     <item name="1.11">
-      <item name="Ai6" value="&quot;6wX5&quot;" saved="True" type="System.String">
+      <item name="Ai6" value="&quot;6iX5&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.11&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av6" value="&quot;7wX5&quot;" saved="True" type="System.String">
+      <item name="Av6" value="&quot;7iX5&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.11&quot;" saved="True" type="System.String" />
       </item>
     </item>
     <item name="1.12">
-      <item name="Ai7" value="&quot;6wX6&quot;" saved="True" type="System.String">
+      <item name="Ai7" value="&quot;6iX6&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.12&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av7" value="&quot;7wX6&quot;" saved="True" type="System.String">
+      <item name="Av7" value="&quot;7iX6&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, 1.12&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -965,10 +959,10 @@
       <item name="Op30" value="&quot;8zX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, 2.04&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn30" value="&quot;9bX13&quot;" saved="True" type="System.String">
+      <item name="Pn30" value="&quot;9iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, 2.04&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp30" value="&quot;8bX13&quot;" saved="True" type="System.String">
+      <item name="Pp30" value="&quot;8iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, 2.04&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -985,10 +979,10 @@
       <item name="Op29" value="&quot;8zX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, 2.05&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn29" value="&quot;9bX12&quot;" saved="True" type="System.String">
+      <item name="Pn29" value="&quot;9iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, 2.05&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp29" value="&quot;8bX12&quot;" saved="True" type="System.String">
+      <item name="Pp29" value="&quot;8iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, 2.05&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -1056,15 +1050,13 @@
     </item>
     <item name="Add">
       <item name="bool" value="&quot;1Z&quot;" saved="True" type="System.String" />
-      <item name="byte" value="&quot;2B&quot;" saved="True" type="System.String" />
-      <item name="int" value="&quot;4I&quot;" saved="True" type="System.String" />
-      <item name="short" value="&quot;3W&quot;" saved="True" type="System.String" />
+      <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />
       <item name="string" value="&quot;5S&quot;" saved="True" type="System.String" />
     </item>
     <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;YR&quot;" saved="True" type="System.String" />
     <item name="Vcc">
-      <item name="Av14" value="&quot;BwX17&quot;" saved="True" type="System.String">
+      <item name="Av14" value="&quot;BiX17&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog value, Vcc=1.1*1024/Av14&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -1105,26 +1097,24 @@
   <item name="U_Gate" value="&quot;/CC;component/Images/ty_jgate.png&quot;" saved="True" type="System.String">
     <item name="Add">
       <item name="bool" value="&quot;1Z&quot;" saved="True" type="System.String" />
-      <item name="byte" value="&quot;2B&quot;" saved="True" type="System.String" />
-      <item name="int" value="&quot;4I&quot;" saved="True" type="System.String" />
-      <item name="short" value="&quot;3W&quot;" saved="True" type="System.String" />
+      <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />
       <item name="string" value="&quot;5S&quot;" saved="True" type="System.String" />
     </item>
     <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;YR&quot;" saved="True" type="System.String" />
     <item name="SV1-01">
-      <item name="Ai7" value="&quot;6wX6&quot;" saved="True" type="System.String">
+      <item name="Ai7" value="&quot;6iX6&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-01&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av7" value="&quot;7wX6&quot;" saved="True" type="System.String">
+      <item name="Av7" value="&quot;7iX6&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, SV1-01&quot;" saved="True" type="System.String" />
       </item>
     </item>
     <item name="SV1-03">
-      <item name="Ai0" value="&quot;AwX1&quot;" saved="True" type="System.String">
+      <item name="Ai0" value="&quot;AiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-03&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av0" value="&quot;BwX1&quot;" saved="True" type="System.String">
+      <item name="Av0" value="&quot;BiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, SV1-03&quot;" saved="True" type="System.String" />
       </item>
       <item name="In16" value="&quot;7zX1&quot;" saved="True" type="System.String">
@@ -1141,10 +1131,10 @@
       </item>
     </item>
     <item name="SV1-04">
-      <item name="Ai1" value="&quot;AwX2&quot;" saved="True" type="System.String">
+      <item name="Ai1" value="&quot;AiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-04&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av1" value="&quot;BwX2&quot;" saved="True" type="System.String">
+      <item name="Av1" value="&quot;BiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, SV1-04&quot;" saved="True" type="System.String" />
       </item>
       <item name="In17" value="&quot;7zX2&quot;" saved="True" type="System.String">
@@ -1161,10 +1151,10 @@
       </item>
     </item>
     <item name="SV1-05">
-      <item name="Ai2" value="&quot;AwX3&quot;" saved="True" type="System.String">
+      <item name="Ai2" value="&quot;AiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-05&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av2" value="&quot;BwX3&quot;" saved="True" type="System.String">
+      <item name="Av2" value="&quot;BiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, SV1-05&quot;" saved="True" type="System.String" />
       </item>
       <item name="In18" value="&quot;7zX3&quot;" saved="True" type="System.String">
@@ -1181,10 +1171,10 @@
       </item>
     </item>
     <item name="SV1-06">
-      <item name="Ai3" value="&quot;AwX4&quot;" saved="True" type="System.String">
+      <item name="Ai3" value="&quot;AiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-06&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av3" value="&quot;BwX4&quot;" saved="True" type="System.String">
+      <item name="Av3" value="&quot;BiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, SV1-06&quot;" saved="True" type="System.String" />
       </item>
       <item name="In19" value="&quot;7zX4&quot;" saved="True" type="System.String">
@@ -1255,10 +1245,10 @@
       <item name="Op29" value="&quot;8zX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, SV1-16&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn29" value="&quot;9bX12&quot;" saved="True" type="System.String">
+      <item name="Pn29" value="&quot;9iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, SV1-16&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp29" value="&quot;8bX12&quot;" saved="True" type="System.String">
+      <item name="Pp29" value="&quot;8iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, SV1-16&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -1275,10 +1265,10 @@
       <item name="Op30" value="&quot;8zX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, SV1-17&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn30" value="&quot;9bX13&quot;" saved="True" type="System.String">
+      <item name="Pn30" value="&quot;9iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, SV1-17&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp30" value="&quot;8bX13&quot;" saved="True" type="System.String">
+      <item name="Pp30" value="&quot;8iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, SV1-17&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -1297,7 +1287,7 @@
       </item>
     </item>
     <item name="Vcc">
-      <item name="Av14" value="&quot;BwX15&quot;" saved="True" type="System.String">
+      <item name="Av14" value="&quot;BiX15&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog value, Vcc=1.1*1024/Av14&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -1305,26 +1295,24 @@
   <item name="U_Node" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
     <item name="Add">
       <item name="bool" value="&quot;1Z&quot;" saved="True" type="System.String" />
-      <item name="byte" value="&quot;2B&quot;" saved="True" type="System.String" />
-      <item name="int" value="&quot;4I&quot;" saved="True" type="System.String" />
-      <item name="short" value="&quot;3W&quot;" saved="True" type="System.String" />
+      <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />
       <item name="string" value="&quot;5S&quot;" saved="True" type="System.String" />
     </item>
     <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;YR&quot;" saved="True" type="System.String" />
     <item name="SV1-01">
-      <item name="Ai7" value="&quot;6wX6&quot;" saved="True" type="System.String">
+      <item name="Ai7" value="&quot;6iX6&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-01&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av7" value="&quot;7wX6&quot;" saved="True" type="System.String">
+      <item name="Av7" value="&quot;7iX6&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, SV1-01&quot;" saved="True" type="System.String" />
       </item>
     </item>
     <item name="SV1-03">
-      <item name="Ai0" value="&quot;AwX1&quot;" saved="True" type="System.String">
+      <item name="Ai0" value="&quot;AiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-03&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av0" value="&quot;BwX1&quot;" saved="True" type="System.String">
+      <item name="Av0" value="&quot;BiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, SV1-03&quot;" saved="True" type="System.String" />
       </item>
       <item name="In16" value="&quot;7zX1&quot;" saved="True" type="System.String">
@@ -1341,10 +1329,10 @@
       </item>
     </item>
     <item name="SV1-04">
-      <item name="Ai1" value="&quot;AwX2&quot;" saved="True" type="System.String">
+      <item name="Ai1" value="&quot;AiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-04&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av1" value="&quot;BwX2&quot;" saved="True" type="System.String">
+      <item name="Av1" value="&quot;BiX2&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, SV1-04&quot;" saved="True" type="System.String" />
       </item>
       <item name="In17" value="&quot;7zX2&quot;" saved="True" type="System.String">
@@ -1361,10 +1349,10 @@
       </item>
     </item>
     <item name="SV1-05">
-      <item name="Ai2" value="&quot;AwX3&quot;" saved="True" type="System.String">
+      <item name="Ai2" value="&quot;AiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-05&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av2" value="&quot;BwX3&quot;" saved="True" type="System.String">
+      <item name="Av2" value="&quot;BiX3&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, SV1-05&quot;" saved="True" type="System.String" />
       </item>
       <item name="In18" value="&quot;7zX3&quot;" saved="True" type="System.String">
@@ -1381,10 +1369,10 @@
       </item>
     </item>
     <item name="SV1-06">
-      <item name="Ai3" value="&quot;AwX4&quot;" saved="True" type="System.String">
+      <item name="Ai3" value="&quot;AiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-06&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Av3" value="&quot;BwX4&quot;" saved="True" type="System.String">
+      <item name="Av3" value="&quot;BiX4&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, AVcc reference, SV1-06&quot;" saved="True" type="System.String" />
       </item>
       <item name="In19" value="&quot;7zX4&quot;" saved="True" type="System.String">
@@ -1489,10 +1477,10 @@
       <item name="Op29" value="&quot;8zX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, SV1-16&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn29" value="&quot;9bX12&quot;" saved="True" type="System.String">
+      <item name="Pn29" value="&quot;9iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, SV1-16&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp29" value="&quot;8bX12&quot;" saved="True" type="System.String">
+      <item name="Pp29" value="&quot;8iX12&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, SV1-16&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -1509,10 +1497,10 @@
       <item name="Op30" value="&quot;8zX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital output, SV1-17&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pn30" value="&quot;9bX13&quot;" saved="True" type="System.String">
+      <item name="Pn30" value="&quot;9iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM negative, SV1-17&quot;" saved="True" type="System.String" />
       </item>
-      <item name="Pp30" value="&quot;8bX13&quot;" saved="True" type="System.String">
+      <item name="Pp30" value="&quot;8iX13&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;PWM positive, SV1-17&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -1531,7 +1519,7 @@
       </item>
     </item>
     <item name="Vcc">
-      <item name="Av14" value="&quot;BwX15&quot;" saved="True" type="System.String">
+      <item name="Av14" value="&quot;BiX15&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog value, Vcc=1.1*1024/Av14&quot;" saved="True" type="System.String" />
       </item>
     </item>
@@ -1539,13 +1527,13 @@
   <item name="Cosm" value="&quot;/CC;component/Images/fu_cosm.png&quot;" saved="True" type="System.String">
     <item name="_description" value="&quot;v Export to cosm.com&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="A" value="&quot;Bc&quot;" saved="True" type="System.String" />
-    <item name="B" value="&quot;Cc&quot;" saved="True" type="System.String" />
-    <item name="C" value="&quot;Dc&quot;" saved="True" type="System.String" />
-    <item name="D" value="&quot;Ec&quot;" saved="True" type="System.String" />
-    <item name="E" value="&quot;Fc&quot;" saved="True" type="System.String" />
-    <item name="F" value="&quot;Gc&quot;" saved="True" type="System.String" />
-    <item name="G" value="&quot;Hc&quot;" saved="True" type="System.String" />
+    <item name="A" value="&quot;Bg&quot;" saved="True" type="System.String" />
+    <item name="B" value="&quot;Cg&quot;" saved="True" type="System.String" />
+    <item name="C" value="&quot;Dg&quot;" saved="True" type="System.String" />
+    <item name="D" value="&quot;Eg&quot;" saved="True" type="System.String" />
+    <item name="E" value="&quot;Fg&quot;" saved="True" type="System.String" />
+    <item name="F" value="&quot;Gg&quot;" saved="True" type="System.String" />
+    <item name="G" value="&quot;Hg&quot;" saved="True" type="System.String" />
     <item name="Push" value="&quot;Az&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
@@ -1562,13 +1550,13 @@
   <item name="Pile" value="&quot;/CC;component/Images/ar_pile.png&quot;" saved="True" type="System.String">
     <item name="_description" value="&quot;v Export to csv&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="A" value="&quot;Bc&quot;" saved="True" type="System.String" />
-    <item name="B" value="&quot;Cc&quot;" saved="True" type="System.String" />
-    <item name="C" value="&quot;Dc&quot;" saved="True" type="System.String" />
-    <item name="D" value="&quot;Ec&quot;" saved="True" type="System.String" />
-    <item name="E" value="&quot;Fc&quot;" saved="True" type="System.String" />
-    <item name="F" value="&quot;Gc&quot;" saved="True" type="System.String" />
-    <item name="G" value="&quot;Hc&quot;" saved="True" type="System.String" />
+    <item name="A" value="&quot;Bg&quot;" saved="True" type="System.String" />
+    <item name="B" value="&quot;Cg&quot;" saved="True" type="System.String" />
+    <item name="C" value="&quot;Dg&quot;" saved="True" type="System.String" />
+    <item name="D" value="&quot;Eg&quot;" saved="True" type="System.String" />
+    <item name="E" value="&quot;Fg&quot;" saved="True" type="System.String" />
+    <item name="F" value="&quot;Gg&quot;" saved="True" type="System.String" />
+    <item name="G" value="&quot;Hg&quot;" saved="True" type="System.String" />
     <item name="Push" value="&quot;Az&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
@@ -1576,12 +1564,12 @@
   <item name="Sun" value="&quot;/CC;component/Images/fu_sun.png&quot;" saved="True" type="System.String">
     <item name="_description" value="&quot;v Sunruse/sunset calculator&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
-    <item name="Lat" value="&quot;Ac&quot;" saved="True" type="System.String" />
-    <item name="Lon" value="&quot;Bc&quot;" saved="True" type="System.String" />
+    <item name="Lat" value="&quot;Ag&quot;" saved="True" type="System.String" />
+    <item name="Lon" value="&quot;Bg&quot;" saved="True" type="System.String" />
     <item name="Out" value="&quot;bz&quot;" saved="True" type="System.String" />
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
-    <item name="Sunrise" value="&quot;ac&quot;" saved="True" type="System.String" />
-    <item name="Sunset" value="&quot;cc&quot;" saved="True" type="System.String" />
+    <item name="Sunrise" value="&quot;ag&quot;" saved="True" type="System.String" />
+    <item name="Sunset" value="&quot;cg&quot;" saved="True" type="System.String" />
   </item>
 </root>

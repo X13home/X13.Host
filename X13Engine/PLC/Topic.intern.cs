@@ -27,8 +27,7 @@ namespace X13.PLC {
     private static WOUM.BlockingQueue<TopicChanged> _publishQueue;
 
     static Topic() {
-      root=new Topic(null);
-      root.path="/";
+      root=new Topic(null) { _name=string.Empty, path="/" };
       _publishQueue=new WOUM.BlockingQueue<TopicChanged>(PubAction);
       _mq=root.Get("/local/MQ");
       _mq._childNodes=new SortedList<string, Topic>(1);
@@ -179,6 +178,8 @@ namespace X13.PLC {
 
     private string _name;
     protected string _json;
+    protected bool _tcObject;
+
     protected int _disposed=0;
     protected SortedList<string, Topic> _childNodes=null;
     private List<Subscription> _subs=new List<Subscription>();
@@ -192,13 +193,17 @@ namespace X13.PLC {
     }
 
     internal string ToJson() {
-      if(_json==null && valueType!=null) {
+      if(_json==null) {
         lock(_name) {
           if(_json==null) {
-            if(valueType==typeof(Topic)) {
+            if(valueType==null) {
+              _json="{ }";
+            } else if(!_tcObject) {
+              _json=JsonConvert.SerializeObject(GetValue());
+            } else if(valueType==typeof(Topic)) {
               Topic link=this.GetValue() as Topic;
               if(link==null) {
-                _json="{ }";
+                _json=(new JObject(new JProperty("+", "Topic"))).ToString();
               } else {
                 string sPath=link.path;
                 Stack<Topic> mPath=new Stack<Topic>();
@@ -231,10 +236,13 @@ namespace X13.PLC {
                 }
                 _json=(new JObject(
                   new JProperty("p", sPath),
-                  new JProperty("t", link.valueType==null?string.Empty:link.valueType.FullName))).ToString();
+                  new JProperty("t", link.valueType==null?string.Empty:link.valueType.FullName),
+                  new JProperty("+", "Topic") )).ToString();
               }
             } else {
-              _json=Newtonsoft.Json.JsonConvert.SerializeObject(GetValue());
+              JObject o=JObject.FromObject(GetValue());
+              o.Add("+", valueType.FullName);
+              _json=o.ToString();
             }
           }
         }

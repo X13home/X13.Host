@@ -64,13 +64,13 @@ namespace X13.Svc {
       {
         Topic nowTp=Topic.root.Get("/system/now");
         DateTime nowDT=DateTime.Now;
-        nowTp.Get<int>("second").value=nowDT.Second;
-        nowTp.Get<int>("minute").value=nowDT.Minute;
-        nowTp.Get<int>("hour").value=nowDT.Hour;
+        nowTp.Get<long>("second").value=nowDT.Second;
+        nowTp.Get<long>("minute").value=nowDT.Minute;
+        nowTp.Get<long>("hour").value=nowDT.Hour;
         nowTp.Get<DayOfWeek>("wDay").value=nowDT.DayOfWeek;
-        nowTp.Get<int>("day").value=nowDT.Day;
-        nowTp.Get<int>("month").value=nowDT.Month;
-        nowTp.Get<int>("year").value=nowDT.Year;
+        nowTp.Get<long>("day").value=nowDT.Day;
+        nowTp.Get<long>("month").value=nowDT.Month;
+        nowTp.Get<long>("year").value=nowDT.Year;
 
       }
       #region Load Security
@@ -108,13 +108,13 @@ namespace X13.Svc {
           }
         }
       }
-      var rf12=root.Get<MsGateway>("/rf12");
-      if(rf12.value==null) {
-        rf12.value=new MsGateway();
-      }
-      if(rf12.value.SerialPortName==null) {
-        rf12.value.SerialPortName=string.Empty;
-      }
+      //var rf12=root.Get<MsGateway>("/rf12");
+      //if(rf12.value==null) {
+      //  rf12.value=new MsGateway();
+      //}
+      //if(rf12.value.SerialPortName==null) {
+      //  rf12.value.SerialPortName=string.Empty;
+      //}
       root.Get<string>("/system/declarers/L_Folder").value="/CC;component/Images/ty_PLC.png";
       root.Get<string>("/plc/_declarer").value="L_Folder";
       foreach(Topic acl in Topic.root.Get("/local/security/acls").children){
@@ -239,19 +239,19 @@ namespace X13.Svc {
       DateTime nowDT=DateTime.Now;
       _1SecTimer.Change(1050-nowDT.Millisecond, 1000);
       Topic nowTp=Topic.root.Get("/system/now");
-      var ns=nowTp.Get<int>("second");
+      var ns=nowTp.Get<long>("second");
       ns.SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
       if(nowDT.Second==0) {
-        nowTp.Get<int>("minute").SetValue(nowDT.Minute, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+        nowTp.Get<long>("minute").SetValue(nowDT.Minute, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
         if(nowDT.Minute==0) {
-          nowTp.Get<int>("hour").SetValue(nowDT.Hour, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+          nowTp.Get<long>("hour").SetValue(nowDT.Hour, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
           if(nowDT.Hour==0) {
             nowTp.Get<DayOfWeek>("wDay").SetValue(nowDT.DayOfWeek, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
-            nowTp.Get<int>("day").SetValue(nowDT.Day, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+            nowTp.Get<long>("day").SetValue(nowDT.Day, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
             if(nowDT.Day==1) {
-              nowTp.Get<int>("month").SetValue(nowDT.Month, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+              nowTp.Get<long>("month").SetValue(nowDT.Month, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
               if(nowDT.Month==1) {
-                nowTp.Get<int>("year").SetValue(nowDT.Year, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+                nowTp.Get<long>("year").SetValue(nowDT.Year, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
               }
             }
           }

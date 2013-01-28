@@ -450,9 +450,9 @@ namespace X13.CC {
         if(leftCell<0) {
           leftCell=0;
         }
-        var sLoc=model.Get<uint>("_location");
+        var sLoc=model.Get<long>("_location");
         sLoc.saved=true;
-        sLoc.value=(uint)((leftCell<<16) | (ushort)topCell);
+        sLoc.value=((leftCell<<16) | (ushort)topCell);
       } else {
         if(_oldX>=0 && _oldY>=0) {
           for(int inH=_oldH; inH>=0; inH--) {
@@ -468,7 +468,7 @@ namespace X13.CC {
     }
 
     public override void Render(int chLevel) {
-      uint l=model.Get<uint>("_location");
+      uint l=(uint)model.Get<long>("_location");
       int gs=LogramView.CellSize;
       double height=0;
       base.OriginalLocation=new Vector((0.5+(short)(l>>16))*gs, (1.0+(short)l)*gs);
@@ -595,7 +595,7 @@ namespace X13.CC {
       if(!model.Exist("_declarer", out dt) || (declarer=Topic.root.Get<string>("/system/declarers/" + (dt as DVar<string>).value))==null) {
         return;
       }
-      uint l=model.Get<uint>("_location");
+      uint l=(uint)model.Get<long>("_location");
       base.OriginalLocation=new Vector((1.0+(short)(l>>16))*gs, (0.5+(short)l)*gs);
       this.Offset=OriginalLocation;
       FormattedText head=new FormattedText(model.name, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LogramView.FtFont, gs*0.6, Brushes.Black);
@@ -718,7 +718,7 @@ namespace X13.CC {
         if(leftCell<0) {
           leftCell=0;
         }
-        var sLoc=model.Get<uint>("_location");
+        var sLoc=model.Get<long>("_location");
         var actLoc=(uint)((leftCell<<16) | (ushort)topCell);
         if(actLoc==sLoc.value) {    // refresh wires
           this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);

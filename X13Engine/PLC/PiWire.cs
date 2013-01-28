@@ -33,7 +33,7 @@ namespace X13.PLC {
     private Topic _b;
     private DVar<Topic> _aAlias;
     private DVar<Topic> _bAlias;
-    private DVar<byte> _direction;
+    private DVar<long> _direction;
 
     public PiWire() {
       _dummy=1000;
@@ -66,16 +66,16 @@ namespace X13.PLC {
           if(_owner==null) {
             return 0;
           }
-          _direction=_owner.Get<byte>("direction");
+          _direction=_owner.Get<long>("direction");
         }
-        return _direction.value;
+        return (byte)_direction.value;
       }
       set {
         if(_direction==null) {
           if(_owner==null) {
             return;
           }
-          _direction=_owner.Get<byte>("direction");
+          _direction=_owner.Get<long>("direction");
           _direction.saved=true;
         }
         _direction.value=value;

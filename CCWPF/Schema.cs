@@ -99,7 +99,7 @@ namespace X13.CC {
           name=string.Format("{0}_{1}", cur.name, i++);
         }
         var it=model.Get<Topic>(name);
-        var sLoc=it.Get<uint>("_location");
+        var sLoc=it.Get<long>("_location");
         sLoc.saved=true;
         sLoc.value=loc;
         it.saved=true;
@@ -113,7 +113,7 @@ namespace X13.CC {
           i++;
         } while(model.Exist(name));
         var it=model.Get<PiStatement>(name);
-        var sLoc=it.Get<uint>("_location");
+        var sLoc=it.Get<long>("_location");
         sLoc.saved=true;
         sLoc.value=loc;
         it.saved=true;
@@ -124,13 +124,13 @@ namespace X13.CC {
     public void Attach(DVar<PiLogram> model) {
       if(this.model!=model) {
         this.model=model;
-        var w=model.Get<int>("_width");
+        var w=model.Get<long>("_width");
         if(w.value==0) {
           w.saved=true;
           w.value=24;
         }
         this.Width=w.value*LogramView.CellSize;
-        var h=model.Get<int>("_height");
+        var h=model.Get<long>("_height");
         if(h.value<=0) {
           h.saved=true;
           h.value=24;
@@ -224,14 +224,14 @@ namespace X13.CC {
 
         if(art==TopicChanged.ChangeArt.Value) {
           if(source.name=="_width") {
-            var w=model.Get<int>("_width");
+            var w=model.Get<long>("_width");
             if(w.value==0) {
               w.saved=true;
               w.value=24;
             }
             this.Width=w.value*LogramView.CellSize;
           } else if(source.name=="_height") {
-            var h=model.Get<int>("_height");
+            var h=model.Get<long>("_height");
             if(h.value<=0) {
               h.saved=true;
               h.value=24;
@@ -379,11 +379,9 @@ namespace X13.CC {
             case ItemAction.rename:
             case ItemAction.addToLogram:
             case ItemAction.createBoolMask:
-            case ItemAction.createByteMask:
-            case ItemAction.createDecimalMask:
-            case ItemAction.createIntMask:
+            case ItemAction.createDoubleMask:
+            case ItemAction.createLongMask:
             case ItemAction.createNodeMask:
-            case ItemAction.createShortMask:
             case ItemAction.createStringMask:
             case ItemAction.open:
               continue;
@@ -428,10 +426,10 @@ namespace X13.CC {
           _mSelected=null;
           if(move) {
             if(d+gs>this.Height) {
-              model.Get<int>("_height").value=1+(int)(d)/gs;
+              model.Get<long>("_height").value=1+(int)(d)/gs;
             }
             if(r+gs>this.Width) {
-              model.Get<int>("_width").value=1+(int)(r)/gs;
+              model.Get<long>("_width").value=1+(int)(r)/gs;
             }
           }
         }
@@ -445,10 +443,10 @@ namespace X13.CC {
           if((el=selected as SchemaElement)!=null && move) {
             el.SetLocation(new Vector(el.OriginalLocation.X+(cp.X-ScreenStartPoint.X), el.OriginalLocation.Y+(cp.Y-ScreenStartPoint.Y)), true);
             if(selected.Offset.Y+selected.ContentBounds.Bottom+gs>this.Height) {
-              model.Get<int>("_height").value=1+(int)(selected.Offset.Y+selected.ContentBounds.Bottom)/gs;
+              model.Get<long>("_height").value=1+(int)(selected.Offset.Y+selected.ContentBounds.Bottom)/gs;
             }
             if(selected.Offset.X+selected.ContentBounds.Right+gs>this.Width) {
-              model.Get<int>("_width").value=1+(int)(selected.Offset.X+selected.ContentBounds.Right)/gs;
+              model.Get<long>("_width").value=1+(int)(selected.Offset.X+selected.ContentBounds.Right)/gs;
             }
           } else if((w=selected as uiWire)!=null && w.GetModel()==null) {
             uiPin finish=GetVisual(cp.X, cp.Y) as uiPin;
@@ -554,17 +552,8 @@ namespace X13.CC {
       case ItemAction.createBoolDef:
         cur.Get<bool>(ci.Header as string);
         break;
-      case ItemAction.createByteDef:
-        cur.Get<byte>(ci.Header as string);
-        break;
-      case ItemAction.createShortDef:
-        cur.Get<short>(ci.Header as string);
-        break;
-      case ItemAction.createIntDef:
-        cur.Get<int>(ci.Header as string);
-        break;
-      case ItemAction.createDecimalDef:
-        cur.Get<decimal>(ci.Header as string);
+      case ItemAction.createLongDef:
+        cur.Get<long>(ci.Header as string);
         break;
       case ItemAction.createDoubleDef:
         cur.Get<double>(ci.Header as string);

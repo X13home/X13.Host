@@ -271,7 +271,7 @@ namespace X13.MQTT {
         this.Send(new MsDisconnect());
         _tryCounter=0;
         state=MsDeviceState.ASleep;
-        var st=Owner.Get<short>(PredefinedTopics._WSleepTime.ToString(), Owner);
+        var st=Owner.Get<long>(PredefinedTopics._WSleepTime.ToString(), Owner);
         st.saved=true;
         st.SetValue((short)duration, new TopicChanged(TopicChanged.ChangeArt.Value, Owner){ Source=st });
       } else if(state!=MsDeviceState.Lost) {
@@ -529,7 +529,7 @@ namespace X13.MQTT {
           var dc=Owner.Get<string>(PredefinedTopics._declarer.ToString(), Owner);
           dc.saved=true;
           dc.value=_declarer;
-          var st=Owner.Get<short>(PredefinedTopics._WSleepTime.ToString(), Owner);
+          var st=Owner.Get<long>(PredefinedTopics._WSleepTime.ToString(), Owner);
           st.saved=true;
           _present=Owner.Get<bool>(PredefinedTopics.present.ToString(), Owner);
           _present.value=(state==MsDeviceState.Connected || state==MsDeviceState.ASleep || state==MsDeviceState.AWake);

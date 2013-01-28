@@ -14,6 +14,7 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 using System.IO;
+using Newtonsoft.Json.Linq;
 
 namespace X13.WOUM {
   public static class ExConverter {
@@ -64,6 +65,48 @@ namespace X13.WOUM {
       return sb.ToString();
     }
     #endregion String2Name
+
+    public static Type Json2Type(string json) {
+      if(string.IsNullOrWhiteSpace(json)) {
+        return null;
+      }
+      if(json[0]=='"') {
+        return typeof(string);
+      }
+      if(json[0]=='{') {
+        JObject o=JObject.Parse(json);
+        JToken jDesc;
+        if(o.TryGetValue("+", out jDesc)) {
+          string type=jDesc.ToObject<string>();
+          return Type.GetType(type);
+        }
+        return null;
+      }
+      if(json=="true" || json=="false") {
+        return typeof(bool);
+      }
+      if(json.StartsWith("new Date(")) {
+        return typeof(DateTime);
+      }
+      int dotCnt=0;
+      for(int i=json.Length-1; i>=0; i--) {
+        if(char.IsDigit(json, i)) {
+          continue;
+        }
+        if(json[i]=='.') {
+          dotCnt++;
+          if(dotCnt>1) {
+            return null;
+          }
+          continue;
+        }
+        if(i==0 && (json[0]=='-' || json[0]=='+')) {
+          continue;
+        }
+        return null;  // is not number
+      }
+      return dotCnt==0?typeof(Int64):typeof(double);
+    }
 
     #region Serializer
     private static SortedList<Type, Delegate> _serializers;

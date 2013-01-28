@@ -26,7 +26,6 @@ namespace X13.PLC {
     }
 
     private T _value;
-    private bool _tcObject;
 
     public DVar()
       : base(typeof(T)) {
