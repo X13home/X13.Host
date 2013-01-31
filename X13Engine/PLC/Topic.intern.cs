@@ -95,7 +95,7 @@ namespace X13.PLC {
       return cur;
     }
     private static void PubAction(TopicChanged tc) {
-      if(tc.Task!=null){
+      if(tc.Task!=null) {
         tc.Source=tc.Task.Current;
         tc.Sender.PublishSubs(tc, tc.Subscription.func);
         if(tc.Task.MoveNext()) {
@@ -199,7 +199,13 @@ namespace X13.PLC {
             if(valueType==null) {
               _json="{ }";
             } else if(!_tcObject) {
-              _json=JsonConvert.SerializeObject(GetValue());
+              if(valueType.IsEnum) {
+                _json=(new JObject(
+                  new JProperty("v", JsonConvert.SerializeObject(GetValue())),
+                  new JProperty("+", valueType.FullName))).ToString();
+              } else {
+                _json=JsonConvert.SerializeObject(GetValue());
+              }
             } else if(valueType==typeof(Topic)) {
               Topic link=this.GetValue() as Topic;
               if(link==null) {
@@ -237,7 +243,7 @@ namespace X13.PLC {
                 _json=(new JObject(
                   new JProperty("p", sPath),
                   new JProperty("t", link.valueType==null?string.Empty:link.valueType.FullName),
-                  new JProperty("+", "Topic") )).ToString();
+                  new JProperty("+", "Topic"))).ToString();
               }
             } else {
               JObject o=JObject.FromObject(GetValue());
@@ -253,14 +259,11 @@ namespace X13.PLC {
       if(valueType==null || string.IsNullOrEmpty(json)) {
         return;   // do nothing
       }
-      TopicChanged param=new TopicChanged(TopicChanged.ChangeArt.Value) { Source=this };
-      if(initiator!=null) {
-        param.Visited(initiator, true);
-      }
+      TopicChanged param=new TopicChanged(TopicChanged.ChangeArt.Value, initiator) { Source=this };
       if(valueType==typeof(Topic)) {
         var jo=JObject.Parse(json);
-        string t1=(string)jo["p"];
-        string t2=(string)jo["t"];
+        string t1=jo.Value<string>("p");
+        string t2=jo.Value<string>("t");
         Type tt;
         if(string.IsNullOrEmpty(t2)) {
           tt=null;
@@ -277,10 +280,12 @@ namespace X13.PLC {
         }
         Topic tc=Topic.GetP(t1, tt, initiator);
         this.SetValue(tc, param);
-      } else if(valueType!=null) {
+      } else if(valueType.IsEnum) {
+        var jo=JObject.Parse(json);
+        this.SetValue(JsonConvert.DeserializeObject(jo["v"].ToString(), valueType) , param);
+      } else {
         this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
       }
-
     }
     private void UpdateMovedTopicsDeep() {
       if(this.parent!=root) {
