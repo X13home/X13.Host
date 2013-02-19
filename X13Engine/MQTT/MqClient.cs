@@ -254,7 +254,7 @@ namespace X13.MQTT {
       case TopicChanged.ChangeArt.Add:
         if(sender.valueType==null || sender.valueType==typeof(string) || sender.valueType.IsValueType) {
           MqPublish pm=new MqPublish(sender);
-          pm.Payload=string.Format("{0},", param.Source.valueType==null?string.Empty:param.Source.valueType.FullName);
+          //pm.Payload=string.Format("{0},", param.Source.valueType==null?string.Empty:param.Source.valueType.FullName);
           this.Send(pm);
         }
         break;

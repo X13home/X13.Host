@@ -271,12 +271,6 @@ namespace X13.PLC {
           var jo=JObject.Parse(json);
           string t1=jo.Value<string>("p");
           string t2=jo.Value<string>("t");
-          Type tt;
-          if(string.IsNullOrEmpty(t2)) {
-            tt=null;
-          } else {
-            tt=Type.GetType(t2);
-          }
           if(t1.StartsWith("../")) {
             Topic mop=this;
             while(t1.StartsWith("../")) {
@@ -285,7 +279,16 @@ namespace X13.PLC {
             }
             t1=mop.path+"/"+t1;
           }
-          Topic tc=Topic.GetP(t1, tt, initiator);
+          Topic tc;
+          if(!Topic.root.Exist(t1, out tc)) {
+            Type tt;
+            if(string.IsNullOrEmpty(t2)) {
+              tt=null;
+            } else {
+              tt=Type.GetType(t2);
+            }
+            tc=Topic.GetP(t1, tt, initiator);
+          }
           this.SetValue(tc, param);
         } else if(valueType.IsEnum) {
           var jo=JObject.Parse(json);
