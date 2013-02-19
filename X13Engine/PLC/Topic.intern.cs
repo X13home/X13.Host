@@ -194,7 +194,7 @@ namespace X13.PLC {
 
     internal string ToJson() {
       if(_json==null) {
-        lock(_name) {
+        lock(this) {
           if(_json==null) {
             if(valueType==null) {
               _json="{ }";
@@ -246,7 +246,13 @@ namespace X13.PLC {
                   new JProperty("+", "Topic"))).ToString();
               }
             } else {
-              JObject o=JObject.FromObject(GetValue());
+              object val=GetValue();
+              JObject o;
+              if(val==null) {
+                o=JObject.Parse("{ }");
+              } else {
+                o=JObject.FromObject(GetValue());
+              }
               o.Add("+", valueType.FullName);
               _json=o.ToString();
             }
@@ -259,32 +265,37 @@ namespace X13.PLC {
       if(valueType==null || string.IsNullOrEmpty(json)) {
         return;   // do nothing
       }
-      TopicChanged param=new TopicChanged(TopicChanged.ChangeArt.Value, initiator) { Source=this };
-      if(valueType==typeof(Topic)) {
-        var jo=JObject.Parse(json);
-        string t1=jo.Value<string>("p");
-        string t2=jo.Value<string>("t");
-        Type tt;
-        if(string.IsNullOrEmpty(t2)) {
-          tt=null;
-        } else {
-          tt=Type.GetType(t2);
-        }
-        if(t1.StartsWith("../")) {
-          Topic mop=this;
-          while(t1.StartsWith("../")) {
-            t1=t1.Substring(3);
-            mop=mop.parent;
+      try {
+        TopicChanged param=new TopicChanged(TopicChanged.ChangeArt.Value, initiator) { Source=this };
+        if(valueType==typeof(Topic)) {
+          var jo=JObject.Parse(json);
+          string t1=jo.Value<string>("p");
+          string t2=jo.Value<string>("t");
+          Type tt;
+          if(string.IsNullOrEmpty(t2)) {
+            tt=null;
+          } else {
+            tt=Type.GetType(t2);
           }
-          t1=mop.path+"/"+t1;
+          if(t1.StartsWith("../")) {
+            Topic mop=this;
+            while(t1.StartsWith("../")) {
+              t1=t1.Substring(3);
+              mop=mop.parent;
+            }
+            t1=mop.path+"/"+t1;
+          }
+          Topic tc=Topic.GetP(t1, tt, initiator);
+          this.SetValue(tc, param);
+        } else if(valueType.IsEnum) {
+          var jo=JObject.Parse(json);
+          this.SetValue(JsonConvert.DeserializeObject(jo["v"].ToString(), valueType), param);
+        } else {
+          this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
         }
-        Topic tc=Topic.GetP(t1, tt, initiator);
-        this.SetValue(tc, param);
-      } else if(valueType.IsEnum) {
-        var jo=JObject.Parse(json);
-        this.SetValue(JsonConvert.DeserializeObject(jo["v"].ToString(), valueType) , param);
-      } else {
-        this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
+      }
+      catch(Exception ex) {
+        Log.Warning("{0}.FromJson({1}, ) - {2}", this.path, json, ex.Message);
       }
     }
     private void UpdateMovedTopicsDeep() {

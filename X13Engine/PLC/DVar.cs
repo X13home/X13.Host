@@ -51,6 +51,9 @@ namespace X13.PLC {
     }
     public override void SetValue(object value, TopicChanged param) {
       try {
+        if(valueType==typeof(object)) {
+          _tcObject=(value==null || Type.GetTypeCode(value.GetType())==TypeCode.Object);
+        }
         T tmp=(T)(!_tcObject?Convert.ChangeType(value, this.valueType):value);
         SetValue(tmp, param);
       }

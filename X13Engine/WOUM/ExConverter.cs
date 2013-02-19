@@ -78,7 +78,11 @@ namespace X13.WOUM {
         JToken jDesc;
         if(o.TryGetValue("+", out jDesc)) {
           string type=jDesc.ToObject<string>();
-          return Type.GetType(type);
+          if(type=="Topic") {
+            return typeof(X13.PLC.Topic);
+          } else {
+            return Type.GetType(type);
+          }
         }
         return null;
       }

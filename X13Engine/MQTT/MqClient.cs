@@ -227,10 +227,12 @@ namespace X13.MQTT {
     private void ProccessPublishMsg(MqPublish pm) {
       Topic cur;
       if(!string.IsNullOrEmpty(pm.Payload)) {         // Publish
-        Type vt=X13.WOUM.ExConverter.Json2Type(pm.Payload);
-        cur=Topic.GetP(pm.Path, vt, _owner);
+        if(!Topic.root.Exist(pm.Path, out cur)) {
+          Type vt=X13.WOUM.ExConverter.Json2Type(pm.Payload);
+          cur=Topic.GetP(pm.Path, vt, _owner);
+        }
         cur.saved=pm.Retained;
-        if(vt!=null) {
+        if(cur.valueType!=null) {
           cur.FromJson(pm.Payload, _owner);
         }
       } else if(Topic.root.Exist(pm.Path, out cur)) {                      // Remove

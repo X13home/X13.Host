@@ -230,15 +230,15 @@ namespace X13.MQTT {
         }
         return;
       }
-      vt=X13.WOUM.ExConverter.Json2Type(pm.Payload);
-      if(i<pt.Length || cur.valueType!=vt) {                             // pm.Path not exist
+      if(i<pt.Length || cur.valueType==null) {                             // pm.Path not exist
+        vt=X13.WOUM.ExConverter.Json2Type(pm.Payload);
         if(!CheckAcl(ConnInfo.userName, cur, TopicAcl.Create)) {
           return;
         }
         cur=Topic.GetP(pm.Path, vt, _owner);        // Create
       }
 
-      if(vt!=null) {                 // Publish
+      if(cur.valueType!=null) {                 // Publish
         if(CheckAcl(ConnInfo.userName, cur, TopicAcl.Change)) {
           cur.saved=pm.Retained;
           cur.FromJson(pm.Payload, _owner);
