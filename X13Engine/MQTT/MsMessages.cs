@@ -403,38 +403,13 @@ namespace X13.MQTT {
       case TypeCode.Boolean:
         ret.Add((byte)((bool)t.GetValue()?1:0));
         break;
-      case TypeCode.Byte:
-        ret.Add((byte)t.GetValue());
-        break;
-      case TypeCode.SByte:
-        ret.Add((byte)(sbyte)t.GetValue());
-        break;
-      case TypeCode.Int16: {
-          short v=(short)t.GetValue();
-          ret.Add((byte)v);
-          ret.Add((byte)(v>>8));
-        }
-        break;
-      case TypeCode.UInt16: {
-          ushort v=(ushort)t.GetValue();
-          ret.Add((byte)v);
-          ret.Add((byte)(v>>8));
-        }
-        break;
-      case TypeCode.Int32: {
-          int v=(int)t.GetValue();
-          ret.Add((byte)v);
-          ret.Add((byte)(v>>8));
-          ret.Add((byte)(v>>16));
-          ret.Add((byte)(v>>24));
-        }
-        break;
-      case TypeCode.UInt32: {
-          uint v=(uint)t.GetValue();
-          ret.Add((byte)v);
-          ret.Add((byte)(v>>8));
-          ret.Add((byte)(v>>16));
-          ret.Add((byte)(v>>24));
+      case TypeCode.Int64:        
+        {
+          ulong v=(ulong)(long)t.GetValue();
+          do {
+            ret.Add((byte)v);
+            v=v>>8;
+          } while(v>0);
         }
         break;
       case TypeCode.String: {

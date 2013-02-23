@@ -214,7 +214,6 @@ namespace X13.CC {
 
       }
       Topic.Export(_settPath, Topic.root.Get("/local/settings"));
-      //Settings.Save();
     }
     private int _clState=0;
     private void MqClientStatusChanged(bool connected) {

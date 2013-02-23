@@ -226,7 +226,7 @@ namespace X13.PLC {
                   mPath.Pop();
                   lPath.Pop();
                 }
-                if(mPath.Count<4) {
+                if(mPath.Count<3) {
                   StringBuilder sb=new StringBuilder();
                   for(int i=mPath.Count-1; i>=0; i--) {
                     sb.Append("../");

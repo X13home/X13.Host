@@ -99,7 +99,11 @@ namespace X13.Svc {
         dbVer.saved=true;
         dbVer.value=dbVersion;
         _lThreshold.saved=true;
+#if DEBUG
+        _lThreshold.value=LogLevel.Debug;
+#else
         _lThreshold.value=LogLevel.Info;
+#endif
         Log.Info("Load default declarers");
         var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.PLC.declarers.xst");
         if(st!=null) {
@@ -108,13 +112,13 @@ namespace X13.Svc {
           }
         }
       }
-      //var rf12=root.Get<MsGateway>("/rf12");
-      //if(rf12.value==null) {
-      //  rf12.value=new MsGateway();
-      //}
-      //if(rf12.value.SerialPortName==null) {
-      //  rf12.value.SerialPortName=string.Empty;
-      //}
+      var rf12=root.Get<MsGateway>("/rf12");
+      if(rf12.value==null) {
+        rf12.value=new MsGateway();
+      }
+      if(rf12.value.SerialPortName==null) {
+        rf12.value.SerialPortName=string.Empty;
+      }
       root.Get<string>("/system/declarers/L_Folder").value="/CC;component/Images/ty_PLC.png";
       root.Get<string>("/plc/_declarer").value="L_Folder";
       foreach(Topic acl in Topic.root.Get("/local/security/acls").children){
