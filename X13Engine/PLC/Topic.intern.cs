@@ -203,7 +203,9 @@ namespace X13.PLC {
                 _json=(new JObject(
                   new JProperty("v", JsonConvert.SerializeObject(GetValue())),
                   new JProperty("+", valueType.FullName))).ToString();
-              } else {
+              } if(valueType==typeof(string) && string.IsNullOrEmpty((string)GetValue())){
+                _json="\"\"";
+              }else {
                 _json=JsonConvert.SerializeObject(GetValue());
               }
             } else if(valueType==typeof(Topic)) {

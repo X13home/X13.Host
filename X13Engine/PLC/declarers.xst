@@ -1094,6 +1094,7 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
     <item name="Stb" value="&quot;Az&quot;" saved="True" type="System.String" />
+    <item name="Reset" value="&quot;Bz&quot;" saved="True" type="System.String" />
   </item>
   <item name="SqPulse" value="&quot;/CC;component/Images/bi_oscillator.png&quot;" saved="True" type="System.String">
     <item name="!Q" value="&quot;bz&quot;" saved="True" type="System.String" />

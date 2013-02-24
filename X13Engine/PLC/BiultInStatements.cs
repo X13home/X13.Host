@@ -198,6 +198,7 @@ namespace X13.PLC {
 
     private class Impuls : IStatement {
       private DVar<bool> _input;
+      private DVar<bool> _reset;
       private DVar<bool> _output;
       private DVar<bool> _iOutput;
       private DVar<long> _onDelay;
@@ -207,6 +208,7 @@ namespace X13.PLC {
 
       public void Init(DVar<PiStatement> model) {
         _input=AddPin<bool>(model, "Stb");
+        _reset=AddPin<bool>(model, "Reset");
         _output=AddPin<bool>(model, "Q");
         _iOutput=AddPin<bool>(model, "!Q");
         _onDelay=AddPin<long>(model, "_onDelay");
@@ -216,6 +218,10 @@ namespace X13.PLC {
         _timer=new Timer((o) => process(), null, Timeout.Infinite, Timeout.Infinite);
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
+        if(_reset.value) {
+          _state=0;
+          process();
+        }
         if(_input==source && _input.value) {
           if(_onDelay.value>0) {
             _state=1;

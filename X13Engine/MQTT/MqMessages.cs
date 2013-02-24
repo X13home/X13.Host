@@ -435,6 +435,9 @@ namespace X13.MQTT {
     public override void Serialise(Stream str) {
       byte[] pathBuf = enc.GetBytes(Path);
       string pys=this.Payload;
+      if(string.IsNullOrEmpty(pys)) {
+        return;
+      }
       byte[] payloadBuf=Encoding.UTF8.GetBytes(pys);
       base.variableHeaderLength =(uint)(
         2 + Path.Length    // Topic + length
