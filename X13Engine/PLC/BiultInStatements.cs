@@ -35,6 +35,7 @@ namespace X13.PLC {
       PiStatement.AddStatemen("comp_le", typeof(Comparer));
       PiStatement.AddStatemen("MathExpr", typeof(MathExpr));
       PiStatement.AddStatemen("Switch", typeof(Switch));
+      PiStatement.AddStatemen("ZBuffer", typeof(ZBuffer));
       PiStatement.AddStatemen("Average", typeof(Average));
       PiStatement.AddStatemen("Sum", typeof(MathOp));
       PiStatement.AddStatemen("Sub", typeof(MathOp));
@@ -925,6 +926,36 @@ namespace X13.PLC {
 
       public void DeInit() {
       }
+    }
+    private class ZBuffer : IStatement {
+      private DVar<bool> _latch;
+      private DVar<bool> _oe;
+      private DVar<double> _in;
+      private DVar<double> _out;
+      private DVar<double> _val;
+      public void Init(DVar<PiStatement> model) {
+        _latch=AddPin<bool>(model, "Latch");
+        _oe=AddPin<bool>(model, "OE");
+        _in=AddPin<double>(model, "In");
+        _out=AddPin<double>(model, "Out");
+        _val=AddPin<double>(model, "_val");
+      }
+
+      public void Calculate(DVar<PiStatement> model, Topic source) {
+        if(source==_val) {
+          return;
+        }
+        if((source==_in && _latch.value) || (source==_latch)) {
+          _val.value=_in.value;
+        }
+        if(_oe.value) {
+          _out.value=_val.value;
+        }
+      }
+
+      public void DeInit() {
+      }
+
     }
   }
 }

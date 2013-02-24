@@ -155,6 +155,16 @@
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
     <item name="Sel" value="&quot;Ai&quot;" saved="True" type="System.String" />
   </item>
+  <item name="ZBuffer" value="&quot;/CC;component/Images/ar_zbuffer.png&quot;" saved="True" type="System.String">
+    <item name="_description" value="&quot;f3Buffer with output enable&quot;" saved="True" type="System.String" />
+    <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />
+    <item name="In" value="&quot;Ag&quot;" saved="True" type="System.String" />
+    <item name="Latch" value="&quot;Bz&quot;" saved="True" type="System.String" />
+    <item name="OE" value="&quot;Cz&quot;" saved="True" type="System.String" />
+    <item name="Out" value="&quot;ag&quot;" saved="True" type="System.String" />
+    <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
+    <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
+  </item>
   <item name="Average" value="&quot;/CC;component/Images/ar_avr.png&quot;" saved="True" type="System.String">
     <item name="_description" value="&quot;g Average&quot;" saved="True" type="System.String" />
     <item name="_type" value="&quot;X13.PLC.PiStatemen&quot;" saved="True" type="System.String" />

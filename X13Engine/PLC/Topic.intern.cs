@@ -191,7 +191,7 @@ namespace X13.PLC {
     protected Topic(Type t) {
       valueType=t;
     }
-
+    //TODO: DateTime
     internal string ToJson() {
       if(_json==null) {
         lock(this) {
@@ -253,7 +253,7 @@ namespace X13.PLC {
               } else {
                 o=JObject.FromObject(GetValue());
               }
-              o.Add("+", valueType.FullName);
+              o["+"]=valueType.FullName;
               _json=o.ToString();
             }
           }
@@ -293,7 +293,9 @@ namespace X13.PLC {
         } else if(valueType.IsEnum) {
           var jo=JObject.Parse(json);
           this.SetValue(JsonConvert.DeserializeObject(jo["v"].ToString(), valueType), param);
-        } else {
+        //} else if(valueType==typeof(object)) {
+        //  object rez=JsonConvert.DeserializeObject(json, typeof(object));
+        } else{
           this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
         }
       }
