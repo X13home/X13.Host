@@ -444,7 +444,7 @@ namespace X13.CC {
         List<RcUse> resource=new List<RcUse>();
         var ar=_declarer.all.Where(z => z!=null && z.valueType==typeof(string) && !z.name.StartsWith("_")).Cast<DVar<string>>().Where(z => z.value!=null && z.value.Length>=2).OrderBy(z => z.name).OrderBy(z => (ushort)z.value[0]).ToList();
 
-        foreach(var ch in ptr.children) {
+        foreach(var ch in ptr.children) {   // check used resources
           var dec=ar.FirstOrDefault(z => z.name==ch.name);
           if(dec!=null) {
             foreach(string curRC in dec.value.Substring(2).Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
@@ -460,13 +460,15 @@ namespace X13.CC {
               } else if(curRC[0]==(char)RcUse.Shared && resource[pos]==RcUse.None) {
                 resource[pos]=RcUse.Shared;
               }
-              //ar.Remove(dec);   // allready used ??
             }
           }
         }
 
         foreach(var tpI in ar) {
-          bool busy=false;
+          bool busy=ptr.children.Any(z => z.name==tpI.name);
+          if(busy) {      // don't show already exist variable
+            continue;
+          }
           foreach(string curRC in tpI.value.Substring(2).Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
             int pos;
             if(!int.TryParse(curRC.Substring(1), out pos)) {

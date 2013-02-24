@@ -418,7 +418,6 @@
       </item>
     </item>
     <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
-    <item name="rename" value="&quot;YR&quot;" saved="True" type="System.String" />
     <item name="Vcc">
       <item name="Av14" value="&quot;BiX15&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog value, Vcc=1.1*1024/Av14&quot;" saved="True" type="System.String" />
@@ -594,7 +593,6 @@
       </item>
     </item>
     <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
-    <item name="rename" value="&quot;YR&quot;" saved="True" type="System.String" />
     <item name="RX">
       <item name="In25" value="&quot;7zX8&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Digital Pull-Up inverted input, RX&quot;" saved="True" type="System.String" />
@@ -838,7 +836,6 @@
       <item name="string" value="&quot;5S&quot;" saved="True" type="System.String" />
     </item>
     <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
-    <item name="rename" value="&quot;YR&quot;" saved="True" type="System.String" />
     <item name="Vcc">
       <item name="Av14" value="&quot;BiX17&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog value, Vcc=1.1*1024/Av14&quot;" saved="True" type="System.String" />
@@ -1064,7 +1061,6 @@
       <item name="string" value="&quot;5S&quot;" saved="True" type="System.String" />
     </item>
     <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
-    <item name="rename" value="&quot;YR&quot;" saved="True" type="System.String" />
     <item name="Vcc">
       <item name="Av14" value="&quot;BiX17&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog value, Vcc=1.1*1024/Av14&quot;" saved="True" type="System.String" />
@@ -1112,7 +1108,6 @@
       <item name="string" value="&quot;5S&quot;" saved="True" type="System.String" />
     </item>
     <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
-    <item name="rename" value="&quot;YR&quot;" saved="True" type="System.String" />
     <item name="SV1-01">
       <item name="Ai7" value="&quot;6iX6&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-01&quot;" saved="True" type="System.String" />
@@ -1310,7 +1305,6 @@
       <item name="string" value="&quot;5S&quot;" saved="True" type="System.String" />
     </item>
     <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
-    <item name="rename" value="&quot;YR&quot;" saved="True" type="System.String" />
     <item name="SV1-01">
       <item name="Ai7" value="&quot;6iX6&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, SV1-01&quot;" saved="True" type="System.String" />

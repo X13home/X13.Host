@@ -376,7 +376,6 @@ namespace X13.CC {
           ItemCollection items;
           for(int i=0; i<actions.Count; i++) {
             switch(actions[i].action) {
-            case ItemAction.rename:
             case ItemAction.addToLogram:
             case ItemAction.createBoolMask:
             case ItemAction.createDoubleMask:

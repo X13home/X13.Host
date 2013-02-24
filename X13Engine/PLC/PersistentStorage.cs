@@ -127,7 +127,7 @@ namespace X13.PLC {
         //Log.Debug("$+{0}[{1}]={2}", act.src.path, st, sv);
       } else if(act.art==PLC.TopicChanged.ChangeArt.Remove) {
         cmd.CommandText="DELETE FROM topics WHERE path=@path;";
-        Log.Debug("$-{0}", act.src.path);
+        //Log.Debug("$-{0}", act.src.path);
       }
       cmd.ExecuteNonQuery();
     }

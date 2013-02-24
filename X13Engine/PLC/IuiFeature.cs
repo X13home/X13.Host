@@ -24,7 +24,6 @@ namespace X13.PLC {
     createObjectDef='o',
 
     addToLogram='A',
-    rename='R',
     remove='D',
     open='O',
   }

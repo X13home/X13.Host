@@ -99,12 +99,12 @@ namespace X13.CC {
         }
         break;
       case X13.PLC.TopicChanged.ChangeArt.Value:
-        if(sender.path!="/system/now/second") {
-          if(ir==null) {
+        if(ir==null) {
+          if(!sender.path.StartsWith("/system/now/")) {
             Log.Debug("! {0}={1}", sender.path, sender.GetValue());
-          } else {
-            Log.Debug("! {0}={1} : {2}", sender.path, sender.GetValue(), ir.name);
           }
+        } else if(!ir.path.StartsWith("/system/now/")) {
+          Log.Debug("! {0}={1} : {2}", sender.path, sender.GetValue(), ir.name);
         }
         break;
       case X13.PLC.TopicChanged.ChangeArt.Remove:

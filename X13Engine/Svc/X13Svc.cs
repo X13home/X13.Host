@@ -62,8 +62,9 @@ namespace X13.Svc {
       BiultInStatements.Initialize();
       _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 1050-DateTime.Now.Millisecond, 1000);
       {
-        Topic nowTp=Topic.root.Get("/system/now");
+        DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/system/now");
         DateTime nowDT=DateTime.Now;
+        nowTp.value=nowDT;
         nowTp.Get<long>("second").value=nowDT.Second;
         nowTp.Get<long>("minute").value=nowDT.Minute;
         nowTp.Get<long>("hour").value=nowDT.Hour;
@@ -242,20 +243,20 @@ namespace X13.Svc {
     private void Tick1Sec(object o) {
       DateTime nowDT=DateTime.Now;
       _1SecTimer.Change(1050-nowDT.Millisecond, 1000);
-      Topic nowTp=Topic.root.Get("/system/now");
-      var ns=nowTp.Get<long>("second");
-      ns.SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+      DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/system/now");
+      nowTp.SetValue(nowDT, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
+      nowTp.Get<long>("second").SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
       if(nowDT.Second==0) {
-        nowTp.Get<long>("minute").SetValue(nowDT.Minute, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+        nowTp.Get<long>("minute").SetValue(nowDT.Minute, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
         if(nowDT.Minute==0) {
-          nowTp.Get<long>("hour").SetValue(nowDT.Hour, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+          nowTp.Get<long>("hour").SetValue(nowDT.Hour, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
           if(nowDT.Hour==0) {
-            nowTp.Get<DayOfWeek>("wDay").SetValue(nowDT.DayOfWeek, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
-            nowTp.Get<long>("day").SetValue(nowDT.Day, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+            nowTp.Get<DayOfWeek>("wDay").SetValue(nowDT.DayOfWeek, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
+            nowTp.Get<long>("day").SetValue(nowDT.Day, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
             if(nowDT.Day==1) {
-              nowTp.Get<long>("month").SetValue(nowDT.Month, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+              nowTp.Get<long>("month").SetValue(nowDT.Month, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
               if(nowDT.Month==1) {
-                nowTp.Get<long>("year").SetValue(nowDT.Year, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+                nowTp.Get<long>("year").SetValue(nowDT.Year, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
               }
             }
           }
