@@ -120,12 +120,14 @@ namespace X13.PLC {
       cmd.Parameters.Add(new SqliteParameter { ParameterName = "@path", Value = act.src.path });
       if(act.art==PLC.TopicChanged.ChangeArt.Value) {
         cmd.CommandText="INSERT OR REPLACE INTO topics VALUES (@path, @type, @val);";
-        cmd.Parameters.Add(new SqliteParameter { ParameterName = "@type", Value = act.src.valueType==null?null:act.src.valueType.FullName });
-        cmd.Parameters.Add(new SqliteParameter { ParameterName = "@val", Value = act.src.ToJson() });
-        //Log.Debug("$+{0}[{1}]={2}", act.src.path, act.src.valueType==null?null:act.src.valueType.FullName, act.src.ToJson());
+        string st=act.src.valueType==null?null:act.src.valueType.FullName;
+        cmd.Parameters.Add(new SqliteParameter { ParameterName = "@type", Value = st });
+        string sv=act.src.ToJson();
+        cmd.Parameters.Add(new SqliteParameter { ParameterName = "@val", Value = sv });
+        //Log.Debug("$+{0}[{1}]={2}", act.src.path, st, sv);
       } else if(act.art==PLC.TopicChanged.ChangeArt.Remove) {
         cmd.CommandText="DELETE FROM topics WHERE path=@path;";
-        //Log.Debug("$-{0}", act.src.path, act.src.valueType==null?null:act.src.valueType.FullName, act.src.ToJson());
+        Log.Debug("$-{0}", act.src.path);
       }
       cmd.ExecuteNonQuery();
     }
