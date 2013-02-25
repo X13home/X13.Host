@@ -300,6 +300,10 @@ namespace X13.CC {
       Topic dt;
       if(ptr.Exist("_declarer", out dt)) {
         string dp=(dt as DVar<string>).value;
+        int i=dp.LastIndexOf('.');
+        if(i>0) {
+          dp=dp.Substring(0, i);
+        }
         Topic ds=Topic.root.Get("/system/declarers");
         if(!string.IsNullOrEmpty(dp) && ds.Exist(dp, out dt)) {
           _declarer=dt as DVar<string>;
@@ -416,8 +420,7 @@ namespace X13.CC {
             ret=dt as DVar<string>;
           }
         }
-        int i=ret.LastIndexOf('.');
-        return i>0?ret.Substring(0, i):ret;
+        return ret;
       }
     }
     public ObservableCollection<TopicView> children {
