@@ -190,14 +190,7 @@
     <Resource Include="Images\ty_str.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Images\ty_i08.png" />
-    <Resource Include="Images\ty_i16.png" />
-    <Resource Include="Images\ty_i32.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Images\ty_f01.png" />
     <Resource Include="Images\ty_f02.png" />
-    <Resource Include="Images\ty_f04.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\ty_bool.png" />
@@ -247,6 +240,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\ar_zbuffer.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\ty_i64.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\ty_dt.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

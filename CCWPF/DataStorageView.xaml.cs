@@ -377,24 +377,24 @@ namespace X13.CC {
           case TypeCode.Boolean:
             return "/CC;component/Images/ty_bool.png";
           case TypeCode.Byte:
-            return "/CC;component/Images/ty_i08.png";
           case TypeCode.Int16:
           case TypeCode.SByte:
           case TypeCode.UInt16:
-            return "/CC;component/Images/ty_i16.png";
           case TypeCode.UInt32:
           case TypeCode.Int32:
-            return "/CC;component/Images/ty_i32.png";
+          case TypeCode.UInt64:
+          case TypeCode.Int64:
+            return "/CC;component/Images/ty_i64.png";
           case TypeCode.Single:
-            return "/CC;component/Images/ty_f01.png";
           case TypeCode.Double:
-            return "/CC;component/Images/ty_f02.png";
           case TypeCode.Decimal:
-            return "/CC;component/Images/ty_f04.png";
+            return "/CC;component/Images/ty_f02.png";
           case TypeCode.String:
             return "/CC;component/Images/ty_str.png";
           case TypeCode.Empty:
             return "/CC;component/Images/ty_topic.png";
+          case TypeCode.DateTime:
+            return "/CC;component/Images/ty_dt.png";
           }
         }
         return "/CC;component/Images/ty_obj.png";
