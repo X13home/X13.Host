@@ -67,6 +67,9 @@ namespace X13.CC {
       }
     }
     public override void Render(int chLevel) {
+      if(model==null) {
+        return;
+      }
       this.Offset=owner.Offset+_ownerOffset;
       switch(Type.GetTypeCode(model.valueType)) {
       case TypeCode.Object:

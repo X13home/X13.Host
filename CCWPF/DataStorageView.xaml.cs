@@ -402,23 +402,22 @@ namespace X13.CC {
     }
     public string description {
       get {
+        string decl;
+        string ret=string.Empty;
         Topic dt;
         if(ptr.Exist("_description", out dt)) {
-          return dt as DVar<string>;
-        }
-
-        if(_declarer!=null && _declarer.Exist("_description", out dt)) {
-          return dt as DVar<string>;
-        }
-        string decl;
-        if(ptr.parent!=null && ptr.parent.Exist("_declarer", out dt) && !string.IsNullOrWhiteSpace(decl=(dt as DVar<string>))) {
+          ret=dt as DVar<string>;
+        }else if(_declarer!=null && _declarer.Exist("_description", out dt)) {
+          ret=dt as DVar<string>;
+        } else if(ptr.parent!=null && ptr.parent.Exist("_declarer", out dt) && !string.IsNullOrWhiteSpace(decl=(dt as DVar<string>))) {
           Topic td=Topic.root.Get("/system/declarers/"+decl);
           DVar<string> ti=td.all.FirstOrDefault(z => z.name==ptr.name && z.valueType==typeof(string)) as DVar<string>;
           if(ti!=null && ti.Exist("_description", out dt)) {
-            return dt as DVar<string>;
+            ret=dt as DVar<string>;
           }
         }
-        return string.Empty;
+        int i=ret.LastIndexOf('.');
+        return i>0?ret.Substring(0, i):ret;
       }
     }
     public ObservableCollection<TopicView> children {

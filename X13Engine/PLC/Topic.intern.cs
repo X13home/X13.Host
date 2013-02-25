@@ -196,69 +196,75 @@ namespace X13.PLC {
       if(_json==null) {
         lock(this) {
           if(_json==null) {
-            if(valueType==null) {
-              _json="{ }";
-            } else if(!_tcObject) {
-              if(valueType.IsEnum) {
-                _json=(new JObject(
-                  new JProperty("v", JsonConvert.SerializeObject(GetValue())),
-                  new JProperty("+", valueType.FullName))).ToString();
-              }else if(valueType==typeof(string) && string.IsNullOrEmpty((string)GetValue())){
-                _json="\"\"";
-              }else if(valueType==typeof(DateTime)){
-                _json=JsonConvert.SerializeObject(GetValue(), new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter());
-              }else {
-                _json=JsonConvert.SerializeObject(GetValue());
-              }
-            } else if(valueType==typeof(Topic)) {
-              Topic link=this.GetValue() as Topic;
-              if(link==null) {
-                _json=(new JObject(new JProperty("+", "Topic"))).ToString();
-              } else {
-                string sPath=link.path;
-                Stack<Topic> mPath=new Stack<Topic>();
-                Topic cur=this;
-                do {
-                  mPath.Push(cur);
-                } while((cur=cur.parent)!=root);
-                Stack<Topic> lPath=new Stack<Topic>();
-                cur=link;
-                do {
-                  lPath.Push(cur);
-                } while((cur=cur.parent)!=root);
-                while(mPath.Peek()==lPath.Peek()) {
-                  mPath.Pop();
-                  lPath.Pop();
+            try {
+              if(valueType==null) {
+                _json="{ }";
+              } else if(!_tcObject) {
+                if(valueType.IsEnum) {
+                  _json=(new JObject(
+                    new JProperty("v", JsonConvert.SerializeObject(GetValue())),
+                    new JProperty("+", valueType.FullName))).ToString();
+                } else if(valueType==typeof(string) && string.IsNullOrEmpty((string)GetValue())) {
+                  _json="\"\"";
+                } else if(valueType==typeof(DateTime)) {
+                  _json=JsonConvert.SerializeObject(GetValue(), new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter());
+                } else {
+                  _json=JsonConvert.SerializeObject(GetValue());
                 }
-                if(mPath.Count<3) {
-                  StringBuilder sb=new StringBuilder();
-                  for(int i=mPath.Count-1; i>=0; i--) {
-                    sb.Append("../");
+              } else if(valueType==typeof(Topic)) {
+                Topic link=this.GetValue() as Topic;
+                if(link==null) {
+                  _json=(new JObject(new JProperty("+", "Topic"))).ToString();
+                } else {
+                  string sPath=link.path;
+                  Stack<Topic> mPath=new Stack<Topic>();
+                  Topic cur=this;
+                  do {
+                    mPath.Push(cur);
+                  } while((cur=cur.parent)!=root);
+                  Stack<Topic> lPath=new Stack<Topic>();
+                  cur=link;
+                  do {
+                    lPath.Push(cur);
+                  } while((cur=cur.parent)!=root);
+                  while(mPath.Peek()==lPath.Peek()) {
+                    mPath.Pop();
+                    lPath.Pop();
                   }
-                  while(lPath.Count>0) {
-                    if(lPath.Count>1) {
-                      sb.AppendFormat("{0}/", lPath.Pop().name);
-                    } else {
-                      sb.AppendFormat(lPath.Pop().name);
+                  if(mPath.Count<3) {
+                    StringBuilder sb=new StringBuilder();
+                    for(int i=mPath.Count-1; i>=0; i--) {
+                      sb.Append("../");
                     }
+                    while(lPath.Count>0) {
+                      if(lPath.Count>1) {
+                        sb.AppendFormat("{0}/", lPath.Pop().name);
+                      } else {
+                        sb.AppendFormat(lPath.Pop().name);
+                      }
+                    }
+                    sPath=sb.ToString();
                   }
-                  sPath=sb.ToString();
+                  _json=(new JObject(
+                    new JProperty("p", sPath),
+                    new JProperty("t", link.valueType==null?string.Empty:link.valueType.FullName),
+                    new JProperty("+", "Topic"))).ToString();
                 }
-                _json=(new JObject(
-                  new JProperty("p", sPath),
-                  new JProperty("t", link.valueType==null?string.Empty:link.valueType.FullName),
-                  new JProperty("+", "Topic"))).ToString();
-              }
-            } else {
-              object val=GetValue();
-              JObject o;
-              if(val==null) {
-                o=JObject.Parse("{ }");
               } else {
-                o=JObject.FromObject(GetValue());
+                object val=GetValue();
+                JObject o;
+                if(val==null) {
+                  o=JObject.Parse("{ }");
+                } else {
+                  o=JObject.FromObject(GetValue());
+                }
+                o["+"]=valueType.FullName;
+                _json=o.ToString();
               }
-              o["+"]=valueType.FullName;
-              _json=o.ToString();
+
+            }
+            catch(Exception ex) {
+              Log.Error("{0}.ToJson() val={1}, err={2}", this.path, ex.Message, GetValue());
             }
           }
         }
@@ -273,36 +279,49 @@ namespace X13.PLC {
         TopicChanged param=new TopicChanged(TopicChanged.ChangeArt.Value, initiator) { Source=this };
         if(valueType==typeof(Topic)) {
           var jo=JObject.Parse(json);
-          string t1=jo.Value<string>("p");
-          string t2=jo.Value<string>("t");
-          if(t1.StartsWith("../")) {
-            Topic mop=this;
-            while(t1.StartsWith("../")) {
-              t1=t1.Substring(3);
-              mop=mop.parent;
+
+          JToken jt1, jt2;
+          if(jo.TryGetValue("p", out jt1) && jo.TryGetValue("t", out jt2)) {
+            string t1=jt1.Value<string>();
+            string t2=jt2.Value<string>();
+            if(t1.StartsWith("../")) {
+              Topic mop=this;
+              while(t1.StartsWith("../")) {
+                t1=t1.Substring(3);
+                mop=mop.parent;
+              }
+              t1=mop.path+"/"+t1;
             }
-            t1=mop.path+"/"+t1;
-          }
-          Topic tc;
-          if(!Topic.root.Exist(t1, out tc)) {
-            Type tt;
-            if(string.IsNullOrEmpty(t2)) {
-              tt=null;
-            } else {
-              tt=Type.GetType(t2);
+            Topic tc;
+            if(!Topic.root.Exist(t1, out tc)) {
+              Type tt;
+              if(string.IsNullOrEmpty(t2)) {
+                tt=null;
+              } else {
+                tt=Type.GetType(t2);
+              }
+              tc=Topic.GetP(t1, tt, initiator);
             }
-            tc=Topic.GetP(t1, tt, initiator);
+            this.SetValue(tc, param);
           }
-          this.SetValue(tc, param);
         } else if(valueType.IsEnum) {
           var jo=JObject.Parse(json);
           this.SetValue(JsonConvert.DeserializeObject(jo["v"].ToString(), valueType), param);
-        }else if(valueType==typeof(DateTime)){
+        } else if(valueType==typeof(DateTime)) {
           this.SetValue(JsonConvert.DeserializeObject(json, valueType, new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter()), param);
           //} else if(valueType==typeof(object)) {
-        //  object rez=JsonConvert.DeserializeObject(json, typeof(object));
-        } else{
-          this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
+          //  object rez=JsonConvert.DeserializeObject(json, typeof(object));
+        } else {
+          if(json[0]=='{') {
+            var jo=JObject.Parse(json);
+            jo.Remove("+");
+            if(jo.Count>0) {
+              json=jo.ToString();
+              this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
+            }
+          } else {
+            this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
+          }
         }
       }
       catch(Exception ex) {

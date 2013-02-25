@@ -251,10 +251,11 @@ namespace X13.MQTT {
         return;
       }
       switch(param.Art) {
-      case TopicChanged.ChangeArt.Add:
-        if(sender.valueType==null || sender.valueType==typeof(string) || sender.valueType.IsValueType) {
+      case TopicChanged.ChangeArt.Add: {
           MqPublish pm=new MqPublish(sender);
-          //pm.Payload=string.Format("{0},", param.Source.valueType==null?string.Empty:param.Source.valueType.FullName);
+          if(sender.valueType!=null && sender.valueType!=typeof(string) && !sender.valueType.IsPrimitive) {
+            pm.Payload=(new Newtonsoft.Json.Linq.JObject(new Newtonsoft.Json.Linq.JProperty("+", sender.valueType.FullName))).ToString();
+          }
           this.Send(pm);
         }
         break;
