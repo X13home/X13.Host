@@ -22,11 +22,6 @@ namespace X13.MQTT {
     private const string P_N="_SerialPortName";
 
     static MsGateway() {
-      if(Topic.brokerMode) {
-        var t1=Topic.root.Get<string>("/system/declarers/MsGateway");
-        t1.value="/CC;component/Images/ty_gateway.png";
-        t1.Get<string>("remove").value="1D";
-      }
     }
 
     private SerialPort _port;

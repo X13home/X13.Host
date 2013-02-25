@@ -249,7 +249,7 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="J_Gate" value="&quot;/CC;component/Images/ty_jgate.png&quot;" saved="True" type="System.String">
+  <item name="GWJNv6" value="&quot;/CC;component/Images/ty_jgate.png&quot;" saved="True" type="System.String">
     <item name="Add">
       <item name="bool" value="&quot;1Z&quot;" saved="True" type="System.String" />
       <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />
@@ -424,7 +424,7 @@
       </item>
     </item>
   </item>
-  <item name="J_Node" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
+  <item name="NDJNv6" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
     <item name="Add">
       <item name="bool" value="&quot;1Z&quot;" saved="True" type="System.String" />
       <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />
@@ -651,7 +651,7 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="PS_Gate" value="&quot;/CC;component/Images/ty_jgate.png&quot;" saved="True" type="System.String">
+  <item name="GWPS20" value="&quot;/CC;component/Images/ty_jgate.png&quot;" saved="True" type="System.String">
     <item name="1.04">
       <item name="Ai0" value="&quot;AiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.04&quot;" saved="True" type="System.String" />
@@ -842,7 +842,7 @@
       </item>
     </item>
   </item>
-  <item name="PS_Node" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
+  <item name="NDPS20" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
     <item name="1.04">
       <item name="Ai0" value="&quot;AiX1&quot;" saved="True" type="System.String">
         <item name="_description" value="&quot;Analog input, internal reference, 1.04&quot;" saved="True" type="System.String" />
@@ -1101,7 +1101,7 @@
     <item name="remove" value="&quot;}D&quot;" saved="True" type="System.String" />
     <item name="rename" value="&quot;|R&quot;" saved="True" type="System.String" />
   </item>
-  <item name="U_Gate" value="&quot;/CC;component/Images/ty_jgate.png&quot;" saved="True" type="System.String">
+  <item name="GWUN10" value="&quot;/CC;component/Images/ty_jgate.png&quot;" saved="True" type="System.String">
     <item name="Add">
       <item name="bool" value="&quot;1Z&quot;" saved="True" type="System.String" />
       <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />
@@ -1298,7 +1298,7 @@
       </item>
     </item>
   </item>
-  <item name="U_Node" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
+  <item name="NDUN10" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
     <item name="Add">
       <item name="bool" value="&quot;1Z&quot;" saved="True" type="System.String" />
       <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />

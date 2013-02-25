@@ -19,11 +19,6 @@ namespace X13.PLC {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public class PiWire : ITopicOwned {
     static PiWire() {
-      if(Topic.brokerMode) {
-        var t1=Topic.root.Get<string>("/system/declarers/Wire");
-        t1.value="/CC;component/Images/ty_wire.png";
-        t1.Get<string>("remove").value="1D";
-      }
     }
 
     [Newtonsoft.Json.JsonProperty]

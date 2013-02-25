@@ -120,7 +120,6 @@ namespace X13.Svc {
       if(rf12.value.SerialPortName==null) {
         rf12.value.SerialPortName=string.Empty;
       }
-      root.Get<string>("/system/declarers/L_Folder").value="/CC;component/Images/ty_PLC.png";
       root.Get<string>("/plc/_declarer").value="L_Folder";
       foreach(Topic acl in Topic.root.Get("/local/security/acls").children){
         SetAcl(acl, Topic.root);
