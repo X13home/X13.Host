@@ -19,7 +19,7 @@ namespace X13.CC {
   /// Interaction logic for SetupView.xaml
   /// </summary>
   public partial class SetupView : DocumentContent  {
-    private const string _enterUrlText="enter url here";
+    private const string _enterUrlText="localhost";
     private DVar<string> _brokerUrl;
     public SetupView() {
       InitializeComponent();

@@ -83,12 +83,14 @@ namespace X13 {
           }
           return;
         }
-        if(args[0]=="/c") {
-          CSWindowsServiceRecoveryProperty.Win32.AttachConsole(-1); // ATTACH_PARENT_PROCESS = -1;
+        if(args[0]=="/c" || args[0]=="/C") {
+          if(args[0]=="/c") {
+            CSWindowsServiceRecoveryProperty.Win32.AttachConsole(-1); // ATTACH_PARENT_PROCESS = -1;
+          }
           var svc=new X13Svc();
           svc.StartUp();
-          Console.WriteLine("System running; press ENTER to stop");
-          Console.ReadKey();
+          Console.WriteLine("X13Engine running; press Enter to Exit");
+          Console.Read();
           svc.Shutdown();
           return;
         }

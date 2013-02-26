@@ -17,6 +17,7 @@ using System.Net;
 using System.IO;
 using System.Threading;
 using X13.PLC;
+using System.Diagnostics;
 
 namespace X13.MQTT {
   public class MqClient {
@@ -32,7 +33,8 @@ namespace X13.MQTT {
     private Timer _tLoaded;
     private int _keepAliveMS=89950;  // 90 sec
     private Action<bool> _statusDelegate;
-    private X13.Svc.X13Svc _svc; // for embedded mode
+    private Process _engine; // for embedded mode
+    private ManualResetEventSlim _engineReady;
 
     public ushort KeepAlive {
       get { return (ushort)(_keepAliveMS>0?(_keepAliveMS+50)/1000:0); }
@@ -61,25 +63,53 @@ namespace X13.MQTT {
         connectionstring="localhost";
       }
       if(connectionstring=="#local") {
-        _svc=new X13.Svc.X13Svc();
-        _svc.StartUp();
-        BrokerName=connectionstring;
-        if(_statusDelegate!=null) {
-          _statusDelegate(true);
-        }
-      } else {
-        if(connectionstring.IndexOf(':')>0) {
-          addr=connectionstring.Substring(0, connectionstring.IndexOf(':'));
-          port=int.Parse(connectionstring.Substring(connectionstring.IndexOf(':')+1));
+        Directory.SetCurrentDirectory(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
+        if(_engine==null || _engine.HasExited) {
+          _engine = new Process();
+          _engine.StartInfo.FileName = "X13Engine.exe";
+          _engine.StartInfo.Arguments="/C";
+
+          _engine.StartInfo.RedirectStandardInput=true;
+          _engine.StartInfo.RedirectStandardOutput=true;
+          _engine.StartInfo.RedirectStandardError=true;
+          _engine.EnableRaisingEvents=true;
+          _engine.StartInfo.UseShellExecute=false;
+          _engine.StartInfo.CreateNoWindow = true;
+          _engine.OutputDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
+          _engine.ErrorDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
+
+          _engineReady=new ManualResetEventSlim(false);
+          _engine.Start();
+
+          _engine.BeginErrorReadLine();
+          _engine.BeginOutputReadLine();
+          _engineReady.Wait(5000);
         } else {
-          addr=connectionstring;
-          port=1883;
+          Thread.Sleep(1000);
         }
-        Topic.paused=true;
-        TcpClient _tcp=new TcpClient();
-        _tcp.SendTimeout=900;
-        _tcp.ReceiveTimeout=0;
-        _tcp.BeginConnect(addr, port, new AsyncCallback(ConnectCB), _tcp);
+
+        connectionstring="localhost";
+      }
+
+      if(connectionstring.IndexOf(':')>0) {
+        addr=connectionstring.Substring(0, connectionstring.IndexOf(':'));
+        port=int.Parse(connectionstring.Substring(connectionstring.IndexOf(':')+1));
+      } else {
+        addr=connectionstring;
+        port=1883;
+      }
+      Topic.paused=true;
+      TcpClient _tcp=new TcpClient();
+      _tcp.SendTimeout=900;
+      _tcp.ReceiveTimeout=0;
+      _tcp.BeginConnect(addr, port, new AsyncCallback(ConnectCB), _tcp);
+
+    }
+
+    void _engine_OutputDataReceived(object sender, DataReceivedEventArgs e) {
+      if(!string.IsNullOrEmpty(e.Data)) {
+        Log.Info("Engine: {0}", e.Data);
+        _engineReady.Set();
       }
     }
     private void ConnectCB(IAsyncResult rez) {
@@ -114,24 +144,17 @@ namespace X13.MQTT {
       }
     }
     public void Subscribe(string topic, QoS sQoS) {
-      if(_svc!=null)
-        return;
       MqSubscribe msg=new MqSubscribe();
       msg.Add(topic, sQoS);
       Send(msg);
     }
     public void Unsubscribe(string path) {
-      if(_svc!=null)
-        return;
       MqUnsubscribe msg=new MqUnsubscribe();
       msg.Add(path);
       Send(msg);
     }
     public void Disconnect() {
-      if(_svc!=null) {
-        _svc.Shutdown();
-        _svc=null;
-      } else if(_connected) {
+       if(_connected) {
         _connected=false;
         if(_stream!=null) {
           _stream.Close();
@@ -145,6 +168,11 @@ namespace X13.MQTT {
         }
         Log.Info("{0} Disconnected", BrokerName);
       }
+       if(_engine!=null) {
+         _engine.StandardInput.WriteLine(" ");
+         _engine.WaitForExit(1500);
+         _engine=null;
+       }
     }
     private void TimeOut(object o) {
       if(!_connected) {
