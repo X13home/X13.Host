@@ -111,7 +111,7 @@ namespace X13.MQTT {
       MqPublish pm;
       pm=new MqPublish(sender);
       pm.QualityOfService=param.Subscription.qos;
-      if(param.Art==TopicChanged.ChangeArt.Add && sender.valueType!=null && sender.valueType!=typeof(string) && !sender.valueType.IsPrimitive) {
+      if(param.Art==TopicChanged.ChangeArt.Add && sender.valueType!=null && sender.valueType!=typeof(string) && !sender.valueType.IsEnum && !sender.valueType.IsPrimitive) {
         pm.Payload=(new Newtonsoft.Json.Linq.JObject(new Newtonsoft.Json.Linq.JProperty("+", sender.valueType.FullName))).ToString();
       } else if(param.Art==TopicChanged.ChangeArt.Remove) {
         pm.Payload=string.Empty;
