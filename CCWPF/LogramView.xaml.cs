@@ -42,7 +42,7 @@ namespace X13.CC {
     static LogramView() {
       _settings=Topic.root.Get("/local/settings/Logram");
       _statements=new List<StatementDescription>();
-      Topic decls=Topic.root.Get("/system/declarers");
+      Topic decls=Topic.root.Get("/system/declarers/func");
       //decls.Subscribe("+", DeclarerChanged);
       TopicChanged p=new TopicChanged(TopicChanged.ChangeArt.Add);
       foreach(Topic d in decls.children) {
@@ -53,7 +53,7 @@ namespace X13.CC {
       DVar<string> dec=sender as DVar<string>;
       Topic infoT;
       DVar<string> infoD;
-      if(dec==null || !dec.Exist("_type", out infoT) || (infoD=(infoT as DVar<string>))==null || infoD.value!="X13.PLC.PiStatemen") {
+      if(dec==null) {
         return;
       }
 

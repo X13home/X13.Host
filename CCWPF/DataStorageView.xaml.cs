@@ -305,10 +305,17 @@ namespace X13.CC {
           dp=dp.Substring(0, i);
         }
         Topic ds=Topic.root.Get("/system/declarers");
-        if(!string.IsNullOrEmpty(dp) && ds.Exist(dp, out dt)) {
-          _declarer=dt as DVar<string>;
-        } else {
-          _declarer=null;
+        if(!string.IsNullOrEmpty(dp)) {
+          if((ptr.valueType==typeof(PiStatement) && ds.Get("func").Exist(dp, out dt)) || ds.Exist(dp, out dt)) {
+            _declarer=dt as DVar<string>;
+          } else {
+            foreach(var ds1 in ds.children.Where(z => z.name!="func" && z.valueType!=typeof(string))) {
+              if(ds1.Exist(dp, out dt)) {
+                _declarer=dt as DVar<string>;
+                break;
+              }
+            }
+          }
         }
       }
     }

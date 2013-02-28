@@ -602,8 +602,10 @@ namespace X13.CC {
       int gs=LogramView.CellSize;
 
       DVar<string> declarer;
+      Topic fd=Topic.root.Get("/system/declarers/func/");
       Topic dt;
-      if(!model.Exist("_declarer", out dt) || (declarer=Topic.root.Get<string>("/system/declarers/" + (dt as DVar<string>).value))==null) {
+      Topic tmp;
+      if(!model.Exist("_declarer", out dt) || !fd.Exist((dt as DVar<string>).value, out tmp ) || ((declarer=tmp as DVar<string>)==null)) {
         return;
       }
       uint l=(uint)model.Get<long>("_location");
