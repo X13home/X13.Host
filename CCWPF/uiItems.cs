@@ -71,22 +71,30 @@ namespace X13.CC {
         return;
       }
       this.Offset=owner.Offset+_ownerOffset;
-      switch(Type.GetTypeCode(model.valueType)) {
+      var tc=Type.GetTypeCode(model.valueType);
+      object val=model.GetValue();
+      if(tc==TypeCode.Object && val!=null){
+        tc=Convert.GetTypeCode(val);
+      }
+      switch(tc) {
       case TypeCode.Object:
         this.brush=Brushes.Magenta;
+        break;
+      case TypeCode.DateTime:
+        this.brush=Brushes.LightSeaGreen;
         break;
       case TypeCode.String:
         this.brush=Brushes.Khaki;
         break;
       default:
         try {
-          Decimal t=(Decimal)Convert.ChangeType(model.GetValue(), typeof(Decimal));
+          double t=(double)Convert.ChangeType(val, typeof(double));
           if(t==0) {
             this.brush=Brushes.DarkGray;
           } else if(t==1) {
             this.brush=Brushes.Lime;
           } else {
-            if((t%1.0m)!=0) {
+            if((t%1.0)!=0) {
               this.brush=new SolidColorBrush(Color.FromRgb(0, 40, 100));
             } else {
               this.brush=Brushes.Green;
