@@ -209,7 +209,7 @@ namespace X13.MQTT {
           val=(msgData[0]!=0);
           break;
         case TypeCode.Int64: {
-          long rv=0;
+          long rv=(msgData[msgData.Length-1]&0x80)==0?0:-1;
           for(int i=msgData.Length-1;i>=0;i--){
           //for(int i=0;i<msgData.Length;i++){
             rv<<=8;

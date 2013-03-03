@@ -421,10 +421,30 @@ namespace X13.CC {
         }else if(_declarer!=null && _declarer.Exist("_description", out dt)) {
           ret=dt as DVar<string>;
         } else if(ptr.parent!=null && ptr.parent.Exist("_declarer", out dt) && !string.IsNullOrWhiteSpace(decl=(dt as DVar<string>))) {
-          Topic td=Topic.root.Get("/system/declarers/"+decl);
-          DVar<string> ti=td.all.FirstOrDefault(z => z.name==ptr.name && z.valueType==typeof(string)) as DVar<string>;
-          if(ti!=null && ti.Exist("_description", out dt)) {
-            ret=dt as DVar<string>;
+          string dp=(dt as DVar<string>).value;
+          int i=dp.LastIndexOf('.');
+          if(i>0) {
+            dp=dp.Substring(0, i);
+          }
+          Topic td=null;
+          if(!string.IsNullOrEmpty(dp)) {
+            Topic ds=Topic.root.Get("/system/declarers");
+            if((ptr.valueType==typeof(PiStatement) && ds.Get("func").Exist(dp, out dt)) || ds.Exist(dp, out dt)) {
+              td=dt as DVar<string>;
+            } else {
+              foreach(var ds1 in ds.children.Where(z => z.name!="func" && z.valueType!=typeof(string))) {
+                if(ds1.Exist(dp, out dt)) {
+                  td=dt as DVar<string>;
+                  break;
+                }
+              }
+            }
+          }
+          if(td!=null) {
+            DVar<string> ti=td.all.FirstOrDefault(z => z.name==ptr.name && z.valueType==typeof(string)) as DVar<string>;
+            if(ti!=null && ti.Exist("_description", out dt)) {
+              ret=dt as DVar<string>;
+            }
           }
         }
         return ret;

@@ -299,6 +299,22 @@ namespace X13.PLC {
                 tt=null;
               } else {
                 tt=Type.GetType(t2);
+                switch(Type.GetTypeCode(tt)) {
+                case TypeCode.Byte:
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.SByte:
+                case TypeCode.UInt16:
+                case TypeCode.UInt32:
+                case TypeCode.UInt64:
+                  tt=typeof(long);
+                  break;
+                case TypeCode.Decimal:
+                case TypeCode.Single:
+                  tt=typeof(double);
+                  break;
+                }
+
               }
               tc=Topic.GetP(t1, tt, initiator);
             }
@@ -344,6 +360,7 @@ namespace X13.PLC {
     }
     protected void CopyFrom(Topic old) {
       if(old.valueType!=null) {
+        Log.Error("Variable {0}[{1}] can't to type {2} convertiert", old.path, old.valueType==null?string.Empty:old.valueType.Name, this.valueType==null?string.Empty:this.valueType.Name);
         throw new ArgumentException();
       }
       this.parent=old.parent;

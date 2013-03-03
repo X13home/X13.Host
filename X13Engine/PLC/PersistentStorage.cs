@@ -52,13 +52,31 @@ namespace X13.PLC {
         string v1 = reader.GetString(reader.GetOrdinal("path"));
         string v2 = reader.GetString(reader.GetOrdinal("type"));
         string v3 = reader.GetString(reader.GetOrdinal("val"));
-        Type vt;
-        if(string.IsNullOrEmpty(v2)) {
-          vt=null;
-        } else {
-          vt=Type.GetType(v2);
+        Topic cur;
+        if(!Topic.root.Exist(v1, out cur) || (cur.valueType==null && !string.IsNullOrEmpty(v2))) {
+          Type vt;
+          if(string.IsNullOrEmpty(v2)) {
+            vt=null;
+          } else {
+            vt=Type.GetType(v2);
+            switch(Type.GetTypeCode(vt)) {
+            case TypeCode.Byte:
+            case TypeCode.Int16:
+            case TypeCode.Int32:
+            case TypeCode.SByte:
+            case TypeCode.UInt16:
+            case TypeCode.UInt32:
+            case TypeCode.UInt64:
+              vt=typeof(long);
+              break;
+            case TypeCode.Decimal:
+            case TypeCode.Single:
+              vt=typeof(double);
+              break;
+            }
+          }
+          cur=Topic.GetP(v1, vt, mq);
         }
-        Topic cur=Topic.GetP(v1, vt, mq);
         cur.saved=true;
         cur.FromJson(v3, mq);
       }

@@ -106,6 +106,13 @@ namespace X13.Svc {
         _lThreshold.value=LogLevel.Info;
 #endif
         Log.Info("Load default declarers");
+        //Topic decl;
+        //if(Topic.root.Exist("/system/declarers", out decl)) {
+        //  Topic.paused=false;
+        //  decl.Remove();
+        //  Thread.Sleep(500);
+        //  Topic.paused=true;
+        //}
         var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.PLC.declarers.xst");
         if(st!=null) {
           using(var sr=new StreamReader(st)){

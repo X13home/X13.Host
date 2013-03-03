@@ -425,14 +425,14 @@ namespace X13.PLC {
 
     private class Switch : IStatement {
       public void Init(DVar<PiStatement> model) {
-        AddPin<byte>(model, "Sel");
+        AddPin<long>(model, "Sel");
         AddPin<double>(model, "0");
         AddPin<double>(model, "1");
         AddPin<double>(model, "Out");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        string sel=model.Get<byte>("Sel").value.ToString();
+        string sel=model.Get<long>("Sel").value.ToString();
         DVar<double> inp;
         if(model.Exist(sel) && (inp=model.Get<double>(sel))!=null) {
           model.Get<double>("Out").value=inp.value;
