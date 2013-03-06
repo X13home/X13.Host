@@ -68,7 +68,7 @@ namespace X13.Svc {
         nowTp.Get<long>("second").value=nowDT.Second;
         nowTp.Get<long>("minute").value=nowDT.Minute;
         nowTp.Get<long>("hour").value=nowDT.Hour;
-        nowTp.Get<DayOfWeek>("wDay").value=nowDT.DayOfWeek;
+        nowTp.Get<long>("wDay").value=(long)nowDT.DayOfWeek;
         nowTp.Get<long>("day").value=nowDT.Day;
         nowTp.Get<long>("month").value=nowDT.Month;
         nowTp.Get<long>("year").value=nowDT.Year;
@@ -257,7 +257,7 @@ namespace X13.Svc {
         if(nowDT.Minute==0) {
           nowTp.Get<long>("hour").SetValue(nowDT.Hour, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
           if(nowDT.Hour==0) {
-            nowTp.Get<DayOfWeek>("wDay").SetValue(nowDT.DayOfWeek, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
+            nowTp.Get<long>("wDay").SetValue((long)nowDT.DayOfWeek, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
             nowTp.Get<long>("day").SetValue(nowDT.Day, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
             if(nowDT.Day==1) {
               nowTp.Get<long>("month").SetValue(nowDT.Month, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));

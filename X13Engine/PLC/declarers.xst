@@ -1239,6 +1239,9 @@
     <item name="MsGateway" value="&quot;/CC;component/Images/ty_gateway.png&quot;" saved="True" type="System.String">
       <item name="remove" value="&quot;1D&quot;" saved="True" type="System.String" />
     </item>
+    <item name="Wire" value="&quot;/CC;component/Images/ty_wire.png&quot;" saved="True" type="System.String">
+      <item name="remove" value="&quot;1D&quot;" saved="True" type="System.String" />
+    </item>
   </item>
   <item name="func">
     <item name="NOT" value="&quot;/CC;component/Images/bi_not.png&quot;" saved="True" type="System.String">
