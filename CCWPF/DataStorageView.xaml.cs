@@ -31,6 +31,10 @@ namespace X13.CC {
       InitializeComponent();
       this.DataContext = this;
 
+      DVar<bool> av=Topic.root.Get<bool>("/local/settings/DSView/_advancedView");
+      TopicView._advancedView=av.value;
+      av.changed+=new Action<Topic, TopicChanged>(av_changed);
+
       Topic _root=Topic.root;
       _root.Subscribe("/#", _root_changed);
       {
@@ -58,6 +62,15 @@ namespace X13.CC {
         return s!=null?s.ptr:Topic.root;
       }
     }
+    private void av_changed(Topic sender, TopicChanged param) {
+      DVar<bool> av=sender as DVar<bool>;
+      if(av==null || param.Art!=TopicChanged.ChangeArt.Value) {
+        return;
+      }
+      av.saved=true;
+      TopicView._advancedView=av.value;
+      this.Dispatcher.BeginInvoke(new Action(TopicView.root.Refresh), System.Windows.Threading.DispatcherPriority.Background);
+    }
 
     private void _root_changed(Topic sender, TopicChanged param) {
       this.Dispatcher.BeginInvoke(new Action<Topic, TopicChanged.ChangeArt>(ProccessChanges), System.Windows.Threading.DispatcherPriority.Background, sender, param.Art);
@@ -65,7 +78,7 @@ namespace X13.CC {
     private void ProccessChanges(Topic oCur, TopicChanged.ChangeArt art) {
       TopicView parent=TopicView.root.Get(oCur.parent, true, art!=TopicChanged.ChangeArt.Remove);
       if(parent!=null) {
-        if(oCur.name==("_declarer") && art==TopicChanged.ChangeArt.Value) {
+        if(oCur.name=="_declarer" && art==TopicChanged.ChangeArt.Value) {
           parent.AttrChanged(oCur);
         } else {
           TopicView cur=parent.Get(oCur, false, art!=TopicChanged.ChangeArt.Remove);
@@ -280,16 +293,21 @@ namespace X13.CC {
       return null;
     }
 
+
   }
   public class TopicView : INotifyPropertyChanged {
+    internal static bool _advancedView;
+
     public static TopicView root { get; private set; }
     static TopicView() {
       root=new TopicView(Topic.root);
     }
+
     private ObservableCollection<TopicView> _children;
     private ItemAction _action;
     private TopicView _parent;
     private DVar<string> _declarer;
+    private ICollectionView _childrenView;
 
     private TopicView(Topic origin) {
       this.ptr=origin;
@@ -461,8 +479,28 @@ namespace X13.CC {
               _children.Add(cur);
             }
           }
+          _childrenView=System.Windows.Data.CollectionViewSource.GetDefaultView(_children);
+          _childrenView.Filter=Filter;
         }
         return _children;
+      }
+    }
+    private bool Filter(object item) {
+      if(_advancedView) {
+        return true;
+      }
+      if(ptr!=null && ptr.valueType==typeof(PiLogram)) {
+        return false;
+      }
+      TopicView t=item as TopicView;
+      return (t!=null && !t.name.StartsWith("_"));
+    }
+    internal void Refresh() {
+      if(_children!=null) {
+        _childrenView.Refresh();
+        foreach(var tv in _children) {
+          tv.Refresh();
+        }
       }
     }
     public bool edited { get; private set; }
