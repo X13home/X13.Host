@@ -462,7 +462,7 @@ namespace X13.MQTT {
       //}
     }
     public override string ToString() {
-      return string.Format("{0} - {1}{2}[{3}] {4},{5:X4}", MessageType.PUBLISH, this.Retained?"*":".", Path, _payload==null?"null":_payload.Length.ToString(), this.QualityOfService, this.MessageID);
+      return string.Format("{0} - {1}{2}[{3}] {4},{5:X4}", MessageType.PUBLISH, this.Retained?"*":".", Path, Payload, this.QualityOfService, this.MessageID);
     }
   }
 

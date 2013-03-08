@@ -32,6 +32,7 @@ namespace X13.Svc {
     private DateTime _firstDT;
     private DVar<LogLevel> _lThreshold;
     private PersistentStorage _pStorage;
+    private DVar<bool> _debug;
     public X13Svc() {
       InitializeComponent();
     }
@@ -131,8 +132,10 @@ namespace X13.Svc {
       foreach(Topic acl in Topic.root.Get("/local/security/acls").children){
         SetAcl(acl, Topic.root);
       }
+      _debug=Topic.root.Get<bool>("/system/log/Repository");
       Topic.paused=false;
-      //root.Subscribe("/#", MQTT_Main_changed);
+
+      root.Subscribe("/#", MQTT_Main_changed);
       MqBroker.Open();
     }
     private void SetTopic<T>(string path, T value, Topic mp) {
@@ -211,9 +214,6 @@ namespace X13.Svc {
               byte[] ba=Encoding.UTF8.GetBytes(rez+"\r\n");
               fs.Write(ba, 0, ba.Length);
             }
-            //using(StreamWriter lf=File.AppendText(_lfPath)) {
-            //  lf.WriteLine(rez);
-            //}
             break;
           }
           catch(System.IO.IOException) {
@@ -270,7 +270,10 @@ namespace X13.Svc {
       }
     }
 
-    private static void MQTT_Main_changed(Topic sender, TopicChanged param) {
+    private void MQTT_Main_changed(Topic sender, TopicChanged param) {
+      if(!_debug.value) {
+        return;
+      }
       var ir=param.Initiator;
       switch(param.Art) {
       case TopicChanged.ChangeArt.Add:

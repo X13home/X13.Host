@@ -40,7 +40,7 @@ namespace X13.CC {
     #endregion Settings
 
     static LogramView() {
-      _settings=Topic.root.Get("/local/settings/Logram");
+      _settings=Topic.root.Get("/system/CC/Logram");
       _statements=new List<StatementDescription>();
       Topic decls=Topic.root.Get("/system/declarers/func");
       //decls.Subscribe("+", DeclarerChanged);

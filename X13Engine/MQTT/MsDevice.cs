@@ -215,7 +215,7 @@ namespace X13.MQTT {
             rv|=msgData[i];
           }
           val=rv;
-          Log.Debug("{0}={1}, {2}", ti.path, rv, Convert.ToString(msgData));
+          //Log.Debug("{0}={1}, {2}", ti.path, rv, BitConverter.ToString(msgData));
           }
           break;
         case TypeCode.String:

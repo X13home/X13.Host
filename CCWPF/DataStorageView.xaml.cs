@@ -31,7 +31,7 @@ namespace X13.CC {
       InitializeComponent();
       this.DataContext = this;
 
-      DVar<bool> av=Topic.root.Get<bool>("/local/settings/DSView/_advancedView");
+      DVar<bool> av=Topic.root.Get<bool>("/system/CC/DSView/_advancedView");
       TopicView._advancedView=av.value;
       av.changed+=new Action<Topic, TopicChanged>(av_changed);
 
@@ -44,6 +44,7 @@ namespace X13.CC {
         tv1.Get(_root.Get("/local/settings"));
       }
       TopicView.root.IsExpanded=true;
+      TopicView.root.Get(Topic.root.Get("/plc")).IsExpanded=true;
       RootNodes=new ObservableCollection<TopicView>();
       RootNodes.Add(TopicView.root);
     }

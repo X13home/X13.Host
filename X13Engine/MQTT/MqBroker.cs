@@ -27,6 +27,7 @@ namespace X13.MQTT {
     private static Topic _mq;
     private static DVar<string> _admGroup;
     private static List<MqBroker> _connections;
+    private static DVar<bool> _debug;
 
     public static void Open() {
       _mq=Topic.root.Get("/local/MQ");
@@ -34,6 +35,7 @@ namespace X13.MQTT {
       _connections=new List<MqBroker>();
       _tcp.Start();
       _admGroup=Topic.root.Get<string>("/local/security/groups/0");
+      _debug=Topic.root.Get<bool>("/system/log/MQTT");
       _tcp.BeginAcceptTcpClient(new AsyncCallback(Connect), null);
       Log.Info("Broker started on {0}", Environment.MachineName);
     }
@@ -119,7 +121,9 @@ namespace X13.MQTT {
       this.Send(pm);
     }
     private void Received(MqMessage msg) {
-      //Log.Debug("R {0} {1}", _owner.name, msg);
+      if(_debug) {
+        Log.Debug("R {0} {1}", _owner==null?string.Empty:_owner.name, msg);
+      }
       int toDelay=ConnInfo==null?600:(ConnInfo.keepAlive*1505);
       switch(msg.MsgType) {
       case MessageType.CONNECT:
@@ -254,6 +258,9 @@ namespace X13.MQTT {
     private void Send(MqMessage msg) {
       if(_stream!=null) {
         _stream.Send(msg);
+        if(_debug) {
+          Log.Debug("S {0} {1}", _owner==null?string.Empty:_owner.name, msg);
+        }
       }
     }
 

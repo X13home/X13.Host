@@ -142,7 +142,7 @@ namespace X13.CC {
       } else if(_clState==0) {
         _clState=1;
         BrokerState="Connecting";
-          _cl.Connect(brokerUrl.value);
+        _cl.Connect(brokerUrl.value);
       } else if(_clState==2) {
         dockManager.DeserializationCallback=new DockingManager.DeserializationCallbackHandler(DSPane);
         if(Settings.Layout!=null) {
@@ -198,7 +198,6 @@ namespace X13.CC {
       return rez;
     }
     private void Window_Closing(object sender, CancelEventArgs e) {
-      _cl.Disconnect();
       {
         var node=Settings.Layout;
         MemoryStream ms=new MemoryStream();
@@ -213,6 +212,8 @@ namespace X13.CC {
         Settings.MainWindowHeight=(int)this.Height;
 
       }
+      System.Threading.Thread.Sleep(150);
+      _cl.Disconnect();
       Topic.Export(_settPath, Topic.root.Get("/local/settings"));
     }
     private int _clState=0;
