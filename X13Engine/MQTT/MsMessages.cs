@@ -405,11 +405,12 @@ namespace X13.MQTT {
         break;
       case TypeCode.Int64:        
         {
-          ulong v=(ulong)(long)t.GetValue();
+          long vo=(long)t.GetValue();
+          long v=vo;
           do {
             ret.Add((byte)v);
             v=v>>8;
-          } while(v>0);
+          } while(vo<0?(v<-1 || (ret[ret.Count-1]&0x80)==0):(v>0 || (ret[ret.Count-1]&0x80)==0x80));
         }
         break;
       case TypeCode.String: {
