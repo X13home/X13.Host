@@ -105,9 +105,8 @@ namespace X13.MQTT {
       _tOut=new Timer(new TimerCallback(TimeOut), null, 900, Timeout.Infinite);
     }
 
-
     private void OwnerChanged(Topic sender, TopicChanged param) {
-      if(sender.path.StartsWith("/local") || param.Visited(_mq, false) || param.Visited(_owner, true) || !CheckAcl(ConnInfo.userName, sender, TopicAcl.Subscribe)) {
+      if(sender!=_mq && (sender.path.StartsWith("/local") || param.Visited(_mq, false) || param.Visited(_owner, true) || !CheckAcl(ConnInfo.userName, sender, TopicAcl.Subscribe))) {
         return;
       }
       MqPublish pm;

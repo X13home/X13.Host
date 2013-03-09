@@ -133,9 +133,10 @@ namespace X13.MQTT {
         this.Send(ConnInfo);
         _owner.Subscribe("/#", OwnerChanged);
         _tOut.Change(3000, _keepAliveMS);       // more often than not
-        _tLoaded.Change(1500, 0);
+        _tLoaded.Change(6500, 0);
       }
       catch(Exception ex) {
+        _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
         Topic.paused=false;
         Log.Error("Connect to {0}:{1} failed, {2}", addr, port, ex.Message);
         if(_statusDelegate!=null) {
@@ -253,6 +254,11 @@ namespace X13.MQTT {
       }
     }
     private void ProccessPublishMsg(MqPublish pm) {
+      if(pm.Path.Equals(_mq.path)) {
+        LoadedCB(null);
+        Log.Info("MQTT Loaded");
+        return;
+      }
       Topic cur;
       if(!string.IsNullOrEmpty(pm.Payload)) {         // Publish
         if(!Topic.root.Exist(pm.Path, out cur)) {
