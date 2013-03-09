@@ -60,7 +60,6 @@ Global
 		{D085BC7C-2010-4276-B2F6-B0C6CD2C0B82}.Debug|x86.Build.0 = Debug|x86
 		{D085BC7C-2010-4276-B2F6-B0C6CD2C0B82}.Release|Any CPU.ActiveCfg = Release|x86
 		{D085BC7C-2010-4276-B2F6-B0C6CD2C0B82}.Release|Mixed Platforms.ActiveCfg = Release|x86
-		{D085BC7C-2010-4276-B2F6-B0C6CD2C0B82}.Release|Mixed Platforms.Build.0 = Release|x86
 		{D085BC7C-2010-4276-B2F6-B0C6CD2C0B82}.Release|x86.ActiveCfg = Release|x86
 		{D085BC7C-2010-4276-B2F6-B0C6CD2C0B82}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
