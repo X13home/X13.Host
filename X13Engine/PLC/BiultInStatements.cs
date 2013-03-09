@@ -35,6 +35,7 @@ namespace X13.PLC {
       PiStatement.AddStatemen("comp_le", typeof(Comparer));
       PiStatement.AddStatemen("MathExpr", typeof(MathExpr));
       PiStatement.AddStatemen("Switch", typeof(Switch));
+      PiStatement.AddStatemen("ZBuffer", typeof(ZBuffer));
       PiStatement.AddStatemen("Average", typeof(Average));
       PiStatement.AddStatemen("Sum", typeof(MathOp));
       PiStatement.AddStatemen("Sub", typeof(MathOp));
@@ -60,17 +61,17 @@ namespace X13.PLC {
 
     private class dAnd : IStatement {
       public void Init(DVar<PiStatement> model) {
-        AddPin<int>(model, "A");
-        AddPin<int>(model, "B");
-        AddPin<int>(model, "Q");
+        AddPin<long>(model, "A");
+        AddPin<long>(model, "B");
+        AddPin<long>(model, "Q");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        int ret=-1;  // 0xFFFFFFFF
-        foreach(DVar<int> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(int) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<int>>()) {
+        long ret=-1;  // 0xFFFFFFFF
+        foreach(DVar<long> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(long) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<long>>()) {
           ret&=pin.value;
         }
-        model.Get<int>("Q").value=ret;
+        model.Get<long>("Q").value=ret;
       }
 
       public void DeInit() {
@@ -79,17 +80,17 @@ namespace X13.PLC {
 
     private class dOr : IStatement {
       public void Init(DVar<PiStatement> model) {
-        AddPin<int>(model, "A");
-        AddPin<int>(model, "B");
-        AddPin<int>(model, "Q");
+        AddPin<long>(model, "A");
+        AddPin<long>(model, "B");
+        AddPin<long>(model, "Q");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        int ret=0;
-        foreach(DVar<int> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(int) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<int>>()) {
+        long ret=0;
+        foreach(DVar<long> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(long) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<long>>()) {
           ret|=pin;
         }
-        model.Get<int>("Q").value=ret;
+        model.Get<long>("Q").value=ret;
       }
 
       public void DeInit() {
@@ -98,17 +99,17 @@ namespace X13.PLC {
 
     private class dXor : IStatement {
       public void Init(DVar<PiStatement> model) {
-        AddPin<int>(model, "A");
-        AddPin<int>(model, "B");
-        AddPin<int>(model, "Q");
+        AddPin<long>(model, "A");
+        AddPin<long>(model, "B");
+        AddPin<long>(model, "Q");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        int ret=0;
-        foreach(DVar<int> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(int) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<int>>()) {
+        long ret=0;
+        foreach(DVar<long> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(long) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<long>>()) {
           ret^=pin;
         }
-        model.Get<int>("Q").value=ret;
+        model.Get<long>("Q").value=ret;
       }
 
       public void DeInit() {
@@ -133,13 +134,13 @@ namespace X13.PLC {
 
     private class Shl : IStatement {
       public void Init(DVar<PiStatement> model) {
-        AddPin<int>(model, "A");
-        AddPin<int>(model, "B");
-        AddPin<int>(model, "Q");
+        AddPin<long>(model, "A");
+        AddPin<long>(model, "B");
+        AddPin<long>(model, "Q");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        model.Get<int>("Q").value=model.Get<int>("A").value<<model.Get<int>("B").value;
+        model.Get<long>("Q").value=model.Get<long>("A").value<<(int)model.Get<long>("B").value;
       }
 
       public void DeInit() {
@@ -147,13 +148,13 @@ namespace X13.PLC {
     }
     private class Shr : IStatement {
       public void Init(DVar<PiStatement> model) {
-        AddPin<int>(model, "A");
-        AddPin<int>(model, "B");
-        AddPin<int>(model, "Q");
+        AddPin<long>(model, "A");
+        AddPin<long>(model, "B");
+        AddPin<long>(model, "Q");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        model.Get<int>("Q").value=model.Get<int>("A").value>>model.Get<int>("B").value;
+        model.Get<long>("Q").value=model.Get<long>("A").value>>(int)model.Get<long>("B").value;
       }
 
       public void DeInit() {
@@ -197,24 +198,30 @@ namespace X13.PLC {
 
     private class Impuls : IStatement {
       private DVar<bool> _input;
+      private DVar<bool> _reset;
       private DVar<bool> _output;
       private DVar<bool> _iOutput;
-      private DVar<uint> _onDelay;
-      private DVar<uint> _offDelay;
+      private DVar<long> _onDelay;
+      private DVar<long> _offDelay;
       private int _state;
       private Timer _timer;
 
       public void Init(DVar<PiStatement> model) {
         _input=AddPin<bool>(model, "Stb");
+        _reset=AddPin<bool>(model, "Reset");
         _output=AddPin<bool>(model, "Q");
         _iOutput=AddPin<bool>(model, "!Q");
-        _onDelay=AddPin<uint>(model, "_onDelay");
-        _offDelay=AddPin<uint>(model, "_offDelay");
+        _onDelay=AddPin<long>(model, "_onDelay");
+        _offDelay=AddPin<long>(model, "_offDelay");
         model.Get<bool>("!Q").value=!model.Get<bool>("Q").value;
         _state=0;
         _timer=new Timer((o) => process(), null, Timeout.Infinite, Timeout.Infinite);
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
+        if(_reset.value) {
+          _state=0;
+          process();
+        }
         if(_input==source && _input.value) {
           if(_onDelay.value>0) {
             _state=1;
@@ -261,8 +268,8 @@ namespace X13.PLC {
       private DVar<bool> _enable;
       private DVar<bool> _output;
       private DVar<bool> _iOutput;
-      private DVar<uint> _offDelay;
-      private DVar<uint> _period;
+      private DVar<long> _offDelay;
+      private DVar<long> _period;
       private Timer _timerOn;
       private Timer _timerOff;
 
@@ -270,8 +277,8 @@ namespace X13.PLC {
         _enable=AddPin<bool>(model, "En");
         _output=AddPin<bool>(model, "Q");
         _iOutput=AddPin<bool>(model, "!Q");
-        _offDelay=AddPin<uint>(model, "_offDelay");
-        _period=AddPin<uint>(model, "_period");
+        _offDelay=AddPin<long>(model, "_offDelay");
+        _period=AddPin<long>(model, "_period");
         _iOutput.value=!_output.value;
         _timerOn=new Timer(new TimerCallback(SwitchOn));
         _timerOff=new Timer(new TimerCallback(SwitchOff));
@@ -330,12 +337,12 @@ namespace X13.PLC {
       }
 
       private DVar<string> declarer;
-      private DVar<decimal> _a;
-      private DVar<decimal> _b;
+      private DVar<double> _a;
+      private DVar<double> _b;
 
       public void Init(DVar<PiStatement> model) {
-        _a=AddPin<Decimal>(model, "A");
-        _b=AddPin<Decimal>(model, "B");
+        _a=AddPin<double>(model, "A");
+        _b=AddPin<double>(model, "B");
         declarer=model.Get<string>("_declarer");
           AddPin<bool>(model, "Q");
           AddPin<bool>(model, "!Q");
@@ -365,14 +372,14 @@ namespace X13.PLC {
 
     private class Counter : IStatement {
       private DVar<bool> _inc, _set, _reset, _dec;
-      private DVar<int> _val, _out;
+      private DVar<long> _val, _out;
       public void Init(DVar<PiStatement> model) {
         _inc=AddPin<bool>(model, "+1");
         _set=AddPin<bool>(model, "Set");
-        _val=AddPin<int>(model, "Value");
+        _val=AddPin<long>(model, "Value");
         _reset=AddPin<bool>(model, "Reset");
         _dec=AddPin<bool>(model, "-1");
-        _out=AddPin<int>(model, "Out");
+        _out=AddPin<long>(model, "Out");
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         _out.saved=true;
@@ -391,17 +398,17 @@ namespace X13.PLC {
     }
 
     private class Average : IStatement {
-      private DVar<Decimal> _in, _out;
+      private DVar<double> _in, _out;
       private DVar<bool> _strobe;
-      private DVar<uint> _capacity;
-      private Queue<Decimal> _buf;
+      private DVar<long> _capacity;
+      private Queue<double> _buf;
       public void Init(DVar<PiStatement> model) {
-        _in=AddPin<Decimal>(model, "In");
+        _in=AddPin<double>(model, "In");
         _strobe=AddPin<bool>(model, "Stb");
-        _capacity=AddPin<uint>(model, "_period");
-        _out=AddPin<Decimal>(model, "Out");
+        _capacity=AddPin<long>(model, "_period");
+        _out=AddPin<double>(model, "Out");
         _out.value=_in.value;
-        _buf=new Queue<decimal>();
+        _buf=new Queue<double>();
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         if(source==_strobe && _strobe.value) {
@@ -418,17 +425,17 @@ namespace X13.PLC {
 
     private class Switch : IStatement {
       public void Init(DVar<PiStatement> model) {
-        AddPin<byte>(model, "Sel");
-        AddPin<Decimal>(model, "0");
-        AddPin<decimal>(model, "1");
-        AddPin<decimal>(model, "Out");
+        AddPin<long>(model, "Sel");
+        AddPin<double>(model, "0");
+        AddPin<double>(model, "1");
+        AddPin<double>(model, "Out");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        string sel=model.Get<byte>("Sel").value.ToString();
-        DVar<decimal> inp;
-        if(model.Exist(sel) && (inp=model.Get<Decimal>(sel))!=null) {
-          model.Get<decimal>("Out").value=inp.value;
+        string sel=model.Get<long>("Sel").value.ToString();
+        DVar<double> inp;
+        if(model.Exist(sel) && (inp=model.Get<double>(sel))!=null) {
+          model.Get<double>("Out").value=inp.value;
         }
       }
 
@@ -437,7 +444,7 @@ namespace X13.PLC {
     }
     private class Pile : IStatement {
       public void Init(DVar<PiStatement> model) {
-        AddPin<Decimal>(model, "A");
+        AddPin<double>(model, "A");
         AddPin<bool>(model, "Push");
         AddPin<string>(model, "_id_A");
         AddPin<string>(model, "_id_B");
@@ -447,7 +454,7 @@ namespace X13.PLC {
         AddPin<string>(model, "_id_F");
         AddPin<string>(model, "_id_G");
         AddPin<string>(model, "_fileName");
-        AddPin<uint>(model, "_capacity");
+        AddPin<long>(model, "_capacity");
         var xFmt=AddPin<string>(model, "_XFormat");
         if(string.IsNullOrEmpty(xFmt.value)) {
           xFmt.value="yyyy-MM-dd HH:mm:ss";
@@ -470,11 +477,11 @@ namespace X13.PLC {
             old=new string[] { string.Empty };
           }
 
-          uint cap=model.Get<uint>("_capacity").value;
+          long cap=model.Get<long>("_capacity").value;
           string header="DT";
           string cur=DateTime.Now.ToString(model.Get<string>("_XFormat").value);
           string valS;
-          foreach(var inp in model.children.Where(z => z is DVar<decimal> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<Decimal>>()) {
+          foreach(var inp in model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
             var id=model.Get<string>(string.Format("_id_{0}", inp.name)).value;
             if(string.IsNullOrEmpty(id)) {
               id=inp.name;
@@ -511,7 +518,7 @@ namespace X13.PLC {
       private DVar<string> _feed;
       private DVar<string> _key;
       public void Init(DVar<PiStatement> model) {
-        AddPin<Decimal>(model, "A");
+        AddPin<double>(model, "A");
         _push=AddPin<bool>(model, "Push");
         _feed=AddPin<string>(model, "_feed");
         _key=AddPin<string>(model, "_key");
@@ -520,7 +527,7 @@ namespace X13.PLC {
       public void Calculate(DVar<PiStatement> model, Topic source) {
         if(!string.IsNullOrEmpty(_feed.value) && !string.IsNullOrEmpty(_key.value) && source==_push && _push.value) {
           StringBuilder sb=new StringBuilder();
-          foreach(var inp in model.children.Where(z => z is DVar<decimal> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<Decimal>>()) {
+          foreach(var inp in model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
             string valS=inp.value.ToString(CultureInfo.InvariantCulture);
             {
               int i=Math.Max(valS.IndexOf('.'), 6);
@@ -571,8 +578,8 @@ namespace X13.PLC {
     }
 
     private class Sun : IStatement {
-      private DVar<Decimal> _dLat;
-      private DVar<Decimal> _dLon;
+      private DVar<double> _dLat;
+      private DVar<double> _dLon;
       private DVar<bool> _dOut;
       private DVar<DateTime> _dSunrise;
       private DVar<DateTime> _dSunset;
@@ -580,8 +587,8 @@ namespace X13.PLC {
       private Timer _evnt;
 
       public void Init(DVar<PiStatement> model) {
-        _dLat=AddPin<Decimal>(model, "Lat");
-        _dLon=AddPin<Decimal>(model, "Lon");
+        _dLat=AddPin<double>(model, "Lat");
+        _dLon=AddPin<double>(model, "Lon");
         _dSunrise=AddPin<DateTime>(model, "Sunrise");
         _dSunset=AddPin<DateTime>(model, "Sunset");
         _dOut=AddPin<bool>(model, "Out");
@@ -662,15 +669,15 @@ namespace X13.PLC {
       }
 
       public void Init(DVar<PiStatement> model) {
-        AddPin<decimal>(model, "A");
-        AddPin<decimal>(model, "B");
-        AddPin<decimal>(model, "Q");
+        AddPin<double>(model, "A");
+        AddPin<double>(model, "B");
+        AddPin<double>(model, "Q");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        decimal ret=model.Get<decimal>("A");
+        double ret=model.Get<double>("A");
         string op=model.Get<string>("_declarer");
-        foreach(DVar<decimal> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(decimal) && z.name[0]>'A' && z.name[0]<='H')).Cast<DVar<decimal>>()) {
+        foreach(DVar<double> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(double) && z.name[0]>'A' && z.name[0]<='H')).Cast<DVar<double>>()) {
           switch(op) {
           case "Sum":
             ret+=pin.value;
@@ -685,7 +692,7 @@ namespace X13.PLC {
             if(pin.value!=0) {
               ret/=pin.value;
             } else {
-              ret=decimal.MaxValue;
+              ret=double.MaxValue;
             }
             break;
           case "Remainder":
@@ -695,7 +702,7 @@ namespace X13.PLC {
             break;
           }
         }
-        DVar<decimal> outp=model.Get<decimal>("Q");
+        DVar<double> outp=model.Get<double>("Q");
         outp.saved=true;
         outp.value=ret;
       }
@@ -925,6 +932,36 @@ namespace X13.PLC {
 
       public void DeInit() {
       }
+    }
+    private class ZBuffer : IStatement {
+      private DVar<bool> _latch;
+      private DVar<bool> _oe;
+      private DVar<double> _in;
+      private DVar<double> _out;
+      private DVar<double> _val;
+      public void Init(DVar<PiStatement> model) {
+        _latch=AddPin<bool>(model, "Latch");
+        _oe=AddPin<bool>(model, "OE");
+        _in=AddPin<double>(model, "In");
+        _out=AddPin<double>(model, "Out");
+        _val=AddPin<double>(model, "_val");
+      }
+
+      public void Calculate(DVar<PiStatement> model, Topic source) {
+        if(source==_val) {
+          return;
+        }
+        if((source==_in && _latch.value) || (source==_latch)) {
+          _val.value=_in.value;
+        }
+        if(_oe.value) {
+          _out.value=_val.value;
+        }
+      }
+
+      public void DeInit() {
+      }
+
     }
   }
 }

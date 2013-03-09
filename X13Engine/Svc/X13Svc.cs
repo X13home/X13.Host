@@ -32,6 +32,7 @@ namespace X13.Svc {
     private DateTime _firstDT;
     private DVar<LogLevel> _lThreshold;
     private PersistentStorage _pStorage;
+    private DVar<bool> _debug;
     public X13Svc() {
       InitializeComponent();
     }
@@ -62,15 +63,16 @@ namespace X13.Svc {
       BiultInStatements.Initialize();
       _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 1050-DateTime.Now.Millisecond, 1000);
       {
-        Topic nowTp=Topic.root.Get("/system/now");
+        DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/system/now");
         DateTime nowDT=DateTime.Now;
-        nowTp.Get<int>("second").value=nowDT.Second;
-        nowTp.Get<int>("minute").value=nowDT.Minute;
-        nowTp.Get<int>("hour").value=nowDT.Hour;
-        nowTp.Get<DayOfWeek>("wDay").value=nowDT.DayOfWeek;
-        nowTp.Get<int>("day").value=nowDT.Day;
-        nowTp.Get<int>("month").value=nowDT.Month;
-        nowTp.Get<int>("year").value=nowDT.Year;
+        nowTp.value=nowDT;
+        nowTp.Get<long>("second").value=nowDT.Second;
+        nowTp.Get<long>("minute").value=nowDT.Minute;
+        nowTp.Get<long>("hour").value=nowDT.Hour;
+        nowTp.Get<long>("wDay").value=(long)nowDT.DayOfWeek;
+        nowTp.Get<long>("day").value=nowDT.Day;
+        nowTp.Get<long>("month").value=nowDT.Month;
+        nowTp.Get<long>("year").value=nowDT.Year;
 
       }
       #region Load Security
@@ -93,14 +95,25 @@ namespace X13.Svc {
       Topic.paused=true;
       _pStorage=new PersistentStorage();
       bool db=_pStorage.Open(pmPath);
-      string dbVersion="0.2.1";
+      string dbVersion="0.2.2";
       var dbVer=Topic.root.Get<string>("/system/db/version");
       if(!db || dbVer.value!=dbVersion) {
         dbVer.saved=true;
         dbVer.value=dbVersion;
         _lThreshold.saved=true;
+#if DEBUG
+        _lThreshold.value=LogLevel.Debug;
+#else
         _lThreshold.value=LogLevel.Info;
+#endif
         Log.Info("Load default declarers");
+        //Topic decl;
+        //if(Topic.root.Exist("/system/declarers", out decl)) {
+        //  Topic.paused=false;
+        //  decl.Remove();
+        //  Thread.Sleep(500);
+        //  Topic.paused=true;
+        //}
         var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.PLC.declarers.xst");
         if(st!=null) {
           using(var sr=new StreamReader(st)){
@@ -115,13 +128,14 @@ namespace X13.Svc {
       if(rf12.value.SerialPortName==null) {
         rf12.value.SerialPortName=string.Empty;
       }
-      root.Get<string>("/system/declarers/L_Folder").value="/CC;component/Images/ty_PLC.png";
       root.Get<string>("/plc/_declarer").value="L_Folder";
       foreach(Topic acl in Topic.root.Get("/local/security/acls").children){
         SetAcl(acl, Topic.root);
       }
+      _debug=Topic.root.Get<bool>("/system/log/Repository");
       Topic.paused=false;
-      //root.Subscribe("/#", MQTT_Main_changed);
+
+      root.Subscribe("/#", MQTT_Main_changed);
       MqBroker.Open();
     }
     private void SetTopic<T>(string path, T value, Topic mp) {
@@ -200,9 +214,6 @@ namespace X13.Svc {
               byte[] ba=Encoding.UTF8.GetBytes(rez+"\r\n");
               fs.Write(ba, 0, ba.Length);
             }
-            //using(StreamWriter lf=File.AppendText(_lfPath)) {
-            //  lf.WriteLine(rez);
-            //}
             break;
           }
           catch(System.IO.IOException) {
@@ -238,20 +249,20 @@ namespace X13.Svc {
     private void Tick1Sec(object o) {
       DateTime nowDT=DateTime.Now;
       _1SecTimer.Change(1050-nowDT.Millisecond, 1000);
-      Topic nowTp=Topic.root.Get("/system/now");
-      var ns=nowTp.Get<int>("second");
-      ns.SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+      DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/system/now");
+      nowTp.SetValue(nowDT, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
+      nowTp.Get<long>("second").SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
       if(nowDT.Second==0) {
-        nowTp.Get<int>("minute").SetValue(nowDT.Minute, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+        nowTp.Get<long>("minute").SetValue(nowDT.Minute, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
         if(nowDT.Minute==0) {
-          nowTp.Get<int>("hour").SetValue(nowDT.Hour, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+          nowTp.Get<long>("hour").SetValue(nowDT.Hour, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
           if(nowDT.Hour==0) {
-            nowTp.Get<DayOfWeek>("wDay").SetValue(nowDT.DayOfWeek, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
-            nowTp.Get<int>("day").SetValue(nowDT.Day, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+            nowTp.Get<long>("wDay").SetValue((long)nowDT.DayOfWeek, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
+            nowTp.Get<long>("day").SetValue(nowDT.Day, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
             if(nowDT.Day==1) {
-              nowTp.Get<int>("month").SetValue(nowDT.Month, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+              nowTp.Get<long>("month").SetValue(nowDT.Month, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
               if(nowDT.Month==1) {
-                nowTp.Get<int>("year").SetValue(nowDT.Year, new TopicChanged(TopicChanged.ChangeArt.Value, ns));
+                nowTp.Get<long>("year").SetValue(nowDT.Year, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
               }
             }
           }
@@ -259,7 +270,10 @@ namespace X13.Svc {
       }
     }
 
-    private static void MQTT_Main_changed(Topic sender, TopicChanged param) {
+    private void MQTT_Main_changed(Topic sender, TopicChanged param) {
+      if(!_debug.value) {
+        return;
+      }
       var ir=param.Initiator;
       switch(param.Art) {
       case TopicChanged.ChangeArt.Add:

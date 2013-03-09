@@ -19,11 +19,6 @@ namespace X13.PLC {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public class PiWire : ITopicOwned {
     static PiWire() {
-      if(Topic.brokerMode) {
-        var t1=Topic.root.Get<string>("/system/declarers/Wire");
-        t1.value="/CC;component/Images/ty_wire.png";
-        t1.Get<string>("remove").value="1D";
-      }
     }
 
     [Newtonsoft.Json.JsonProperty]
@@ -33,7 +28,7 @@ namespace X13.PLC {
     private Topic _b;
     private DVar<Topic> _aAlias;
     private DVar<Topic> _bAlias;
-    private DVar<byte> _direction;
+    private DVar<long> _direction;
 
     public PiWire() {
       _dummy=1000;
@@ -66,16 +61,16 @@ namespace X13.PLC {
           if(_owner==null) {
             return 0;
           }
-          _direction=_owner.Get<byte>("direction");
+          _direction=_owner.Get<long>("direction");
         }
-        return _direction.value;
+        return (byte)_direction.value;
       }
       set {
         if(_direction==null) {
           if(_owner==null) {
             return;
           }
-          _direction=_owner.Get<byte>("direction");
+          _direction=_owner.Get<long>("direction");
           _direction.saved=true;
         }
         _direction.value=value;

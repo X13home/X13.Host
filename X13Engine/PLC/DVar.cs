@@ -26,14 +26,13 @@ namespace X13.PLC {
     }
 
     private T _value;
-    private bool _tcObject;
 
     public DVar()
       : base(typeof(T)) {
-      var tc=Type.GetTypeCode(valueType);
-      if(tc==TypeCode.Empty || valueType.IsGenericType) {
+      if(valueType==null || valueType.IsGenericType) {
         throw new ArgumentException();
       }
+      var tc=Type.GetTypeCode(valueType);
       _tcObject=tc==TypeCode.Object;
     }
 
@@ -52,6 +51,9 @@ namespace X13.PLC {
     }
     public override void SetValue(object value, TopicChanged param) {
       try {
+        if(valueType==typeof(object)) {
+          _tcObject=(value==null || Type.GetTypeCode(value.GetType())==TypeCode.Object);
+        }
         T tmp=(T)(!_tcObject?Convert.ChangeType(value, this.valueType):value);
         SetValue(tmp, param);
       }
@@ -99,6 +101,7 @@ namespace X13.PLC {
     protected override void onChange(Topic sender, TopicChanged param) {
       if(valueType==typeof(Topic) && sender.Equals(_value)) {
         if(param.Art==TopicChanged.ChangeArt.Add) {
+          base._json=null;
           Publish(this, new TopicChanged(param) { Art=TopicChanged.ChangeArt.Value, Source=this });
         } else if(param.Art==TopicChanged.ChangeArt.Remove) {
           this.Remove();

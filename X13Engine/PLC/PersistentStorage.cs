@@ -52,13 +52,31 @@ namespace X13.PLC {
         string v1 = reader.GetString(reader.GetOrdinal("path"));
         string v2 = reader.GetString(reader.GetOrdinal("type"));
         string v3 = reader.GetString(reader.GetOrdinal("val"));
-        Type vt;
-        if(string.IsNullOrEmpty(v2)) {
-          vt=null;
-        } else {
-          vt=Type.GetType(v2);
+        Topic cur;
+        if(!Topic.root.Exist(v1, out cur) || (cur.valueType==null && !string.IsNullOrEmpty(v2))) {
+          Type vt;
+          if(string.IsNullOrEmpty(v2)) {
+            vt=null;
+          } else {
+            vt=Type.GetType(v2);
+            switch(Type.GetTypeCode(vt)) {
+            case TypeCode.Byte:
+            case TypeCode.Int16:
+            case TypeCode.Int32:
+            case TypeCode.SByte:
+            case TypeCode.UInt16:
+            case TypeCode.UInt32:
+            case TypeCode.UInt64:
+              vt=typeof(long);
+              break;
+            case TypeCode.Decimal:
+            case TypeCode.Single:
+              vt=typeof(double);
+              break;
+            }
+          }
+          cur=Topic.GetP(v1, vt, mq);
         }
-        Topic cur=Topic.GetP(v1, vt, mq);
         cur.saved=true;
         cur.FromJson(v3, mq);
       }
@@ -120,12 +138,14 @@ namespace X13.PLC {
       cmd.Parameters.Add(new SqliteParameter { ParameterName = "@path", Value = act.src.path });
       if(act.art==PLC.TopicChanged.ChangeArt.Value) {
         cmd.CommandText="INSERT OR REPLACE INTO topics VALUES (@path, @type, @val);";
-        cmd.Parameters.Add(new SqliteParameter { ParameterName = "@type", Value = act.src.valueType==null?null:act.src.valueType.FullName });
-        cmd.Parameters.Add(new SqliteParameter { ParameterName = "@val", Value = act.src.ToJson() });
-        //Log.Debug("$+{0}[{1}]={2}", act.src.path, act.src.valueType==null?null:act.src.valueType.FullName, act.src.ToJson());
+        string st=act.src.valueType==null?null:act.src.valueType.FullName;
+        cmd.Parameters.Add(new SqliteParameter { ParameterName = "@type", Value = st });
+        string sv=act.src.ToJson();
+        cmd.Parameters.Add(new SqliteParameter { ParameterName = "@val", Value = sv });
+        //Log.Debug("$+{0}[{1}]={2}", act.src.path, st, sv);
       } else if(act.art==PLC.TopicChanged.ChangeArt.Remove) {
         cmd.CommandText="DELETE FROM topics WHERE path=@path;";
-        //Log.Debug("$-{0}", act.src.path, act.src.valueType==null?null:act.src.valueType.FullName, act.src.ToJson());
+        //Log.Debug("$-{0}", act.src.path);
       }
       cmd.ExecuteNonQuery();
     }

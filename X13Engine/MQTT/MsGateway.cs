@@ -20,13 +20,10 @@ namespace X13.MQTT {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public class MsGateway : ITopicOwned {
     private const string P_N="_SerialPortName";
+    private static DVar<bool> _debug;
 
     static MsGateway() {
-      if(Topic.brokerMode) {
-        var t1=Topic.root.Get<string>("/system/declarers/MsGateway");
-        t1.value="/CC;component/Images/ty_gateway.png";
-        t1.Get<string>("remove").value="1D";
-      }
+      _debug=Topic.root.Get<bool>("/system/log/MQTTS");
     }
 
     private SerialPort _port;
@@ -94,7 +91,8 @@ namespace X13.MQTT {
       sBuf.Enqueue(0xC0);
       _port.Write(sBuf.ToArray(), 0, sBuf.Count);
       var dev=GetDeviceByAddr(msg.Addr);
-      Log.Debug("s {0} {1} [{2}]", dev!=null?dev.path:msg.Addr.ToString(), msg.ToString(), BitConverter.ToString(buf));
+      if(_debug) 
+        Log.Debug("s {0} {1} [{2}]", dev!=null?dev.path:msg.Addr.ToString(), msg.ToString(), BitConverter.ToString(buf));
     }
     private void OpenPort(object o) {
       lock(_InputQueue) {
@@ -123,11 +121,13 @@ namespace X13.MQTT {
               _port.DiscardInBuffer();
               byte[] bufO=new byte[] { 0xC0, 0x00, 0x03, 0x01, 0x00, 0xC0 };
               _port.Write(bufO, 0, bufO.Length);   // Send SearchGW
-              Log.Debug("{0} s {1}", pn, BitConverter.ToString(bufO));
+              if(_debug) 
+                Log.Debug("{0} s {1}", pn, BitConverter.ToString(bufO));
               byte[] inBuf=new byte[5];
               Thread.Sleep(34);
               int j=_port.Read(inBuf, 0, 5);
-              Log.Debug("{0} r {1}", pn, BitConverter.ToString(inBuf));
+              if(_debug) 
+                Log.Debug("{0} r {1}", pn, BitConverter.ToString(inBuf));
               if(j==5 && inBuf[2]==0x02) {   // Received GWInfo
                 if(inBuf[3]<_gwAddr) {
                   _gwAddr=inBuf[3];
@@ -229,10 +229,12 @@ namespace X13.MQTT {
         if(msgTyp!=MsMessageType.CONNECT && msgTyp!=MsMessageType.SEARCHGW) {
           dev=GetDeviceByAddr(buf[0]);
           if(dev==null || dev.value==null || dev.value.state==MsDeviceState.Disconnected || dev.value.state==MsDeviceState.Lost) {
-            if(dev==null || dev.value==null) {
-              Log.Debug("unknown device: [{0}]", BitConverter.ToString(buf));
-            } else {
-              Log.Debug("inactive device: [{0}]", BitConverter.ToString(buf));
+            if(_debug) {
+              if(dev==null || dev.value==null) {
+                Log.Debug("unknown device: [{0}]", BitConverter.ToString(buf));
+              } else {
+                Log.Debug("inactive device: [{0}]", BitConverter.ToString(buf));
+              }
             }
             if(buf[0]!=0) {             // broadcast addr
               this.Send(new MsDisconnect() { Addr=buf[0] });
@@ -386,7 +388,9 @@ namespace X13.MQTT {
       }
     }
     private void PrintPacket(DVar<MsDevice> dev, MsMessage msg, byte[] buf=null) {
-      Log.Debug("r {0} {1} [{2}]", dev!=null?dev.path:msg.Addr.ToString("X2"), msg.ToString(), BitConverter.ToString(buf??msg.GetBytes()));
+      if(_debug) {
+        Log.Debug("r {0} {1} [{2}]", dev!=null?dev.path:msg.Addr.ToString("X2"), msg.ToString(), BitConverter.ToString(buf??msg.GetBytes()));
+      }
     }
     private DVar<MsDevice> GetDeviceByAddr(byte addr) {
       return Owner.children.Where(tp => tp is DVar<MsDevice>).Cast<DVar<MsDevice>>().FirstOrDefault(tp => tp.value!=null && tp.value.Addr==addr);

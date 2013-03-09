@@ -71,9 +71,9 @@ namespace X13.View {
 
 
       Topic trp=Topic.root.Get("/local/settings/Transport");
-      foreach(DVar<int> route in trp.children.Where(z => z.valueType==typeof(int)).Cast<DVar<int>>()) {
+      foreach(var route in trp.children.Where(z => z.valueType==typeof(long)).Cast<DVar<long>>()) {
         DateTime now=DateTime.Now.AddMinutes(route.value);
-        foreach(DVar<byte> i in route.children.Where(z => z.valueType==typeof(byte)).Cast<DVar<byte>>()) {
+        foreach(var i in route.children.Where(z => z.valueType==typeof(long)).Cast<DVar<long>>()) {
           try {
             Dow im=(Dow)int.Parse(i.name.Substring(4, 1), NumberStyles.AllowHexSpecifier);
             if((im & mask)!=mask) {
@@ -107,11 +107,11 @@ namespace X13.View {
       }
     }
 
-    private Transport(DVar<int> route, DateTime dt) {
+    private Transport(DVar<long> route, DateTime dt) {
       this.route=route;
       this.dt=dt;
     }
-    public readonly DVar<int> route;
+    public readonly DVar<long> route;
     public readonly DateTime dt;
 
     public int CompareTo(Transport other) {

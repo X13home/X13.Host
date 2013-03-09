@@ -234,7 +234,7 @@ l1: { }
       this.parent=nParent;
       this.parent._childNodes.Add(name, this);
       this._name=name;
-      var fake=Topic.GetP(this.path, this.valueType, root);
+      var fake=Topic.GetP(this.path, this.valueType, _mq);
       UpdateMovedTopicsDeep();
       fake.Remove();    // Remove with correct path
     }

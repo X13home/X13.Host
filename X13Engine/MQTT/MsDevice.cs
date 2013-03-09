@@ -204,31 +204,22 @@ namespace X13.MQTT {
     private void SetValue(TopicInfo ti, byte[] msgData) {
       if(ti!=null) {
         object val;
-        var tc=Type.GetTypeCode(ti.topic.valueType);
-        switch(tc) {
+        switch(Type.GetTypeCode(ti.topic.valueType)) {
         case TypeCode.Boolean:
           val=(msgData[0]!=0);
           break;
-        case TypeCode.SByte:
-          val=(sbyte)msgData[0];
-          break;
-        case TypeCode.Byte:
-          val=msgData[0];
-          break;
-        case TypeCode.Int16:
-          val=(short)((msgData[1]<<8) | msgData[0]);
-          break;
-        case TypeCode.UInt16:
-          val=(ushort)((msgData[1]<<8) | msgData[0]);
-          break;
-        case TypeCode.Int32:
-          val=(int)((msgData[3]<<24) | (msgData[2]<<16) | (msgData[1]<<8) | msgData[0]);
-          break;
-        case TypeCode.UInt32:
-          val=((msgData[3]<<24) | (msgData[2]<<16) | (msgData[1]<<8) | msgData[0]);
+        case TypeCode.Int64: {
+          long rv=(msgData[msgData.Length-1]&0x80)==0?0:-1;
+          for(int i=msgData.Length-1;i>=0;i--){
+            rv<<=8;
+            rv|=msgData[i];
+          }
+          val=rv;
+          //Log.Debug("{0}={1}, {2}", ti.path, rv, BitConverter.ToString(msgData));
+          }
           break;
         case TypeCode.String:
-          val=Encoding.UTF8.GetString(msgData);
+          val=Encoding.Default.GetString(msgData);
           break;
         case TypeCode.Object:
           if(ti.topic.valueType==typeof(byte[])) {
@@ -271,7 +262,7 @@ namespace X13.MQTT {
         this.Send(new MsDisconnect());
         _tryCounter=0;
         state=MsDeviceState.ASleep;
-        var st=Owner.Get<short>(PredefinedTopics._WSleepTime.ToString(), Owner);
+        var st=Owner.Get<long>(PredefinedTopics._WSleepTime.ToString(), Owner);
         st.saved=true;
         st.SetValue((short)duration, new TopicChanged(TopicChanged.ChangeArt.Value, Owner){ Source=st });
       } else if(state!=MsDeviceState.Lost) {
@@ -529,7 +520,7 @@ namespace X13.MQTT {
           var dc=Owner.Get<string>(PredefinedTopics._declarer.ToString(), Owner);
           dc.saved=true;
           dc.value=_declarer;
-          var st=Owner.Get<short>(PredefinedTopics._WSleepTime.ToString(), Owner);
+          var st=Owner.Get<long>(PredefinedTopics._WSleepTime.ToString(), Owner);
           st.saved=true;
           _present=Owner.Get<bool>(PredefinedTopics.present.ToString(), Owner);
           _present.value=(state==MsDeviceState.Connected || state==MsDeviceState.ASleep || state==MsDeviceState.AWake);
@@ -566,32 +557,32 @@ namespace X13.MQTT {
                                           new NTRecord("Ip", typeof(bool)),
                                           new NTRecord("Op", typeof(bool)),
                                           new NTRecord("On", typeof(bool)),
-                                          new NTRecord("Ai", typeof(short)),
-                                          new NTRecord("Av", typeof(short)),
-                                          new NTRecord("Ae", typeof(short)),
-                                          new NTRecord("_B", typeof(byte)),
-                                          new NTRecord("Pp", typeof(byte)),   // PWM positive[29, 30]
-                                          new NTRecord("Pn", typeof(byte)),   // PWM negative[29, 30]
-                                          new NTRecord("_W", typeof(short)),
+                                          new NTRecord("Ai", typeof(long)),   //uint16
+                                          new NTRecord("Av", typeof(long)),   //uint16
+                                          new NTRecord("Ae", typeof(long)),   //uint16
+                                          new NTRecord("_B", typeof(long)),   //uint8
+                                          new NTRecord("Pp", typeof(long)),   //uint8 PWM positive[29, 30]
+                                          new NTRecord("Pn", typeof(long)),   //uint8 PWM negative[29, 30]
+                                          new NTRecord("_W", typeof(long)),   //uint16
                                           new NTRecord("_s", typeof(string)),
                                           new NTRecord("St", typeof(string)),  // Serial port transmit
                                           new NTRecord("Sr", typeof(string)),  // Serial port recieve
                                           new NTRecord("Tz", typeof(bool)),
-                                          new NTRecord("Tb", typeof(sbyte)),
-                                          new NTRecord("TB", typeof(byte)),
-                                          new NTRecord("Tw", typeof(short)),
-                                          new NTRecord("TW", typeof(ushort)),
-                                          new NTRecord("Td", typeof(int)),
-                                          new NTRecord("TD", typeof(uint)),
+                                          new NTRecord("Tb", typeof(long)),   //int8
+                                          new NTRecord("TB", typeof(long)),   //uint8
+                                          new NTRecord("Tw", typeof(long)),   //int16
+                                          new NTRecord("TW", typeof(long)),   //uint16
+                                          new NTRecord("Td", typeof(long)),   //int32
+                                          new NTRecord("TD", typeof(long)),   //uint32
                                           new NTRecord("Ts", typeof(string)),
                                           new NTRecord("Ta", typeof(byte[])),
                                           new NTRecord("Xz", typeof(bool)),   // user defined
-                                          new NTRecord("Xb", typeof(sbyte)),
-                                          new NTRecord("XB", typeof(byte)),
-                                          new NTRecord("Xw", typeof(short)),
-                                          new NTRecord("XW", typeof(ushort)),
-                                          new NTRecord("Xd", typeof(int)),
-                                          new NTRecord("XD", typeof(uint)),
+                                          new NTRecord("Xb", typeof(long)),   //int8
+                                          new NTRecord("XB", typeof(long)),   //uint8
+                                          new NTRecord("Xw", typeof(long)),   //int16
+                                          new NTRecord("XW", typeof(long)),   //uint16
+                                          new NTRecord("Xd", typeof(long)),   //int32
+                                          new NTRecord("XD", typeof(long)),   //uint32
                                           new NTRecord("Xs", typeof(string)),
                                           new NTRecord("Xa", typeof(byte[])),
                                           new NTRecord(PredefinedTopics._declarer.ToString(), typeof(string)),

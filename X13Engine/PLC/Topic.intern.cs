@@ -27,8 +27,7 @@ namespace X13.PLC {
     private static WOUM.BlockingQueue<TopicChanged> _publishQueue;
 
     static Topic() {
-      root=new Topic(null);
-      root.path="/";
+      root=new Topic(null) { _name=string.Empty, path="/" };
       _publishQueue=new WOUM.BlockingQueue<TopicChanged>(PubAction);
       _mq=root.Get("/local/MQ");
       _mq._childNodes=new SortedList<string, Topic>(1);
@@ -96,11 +95,13 @@ namespace X13.PLC {
       return cur;
     }
     private static void PubAction(TopicChanged tc) {
-      if(tc.Task!=null){
+      if(tc.Task!=null) {
         tc.Source=tc.Task.Current;
         tc.Sender.PublishSubs(tc, tc.Subscription.func);
         if(tc.Task.MoveNext()) {
           _publishQueue.Enqueue(new TopicChanged(tc));
+        } else if(tc.Subscription.func.Target!=null && tc.Subscription.func.Target.GetType()==typeof(MQTT.MqBroker)) {
+          _mq.PublishSubs(new TopicChanged(TopicChanged.ChangeArt.Value) { Source=_mq, Sender=_mq, Subscription=tc.Subscription}, tc.Subscription.func);
         }
       } else {
         while(tc.Sender!=null) {
@@ -179,6 +180,8 @@ namespace X13.PLC {
 
     private string _name;
     protected string _json;
+    protected bool _tcObject;
+
     protected int _disposed=0;
     protected SortedList<string, Topic> _childNodes=null;
     private List<Subscription> _subs=new List<Subscription>();
@@ -192,49 +195,78 @@ namespace X13.PLC {
     }
 
     internal string ToJson() {
-      if(_json==null && valueType!=null) {
-        lock(_name) {
+      if(_json==null) {
+        lock(this) {
           if(_json==null) {
-            if(valueType==typeof(Topic)) {
-              Topic link=this.GetValue() as Topic;
-              if(link==null) {
+            try {
+              if(valueType==null) {
                 _json="{ }";
-              } else {
-                string sPath=link.path;
-                Stack<Topic> mPath=new Stack<Topic>();
-                Topic cur=this;
-                do {
-                  mPath.Push(cur);
-                } while((cur=cur.parent)!=root);
-                Stack<Topic> lPath=new Stack<Topic>();
-                cur=link;
-                do {
-                  lPath.Push(cur);
-                } while((cur=cur.parent)!=root);
-                while(mPath.Peek()==lPath.Peek()) {
-                  mPath.Pop();
-                  lPath.Pop();
+              } else if(!_tcObject) {
+                if(valueType.IsEnum) {
+                  _json=(new JObject(
+                    new JProperty("v", JsonConvert.SerializeObject(GetValue())),
+                    new JProperty("+", valueType.FullName))).ToString();
+                } else if(valueType==typeof(string) && string.IsNullOrEmpty((string)GetValue())) {
+                  _json="\"\"";
+                } else if(valueType==typeof(DateTime)) {
+                  _json=JsonConvert.SerializeObject(GetValue(), new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter());
+                } else {
+                  _json=JsonConvert.SerializeObject(GetValue());
                 }
-                if(mPath.Count<4) {
-                  StringBuilder sb=new StringBuilder();
-                  for(int i=mPath.Count-1; i>=0; i--) {
-                    sb.Append("../");
+              } else if(valueType==typeof(Topic)) {
+                Topic link=this.GetValue() as Topic;
+                if(link==null) {
+                  _json=(new JObject(new JProperty("+", "Topic"))).ToString();
+                } else {
+                  string sPath=link.path;
+                  Stack<Topic> mPath=new Stack<Topic>();
+                  Topic cur=this;
+                  do {
+                    mPath.Push(cur);
+                  } while((cur=cur.parent)!=root);
+                  Stack<Topic> lPath=new Stack<Topic>();
+                  cur=link;
+                  do {
+                    lPath.Push(cur);
+                  } while((cur=cur.parent)!=root);
+                  while(mPath.Peek()==lPath.Peek()) {
+                    mPath.Pop();
+                    lPath.Pop();
                   }
-                  while(lPath.Count>0) {
-                    if(lPath.Count>1) {
-                      sb.AppendFormat("{0}/", lPath.Pop().name);
-                    } else {
-                      sb.AppendFormat(lPath.Pop().name);
+                  if(mPath.Count<3) {
+                    StringBuilder sb=new StringBuilder();
+                    for(int i=mPath.Count-1; i>=0; i--) {
+                      sb.Append("../");
                     }
+                    while(lPath.Count>0) {
+                      if(lPath.Count>1) {
+                        sb.AppendFormat("{0}/", lPath.Pop().name);
+                      } else {
+                        sb.AppendFormat(lPath.Pop().name);
+                      }
+                    }
+                    sPath=sb.ToString();
                   }
-                  sPath=sb.ToString();
+                  _json=(new JObject(
+                    new JProperty("p", sPath),
+                    new JProperty("t", link.valueType==null?string.Empty:link.valueType.FullName),
+                    new JProperty("+", "Topic"))).ToString();
                 }
-                _json=(new JObject(
-                  new JProperty("p", sPath),
-                  new JProperty("t", link.valueType==null?string.Empty:link.valueType.FullName))).ToString();
+              } else {
+                object val=GetValue();
+                JObject o;
+                if(val==null) {
+                  o=JObject.Parse("{ }");
+                } else {
+                  o=JObject.FromObject(GetValue());
+                }
+                o["+"]=valueType.FullName;
+                _json=o.ToString();
               }
-            } else {
-              _json=Newtonsoft.Json.JsonConvert.SerializeObject(GetValue());
+
+            }
+            catch(Exception ex) {
+              Log.Error("{0}.ToJson() val={1}, err={2}", this.path, ex.Message, GetValue());
             }
           }
         }
@@ -245,34 +277,74 @@ namespace X13.PLC {
       if(valueType==null || string.IsNullOrEmpty(json)) {
         return;   // do nothing
       }
-      TopicChanged param=new TopicChanged(TopicChanged.ChangeArt.Value) { Source=this };
-      if(initiator!=null) {
-        param.Visited(initiator, true);
-      }
-      if(valueType==typeof(Topic)) {
-        var jo=JObject.Parse(json);
-        string t1=(string)jo["p"];
-        string t2=(string)jo["t"];
-        Type tt;
-        if(string.IsNullOrEmpty(t2)) {
-          tt=null;
-        } else {
-          tt=Type.GetType(t2);
-        }
-        if(t1.StartsWith("../")) {
-          Topic mop=this;
-          while(t1.StartsWith("../")) {
-            t1=t1.Substring(3);
-            mop=mop.parent;
-          }
-          t1=mop.path+"/"+t1;
-        }
-        Topic tc=Topic.GetP(t1, tt, initiator);
-        this.SetValue(tc, param);
-      } else if(valueType!=null) {
-        this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
-      }
+      try {
+        TopicChanged param=new TopicChanged(TopicChanged.ChangeArt.Value, initiator) { Source=this };
+        if(valueType==typeof(Topic)) {
+          var jo=JObject.Parse(json);
 
+          JToken jt1, jt2;
+          if(jo.TryGetValue("p", out jt1) && jo.TryGetValue("t", out jt2)) {
+            string t1=jt1.Value<string>();
+            string t2=jt2.Value<string>();
+            if(t1.StartsWith("../")) {
+              Topic mop=this;
+              while(t1.StartsWith("../")) {
+                t1=t1.Substring(3);
+                mop=mop.parent;
+              }
+              t1=mop.path+"/"+t1;
+            }
+            Topic tc;
+            if(!Topic.root.Exist(t1, out tc)) {
+              Type tt;
+              if(string.IsNullOrEmpty(t2)) {
+                tt=null;
+              } else {
+                tt=Type.GetType(t2);
+                switch(Type.GetTypeCode(tt)) {
+                case TypeCode.Byte:
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.SByte:
+                case TypeCode.UInt16:
+                case TypeCode.UInt32:
+                case TypeCode.UInt64:
+                  tt=typeof(long);
+                  break;
+                case TypeCode.Decimal:
+                case TypeCode.Single:
+                  tt=typeof(double);
+                  break;
+                }
+
+              }
+              tc=Topic.GetP(t1, tt, initiator);
+            }
+            this.SetValue(tc, param);
+          }
+        } else if(valueType.IsEnum) {
+          var jo=JObject.Parse(json);
+          this.SetValue(JsonConvert.DeserializeObject(jo["v"].ToString(), valueType), param);
+        } else if(valueType==typeof(DateTime)) {
+          this.SetValue(JsonConvert.DeserializeObject(json, valueType, new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter()), param);
+          //} else if(valueType==typeof(object)) {
+          //  object rez=JsonConvert.DeserializeObject(json, typeof(object));
+        } else {
+          if(json[0]=='{') {
+            var jo=JObject.Parse(json);
+            jo.Remove("+");
+            if(jo.Count>0) {
+              json=jo.ToString();
+              this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
+            }
+          } else {
+            this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
+          }
+        }
+      }
+      catch(Exception ex) {
+        Log.Warning("{0}.FromJson({1}, ) - {2}", this.path, json, ex.Message);
+      }
     }
     private void UpdateMovedTopicsDeep() {
       if(this.parent!=root) {
@@ -290,6 +362,7 @@ namespace X13.PLC {
     }
     protected void CopyFrom(Topic old) {
       if(old.valueType!=null) {
+        Log.Error("Variable {0}[{1}] can't to type {2} convertiert", old.path, old.valueType==null?string.Empty:old.valueType.Name, this.valueType==null?string.Empty:this.valueType.Name);
         throw new ArgumentException();
       }
       this.parent=old.parent;

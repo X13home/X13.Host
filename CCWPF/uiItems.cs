@@ -67,23 +67,34 @@ namespace X13.CC {
       }
     }
     public override void Render(int chLevel) {
+      if(model==null) {
+        return;
+      }
       this.Offset=owner.Offset+_ownerOffset;
-      switch(Type.GetTypeCode(model.valueType)) {
+      var tc=Type.GetTypeCode(model.valueType);
+      object val=model.GetValue();
+      if(tc==TypeCode.Object && val!=null){
+        tc=Convert.GetTypeCode(val);
+      }
+      switch(tc) {
       case TypeCode.Object:
         this.brush=Brushes.Magenta;
+        break;
+      case TypeCode.DateTime:
+        this.brush=Brushes.LightSeaGreen;
         break;
       case TypeCode.String:
         this.brush=Brushes.Khaki;
         break;
       default:
         try {
-          Decimal t=(Decimal)Convert.ChangeType(model.GetValue(), typeof(Decimal));
+          double t=(double)Convert.ChangeType(val, typeof(double));
           if(t==0) {
             this.brush=Brushes.DarkGray;
           } else if(t==1) {
             this.brush=Brushes.Lime;
           } else {
-            if((t%1.0m)!=0) {
+            if((t%1.0)!=0) {
               this.brush=new SolidColorBrush(Color.FromRgb(0, 40, 100));
             } else {
               this.brush=Brushes.Green;
@@ -450,9 +461,9 @@ namespace X13.CC {
         if(leftCell<0) {
           leftCell=0;
         }
-        var sLoc=model.Get<uint>("_location");
+        var sLoc=model.Get<long>("_location");
         sLoc.saved=true;
-        sLoc.value=(uint)((leftCell<<16) | (ushort)topCell);
+        sLoc.value=((leftCell<<16) | (ushort)topCell);
       } else {
         if(_oldX>=0 && _oldY>=0) {
           for(int inH=_oldH; inH>=0; inH--) {
@@ -468,7 +479,7 @@ namespace X13.CC {
     }
 
     public override void Render(int chLevel) {
-      uint l=model.Get<uint>("_location");
+      uint l=(uint)model.Get<long>("_location");
       int gs=LogramView.CellSize;
       double height=0;
       base.OriginalLocation=new Vector((0.5+(short)(l>>16))*gs, (1.0+(short)l)*gs);
@@ -591,11 +602,13 @@ namespace X13.CC {
       int gs=LogramView.CellSize;
 
       DVar<string> declarer;
+      Topic fd=Topic.root.Get("/system/declarers/func/");
       Topic dt;
-      if(!model.Exist("_declarer", out dt) || (declarer=Topic.root.Get<string>("/system/declarers/" + (dt as DVar<string>).value))==null) {
+      Topic tmp;
+      if(!model.Exist("_declarer", out dt) || !fd.Exist((dt as DVar<string>).value, out tmp ) || ((declarer=tmp as DVar<string>)==null)) {
         return;
       }
-      uint l=model.Get<uint>("_location");
+      uint l=(uint)model.Get<long>("_location");
       base.OriginalLocation=new Vector((1.0+(short)(l>>16))*gs, (0.5+(short)l)*gs);
       this.Offset=OriginalLocation;
       FormattedText head=new FormattedText(model.name, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LogramView.FtFont, gs*0.6, Brushes.Black);
@@ -718,7 +731,7 @@ namespace X13.CC {
         if(leftCell<0) {
           leftCell=0;
         }
-        var sLoc=model.Get<uint>("_location");
+        var sLoc=model.Get<long>("_location");
         var actLoc=(uint)((leftCell<<16) | (ushort)topCell);
         if(actLoc==sLoc.value) {    // refresh wires
           this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);

@@ -27,6 +27,7 @@ namespace X13.MQTT {
     private static Topic _mq;
     private static DVar<string> _admGroup;
     private static List<MqBroker> _connections;
+    private static DVar<bool> _debug;
 
     public static void Open() {
       _mq=Topic.root.Get("/local/MQ");
@@ -34,6 +35,7 @@ namespace X13.MQTT {
       _connections=new List<MqBroker>();
       _tcp.Start();
       _admGroup=Topic.root.Get<string>("/local/security/groups/0");
+      _debug=Topic.root.Get<bool>("/system/log/MQTT");
       _tcp.BeginAcceptTcpClient(new AsyncCallback(Connect), null);
       Log.Info("Broker started on {0}", Environment.MachineName);
     }
@@ -103,21 +105,24 @@ namespace X13.MQTT {
       _tOut=new Timer(new TimerCallback(TimeOut), null, 900, Timeout.Infinite);
     }
 
-
     private void OwnerChanged(Topic sender, TopicChanged param) {
-      if(param.Art==TopicChanged.ChangeArt.Add || sender.path.StartsWith("/local") || param.Visited(_mq, false) || param.Visited(_owner, true) || !CheckAcl(ConnInfo.userName, sender, TopicAcl.Subscribe)) {
+      if(sender!=_mq && (sender.path.StartsWith("/local") || param.Visited(_mq, false) || param.Visited(_owner, true) || !CheckAcl(ConnInfo.userName, sender, TopicAcl.Subscribe))) {
         return;
       }
       MqPublish pm;
       pm=new MqPublish(sender);
       pm.QualityOfService=param.Subscription.qos;
-      if(param.Art==TopicChanged.ChangeArt.Remove) {
+      if(param.Art==TopicChanged.ChangeArt.Add && sender.valueType!=null && sender.valueType!=typeof(string) && !sender.valueType.IsEnum && !sender.valueType.IsPrimitive) {
+        pm.Payload=(new Newtonsoft.Json.Linq.JObject(new Newtonsoft.Json.Linq.JProperty("+", sender.valueType.FullName))).ToString();
+      } else if(param.Art==TopicChanged.ChangeArt.Remove) {
         pm.Payload=string.Empty;
       }
       this.Send(pm);
     }
     private void Received(MqMessage msg) {
-      //Log.Debug("R {0} {1}", _owner.name, msg);
+      if(_debug) {
+        Log.Debug("R {0} {1}", _owner==null?string.Empty:_owner.name, msg);
+      }
       int toDelay=ConnInfo==null?600:(ConnInfo.keepAlive*1505);
       switch(msg.MsgType) {
       case MessageType.CONNECT:
@@ -214,7 +219,6 @@ namespace X13.MQTT {
 
     private void ProccessPublishMsg(MqPublish pm) {
       Topic cur=Topic.root;
-      string v3=null;
       Type vt=null;
 
       string[] pt=pm.Path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
@@ -225,28 +229,24 @@ namespace X13.MQTT {
       while(i<pt.Length && cur.Exist(pt[i])) {
         cur=cur.Get(pt[i++]);
       }
-      if(pm.Payload==null || pm.Payload.Length==0) {                      // Remove
+      if(string.IsNullOrEmpty(pm.Payload)) {                      // Remove
         if(i==pt.Length && CheckAcl(ConnInfo.userName, cur, TopicAcl.Delete)) {
           cur.Remove(_owner);
         }
         return;
       }
-      int dl=pm.Payload.IndexOf(',');
-      if(dl>1) {      // id type==null, not need parse value
-        v3 = pm.Payload.Substring(dl+1);
-        vt=dl==0?null:Type.GetType(pm.Payload.Substring(0, dl));
-      }
-      if(i<pt.Length || cur.valueType!=vt) {                             // pm.Path not exist
+      if(i<pt.Length || cur.valueType==null) {                             // pm.Path not exist
+        vt=X13.WOUM.ExConverter.Json2Type(pm.Payload);
         if(!CheckAcl(ConnInfo.userName, cur, TopicAcl.Create)) {
           return;
         }
         cur=Topic.GetP(pm.Path, vt, _owner);        // Create
       }
 
-      if(!string.IsNullOrEmpty(v3)) {                 // Publish
+      if(cur.valueType!=null) {                 // Publish
         if(CheckAcl(ConnInfo.userName, cur, TopicAcl.Change)) {
           cur.saved=pm.Retained;
-          cur.FromJson(v3, _owner);
+          cur.FromJson(pm.Payload, _owner);
         }
       }
     }
@@ -257,6 +257,9 @@ namespace X13.MQTT {
     private void Send(MqMessage msg) {
       if(_stream!=null) {
         _stream.Send(msg);
+        if(_debug) {
+          Log.Debug("S {0} {1}", _owner==null?string.Empty:_owner.name, msg);
+        }
       }
     }
 

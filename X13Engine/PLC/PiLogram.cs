@@ -18,14 +18,6 @@ namespace X13.PLC {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public class PiLogram : ITopicOwned {
     static PiLogram() {
-      if(Topic.brokerMode) {
-        var t1=Topic.root.Get<string>("/system/declarers/Logram");
-        t1.value="/CC;component/Images/ty_logram.png";
-
-        t1.Get<string>("open").value="1O";
-        t1.Get<string>("rename").value="2R";
-        t1.Get<string>("remove").value="3D";
-      }
     }
 
     public PiLogram() {

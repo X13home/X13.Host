@@ -31,6 +31,10 @@ namespace X13.CC {
       InitializeComponent();
       this.DataContext = this;
 
+      DVar<bool> av=Topic.root.Get<bool>("/system/CC/DSView/_advancedView");
+      TopicView._advancedView=av.value;
+      av.changed+=new Action<Topic, TopicChanged>(av_changed);
+
       Topic _root=Topic.root;
       _root.Subscribe("/#", _root_changed);
       {
@@ -40,6 +44,7 @@ namespace X13.CC {
         tv1.Get(_root.Get("/local/settings"));
       }
       TopicView.root.IsExpanded=true;
+      TopicView.root.Get(Topic.root.Get("/plc")).IsExpanded=true;
       RootNodes=new ObservableCollection<TopicView>();
       RootNodes.Add(TopicView.root);
     }
@@ -58,6 +63,15 @@ namespace X13.CC {
         return s!=null?s.ptr:Topic.root;
       }
     }
+    private void av_changed(Topic sender, TopicChanged param) {
+      DVar<bool> av=sender as DVar<bool>;
+      if(av==null || param.Art!=TopicChanged.ChangeArt.Value) {
+        return;
+      }
+      av.saved=true;
+      TopicView._advancedView=av.value;
+      this.Dispatcher.BeginInvoke(new Action(TopicView.root.Refresh), System.Windows.Threading.DispatcherPriority.Background);
+    }
 
     private void _root_changed(Topic sender, TopicChanged param) {
       this.Dispatcher.BeginInvoke(new Action<Topic, TopicChanged.ChangeArt>(ProccessChanges), System.Windows.Threading.DispatcherPriority.Background, sender, param.Art);
@@ -65,7 +79,7 @@ namespace X13.CC {
     private void ProccessChanges(Topic oCur, TopicChanged.ChangeArt art) {
       TopicView parent=TopicView.root.Get(oCur.parent, true, art!=TopicChanged.ChangeArt.Remove);
       if(parent!=null) {
-        if(oCur.name==("_declarer") && art==TopicChanged.ChangeArt.Value) {
+        if(oCur.name=="_declarer" && art==TopicChanged.ChangeArt.Value) {
           parent.AttrChanged(oCur);
         } else {
           TopicView cur=parent.Get(oCur, false, art!=TopicChanged.ChangeArt.Remove);
@@ -144,27 +158,16 @@ namespace X13.CC {
       switch(((TopicView.ItemActionStr)ci.Tag).action) {
       case ItemAction.createNodeMask:
       case ItemAction.createBoolMask:
-      case ItemAction.createByteMask:
-      case ItemAction.createShortMask:
-      case ItemAction.createIntMask:
-      case ItemAction.createDecimalMask:
+      case ItemAction.createLongMask:
+      case ItemAction.createDoubleMask:
       case ItemAction.createStringMask:
         AddItem(ci.DataContext as StackPanel, ((TopicView.ItemActionStr)ci.Tag).action);
         break;
       case ItemAction.createBoolDef:
         cur.Get<bool>(ci.Header as string);
         break;
-      case ItemAction.createByteDef:
-        cur.Get<byte>(ci.Header as string);
-        break;
-      case ItemAction.createShortDef:
-        cur.Get<short>(ci.Header as string);
-        break;
-      case ItemAction.createIntDef:
-        cur.Get<int>(ci.Header as string);
-        break;
-      case ItemAction.createDecimalDef:
-        cur.Get<decimal>(ci.Header as string);
+      case ItemAction.createLongDef:
+        cur.Get<long>(ci.Header as string);
         break;
       case ItemAction.createDoubleDef:
         cur.Get<double>(ci.Header as string);
@@ -291,16 +294,21 @@ namespace X13.CC {
       return null;
     }
 
+
   }
   public class TopicView : INotifyPropertyChanged {
+    internal static bool _advancedView;
+
     public static TopicView root { get; private set; }
     static TopicView() {
       root=new TopicView(Topic.root);
     }
+
     private ObservableCollection<TopicView> _children;
     private ItemAction _action;
     private TopicView _parent;
     private DVar<string> _declarer;
+    private ICollectionView _childrenView;
 
     private TopicView(Topic origin) {
       this.ptr=origin;
@@ -311,11 +319,22 @@ namespace X13.CC {
       Topic dt;
       if(ptr.Exist("_declarer", out dt)) {
         string dp=(dt as DVar<string>).value;
+        int i=dp.LastIndexOf('.');
+        if(i>0) {
+          dp=dp.Substring(0, i);
+        }
         Topic ds=Topic.root.Get("/system/declarers");
-        if(!string.IsNullOrEmpty(dp) && ds.Exist(dp, out dt)) {
-          _declarer=dt as DVar<string>;
-        } else {
-          _declarer=null;
+        if(!string.IsNullOrEmpty(dp)) {
+          if((ptr.valueType==typeof(PiStatement) && ds.Get("func").Exist(dp, out dt)) || ds.Exist(dp, out dt)) {
+            _declarer=dt as DVar<string>;
+          } else {
+            foreach(var ds1 in ds.children.Where(z => z.name!="func" && z.valueType!=typeof(string))) {
+              if(ds1.Exist(dp, out dt)) {
+                _declarer=dt as DVar<string>;
+                break;
+              }
+            }
+          }
         }
       }
     }
@@ -388,24 +407,24 @@ namespace X13.CC {
           case TypeCode.Boolean:
             return "/CC;component/Images/ty_bool.png";
           case TypeCode.Byte:
-            return "/CC;component/Images/ty_i08.png";
           case TypeCode.Int16:
           case TypeCode.SByte:
           case TypeCode.UInt16:
-            return "/CC;component/Images/ty_i16.png";
           case TypeCode.UInt32:
           case TypeCode.Int32:
-            return "/CC;component/Images/ty_i32.png";
+          case TypeCode.UInt64:
+          case TypeCode.Int64:
+            return "/CC;component/Images/ty_i64.png";
           case TypeCode.Single:
-            return "/CC;component/Images/ty_f01.png";
           case TypeCode.Double:
-            return "/CC;component/Images/ty_f02.png";
           case TypeCode.Decimal:
-            return "/CC;component/Images/ty_f04.png";
+            return "/CC;component/Images/ty_f02.png";
           case TypeCode.String:
             return "/CC;component/Images/ty_str.png";
           case TypeCode.Empty:
             return "/CC;component/Images/ty_topic.png";
+          case TypeCode.DateTime:
+            return "/CC;component/Images/ty_dt.png";
           }
         }
         return "/CC;component/Images/ty_obj.png";
@@ -413,23 +432,41 @@ namespace X13.CC {
     }
     public string description {
       get {
+        string decl;
+        string ret=string.Empty;
         Topic dt;
         if(ptr.Exist("_description", out dt)) {
-          return dt as DVar<string>;
-        }
-
-        if(_declarer!=null && _declarer.Exist("_description", out dt)) {
-          return dt as DVar<string>;
-        }
-        string decl;
-        if(ptr.parent!=null && ptr.parent.Exist("_declarer", out dt) && !string.IsNullOrWhiteSpace(decl=(dt as DVar<string>))) {
-          Topic td=Topic.root.Get("/system/declarers/"+decl);
-          DVar<string> ti=td.all.FirstOrDefault(z => z.name==ptr.name && z.valueType==typeof(string)) as DVar<string>;
-          if(ti!=null && ti.Exist("_description", out dt)) {
-            return dt as DVar<string>;
+          ret=dt as DVar<string>;
+        }else if(_declarer!=null && _declarer.Exist("_description", out dt)) {
+          ret=dt as DVar<string>;
+        } else if(ptr.parent!=null && ptr.parent.Exist("_declarer", out dt) && !string.IsNullOrWhiteSpace(decl=(dt as DVar<string>))) {
+          string dp=(dt as DVar<string>).value;
+          int i=dp.LastIndexOf('.');
+          if(i>0) {
+            dp=dp.Substring(0, i);
+          }
+          Topic td=null;
+          if(!string.IsNullOrEmpty(dp)) {
+            Topic ds=Topic.root.Get("/system/declarers");
+            if((ptr.valueType==typeof(PiStatement) && ds.Get("func").Exist(dp, out dt)) || ds.Exist(dp, out dt)) {
+              td=dt as DVar<string>;
+            } else {
+              foreach(var ds1 in ds.children.Where(z => z.name!="func" && z.valueType!=typeof(string))) {
+                if(ds1.Exist(dp, out dt)) {
+                  td=dt as DVar<string>;
+                  break;
+                }
+              }
+            }
+          }
+          if(td!=null) {
+            DVar<string> ti=td.all.FirstOrDefault(z => z.name==ptr.name && z.valueType==typeof(string)) as DVar<string>;
+            if(ti!=null && ti.Exist("_description", out dt)) {
+              ret=dt as DVar<string>;
+            }
           }
         }
-        return string.Empty;
+        return ret;
       }
     }
     public ObservableCollection<TopicView> children {
@@ -443,8 +480,28 @@ namespace X13.CC {
               _children.Add(cur);
             }
           }
+          _childrenView=System.Windows.Data.CollectionViewSource.GetDefaultView(_children);
+          _childrenView.Filter=Filter;
         }
         return _children;
+      }
+    }
+    private bool Filter(object item) {
+      if(_advancedView) {
+        return true;
+      }
+      if(ptr!=null && ptr.valueType==typeof(PiLogram)) {
+        return false;
+      }
+      TopicView t=item as TopicView;
+      return (t!=null && !t.name.StartsWith("_"));
+    }
+    internal void Refresh() {
+      if(_children!=null) {
+        _childrenView.Refresh();
+        foreach(var tv in _children) {
+          tv.Refresh();
+        }
       }
     }
     public bool edited { get; private set; }
@@ -455,7 +512,7 @@ namespace X13.CC {
         List<RcUse> resource=new List<RcUse>();
         var ar=_declarer.all.Where(z => z!=null && z.valueType==typeof(string) && !z.name.StartsWith("_")).Cast<DVar<string>>().Where(z => z.value!=null && z.value.Length>=2).OrderBy(z => z.name).OrderBy(z => (ushort)z.value[0]).ToList();
 
-        foreach(var ch in ptr.children) {
+        foreach(var ch in ptr.children) {   // check used resources
           var dec=ar.FirstOrDefault(z => z.name==ch.name);
           if(dec!=null) {
             foreach(string curRC in dec.value.Substring(2).Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
@@ -471,13 +528,15 @@ namespace X13.CC {
               } else if(curRC[0]==(char)RcUse.Shared && resource[pos]==RcUse.None) {
                 resource[pos]=RcUse.Shared;
               }
-              //ar.Remove(dec);   // allready used ??
             }
           }
         }
 
         foreach(var tpI in ar) {
-          bool busy=false;
+          bool busy=ptr.children.Any(z => z.name==tpI.name);
+          if(busy) {      // don't show already exist variable
+            continue;
+          }
           foreach(string curRC in tpI.value.Substring(2).Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
             int pos;
             if(!int.TryParse(curRC.Substring(1), out pos)) {
@@ -499,10 +558,8 @@ namespace X13.CC {
       } else {
         actions.Add(new ItemActionStr("Add/Node", ItemAction.createNodeMask, null));
         actions.Add(new ItemActionStr("Add/bool", ItemAction.createBoolMask, null));
-        actions.Add(new ItemActionStr("Add/byte", ItemAction.createByteMask, null));
-        actions.Add(new ItemActionStr("Add/short", ItemAction.createShortMask, null));
-        actions.Add(new ItemActionStr("Add/int", ItemAction.createIntMask, null));
-        actions.Add(new ItemActionStr("Add/decimal", ItemAction.createDecimalMask, null));
+        actions.Add(new ItemActionStr("Add/long", ItemAction.createLongMask, null));
+        actions.Add(new ItemActionStr("Add/double", ItemAction.createDoubleMask, null));
         actions.Add(new ItemActionStr("Add/string", ItemAction.createStringMask, null));
         if(ptr.valueType!=null && Type.GetTypeCode(ptr.valueType)!=TypeCode.Object) {
           actions.Add(new ItemActionStr("Attach to Logram", ItemAction.addToLogram, null));
@@ -542,17 +599,11 @@ namespace X13.CC {
         case ItemAction.createBoolMask:
           _parent.ptr.Get<bool>(name);
           break;
-        case ItemAction.createByteMask:
-          _parent.ptr.Get<byte>(name);
+        case ItemAction.createLongMask:
+          _parent.ptr.Get<long>(name);
           break;
-        case ItemAction.createShortMask:
-          _parent.ptr.Get<short>(name);
-          break;
-        case ItemAction.createIntMask:
-          _parent.ptr.Get<int>(name);
-          break;
-        case ItemAction.createDecimalMask:
-          _parent.ptr.Get<Decimal>(name);
+        case ItemAction.createDoubleMask:
+          _parent.ptr.Get<double>(name);
           break;
         case ItemAction.createStringMask:
           _parent.ptr.Get<string>(name);
