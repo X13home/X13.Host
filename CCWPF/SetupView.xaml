@@ -13,12 +13,12 @@
       <TabItem Header="*">
       <GroupBox Header="Select Engine">
       <StackPanel>
-        <RadioButton Name="EngineEmbedded" Content="Embedded Engine" Margin="5,10,5,5"/>
-        <RadioButton Name="EngineInstall" Content="Install Engine local (need Administator rights)"  Margin="5" IsChecked="True" />
+            <RadioButton Name="EngineEmbedded" Content="Embedded Engine" Margin="5,10,5,5"  IsChecked="True"/>
+        <RadioButton Name="EngineInstall" Content="Install Engine local (need Administator rights)"  Margin="5" />
         <RadioButton Name="EngineUrl" Margin="5">
           <RadioButton.Content>
             <StackPanel>
-              <TextBlock Text="Use remote engine" />
+              <TextBlock Text="Connect to exist engine" />
               <TextBox Name="RemoteUrl" Text="localhost" TextWrapping="Wrap" IsEnabled="{Binding Path=IsChecked, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" GotFocus="RemoteUrl_GotFocus" LostKeyboardFocus="RemoteUrl_LostKeyboardFocus" MaxLines="1" Margin="5" />
             </StackPanel>
           </RadioButton.Content>
