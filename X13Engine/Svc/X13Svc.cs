@@ -61,7 +61,7 @@ namespace X13.Svc {
       _lThreshold=root.Get<LogLevel>("/system/log/threshold");
       Log.Info("Starting");
       BiultInStatements.Initialize();
-      _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 1050-DateTime.Now.Millisecond, 1000);
+      _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 5050-DateTime.Now.Millisecond, 1000);
       {
         DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/system/now");
         DateTime nowDT=DateTime.Now;
@@ -133,9 +133,13 @@ namespace X13.Svc {
         SetAcl(acl, Topic.root);
       }
       _debug=Topic.root.Get<bool>("/system/log/Repository");
+      Topic.ready=false;
       Topic.paused=false;
 
       root.Subscribe("/#", MQTT_Main_changed);
+      while(!Topic.ready) {
+        Thread.Sleep(30);
+      }
       MqBroker.Open();
     }
     private void SetTopic<T>(string path, T value, Topic mp) {
