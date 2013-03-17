@@ -7,7 +7,6 @@ See http://x13home.github.com/
 
 ***
 Quick Start
-
-1. Unpack X13.Home.zip.
-2. Run bin\CC.exe
-3. Select Embedded Engine and click Ok
+0. Requre mono version 3, SQLite
+1. Unpack X13.Home.Mono.zip.
+2. Start: mono 13.Home.exe

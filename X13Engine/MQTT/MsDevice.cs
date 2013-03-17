@@ -284,7 +284,7 @@ namespace X13.MQTT {
 
     internal void PublishTopic(Topic topic, TopicChanged param) {
       if(param.Art==TopicChanged.ChangeArt.Add) {
-        var ti=GetTopicInfo(topic);
+        GetTopicInfo(topic);
         return;
       }
       if(state==MsDeviceState.Disconnected || state==MsDeviceState.Lost || param.Visited(Owner, true)) {

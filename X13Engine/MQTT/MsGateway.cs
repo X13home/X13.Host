@@ -28,11 +28,8 @@ namespace X13.MQTT {
 
     private SerialPort _port;
     private Queue<MsMessage> _sendQueue;
-    private bool _escChar=false;
-    private Queue<byte> _InputQueue=new Queue<byte>(128);
     private Timer _sendPoolTimer;
     private byte _gwAddr;
-    private MsAdvertise _advMsg;
     private Timer _advTimer;
 
     [Newtonsoft.Json.JsonIgnore]
@@ -52,6 +49,75 @@ namespace X13.MQTT {
       if(Topic.brokerMode) {
         _sendQueue=new Queue<MsMessage>();
         _sendPoolTimer=new Timer(new TimerCallback(SendPool), null, Timeout.Infinite, Timeout.Infinite);
+      }
+    }
+
+    private byte[] _inputBuf=new byte[256];
+    private bool _escChar=false;
+    private int _inputCnt=0;
+
+    private bool GetPacket() {
+      int b;
+      while(_port.BytesToRead>0) {
+        b=_port.ReadByte();
+        if(b<0) {
+          break;
+        }
+        if(b==0xC0) {
+          _escChar=false;
+          if(_inputCnt>1 && _inputCnt==_inputBuf[1]+1) {
+            return true;
+          } else {
+            _inputCnt=0;
+            Log.Warning("size mismatch: {0}", BitConverter.ToString(_inputBuf, 0, _inputCnt));
+          }
+          continue;
+        }
+        if(b==0xDB) {
+          _escChar=true;
+          continue;
+        }
+        if(_escChar) {
+          b^=0x20;
+          _escChar=false;
+        }
+        if(_inputCnt==0x100) {
+          _inputCnt=0;
+          continue;
+        }
+        _inputBuf[_inputCnt++]=(byte)b;
+      }
+      return false;
+    }
+    private void RecvThread(object o) {
+      try {
+        _inputCnt=0;
+        _escChar=false;
+        while(_port!=null && _port.IsOpen) {
+          if(GetPacket()) {
+            byte[] rezBuf=new byte[_inputCnt];
+            Array.Copy(_inputBuf, rezBuf, _inputCnt);
+            _inputCnt=0;
+            ParseInPacket(rezBuf);
+          } else {
+            Thread.Sleep(15);
+          }
+        }
+      }
+      catch(Exception ex) {
+        Log.Error("MsGateway.RecvThread ex={0}", ex.Message);
+      }
+      _sendPoolTimer.Change(15000, Timeout.Infinite);
+      if(_port!=null) {
+        try {
+          _port.Dispose();
+        }
+        catch(Exception) {
+        }
+        _port=null;
+      }
+      if(SerialPortName!="offline") {
+        ThreadPool.QueueUserWorkItem(new WaitCallback(OpenPort));
       }
     }
 
@@ -91,11 +157,11 @@ namespace X13.MQTT {
       sBuf.Enqueue(0xC0);
       _port.Write(sBuf.ToArray(), 0, sBuf.Count);
       var dev=GetDeviceByAddr(msg.Addr);
-      if(_debug) 
+      if(_debug)
         Log.Debug("s {0} {1} [{2}]", dev!=null?dev.path:msg.Addr.ToString(), msg.ToString(), BitConverter.ToString(buf));
     }
     private void OpenPort(object o) {
-      lock(_InputQueue) {
+      lock(_inputBuf) {
         if(_port!=null) {
           if(_port.PortName==SerialPortName) {
             return;
@@ -112,29 +178,34 @@ namespace X13.MQTT {
         }
         ports.AddRange(SerialPort.GetPortNames());
         foreach(string pn in ports) {
-          for(int i=2; i>0; i--) {
+
             try {
               _port=new SerialPort(pn, 38400, Parity.None, 8, StopBits.One);
-              _port.ReadTimeout=30;
-              _port.ReceivedBytesThreshold=5;
+              //_port.ReadTimeout=Timeout.Infinite;
+              //_port.WriteTimeout=30;
+			  _port.ReadBufferSize=300;
+			  _port.WriteBufferSize=300;
               _port.Open();
               _port.DiscardInBuffer();
+              _inputCnt=0;
               byte[] bufO=new byte[] { 0xC0, 0x00, 0x03, 0x01, 0x00, 0xC0 };
               _port.Write(bufO, 0, bufO.Length);   // Send SearchGW
-              if(_debug) 
+              if(_debug)
                 Log.Debug("{0} s {1}", pn, BitConverter.ToString(bufO));
-              byte[] inBuf=new byte[5];
-              Thread.Sleep(34);
-              int j=_port.Read(inBuf, 0, 5);
-              if(_debug) 
-                Log.Debug("{0} r {1}", pn, BitConverter.ToString(inBuf));
-              if(j==5 && inBuf[2]==0x02) {   // Received GWInfo
-                if(inBuf[3]<_gwAddr) {
-                  _gwAddr=inBuf[3];
-                  spMin=pn;
+			  Thread.Sleep(50);
+			  while(GetPacket()) {
+
+                if(_debug) 
+                  Log.Debug("{0} r {1}", pn, BitConverter.ToString(_inputBuf, 0, _inputCnt));
+                if(_inputCnt==4 && _inputBuf[2]==0x02) {   // Received GWInfo
+                  if(_inputBuf[3]<_gwAddr) {
+                    _gwAddr=_inputBuf[3];
+                    spMin=pn;
+                  }
+                  _port.Close();
+                  break;
                 }
-                _port.Close();
-                break;
+				Thread.Sleep(50);
               }
               _port.Close();
             }
@@ -144,16 +215,18 @@ namespace X13.MQTT {
               }
             }
             _port=null;
-          }
+          
         }
         if(spMin!=null) {
           try {
             _port=new SerialPort(spMin, 38400, Parity.None, 8, StopBits.One);
-            _port.ReadTimeout=5;
-            _port.ReceivedBytesThreshold=1;
+			//_port.ReadTimeout=Timeout.Infinite;
+			//_port.WriteTimeout=30;
+			_port.ReadBufferSize=300;
+			_port.WriteBufferSize=300;
             _port.Open();
             _port.DiscardInBuffer();
-
+            _inputCnt=0;
             SerialPortName=spMin;
           }
           catch(Exception) {
@@ -167,60 +240,16 @@ namespace X13.MQTT {
         }
       }
       Log.Info("found MQTTS Gataway on {0}", SerialPortName);
-      _port.DiscardInBuffer();
-      _port.DataReceived+=new SerialDataReceivedEventHandler(DataReceived);
       _sendPoolTimer.Change(600, 14);
-      this.Send(new MsDisconnect() { Addr=0 });
-      if(_advTimer!=null){
+	  ThreadPool.QueueUserWorkItem(RecvThread);
+	  this.Send(new MsDisconnect() { Addr=0 });
+      if(_advTimer!=null) {
         _advTimer.Dispose();
       }
       _advTimer=new Timer(new TimerCallback(SendAdvMessage), new MsAdvertise(_gwAddr, 900), 5000, 900000);
     }
     private void SendAdvMessage(object o) {
       this.Send((MsAdvertise)o);
-    }
-    private void DataReceived(object sender, SerialDataReceivedEventArgs e) {
-      try {
-        while(_port!=null && _port.BytesToRead>0) {
-          int b=_port.ReadByte();
-          if(b<0) {
-            break;
-          }
-          if(b==0xC0) {
-            byte[] rezBuf=_InputQueue.ToArray();
-            _InputQueue.Clear();
-            _escChar=false;
-            if(rezBuf.Length>1 && rezBuf.Length==rezBuf[1]+1) {
-              ParseInPacket(rezBuf);
-            } else {
-              Log.Warning("size mismatch: {0}", BitConverter.ToString(rezBuf));
-            }
-            continue;
-          }
-          if(b==0xDB) {
-            _escChar=true;
-            continue;
-          }
-          if(_escChar) {
-            b^=0x20;
-            _escChar=false;
-          }
-          _InputQueue.Enqueue((byte)b);
-        }
-      }
-      catch(Exception ex) {
-        _sendPoolTimer.Change(15000, Timeout.Infinite);
-        try {
-          _port.Dispose();
-        }
-        catch(Exception) {
-        }
-        _port=null;
-        Log.Error("MsGateway.DataReceived {0}", ex.Message);
-        if(SerialPortName!="offline") {
-          ThreadPool.QueueUserWorkItem(new WaitCallback(OpenPort));
-        }
-      }
     }
     private void ParseInPacket(byte[] buf) {
       try {
@@ -352,7 +381,6 @@ namespace X13.MQTT {
       catch(ArgumentException) {
         Log.Warning("incorrect packet on {0} ({1})", Owner.name, BitConverter.ToString(buf));
         _port.DiscardInBuffer();
-        _InputQueue.Clear();
         _port.Write(new byte[] { 0xC0, 0x00, 0x03, 0x01, 0x00, 0xC0 }, 0, 6);   // Send SearchGW
       }
       catch(Exception ex) {
