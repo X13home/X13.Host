@@ -29,10 +29,11 @@ namespace X13.PLC {
     static Topic() {
       root=new Topic(null) { _name=string.Empty, path="/" };
       _publishQueue=new WOUM.BlockingQueue<TopicChanged>(PubAction, PqIdle);
+      _publishQueue.timeout=300;
       _mq=root.Get("/local/MQ");
       _mq._childNodes=new SortedList<string, Topic>(1);
     }
-    internal static bool ready;
+    internal static ManualResetEvent ready=new ManualResetEvent(false);
     internal static bool paused { get { return _publishQueue.paused; } set { _publishQueue.paused=value; } }
     /// <summary>Find or create Topic</summary>
     /// <param name="path"></param>
@@ -112,7 +113,7 @@ namespace X13.PLC {
       }
     }
     private static void PqIdle() {
-      ready=true;
+      ready.Set();
     }
     internal static void Import(StreamReader reader, string path) {
       XDocument doc=XDocument.Load(reader);

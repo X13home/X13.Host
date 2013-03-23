@@ -133,13 +133,11 @@ namespace X13.Svc {
         SetAcl(acl, Topic.root);
       }
       _debug=Topic.root.Get<bool>("/system/log/Repository");
-      Topic.ready=false;
+      root.Subscribe("/#", MQTT_Main_changed);
+      Topic.ready.Reset();
       Topic.paused=false;
 
-      root.Subscribe("/#", MQTT_Main_changed);
-      while(!Topic.ready) {
-        Thread.Sleep(30);
-      }
+      Topic.ready.WaitOne(2500);
       MqBroker.Open();
     }
     private void SetTopic<T>(string path, T value, Topic mp) {

@@ -13,8 +13,8 @@
       <TabItem Header="*">
       <GroupBox Header="Select Engine">
       <StackPanel>
-        <RadioButton Name="EngineEmbedded" Content="Embedded Engine" Margin="5,10,5,5"/>
-        <RadioButton Name="EngineInstall" Content="Install Engine local (need Administator rights)"  Margin="5" IsChecked="True" />
+        <RadioButton Name="EngineEmbedded" Content="Embedded Engine" Margin="5,10,5,5" IsChecked="True" />
+        <RadioButton Name="EngineInstall" Content="Install Engine local (need Administator rights)"  Margin="5" />
         <RadioButton Name="EngineUrl" Margin="5">
           <RadioButton.Content>
             <StackPanel>

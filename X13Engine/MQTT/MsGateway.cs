@@ -379,7 +379,7 @@ namespace X13.MQTT {
       catch(ArgumentException) {
         Log.Warning("incorrect packet on {0} ({1})", Owner.name, BitConverter.ToString(buf));
         _port.DiscardInBuffer();
-        inputCnt=0;
+        _inputCnt=0;
         _port.Write(new byte[] { 0xC0, 0x00, 0x03, 0x01, 0x00, 0xC0 }, 0, 6);   // Send SearchGW
       }
       catch(Exception ex) {
