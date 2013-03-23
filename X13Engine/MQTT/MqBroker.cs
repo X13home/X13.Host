@@ -48,7 +48,7 @@ namespace X13.MQTT {
       catch(ObjectDisposedException) {
         return;   // Socket allready closed
       }
-      catch(SocketException ex) {
+      catch(SocketException) {
       }
       _tcp.BeginAcceptTcpClient(new AsyncCallback(Connect), null);
     }

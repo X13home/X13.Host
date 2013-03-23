@@ -601,7 +601,7 @@ namespace X13.PLC {
         var B5 = (double)_dLat.value;
         var L5 = (double)_dLon.value;
         var Now = DateTime.Now;
-        var H =  TimeZone.CurrentTimeZone.IsDaylightSavingTime(Now)?0:1;
+        //var H =  TimeZone.CurrentTimeZone.IsDaylightSavingTime(Now)?0:1;
         B5 = DR * B5;
         var N = (Int32)(275 * Now.Month / 9) - 2 * (Int32)((Now.Month + 9) / 12) + Now.Day - 30;
         var L0 = 4.8771 + .0172 * (N + .5 - L5 / 360);
@@ -903,7 +903,7 @@ namespace X13.PLC {
 
       private void StartProcess() {
         try {
-          var proc=System.Diagnostics.Process.Start(_proc.value, _args.value);
+          System.Diagnostics.Process.Start(_proc.value, _args.value);
           Log.Info("Execute({0}, {1})", _proc.value, _args.value);
         }
         catch(Exception ex) {

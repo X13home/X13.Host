@@ -48,11 +48,11 @@ namespace X13.Svc {
       Directory.SetCurrentDirectory(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
 
       _log=new BlockingQueue<LogEntry>(ProcessLog);
-      if(!Directory.Exists("..\\Log")) {
-        Directory.CreateDirectory("..\\Log");
+      if(!Directory.Exists("../log")) {
+        Directory.CreateDirectory("../log");
       }
-      if(!Directory.Exists("..\\Data")) {
-        Directory.CreateDirectory("..\\Data");
+      if(!Directory.Exists("../data")) {
+        Directory.CreateDirectory("../data");
       }
       AppDomain.CurrentDomain.UnhandledException+=new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
       Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
@@ -76,7 +76,7 @@ namespace X13.Svc {
 
       }
       #region Load Security
-      if(!Topic.Import(@"..\data\security.dat", "/local/security")) {
+      if(!Topic.Import(@"../data/security.dat", "/local/security")) {
         Topic sec=Topic.root.Get("/local/security");
         byte[] randBytes=new byte[18];
         (new Random()).NextBytes(randBytes);
@@ -88,10 +88,10 @@ namespace X13.Svc {
         sec.Get("groups/1/user");
         SetTopic<uint>("acls/Public", 0x1F000001, sec);
 
-        Topic.Export(@"..\data\security.dat", sec);
+        Topic.Export(@"../data/security.dat", sec);
       }
       #endregion Load security
-      string pmPath=@"..\data\persist.db3";
+      string pmPath=@"../data/persist.db3";
       Topic.paused=true;
       _pStorage=new PersistentStorage();
       bool db=_pStorage.Open(pmPath);
@@ -202,14 +202,14 @@ namespace X13.Svc {
         if(_lfPath==null || _firstDT!=en.dt.Date) {
           _firstDT=en.dt.Date;
           try {
-            foreach(string f in Directory.GetFiles("..\\Log\\", "*.log", SearchOption.TopDirectoryOnly)) {
+            foreach(string f in Directory.GetFiles("../log/", "*.log", SearchOption.TopDirectoryOnly)) {
               if(File.GetLastWriteTime(f).AddDays(6)<_firstDT)
                 File.Delete(f);
             }
           }
           catch(System.IO.IOException) {
           }
-          _lfPath="..\\Log\\"+_firstDT.ToString("yyMMdd")+".log";
+          _lfPath="../log/"+_firstDT.ToString("yyMMdd")+".log";
         }
         for(int i=2; i>=0; i--) {
           try {
