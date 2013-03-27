@@ -87,7 +87,8 @@
     <Compile Include="MQTT\MqMessages.cs" />
     <Compile Include="MQTT\MqStreamer.cs" />
     <Compile Include="MQTT\MsDevice.cs" />
-    <Compile Include="MQTT\MsGateway.cs" />
+    <Compile Include="MQTT\MsDevRf.cs" />
+    <Compile Include="MQTT\MsDevSer.cs" />
     <Compile Include="MQTT\MsMessages.cs" />
     <Compile Include="PLC\BiultInStatements.cs" />
     <Compile Include="PLC\DVar.cs" />

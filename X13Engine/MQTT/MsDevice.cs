@@ -18,7 +18,7 @@ using X13.MQTT;
 
 namespace X13.MQTT {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
-  public class MsDevice : ITopicOwned {
+  public abstract class MsDevice : ITopicOwned {
     private const int ACK_TIMEOUT=550;
 
     private int _duration=3000;
@@ -56,7 +56,7 @@ namespace X13.MQTT {
     private int _tryCounter;
     private int _topicIdGen=0;
     private int _messageIdGen=0;
-    private byte _addr;
+    private byte[] _addr;
     private DVar<bool> _present;
 
     internal MsDevice() {
@@ -68,14 +68,8 @@ namespace X13.MQTT {
       }
     }
 
-    public byte Addr {
-      get { return _addr; }
-      set {
-        _addr=value;
-      }
-    }
-
-    public DVar<MsDevice> Owner { get; private set; }
+    internal byte[] Addr { get { return _addr; } set { _addr=value; } }
+    public Topic Owner { get; private set; }
 
     internal void Connect(MsConnect msg) {
       Addr=msg.Addr;
@@ -174,9 +168,9 @@ namespace X13.MQTT {
         topicId=ti.TopicId;
       }
       //if(s!=null) {
-        Send(new MsSuback(msg.qualityOfService, topicId, msg.MessageId, MsReturnCode.Accepted));
-        s=Owner.Subscribe(msg.path, PublishTopic, msg.qualityOfService);
-        _subsscriptions.Add(s);
+      Send(new MsSuback(msg.qualityOfService, topicId, msg.MessageId, MsReturnCode.Accepted));
+      s=Owner.Subscribe(msg.path, PublishTopic, msg.qualityOfService);
+      _subsscriptions.Add(s);
       //} else {
       //  Send(new MsSuback(QoS.AtMostOnce, topicId, msg.MessageId, MsReturnCode.InvalidTopicId));
       //}
@@ -209,13 +203,13 @@ namespace X13.MQTT {
           val=(msgData[0]!=0);
           break;
         case TypeCode.Int64: {
-          long rv=(msgData[msgData.Length-1]&0x80)==0?0:-1;
-          for(int i=msgData.Length-1;i>=0;i--){
-            rv<<=8;
-            rv|=msgData[i];
-          }
-          val=rv;
-          //Log.Debug("{0}={1}, {2}", ti.path, rv, BitConverter.ToString(msgData));
+            long rv=(msgData[msgData.Length-1]&0x80)==0?0:-1;
+            for(int i=msgData.Length-1; i>=0; i--) {
+              rv<<=8;
+              rv|=msgData[i];
+            }
+            val=rv;
+            //Log.Debug("{0}={1}, {2}", ti.path, rv, BitConverter.ToString(msgData));
           }
           break;
         case TypeCode.String:
@@ -249,7 +243,7 @@ namespace X13.MQTT {
         }
       } else {
         ResetTimer();
-        Send(new MsMessage(MsMessageType.PINGRESP));
+        SendIF(new MsMessage(MsMessageType.PINGRESP));
       }
     }
     internal void Disconnect(ushort duration=0) {
@@ -264,7 +258,7 @@ namespace X13.MQTT {
         state=MsDeviceState.ASleep;
         var st=Owner.Get<long>(PredefinedTopics._WSleepTime.ToString(), Owner);
         st.saved=true;
-        st.SetValue((short)duration, new TopicChanged(TopicChanged.ChangeArt.Value, Owner){ Source=st });
+        st.SetValue((short)duration, new TopicChanged(TopicChanged.ChangeArt.Value, Owner) { Source=st });
       } else if(state!=MsDeviceState.Lost) {
         state=MsDeviceState.Disconnected;
         if(Owner!=null) {
@@ -298,7 +292,7 @@ namespace X13.MQTT {
         return;
       }
       if(param.Art==TopicChanged.ChangeArt.Value) {
-          Send(new MsPublish(rez.topic, rez.TopicId, param.Subscription.qos));
+        Send(new MsPublish(rez.topic, rez.TopicId, param.Subscription.qos));
       } else {          // Remove by device
         Send(new MsRegister(0, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
         _topics.Remove(rez);
@@ -411,7 +405,7 @@ namespace X13.MQTT {
       }
     }
     private void Send(MsMessage msg) {
-      if((state!=MsDeviceState.Disconnected && state!=MsDeviceState.Lost) || (msg.MsgTyp==MsMessageType.DISCONNECT || msg.MsgTyp==MsMessageType.PINGRESP)) {
+      if(state!=MsDeviceState.Disconnected && state!=MsDeviceState.Lost) {
         msg.Addr=this.Addr;
         bool send=true;
         if(msg.MessageId==0 && (msg.MsgTyp==MsMessageType.PUBLISH?(msg as MsPublish).qualityOfService!=QoS.AtMostOnce:msg.IsRequest)) {
@@ -432,34 +426,28 @@ namespace X13.MQTT {
       }
     }
     private void SendIntern(MsMessage msg) {
-      MsGateway g;
-      if(Owner==null || (g=(Owner.parent as DVar<MsGateway>).value)==null) {
-        return;
-      }
-      while((msg!=null ||state==MsDeviceState.AWake) && (state!=MsDeviceState.ASleep || (msg.MsgTyp==MsMessageType.DISCONNECT || msg.MsgTyp==MsMessageType.PINGRESP))) {
+      while((msg!=null || state==MsDeviceState.AWake) && state!=MsDeviceState.ASleep) {
         if(msg!=null) {
-          g.Send(msg);
+          SendIF(msg);
+          if(msg.IsRequest) {
+            ResetTimer(ACK_TIMEOUT);
+            break;
+          }
         }
-        if(msg!=null && msg.IsRequest) {
-          ResetTimer(ACK_TIMEOUT);
-          break;
-        } else {
-          msg=null;
-          lock(_sendQueue) {
-            if(_sendQueue.Count==0 && state==MsDeviceState.AWake) {
-              g.Send(new MsMessage(MsMessageType.PINGRESP) { Addr=this.Addr });
-              state=MsDeviceState.ASleep;
-              break;
-            }
-            if(_sendQueue.Count>0 && !(msg=_sendQueue.Peek()).IsRequest) {
-              _sendQueue.Dequeue();
-            //} else if(msg!=null && msg.MsgTyp==MsMessageType.PUBLISH && (msg as MsPublish).Dup) {
-            //  break;
-            }
+        msg=null;
+        lock(_sendQueue) {
+          if(_sendQueue.Count==0 && state==MsDeviceState.AWake) {
+            SendIF(new MsMessage(MsMessageType.PINGRESP) { Addr=this.Addr });
+            state=MsDeviceState.ASleep;
+            break;
+          }
+          if(_sendQueue.Count>0 && !(msg=_sendQueue.Peek()).IsRequest) {
+            _sendQueue.Dequeue();
           }
         }
       }
     }
+    internal abstract void SendIF(MsMessage msg);
     private void ResetTimer(int period=0) {
       if(period==0) {
         if(_sendQueue.Count>0) {
@@ -498,7 +486,7 @@ namespace X13.MQTT {
       lock(_sendQueue) {
         _sendQueue.Clear();
       }
-      SendIntern(new MsDisconnect() { Addr=this.Addr });
+      SendIF(new MsDisconnect() { Addr=this.Addr });
     }
 
     #region ITopicOwned Members
@@ -513,7 +501,7 @@ namespace X13.MQTT {
           }
           _stateVar=null;
         }
-        Owner=owner as DVar<MsDevice>;
+        Owner=owner;
         if(Topic.brokerMode && Owner!=null) {
           Owner.saved=true;
           _stateVar=Owner.Get<MsDeviceState>(PredefinedTopics._state.ToString());

@@ -57,23 +57,22 @@ namespace X13.MQTT {
 
     protected ushort _length;
 
-    public byte Addr;
+    public byte[] Addr;
     public readonly MsMessageType MsgTyp;
     public bool IsRequest { get; protected set; }        // response is required 
     public MsMessageType ReqTyp { get; protected set; }  // message is a response to
     public ushort MessageId { get; set; }
 
     protected MsMessage(byte[] buf) {
-      Addr=buf[0];
-      if(buf[1]>1) {
-        _length=buf[1];
+      if(buf[0]>1) {
+        _length=buf[0];
       } else {
-        _length=(ushort)((buf[2]<<8) | (buf[3]));
+        _length=(ushort)((buf[1]<<8) | (buf[2]));
       }
-      if(buf.Length!=_length+1) {
+      if(buf.Length!=_length) {
         throw new ArgumentException("length is not correct");
       }
-      MsgTyp=(MsMessageType)(buf[1]>0?buf[2]:buf[4]);
+      MsgTyp=(MsMessageType)(buf[0]>1?buf[1]:buf[3]);
     }
     public MsMessage(MsMessageType type) {
       MsgTyp=type;
@@ -89,9 +88,8 @@ namespace X13.MQTT {
       if(_length>255) {
         _length+=2;
       }
-      byte[] rez=new byte[_length+1];
+      byte[] rez=new byte[_length];
       int ptr=0;
-      rez[ptr++]=Addr;
       if(_length>255) {
         rez[ptr++]=1;
         rez[ptr++]=(byte)(_length>>8);
@@ -115,9 +113,9 @@ namespace X13.MQTT {
       : base(MsMessageType.ADVERTISE) {
         base._length=5;
         _buf=base.GetBytes();
-        _buf[3]=gwId;
-        _buf[4]=(byte)(duration>>8);
-        _buf[5]=(byte)duration;
+        _buf[2]=gwId;
+        _buf[3]=(byte)(duration>>8);
+        _buf[4]=(byte)duration;
     }
     public override byte[] GetBytes() {
       return _buf;
@@ -133,15 +131,14 @@ namespace X13.MQTT {
   }
 
   internal class MsGwInfo : MsMessage {
-    private byte _gwAddr;
-    public MsGwInfo(byte addr, byte gwAddr) : base(MsMessageType.GWINFO) {
-      _gwAddr=gwAddr;
-      base.Addr=addr;
+    private byte _gwIdx;
+    public MsGwInfo(byte gwIdx) : base(MsMessageType.GWINFO) {
+      _gwIdx=gwIdx;
     }
     public override byte[] GetBytes() {
       base._length=3;
       byte[] buf=base.GetBytes();
-      buf[3]=_gwAddr;
+      buf[2]=_gwIdx;
       return buf;
     }
   }
@@ -149,7 +146,7 @@ namespace X13.MQTT {
   internal class MsConnect : MsMessage {
     public MsConnect(byte[] buf)
       : base(buf) {
-      int ptr=buf[1]==1?5:3;
+      int ptr=buf[0]==1?4:2;
       Will=(buf[ptr] & 8)!=0;
       CleanSession=(buf[ptr] & 4)!=0;
       ptr++;
@@ -157,7 +154,7 @@ namespace X13.MQTT {
         throw new ArgumentException("Unknown ProtocolId");
       }
       Duration=(ushort)((buf[ptr++]<<8) | buf[ptr++]);
-      ClientId=enc.GetString(buf, ptr, 1+_length-ptr);
+      ClientId=enc.GetString(buf, ptr, _length-ptr);
     }
 
     public bool CleanSession;
@@ -166,7 +163,7 @@ namespace X13.MQTT {
     public string ClientId;
 
     public override byte[] GetBytes() {
-      throw new ApplicationException("MsConnect.GetBytes() not supported");
+      throw new NotSupportedException("MsConnect.GetBytes() not supported");
     }
   }
 
@@ -179,7 +176,7 @@ namespace X13.MQTT {
     public override byte[] GetBytes() {
       base._length=3;
       byte[] buf=base.GetBytes();
-      buf[3]=(byte)_retCode;
+      buf[2]=(byte)_retCode;
       return buf;
     }
   }
@@ -187,11 +184,11 @@ namespace X13.MQTT {
   internal class MsWillTopic : MsMessage {
     public MsWillTopic(byte[] buf)
       : base(buf) {
-      int ptr=buf[1]==1?5:3;
+      int ptr=buf[0]==1?4:2;
       this.Retain=(buf[ptr] & 0x10)!=0;
       ptr++;
       if(1+_length-ptr>0) {
-        this.Path=enc.GetString(buf, ptr, 1+_length-ptr);
+        this.Path=enc.GetString(buf, ptr, _length-ptr);
       } else {
         this.Path=string.Empty;
       }
@@ -201,15 +198,15 @@ namespace X13.MQTT {
     public readonly bool Retain;
 
     public override byte[] GetBytes() {
-      throw new ApplicationException("MsWillTopic.GetBytes() not supported");
+      throw new NotSupportedException("MsWillTopic.GetBytes() not supported");
     }
   }
 
   internal class MsWillMsg : MsMessage {
     public MsWillMsg(byte[] buf)
       : base(buf) {
-      int ptr=buf[1]==1?5:3;
-      if(1+_length-ptr>0) {
+      int ptr=buf[0]==1?4:2;
+      if(_length-ptr>0) {
         Payload=buf.Skip(ptr).ToArray();
       }
       base.ReqTyp=MsMessageType.WILLMSGREQ;
@@ -217,14 +214,14 @@ namespace X13.MQTT {
     public readonly byte[] Payload;
 
     public override byte[] GetBytes() {
-      throw new ApplicationException("MsWillMsg.GetBytes() not supported");
+      throw new NotSupportedException("MsWillMsg.GetBytes() not supported");
     }
   }
 
   internal class MsSubscribe : MsMessage {
     public MsSubscribe(byte[] buf)
       : base(buf) {
-      int ptr=buf[1]==1?5:3;
+      int ptr=buf[0]==1?4:2;
       dup=(buf[ptr] & 0x80)!=0;
       qualityOfService=(QoS)((buf[ptr] >>5) & 0x03);
       topicIdType=(TopicIdType)(buf[ptr] & 0x03);
@@ -235,7 +232,7 @@ namespace X13.MQTT {
         path=null;
       } else if(topicIdType==TopicIdType.Normal) {
         topicId=0;
-        path=enc.GetString(buf, ptr, buf.Length-ptr);
+        path=enc.GetString(buf, ptr, _length-ptr);
         if(string.IsNullOrEmpty(path)) {
           throw new ArgumentException("empty path");
         }
@@ -244,7 +241,7 @@ namespace X13.MQTT {
       }
     }
     public override byte[] GetBytes() {
-      throw new ApplicationException("MsSubscribe.GetBytes() not supported");
+      throw new NotSupportedException("MsSubscribe.GetBytes() not supported");
     }
 
     public bool dup;
@@ -265,12 +262,12 @@ namespace X13.MQTT {
     public override byte[] GetBytes() {
       base._length=8;
       byte[] buf=base.GetBytes();
-      buf[3]=(byte)(((int)_qualityOfService)<<5);
-      buf[4]=(byte)(_topicId>>8);
-      buf[5]=(byte)_topicId;
-      buf[6]=(byte)(_msgId>>8);
-      buf[7]=(byte)_msgId;
-      buf[8]=(byte)_retCode;
+      buf[2]=(byte)(((int)_qualityOfService)<<5);
+      buf[3]=(byte)(_topicId>>8);
+      buf[4]=(byte)_topicId;
+      buf[5]=(byte)(_msgId>>8);
+      buf[6]=(byte)_msgId;
+      buf[7]=(byte)_retCode;
       return buf;
     }
 
@@ -289,7 +286,7 @@ namespace X13.MQTT {
     }
     public MsRegister(byte[] buf)
       : base(buf) {
-      int ptr=buf[1]==1?5:3;
+      int ptr=buf[0]==1?4:2;
       TopicId=(ushort)((buf[ptr++]<<8) | buf[ptr++]);
       MessageId=(ushort)((buf[ptr++]<<8) | buf[ptr++]);
       TopicPath=enc.GetString(buf, ptr, buf.Length-ptr);
@@ -297,7 +294,7 @@ namespace X13.MQTT {
     public override byte[] GetBytes() {
       base._length=(ushort)(6+enc.GetByteCount(TopicPath));
       byte[] buf=base.GetBytes();
-      int ptr=buf[1]==1?5:3;
+      int ptr=buf[0]==1?4:2;
       buf[ptr++]=(byte)(TopicId>>8);
       buf[ptr++]=(byte)(TopicId);
       buf[ptr++]=(byte)(MessageId>>8);
@@ -322,7 +319,7 @@ namespace X13.MQTT {
     }
     public MsRegAck(byte[] buf)
       : base(buf) {
-      int ptr=buf[1]==1?5:3;
+      int ptr=buf[0]==1?4:2;
       this.TopicId=(ushort)((buf[ptr++]<<8) | buf[ptr++]);
       this.MessageId=(ushort)((buf[ptr++]<<8) | buf[ptr++]);
       this.RetCode=(MsReturnCode)buf[ptr];
@@ -332,7 +329,7 @@ namespace X13.MQTT {
     public override byte[] GetBytes() {
       base._length=7;
       byte[] buf=base.GetBytes();
-      int ptr=buf[1]==1?5:3;
+      int ptr=buf[0]==1?4:2;
       buf[ptr++]=(byte)(TopicId>>8);
       buf[ptr++]=(byte)(TopicId);
       buf[ptr++]=(byte)(MessageId>>8);
@@ -366,7 +363,7 @@ namespace X13.MQTT {
     }
     public MsPublish(byte[] buf)
       : base(buf) {
-      int ptr=buf[1]==1?5:3;
+      int ptr=buf[0]==1?4:2;
       this.Dup=(buf[ptr]&0x80)!=0;
       this.qualityOfService=(QoS)((buf[ptr]>>5)&0x03);
       this.Retained=(buf[ptr]&0x10)!=0;
@@ -380,7 +377,7 @@ namespace X13.MQTT {
       byte[] tmp=this.Data;
       base._length=(ushort)(7+tmp.Length);
       byte[] buf=base.GetBytes();
-      int ptr=buf[1]==1?5:3;
+      int ptr=buf[0]==1?4:2;
       buf[ptr++]=(byte)((Dup?0x80:0) | (((int)qualityOfService)<<5) | (Retained?0x10:0) | ((int)topicIdType));
       buf[ptr++]=(byte)(TopicId>>8);
       buf[ptr++]=(byte)(TopicId);
@@ -410,7 +407,7 @@ namespace X13.MQTT {
           do {
             ret.Add((byte)v);
             v=v>>8;
-          } while(vo<0?(v<-1 || (ret[ret.Count-1]&0x80)==0):(v>0 || (ret[ret.Count-1]&0x80)==0x80));
+          } while(vo<0?(v<-1 || (ret[ret.Count-1]&0x80)==0):(v>0 || (ret[ret.Count-1]&0x80)!=0));
         }
         break;
       case TypeCode.String: {
@@ -447,7 +444,7 @@ namespace X13.MQTT {
     }
     public MsPubAck(byte[] buf)
       : base(buf) {
-      int ptr=3;
+      int ptr=2;
       this.TopicId=(ushort)((buf[ptr++]<<8) | buf[ptr++]);
       this.MessageId=(ushort)((buf[ptr++]<<8) | buf[ptr++]);
       this.retCode=(MsReturnCode)buf[ptr];
@@ -456,7 +453,7 @@ namespace X13.MQTT {
     public override byte[] GetBytes() {
       base._length=7;
       byte[] buf=base.GetBytes();
-      int ptr=3;
+      int ptr=2;
       buf[ptr++]=(byte)(TopicId>>8);
       buf[ptr++]=(byte)(TopicId);
       buf[ptr++]=(byte)(MessageId>>8);
@@ -474,7 +471,7 @@ namespace X13.MQTT {
   internal class MsPingReq : MsMessage {
     public MsPingReq(byte[] buf)
       : base(buf) {
-      int ptr=buf[1]==1?5:3;
+      int ptr=buf[0]==1?4:2;
       if(1+_length-ptr>0) {
         ClientId=enc.GetString(buf, ptr, 1+_length-ptr);
       } else {
@@ -485,7 +482,7 @@ namespace X13.MQTT {
     public string ClientId;
 
     public override byte[] GetBytes() {
-      throw new ApplicationException("MsPingReq.GetBytes() unsupported");
+      throw new NotSupportedException("MsPingReq.GetBytes() not supported");
     }
 
   }
@@ -496,8 +493,8 @@ namespace X13.MQTT {
     }
     public MsDisconnect(byte[] buf)
       : base(buf) {
-      if(buf.Length==5) {
-        Duration=(ushort)((buf[3]<<8) | buf[4]);
+      if(buf.Length==4) {
+        Duration=(ushort)((buf[2]<<8) | buf[3]);
       }
     }
     public readonly ushort Duration;

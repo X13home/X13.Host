@@ -121,13 +121,6 @@ namespace X13.Svc {
           }
         }
       }
-      var rf12=root.Get<MsGateway>("/rf12");
-      if(rf12.value==null) {
-        rf12.value=new MsGateway();
-      }
-      if(rf12.value.SerialPortName==null) {
-        rf12.value.SerialPortName=string.Empty;
-      }
       root.Get<string>("/plc/_declarer").value="L_Folder";
       foreach(Topic acl in Topic.root.Get("/local/security/acls").children){
         SetAcl(acl, Topic.root);
@@ -138,6 +131,7 @@ namespace X13.Svc {
       Topic.paused=false;
 
       Topic.ready.WaitOne(2500);
+      MsDevSer.Open();
       MqBroker.Open();
     }
     private void SetTopic<T>(string path, T value, Topic mp) {
