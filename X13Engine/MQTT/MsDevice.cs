@@ -18,15 +18,26 @@ using X13.MQTT;
 
 namespace X13.MQTT {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
-  public abstract class MsDevice : ITopicOwned {
+  public partial class MsDevice : ITopicOwned {
     private const int ACK_TIMEOUT=550;
+    private static DVar<bool> _verbose;
+    private static List<IMsGate> _gates;
+
+    static MsDevice() {
+      _verbose=Topic.root.Get<bool>("/system/Broker/MQTTS/verboseLog");
+      _verbose.value=true;
+      _gates=new List<IMsGate>();
+    }
+    public static void Open() {
+      MsGSerial.Open();
+    }
 
     private int _duration=3000;
     private DVar<MsDeviceState> _stateVar;
 
     public MsDeviceState state {
       get { return _stateVar!=null?_stateVar.value:MsDeviceState.Disconnected; }
-      private set {
+      protected set {
         if(_stateVar!=null) {
           try {
             _stateVar.value=value;
@@ -56,7 +67,6 @@ namespace X13.MQTT {
     private int _tryCounter;
     private int _topicIdGen=0;
     private int _messageIdGen=0;
-    private byte[] _addr;
     private DVar<bool> _present;
 
     internal MsDevice() {
@@ -68,8 +78,170 @@ namespace X13.MQTT {
       }
     }
 
-    internal byte[] Addr { get { return _addr; } set { _addr=value; } }
+    [Newtonsoft.Json.JsonProperty]
+    internal byte[] Addr { get; set; }
     public Topic Owner { get; private set; }
+    internal string via {
+      get { return Owner!=null?Owner.Get<string>("_via").value:string.Empty; }
+      private set {
+        if(Owner!=null) {
+          var t=Owner.Get<string>("_via");
+          t.saved=true;
+          t.value=value;
+        }
+      }
+    }
+    private IMsGate _gate;
+
+    internal static void PrintPacket(MsDevice dev, MsMessage msg, byte[] buf) {
+      if(_verbose) {
+        Log.Debug("r {4:X2}:{0}:{1} \t{2}:{3}", BitConverter.ToString(msg.Addr??new byte[0]), BitConverter.ToString(buf??new byte[0]), (dev!=null && dev.Owner!=null)?dev.Owner.name:string.Empty, msg.ToString(), (dev!=null && dev._gate!=null)?dev._gate.gwIdx:0xFF);
+      }
+    }
+
+    internal void ParseInPacket(byte[] buf) {
+      var msgTyp=(MsMessageType)(buf[0]>1?buf[1]:buf[2]);
+      switch(msgTyp) {
+      case MsMessageType.WILLTOPIC: {
+          var msg=new MsWillTopic(buf) { Addr=this.Addr };
+          PrintPacket(this, msg, buf);
+          if(state==MsDeviceState.WillTopic) {
+            _willPath=msg.Path;
+            _willRetain=msg.Retain;
+            state=MsDeviceState.WillMsg;
+            ProccessAcknoledge(msg);
+          }
+        }
+        break;
+      case MsMessageType.WILLMSG: {
+          var msg=new MsWillMsg(buf) { Addr=this.Addr };
+          PrintPacket(this, msg, buf);
+          if(state==MsDeviceState.WillMsg) {
+            _wilMsg=msg.Payload;
+            state=MsDeviceState.Connected;
+            ProccessAcknoledge(msg);
+            Send(new MsConnack(MsReturnCode.Accepted));
+            Log.Info("{0} connected", Owner.path);
+          }
+        }
+        break;
+      case MsMessageType.SUBSCRIBE: {
+          var msg=new MsSubscribe(buf) { Addr=this.Addr };
+          PrintPacket(this, msg, buf);
+
+          SyncMsgId(msg.MessageId);
+          Topic.Subscription s=null;
+          ushort topicId=msg.topicId;
+          if(msg.topicIdType!=TopicIdType.Normal || msg.path.IndexOfAny(new[] { '+', '#' })<0) {
+            TopicInfo ti=null;
+            if(msg.topicIdType==TopicIdType.Normal) {
+              ti=GetTopicInfo(msg.path, false);
+            } else {
+              ti=GetTopicInfo(msg.topicId, msg.topicIdType);
+            }
+            topicId=ti.TopicId;
+          }
+          Send(new MsSuback(msg.qualityOfService, topicId, msg.MessageId, MsReturnCode.Accepted));
+          s=Owner.Subscribe(msg.path, PublishTopic, msg.qualityOfService);
+          _subsscriptions.Add(s);
+        }
+        break;
+      case MsMessageType.REGISTER: {
+          var msg=new MsRegister(buf) { Addr=this.Addr };
+          PrintPacket(this, msg, buf);
+          ResetTimer();
+          try {
+            TopicInfo ti = GetTopicInfo(msg.TopicPath, false);
+            Send(new MsRegAck(ti.TopicId, msg.MessageId, MsReturnCode.Accepted));
+          }
+          catch(Exception) {
+            Send(new MsRegAck(0, msg.MessageId, MsReturnCode.NotSupportes));
+            Log.Warning("Unknown variable type by register {0}, {1}", Owner.path, msg.TopicPath);
+          }
+        }
+        break;
+      case MsMessageType.REGACK: {
+          var msg=new MsRegAck(buf) { Addr=this.Addr };
+          PrintPacket(this, msg, buf);
+          ProccessAcknoledge(msg);
+          TopicInfo ti=_topics.FirstOrDefault(z => z.TopicId==msg.TopicId);
+          if(ti==null) {
+            if(msg.TopicId!=0) {
+              Log.Warning("{0} RegAck({1:X4}) for unknown variable", Owner.path, msg.TopicId);
+            }
+            return;
+          }
+          if(msg.RetCode==MsReturnCode.Accepted) {
+            ti.registred=true;
+            if(ti.it!=TopicIdType.PreDefined) {
+              Send(new MsPublish(ti.topic, ti.TopicId, QoS.AtLeastOnce));
+            }
+          } else {
+            Log.Warning("{0} registred failed: {1}", ti.path, msg.RetCode.ToString());
+            _topics.Remove(ti);
+            ti.topic.Remove();
+          }
+        }
+        break;
+      case MsMessageType.PUBLISH: {
+          var msg=new MsPublish(buf) { Addr=this.Addr };
+          PrintPacket(this, msg, buf);
+          TopicInfo ti=_topics.Find(z => z.TopicId==msg.TopicId && z.it==msg.topicIdType);
+          if(ti==null && msg.topicIdType!=TopicIdType.Normal) {
+            ti=GetTopicInfo(msg.TopicId, msg.topicIdType, false);
+          }
+          if(msg.qualityOfService==QoS.AtMostOnce) {
+            ResetTimer();
+          } else if(msg.qualityOfService==QoS.AtLeastOnce) {
+            SyncMsgId(msg.MessageId);
+            Send(new MsPubAck(msg.TopicId, msg.MessageId, ti!=null?MsReturnCode.Accepted:MsReturnCode.InvalidTopicId));
+          } else if(msg.qualityOfService==QoS.ExactlyOnce) {
+            SyncMsgId(msg.MessageId);
+            // QoS2 not supported, use QoS1
+            Send(new MsPubAck(msg.TopicId, msg.MessageId, ti!=null?MsReturnCode.Accepted:MsReturnCode.InvalidTopicId));
+          } else {
+            throw new NotSupportedException("QoS -1 not supported "+Owner.path);
+          }
+          SetValue(ti, msg.Data);
+        }
+        break;
+      case MsMessageType.PUBACK: {
+          var msg=new MsPubAck(buf) { Addr=this.Addr };
+          PrintPacket(this, msg, buf);
+          ProccessAcknoledge(msg);
+        }
+        break;
+      case MsMessageType.PINGREQ: {
+          var msg=new MsPingReq(buf) { Addr=this.Addr };
+          PrintPacket(this, msg, buf);
+          if(state==MsDeviceState.ASleep) {
+            if(string.IsNullOrEmpty(msg.ClientId) || msg.ClientId==Owner.name) {
+              state=MsDeviceState.AWake;
+              ProccessAcknoledge(msg);    // resume send proccess
+            } else {
+              Send(new MsDisconnect());
+              state=MsDeviceState.Lost;
+              Log.Warning("{0} PingReq from unknown device: {1}", Owner.path, msg.ClientId);
+            }
+          } else {
+            ResetTimer();
+            if(_gate!=null) {
+              _gate.Send(new MsMessage(MsMessageType.PINGRESP) { Addr=this.Addr });
+            }
+          }
+        }
+        break;
+      case MsMessageType.DISCONNECT: {
+          var msg=new MsDisconnect(buf) { Addr=this.Addr };
+          PrintPacket(this, msg, buf);
+          Disconnect(msg.Duration);
+        }
+        break;
+      default:
+        Log.Warning("{0} unknown packet: {1}", Owner!=null?Owner.path:"null", BitConverter.ToString(buf));
+        break;
+      }
+    }
 
     internal void Connect(MsConnect msg) {
       Addr=msg.Addr;
@@ -106,94 +278,6 @@ namespace X13.MQTT {
         Send(new MsConnack(MsReturnCode.Accepted));
       }
     }
-    internal void WillTopic(MsWillTopic msg) {
-      if(state==MsDeviceState.WillTopic) {
-        _willPath=msg.Path;
-        _willRetain=msg.Retain;
-        state=MsDeviceState.WillMsg;
-        ProccessAcknoledge(msg);
-      }
-    }
-    internal void WillMsg(MsWillMsg msg) {
-      if(state==MsDeviceState.WillMsg) {
-        _wilMsg=msg.Payload;
-        state=MsDeviceState.Connected;
-        ProccessAcknoledge(msg);
-        Send(new MsConnack(MsReturnCode.Accepted));
-        Log.Info("{0} connected", Owner.path);
-      }
-    }
-    internal void Register(MsRegister msg) {
-      ResetTimer();
-      try {
-        TopicInfo ti = GetTopicInfo(msg.TopicPath, false);
-        Send(new MsRegAck(ti.TopicId, msg.MessageId, MsReturnCode.Accepted));
-      }
-      catch(Exception) {
-        Send(new MsRegAck(0, msg.MessageId, MsReturnCode.NotSupportes));
-        Log.Warning("Unknown variable type by register {0}, {1}", Owner.path, msg.TopicPath);
-      }
-    }
-    internal void RegAck(MsRegAck msg) {
-      ProccessAcknoledge(msg);
-      TopicInfo ti=_topics.FirstOrDefault(z => z.TopicId==msg.TopicId);
-      if(ti==null) {
-        if(msg.TopicId!=0) {
-          Log.Warning("{0} RegAck({1:X4}) for unknown variable", Owner.path, msg.TopicId);
-        }
-        return;
-      }
-      if(msg.RetCode==MsReturnCode.Accepted) {
-        ti.registred=true;
-        if(ti.it!=TopicIdType.PreDefined) {
-          Send(new MsPublish(ti.topic, ti.TopicId, QoS.AtLeastOnce));
-        }
-      } else {
-        Log.Warning("{0} registred failed: {1}", ti.path, msg.RetCode.ToString());
-        _topics.Remove(ti);
-        ti.topic.Remove();
-      }
-    }
-    internal void Subscibe(MsSubscribe msg) {
-      SyncMsgId(msg.MessageId);
-      Topic.Subscription s=null;
-      ushort topicId=msg.topicId;
-      if(msg.topicIdType!=TopicIdType.Normal || msg.path.IndexOfAny(new[] { '+', '#' })<0) {
-        TopicInfo ti=null;
-        if(msg.topicIdType==TopicIdType.Normal) {
-          ti=GetTopicInfo(msg.path, false);
-        } else {
-          ti=GetTopicInfo(msg.topicId, msg.topicIdType);
-        }
-        topicId=ti.TopicId;
-      }
-      //if(s!=null) {
-      Send(new MsSuback(msg.qualityOfService, topicId, msg.MessageId, MsReturnCode.Accepted));
-      s=Owner.Subscribe(msg.path, PublishTopic, msg.qualityOfService);
-      _subsscriptions.Add(s);
-      //} else {
-      //  Send(new MsSuback(QoS.AtMostOnce, topicId, msg.MessageId, MsReturnCode.InvalidTopicId));
-      //}
-    }
-    internal void Publish(MsPublish msg) {
-      TopicInfo ti=_topics.Find(z => z.TopicId==msg.TopicId && z.it==msg.topicIdType);
-      if(ti==null && msg.topicIdType!=TopicIdType.Normal) {
-        ti=GetTopicInfo(msg.TopicId, msg.topicIdType, false);
-      }
-      if(msg.qualityOfService==QoS.AtMostOnce) {
-        ResetTimer();
-      } else if(msg.qualityOfService==QoS.AtLeastOnce) {
-        SyncMsgId(msg.MessageId);
-        Send(new MsPubAck(msg.TopicId, msg.MessageId, ti!=null?MsReturnCode.Accepted:MsReturnCode.InvalidTopicId));
-      } else if(msg.qualityOfService==QoS.ExactlyOnce) {
-        SyncMsgId(msg.MessageId);
-        // QoS2 not supported, use QoS1
-        Send(new MsPubAck(msg.TopicId, msg.MessageId, ti!=null?MsReturnCode.Accepted:MsReturnCode.InvalidTopicId));
-      } else {
-        throw new NotSupportedException("QoS -1 not supported "+Owner.path);
-      }
-      SetValue(ti, msg.Data);
-    }
     //TODO: Unsubscribe
     private void SetValue(TopicInfo ti, byte[] msgData) {
       if(ti!=null) {
@@ -228,26 +312,8 @@ namespace X13.MQTT {
         ti.topic.SetValue(val, new TopicChanged(TopicChanged.ChangeArt.Value, Owner));
       }
     }
-    internal void PubAck(MsPubAck msg) {
-      ProccessAcknoledge(msg);
-    }
-    internal void PingReq(MsPingReq msg) {
-      if(state==MsDeviceState.ASleep) {
-        if(string.IsNullOrEmpty(msg.ClientId) || msg.ClientId==Owner.name) {
-          state=MsDeviceState.AWake;
-          ProccessAcknoledge(msg);    // resume send proccess
-        } else {
-          Send(new MsDisconnect());
-          state=MsDeviceState.Lost;
-          Log.Warning("{0} PingReq from unknown device: {1}", Owner.path, msg.ClientId);
-        }
-      } else {
-        ResetTimer();
-        SendIF(new MsMessage(MsMessageType.PINGRESP));
-      }
-    }
     internal void Disconnect(ushort duration=0) {
-      if(!string.IsNullOrEmpty(_willPath)) {
+      if(duration==0 && !string.IsNullOrEmpty(_willPath)) {
         TopicInfo ti = GetTopicInfo(_willPath, false);
         SetValue(ti, _wilMsg);
       }
@@ -264,8 +330,7 @@ namespace X13.MQTT {
         if(Owner!=null) {
           Log.Info("{0} Disconnected", Owner.path);
         }
-        _activeTimer.Dispose();
-        _activeTimer=null;
+        _activeTimer.Change(Timeout.Infinite, Timeout.Infinite);
       }
     }
     private void OwnerChanged(Topic topic, TopicChanged param) {
@@ -276,10 +341,17 @@ namespace X13.MQTT {
       }
     }
 
-    internal void PublishTopic(Topic topic, TopicChanged param) {
+    protected virtual void PublishTopic(Topic topic, TopicChanged param) {
       if(param.Art==TopicChanged.ChangeArt.Add) {
         GetTopicInfo(topic);
         return;
+      }
+      if(topic.name=="_via") {
+        if(_gate==null) {
+          if(string.IsNullOrEmpty(via)) {
+            MsGSerial.Rescan();
+          }
+        }
       }
       if(state==MsDeviceState.Disconnected || state==MsDeviceState.Lost || param.Visited(Owner, true)) {
         return;
@@ -428,7 +500,9 @@ namespace X13.MQTT {
     private void SendIntern(MsMessage msg) {
       while((msg!=null || state==MsDeviceState.AWake) && state!=MsDeviceState.ASleep) {
         if(msg!=null) {
-          SendIF(msg);
+          if(_gate!=null) {
+            _gate.Send(msg);
+          }
           if(msg.IsRequest) {
             ResetTimer(ACK_TIMEOUT);
             break;
@@ -437,7 +511,9 @@ namespace X13.MQTT {
         msg=null;
         lock(_sendQueue) {
           if(_sendQueue.Count==0 && state==MsDeviceState.AWake) {
-            SendIF(new MsMessage(MsMessageType.PINGRESP) { Addr=this.Addr });
+            if(_gate!=null) {
+              _gate.Send(new MsMessage(MsMessageType.PINGRESP) { Addr=this.Addr });
+            }
             state=MsDeviceState.ASleep;
             break;
           }
@@ -447,7 +523,6 @@ namespace X13.MQTT {
         }
       }
     }
-    internal abstract void SendIF(MsMessage msg);
     private void ResetTimer(int period=0) {
       if(period==0) {
         if(_sendQueue.Count>0) {
@@ -486,7 +561,9 @@ namespace X13.MQTT {
       lock(_sendQueue) {
         _sendQueue.Clear();
       }
-      SendIF(new MsDisconnect() { Addr=this.Addr });
+      if(_gate!=null) {
+        _gate.Send(new MsDisconnect() { Addr=this.Addr });
+      }
     }
 
     #region ITopicOwned Members
@@ -513,13 +590,13 @@ namespace X13.MQTT {
           _present=Owner.Get<bool>(PredefinedTopics.present.ToString(), Owner);
           _present.value=(state==MsDeviceState.Connected || state==MsDeviceState.ASleep || state==MsDeviceState.AWake);
 
-          if(!string.IsNullOrEmpty(backName) && backName!=Owner.name && Owner.parent.Exist(backName)) {   // Device renamed
-            var old=Owner.parent.Get<MsDevice>(backName);
-            if(old!=null && old.value!=null) {
-              _addr=old.value._addr;
-              _stateVar.value=old.value._stateVar.value;
-              Send(new MsPublish(null, (ushort)PredefinedTopics._sName, QoS.AtLeastOnce) { Data=Encoding.UTF8.GetBytes(Owner.name.Substring(0, Owner.name.Length)) });
-              Send(new MsDisconnect());
+          Topic oldT;
+          if(!string.IsNullOrEmpty(backName) && backName!=Owner.name && Owner.parent.Exist(backName, out oldT) && oldT.valueType==typeof(MsDevice)) {   // Device renamed
+            MsDevice old=(oldT as DVar<MsDevice>).value;
+            if(old!=null) {
+              Addr=old.Addr;
+              old.Send(new MsPublish(null, (ushort)PredefinedTopics._sName, QoS.AtLeastOnce) { Data=Encoding.UTF8.GetBytes(Owner.name.Substring(0, Owner.name.Length)) });
+              old.Send(new MsDisconnect());
             }
           }
           backName=Owner.name;
@@ -527,7 +604,12 @@ namespace X13.MQTT {
       }
     }
     #endregion ITopicOwned Members
-
+    public override string ToString() {
+      if(Owner!=null) {
+        return string.Format("{0} via {1}", Addr==null?"N/A":BitConverter.ToString(Addr), via);
+      }
+      return _declarer;
+    }
     private string _declarer="RF12_Default";
 
     [Newtonsoft.Json.JsonProperty]
@@ -584,6 +666,7 @@ namespace X13.MQTT {
       public readonly string name;
       public readonly Type type;
     }
+
   }
 
   internal enum TopicIdType {
@@ -601,6 +684,7 @@ namespace X13.MQTT {
     _BRSSI=0xFE08,
     _state=0xFF01,
     present=0xFF02,
+    _via=0xFF03
   }
   public enum MsDeviceState {
     Disconnected=0,

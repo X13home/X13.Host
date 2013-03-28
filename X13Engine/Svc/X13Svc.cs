@@ -131,7 +131,7 @@ namespace X13.Svc {
       Topic.paused=false;
 
       Topic.ready.WaitOne(2500);
-      MsDevSer.Open();
+      MsDevice.Open();
       MqBroker.Open();
     }
     private void SetTopic<T>(string path, T value, Topic mp) {

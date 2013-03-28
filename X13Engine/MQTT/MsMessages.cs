@@ -473,7 +473,7 @@ namespace X13.MQTT {
       : base(buf) {
       int ptr=buf[0]==1?4:2;
       if(1+_length-ptr>0) {
-        ClientId=enc.GetString(buf, ptr, 1+_length-ptr);
+        ClientId=enc.GetString(buf, ptr, _length-ptr);
       } else {
         ClientId=string.Empty;
       }
