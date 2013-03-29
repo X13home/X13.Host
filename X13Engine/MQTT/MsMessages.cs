@@ -51,6 +51,11 @@ namespace X13.MQTT {
     InvalidTopicId=2,
     NotSupportes=3
   }
+  internal enum TopicIdType {
+    Normal=0,
+    PreDefined=1,
+    ShortName=2
+  }
 
   internal class MsMessage {
     protected static UTF8Encoding enc = new UTF8Encoding();

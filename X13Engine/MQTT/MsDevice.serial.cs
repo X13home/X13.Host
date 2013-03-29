@@ -21,22 +21,17 @@ using System.IO;
 namespace X13.MQTT {
   public partial class MsDevice : ITopicOwned {
 
-    private interface IMsGate {
-      void Send(MsMessage msg);
-      byte gwIdx { get; set; }
-    }
-
     private class MsGSerial : IMsGate {
 
       #region static
       private static AutoResetEvent _startScan;
       private static bool _scanAllPorts=false;
-      private static Timer _rescanTimer;
+      private static int _scanBusy;
 
       static MsGSerial() {
         _startScan=new AutoResetEvent(false);
+        _scanBusy=0;
         ThreadPool.RegisterWaitForSingleObject(_startScan, ScanPorts, null, TimeSpan.FromMinutes(15), false);
-        _rescanTimer=new Timer((o) => _startScan.Set());
       }
 
       public static void Open() {
@@ -46,10 +41,16 @@ namespace X13.MQTT {
         _startScan.Set();
       }
       public static void Rescan() {
-        _startScan.Set();
+        if(_scanBusy==0) {
+          _startScan.Set();
+        }
       }
 
       private static void ScanPorts(object o, bool b) {
+        if(Interlocked.Exchange(ref _scanBusy, 1)!=0) {
+          return;
+        }
+
         byte[] buf=new byte[64];
         byte addr=0xFF;
         bool escChar;
@@ -61,7 +62,7 @@ namespace X13.MQTT {
         List<string> pns=new List<string>();
         Topic dev=Topic.root.Get("/dev");
         lock(dev) {
-          var ifs=dev.children.Where(z => z.valueType==typeof(MsDevice)).Cast<DVar<MsDevice>>().Where(z => z.value!=null && z.value.state!=MsDeviceState.Connected).Select(z => z.value).ToArray();
+          var ifs=dev.children.Where(z => z.valueType==typeof(MsDevice)).Cast<DVar<MsDevice>>().Where(z => z.value!=null && z.value.state!=State.Connected).Select(z => z.value).ToArray();
           foreach(var devSer in ifs) {
             if(string.IsNullOrWhiteSpace(devSer.via)) {
               _scanAllPorts=true;
@@ -105,8 +106,10 @@ namespace X13.MQTT {
               port.Close();
               continue;
             }
-            var gw=new MsGSerial(port, curAddr[0]);
-            _gates.Add(gw);
+            lock(_gates) {
+              var gw=new MsGSerial(port, curAddr[0]);
+              _gates.Add(gw);
+            }
           }
           catch(Exception) {
             if(port!=null && port.IsOpen) {
@@ -115,6 +118,7 @@ namespace X13.MQTT {
           }
           port=null;
         }
+        _scanBusy=0;
       }
       private static bool GetPacket(SerialPort port, ref byte addr, byte[] buf, ref int cnt, ref bool escChar) {
         int b;
@@ -235,13 +239,20 @@ namespace X13.MQTT {
         _gwAddr=addr;
         byte i=1;
         foreach(var g in _gates) {
-          i=g.gwIdx>i?(byte)(g.gwIdx+1):i;
+          i=g.gwIdx>=i?(byte)(g.gwIdx+1):i;
         }
         gwIdx=i;
         _sendQueue=new Queue<MsMessage>();
         ThreadPool.QueueUserWorkItem(CommThread);
         Send(new MsDisconnect() { Addr=new byte[] { 0 } });
       }
+      public void Send(MsMessage msg) {
+        lock(_sendQueue) {
+          _sendQueue.Enqueue(msg);
+        }
+      }
+      public byte gwIdx { get; private set; }
+
       private void CommThread(object o) {
         byte[] buf=new byte[256];
         bool escChar=false;
@@ -266,7 +277,7 @@ namespace X13.MQTT {
               SendRaw(this, msg);
             }
             Thread.Sleep(15);
-            if(_gwTopic!=null && _gwTopic.value!=null && (_gwTopic.value.state==MsDeviceState.Disconnected || _gwTopic.value.state==MsDeviceState.Lost)) {
+            if(_gwTopic!=null && _gwTopic.value!=null && (_gwTopic.value.state==State.Disconnected || _gwTopic.value.state==State.Lost)) {
               break;
             }
           }
@@ -298,11 +309,11 @@ namespace X13.MQTT {
             Log.Info("{0} new addr={1}", msg.ClientId, nAddr);
             var pm=new MsPublish(null, (ushort)PredefinedTopics._DeviceAddr, QoS.AtLeastOnce) { Addr=msg.Addr, MessageId=1, Data=nAddr };
             Send(pm);
-          } else {
+          } else { // msg.Addr!=0xFF
             DVar<MsDevice> dev=devR.Get<MsDevice>(msg.ClientId);
-            if(!msg.CleanSession && (dev.value==null || dev.value.Addr!=msg.Addr || dev.value.state==MsDeviceState.Disconnected || dev.value.state==MsDeviceState.Lost)) {
-              Send(new MsConnack(MsReturnCode.InvalidTopicId) { Addr=msg.Addr });
+            if(!msg.CleanSession && (dev.value==null || dev.value.Addr!=msg.Addr || dev.value.state==State.Disconnected || dev.value.state==State.Lost)) {
               PrintPacket(dev, msg, buf);
+              Send(new MsConnack(MsReturnCode.InvalidTopicId) { Addr=msg.Addr });
               return;
             }
             if(dev.value==null) {
@@ -312,6 +323,7 @@ namespace X13.MQTT {
             if(dev.value.Addr==null || !msg.Addr.SequenceEqual(dev.value.Addr)) {
               dev.value.Addr=msg.Addr;
             }
+            PrintPacket(dev, msg, buf);
             Thread.Sleep(0);
             dev.value.Connect(msg);
             if(msg.Addr[0]==_gwAddr) {
@@ -320,11 +332,10 @@ namespace X13.MQTT {
             } else {
               dev.value.via= _gwTopic==null?string.Empty:_gwTopic.name;
             }
-
           }  // msg.Addr!=0xFF
         } else { // msgType==Connect
           MsDevice dev=devR.children.Select(z => z.GetValue() as MsDevice).FirstOrDefault(z => z!=null && z.Addr!=null && addr.SequenceEqual(z.Addr) && z._gate==this);
-          if(dev!=null && dev.state!=MsDeviceState.Disconnected && dev.state!=MsDeviceState.Lost) {
+          if(dev!=null && dev.state!=State.Disconnected && dev.state!=State.Lost) {
             dev.ParseInPacket(buf);
           } else {
             if(dev==null || dev.Owner==null) {
@@ -352,12 +363,6 @@ namespace X13.MQTT {
           }
         }
       }
-      public void Send(MsMessage msg) {
-        lock(_sendQueue) {
-          _sendQueue.Enqueue(msg);
-        }
-      }
-      public byte gwIdx { get; set; }
       #endregion instance
     }
   }

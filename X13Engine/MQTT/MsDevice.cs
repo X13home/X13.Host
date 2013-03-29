@@ -29,14 +29,15 @@ namespace X13.MQTT {
       _gates=new List<IMsGate>();
     }
     public static void Open() {
+      MsGUdp.Open();
       MsGSerial.Open();
     }
 
     private int _duration=3000;
-    private DVar<MsDeviceState> _stateVar;
+    private DVar<State> _stateVar;
 
-    public MsDeviceState state {
-      get { return _stateVar!=null?_stateVar.value:MsDeviceState.Disconnected; }
+    public State state {
+      get { return _stateVar!=null?_stateVar.value:State.Disconnected; }
       protected set {
         if(_stateVar!=null) {
           try {
@@ -48,7 +49,7 @@ namespace X13.MQTT {
         }
         if(_present!=null) {
           try {
-            _present.value=(state==MsDeviceState.Connected || state==MsDeviceState.ASleep || state==MsDeviceState.AWake);
+            _present.value=(state==State.Connected || state==State.ASleep || state==State.AWake);
           }
           catch(ObjectDisposedException) {
             _present=null;
@@ -105,10 +106,10 @@ namespace X13.MQTT {
       case MsMessageType.WILLTOPIC: {
           var msg=new MsWillTopic(buf) { Addr=this.Addr };
           PrintPacket(this, msg, buf);
-          if(state==MsDeviceState.WillTopic) {
+          if(state==State.WillTopic) {
             _willPath=msg.Path;
             _willRetain=msg.Retain;
-            state=MsDeviceState.WillMsg;
+            state=State.WillMsg;
             ProccessAcknoledge(msg);
           }
         }
@@ -116,9 +117,9 @@ namespace X13.MQTT {
       case MsMessageType.WILLMSG: {
           var msg=new MsWillMsg(buf) { Addr=this.Addr };
           PrintPacket(this, msg, buf);
-          if(state==MsDeviceState.WillMsg) {
+          if(state==State.WillMsg) {
             _wilMsg=msg.Payload;
-            state=MsDeviceState.Connected;
+            state=State.Connected;
             ProccessAcknoledge(msg);
             Send(new MsConnack(MsReturnCode.Accepted));
             Log.Info("{0} connected", Owner.path);
@@ -214,13 +215,13 @@ namespace X13.MQTT {
       case MsMessageType.PINGREQ: {
           var msg=new MsPingReq(buf) { Addr=this.Addr };
           PrintPacket(this, msg, buf);
-          if(state==MsDeviceState.ASleep) {
+          if(state==State.ASleep) {
             if(string.IsNullOrEmpty(msg.ClientId) || msg.ClientId==Owner.name) {
-              state=MsDeviceState.AWake;
+              state=State.AWake;
               ProccessAcknoledge(msg);    // resume send proccess
             } else {
               Send(new MsDisconnect());
-              state=MsDeviceState.Lost;
+              state=State.Lost;
               Log.Warning("{0} PingReq from unknown device: {1}", Owner.path, msg.ClientId);
             }
           } else {
@@ -266,15 +267,18 @@ namespace X13.MQTT {
       _duration=msg.Duration*1100;
       ResetTimer();
       if(msg.Will) {
-        state=MsDeviceState.WillTopic;
         _willPath=string.Empty;
         _wilMsg=null;
+        if(state!=State.ASleep) {
+          Log.Info("{0}.state {1} => WILLTOPICREQ", Owner.path, state);
+        }
+        state=State.WillTopic;
         Send(new MsMessage(MsMessageType.WILLTOPICREQ));
       } else {
-        if(state==MsDeviceState.Disconnected || state==MsDeviceState.Lost) {
-          Log.Info("{0}.state={1}->connected", Owner.path, state);
+        if(state!=State.ASleep) {
+          Log.Info("{0}.state {1} => Connected", Owner.path, state);
         }
-        state=MsDeviceState.Connected;
+        state=State.Connected;
         Send(new MsConnack(MsReturnCode.Accepted));
       }
     }
@@ -321,12 +325,12 @@ namespace X13.MQTT {
         ResetTimer(duration*1550);
         this.Send(new MsDisconnect());
         _tryCounter=0;
-        state=MsDeviceState.ASleep;
+        state=State.ASleep;
         var st=Owner.Get<long>(PredefinedTopics._WSleepTime.ToString(), Owner);
         st.saved=true;
         st.SetValue((short)duration, new TopicChanged(TopicChanged.ChangeArt.Value, Owner) { Source=st });
-      } else if(state!=MsDeviceState.Lost) {
-        state=MsDeviceState.Disconnected;
+      } else if(state!=State.Lost) {
+        state=State.Disconnected;
         if(Owner!=null) {
           Log.Info("{0} Disconnected", Owner.path);
         }
@@ -336,7 +340,7 @@ namespace X13.MQTT {
     private void OwnerChanged(Topic topic, TopicChanged param) {
       if(param.Art==TopicChanged.ChangeArt.Remove) {
         Send(new MsDisconnect());
-        state=MsDeviceState.Disconnected;
+        state=State.Disconnected;
         return;
       }
     }
@@ -353,7 +357,7 @@ namespace X13.MQTT {
           }
         }
       }
-      if(state==MsDeviceState.Disconnected || state==MsDeviceState.Lost || param.Visited(Owner, true)) {
+      if(state==State.Disconnected || state==State.Lost || param.Visited(Owner, true)) {
         return;
       }
       TopicInfo rez=_topics.FirstOrDefault(ti => ti.path==topic.path);
@@ -469,7 +473,7 @@ namespace X13.MQTT {
           _sendQueue.Dequeue();
         }
       }
-      if(msg!=null || state==MsDeviceState.AWake) {
+      if(msg!=null || state==State.AWake) {
         if(msg!=null && msg.IsRequest) {
           _tryCounter=2;
         }
@@ -477,13 +481,13 @@ namespace X13.MQTT {
       }
     }
     private void Send(MsMessage msg) {
-      if(state!=MsDeviceState.Disconnected && state!=MsDeviceState.Lost) {
+      if(state!=State.Disconnected && state!=State.Lost) {
         msg.Addr=this.Addr;
         bool send=true;
         if(msg.MessageId==0 && (msg.MsgTyp==MsMessageType.PUBLISH?(msg as MsPublish).qualityOfService!=QoS.AtMostOnce:msg.IsRequest)) {
           msg.MessageId=NextMsgId();
           lock(_sendQueue) {
-            if(_sendQueue.Count>0 || state==MsDeviceState.ASleep) {
+            if(_sendQueue.Count>0 || state==State.ASleep) {
               send=false;
             }
             _sendQueue.Enqueue(msg);
@@ -498,7 +502,7 @@ namespace X13.MQTT {
       }
     }
     private void SendIntern(MsMessage msg) {
-      while((msg!=null || state==MsDeviceState.AWake) && state!=MsDeviceState.ASleep) {
+      while((msg!=null || state==State.AWake) && state!=State.ASleep) {
         if(msg!=null) {
           if(_gate!=null) {
             _gate.Send(msg);
@@ -510,11 +514,11 @@ namespace X13.MQTT {
         }
         msg=null;
         lock(_sendQueue) {
-          if(_sendQueue.Count==0 && state==MsDeviceState.AWake) {
+          if(_sendQueue.Count==0 && state==State.AWake) {
             if(_gate!=null) {
               _gate.Send(new MsMessage(MsMessageType.PINGRESP) { Addr=this.Addr });
             }
-            state=MsDeviceState.ASleep;
+            state=State.ASleep;
             break;
           }
           if(_sendQueue.Count>0 && !(msg=_sendQueue.Peek()).IsRequest) {
@@ -553,7 +557,7 @@ namespace X13.MQTT {
         }
         return;
       }
-      state=MsDeviceState.Lost;
+      state=State.Lost;
       if(Owner!=null) {
         Disconnect();
         Log.Warning("{0} Lost", Owner.path);
@@ -581,14 +585,14 @@ namespace X13.MQTT {
         Owner=owner;
         if(Topic.brokerMode && Owner!=null) {
           Owner.saved=true;
-          _stateVar=Owner.Get<MsDeviceState>(PredefinedTopics._state.ToString());
+          _stateVar=Owner.Get<State>(PredefinedTopics._state.ToString());
           var dc=Owner.Get<string>(PredefinedTopics._declarer.ToString(), Owner);
           dc.saved=true;
           dc.value=_declarer;
           var st=Owner.Get<long>(PredefinedTopics._WSleepTime.ToString(), Owner);
           st.saved=true;
           _present=Owner.Get<bool>(PredefinedTopics.present.ToString(), Owner);
-          _present.value=(state==MsDeviceState.Connected || state==MsDeviceState.ASleep || state==MsDeviceState.AWake);
+          _present.value=(state==State.Connected || state==State.ASleep || state==State.AWake);
 
           Topic oldT;
           if(!string.IsNullOrEmpty(backName) && backName!=Owner.name && Owner.parent.Exist(backName, out oldT) && oldT.valueType==typeof(MsDevice)) {   // Device renamed
@@ -667,13 +671,21 @@ namespace X13.MQTT {
       public readonly Type type;
     }
 
+    private interface IMsGate {
+      void Send(MsMessage msg);
+      byte gwIdx { get; }
+    }
+    public enum State {
+      Disconnected=0,
+      WillTopic,
+      WillMsg,
+      Connected,
+      ASleep,
+      AWake,
+      Lost,
+    }
   }
 
-  internal enum TopicIdType {
-    Normal=0,
-    PreDefined=1,
-    ShortName=2
-  }
   internal enum PredefinedTopics : ushort {
     _declarer=0xFE00,
     _DeviceAddr=0xFE01,
@@ -685,14 +697,5 @@ namespace X13.MQTT {
     _state=0xFF01,
     present=0xFF02,
     _via=0xFF03
-  }
-  public enum MsDeviceState {
-    Disconnected=0,
-    WillTopic,
-    WillMsg,
-    Connected,
-    ASleep,
-    AWake,
-    Lost,
   }
 }
