@@ -73,8 +73,8 @@ namespace X13.CC {
         this.WindowState=Settings.MainWindowState;
       } else {
         this.WindowStartupLocation=System.Windows.WindowStartupLocation.CenterScreen;
-        this.Width=1100;
-        this.Height=700;
+        this.Width=System.Windows.SystemParameters.PrimaryScreenWidth*0.6;
+        this.Height=System.Windows.SystemParameters.PrimaryScreenHeight*0.8;
       }
       this.dockManager.ActiveDocumentChanged+=new EventHandler(dockManager_ActiveDocumentChanged);
     }
