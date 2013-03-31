@@ -141,6 +141,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WOUM\BlockingQueue.cs" />
+    <Compile Include="WOUM\crc16.cs" />
     <Compile Include="WOUM\Eval.cs" />
     <Compile Include="WOUM\ExConverter.cs" />
     <Compile Include="WOUM\PriorityQueue.cs" />

@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading;
 using X13.PLC;
 using X13.MQTT;
+using X13.WOUM;
 
 namespace X13.MQTT {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
@@ -28,13 +29,41 @@ namespace X13.MQTT {
       _verbose.value=true;
       _gates=new List<IMsGate>();
     }
-    public static void Open() {
+    internal static void Open() {
       MsGUdp.Open();
       MsGSerial.Open();
+    }
+    private static void PrintPacket(MsDevice dev, MsMessage msg, byte[] buf) {
+      if(_verbose) {
+        Log.Debug("r {4:X2}:{0}:{1} \t{2}:{3}", BitConverter.ToString(msg.Addr??new byte[0]), BitConverter.ToString(buf??new byte[0]), (dev!=null && dev.Owner!=null)?dev.Owner.name:string.Empty, msg.ToString(), (dev!=null && dev._gate!=null)?dev._gate.gwIdx:0xFF);
+      }
     }
 
     private int _duration=3000;
     private DVar<State> _stateVar;
+
+    private string _willPath;
+    private byte[] _wilMsg;
+    private bool _willRetain;
+    private Timer _activeTimer;
+    // TODO: Save/Restore _topics & _subsscriptions
+    private List<TopicInfo> _topics;
+    private List<Topic.Subscription> _subsscriptions;
+    private Queue<MsMessage> _sendQueue;
+    private string _declarer="RF12_Default";
+    private int _tryCounter;
+    private int _messageIdGen=0;
+    private DVar<bool> _present;
+    private IMsGate _gate;
+
+    private MsDevice() {
+      if(Topic.brokerMode) {
+        _activeTimer=new Timer(new TimerCallback(TimeOut));
+        _topics=new List<TopicInfo>(16);
+        _subsscriptions=new List<Topic.Subscription>(4);
+        _sendQueue=new Queue<MsMessage>();
+      }
+    }
 
     public State state {
       get { return _stateVar!=null?_stateVar.value:State.Disconnected; }
@@ -57,34 +86,11 @@ namespace X13.MQTT {
         }
       }
     }
-    private string _willPath;
-    private byte[] _wilMsg;
-    private bool _willRetain;
-    private Timer _activeTimer;
-    // TODO: Save/Restore _topics & _subsscriptions
-    private List<TopicInfo> _topics;
-    private List<Topic.Subscription> _subsscriptions;
-    private Queue<MsMessage> _sendQueue;
-    private int _tryCounter;
-    private int _topicIdGen=0;
-    private int _messageIdGen=0;
-    private DVar<bool> _present;
-
-    internal MsDevice() {
-      if(Topic.brokerMode) {
-        _activeTimer=new Timer(new TimerCallback(TimeOut));
-        _topics=new List<TopicInfo>(16);
-        _subsscriptions=new List<Topic.Subscription>(4);
-        _sendQueue=new Queue<MsMessage>();
-      }
-    }
-
-    [Newtonsoft.Json.JsonProperty]
-    internal byte[] Addr { get; set; }
     public Topic Owner { get; private set; }
-    internal string via {
+
+    private string via {
       get { return Owner!=null?Owner.Get<string>("_via").value:string.Empty; }
-      private set {
+      set {
         if(Owner!=null) {
           var t=Owner.Get<string>("_via");
           t.saved=true;
@@ -92,15 +98,13 @@ namespace X13.MQTT {
         }
       }
     }
-    private IMsGate _gate;
+    [Newtonsoft.Json.JsonProperty]
+    private byte[] Addr { get; set; }
+    [Newtonsoft.Json.JsonProperty]
+    private string backName { get; set; }
 
-    internal static void PrintPacket(MsDevice dev, MsMessage msg, byte[] buf) {
-      if(_verbose) {
-        Log.Debug("r {4:X2}:{0}:{1} \t{2}:{3}", BitConverter.ToString(msg.Addr??new byte[0]), BitConverter.ToString(buf??new byte[0]), (dev!=null && dev.Owner!=null)?dev.Owner.name:string.Empty, msg.ToString(), (dev!=null && dev._gate!=null)?dev._gate.gwIdx:0xFF);
-      }
-    }
 
-    internal void ParseInPacket(byte[] buf) {
+    private void ParseInPacket(byte[] buf) {
       var msgTyp=(MsMessageType)(buf[0]>1?buf[1]:buf[2]);
       switch(msgTyp) {
       case MsMessageType.WILLTOPIC: {
@@ -244,9 +248,8 @@ namespace X13.MQTT {
       }
     }
 
-    internal void Connect(MsConnect msg) {
+    private void Connect(MsConnect msg) {
       Addr=msg.Addr;
-      _topicIdGen=0;
       if(msg.CleanSession) {
         foreach(var s in _subsscriptions) {
           Owner.Unsubscribe(s.path, s.func);
@@ -255,13 +258,6 @@ namespace X13.MQTT {
         _topics.Clear();
         lock(_sendQueue) {
           _sendQueue.Clear();
-        }
-      } else {
-        try {
-          _topicIdGen=_topics.Where(z => z.it==TopicIdType.Normal).Max(z => z.TopicId);
-        }
-        catch(InvalidOperationException) {
-          _topicIdGen=1;
         }
       }
       _duration=msg.Duration*1100;
@@ -316,7 +312,7 @@ namespace X13.MQTT {
         ti.topic.SetValue(val, new TopicChanged(TopicChanged.ChangeArt.Value, Owner));
       }
     }
-    internal void Disconnect(ushort duration=0) {
+    private void Disconnect(ushort duration=0) {
       if(duration==0 && !string.IsNullOrEmpty(_willPath)) {
         TopicInfo ti = GetTopicInfo(_willPath, false);
         SetValue(ti, _wilMsg);
@@ -344,8 +340,7 @@ namespace X13.MQTT {
         return;
       }
     }
-
-    protected virtual void PublishTopic(Topic topic, TopicChanged param) {
+    private void PublishTopic(Topic topic, TopicChanged param) {
       if(param.Art==TopicChanged.ChangeArt.Add) {
         GetTopicInfo(topic);
         return;
@@ -395,7 +390,7 @@ namespace X13.MQTT {
           rez.it=TopicIdType.PreDefined;
           rez.registred=true;
         } else {
-          rez.TopicId=(ushort)Interlocked.Increment(ref _topicIdGen);
+          rez.TopicId=CalculateTopicId(rez.path);
           rez.it=TopicIdType.Normal;
         }
         _topics.Add(rez);
@@ -408,6 +403,20 @@ namespace X13.MQTT {
         }
       }
       return rez;
+    }
+    private ushort CalculateTopicId(string path) {
+      byte[] buf=Encoding.UTF8.GetBytes(path);
+      ushort id=Crc16.ComputeChecksum(buf);
+      while(id==0 || id==0xF000 || _topics.Any(z=>z.it==TopicIdType.Normal && z.TopicId==id)) {
+        if(id==0 || id==0xF000) {
+          Log.Warning("{0} restrickted id={1:X4}", path, id);
+        } else {
+          var dup=_topics.Find(z => z.it==TopicIdType.Normal && z.TopicId==id);
+          Log.Warning("{0} id {1:X4} already used as {2}", path, id, dup.path);
+        }
+        id=Crc16.UpdateChecksum(id, 0);
+      }
+      return id;
     }
     private TopicInfo GetTopicInfo(string path, bool sendRegister=true) {
       Topic cur=null;
@@ -614,11 +623,6 @@ namespace X13.MQTT {
       }
       return _declarer;
     }
-    private string _declarer="RF12_Default";
-
-    [Newtonsoft.Json.JsonProperty]
-    private string backName { get; set; }
-
     private class TopicInfo {
       public Topic topic;
       public ushort TopicId;
@@ -674,6 +678,7 @@ namespace X13.MQTT {
     private interface IMsGate {
       void Send(MsMessage msg);
       byte gwIdx { get; }
+      //TODO: Stop
     }
     public enum State {
       Disconnected=0,

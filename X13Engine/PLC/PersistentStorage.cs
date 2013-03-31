@@ -91,7 +91,7 @@ namespace X13.PLC {
     public void Close() {
       Topic.root.Unsubscribe("/#", MqChanged);
       _close.Set();
-      _thread.Join(1500);
+      _thread.Join(2500);
       if(_connection!=null) {
         _connection.Close();
         _connection = null;
@@ -110,7 +110,7 @@ namespace X13.PLC {
       try {
         LazyAction cur;
         while(!_close.WaitOne(1100)) {
-          long th=DateTime.Now.AddMilliseconds(-1500).Ticks;
+          long th=DateTime.Now.AddMilliseconds(-4500).Ticks;
           while(true) {
             lock(_actions) {
               if(_actions.Any() && _actions[0].marker<th) {
