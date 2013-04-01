@@ -26,7 +26,6 @@ namespace X13.MQTT {
 
     static MsDevice() {
       _verbose=Topic.root.Get<bool>("/system/Broker/MQTTS/verboseLog");
-      _verbose.value=true;
       _gates=new List<IMsGate>();
     }
     internal static void Open() {

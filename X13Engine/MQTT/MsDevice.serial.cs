@@ -25,7 +25,7 @@ namespace X13.MQTT {
 
       #region static
       private static AutoResetEvent _startScan;
-      private static bool _scanAllPorts=false;
+      private static bool _scanAllPorts;
       private static int _scanBusy;
 
       static MsGSerial() {
@@ -35,10 +35,11 @@ namespace X13.MQTT {
       }
 
       public static void Open() {
+        Log.Info("Search for MQTTS.serial devices");
         Topic dev=Topic.root.Get("/dev");
         dev.Get<string>("_declarer").value="MsGateway";
         _scanAllPorts=true;
-        _startScan.Set();
+        ScanPorts(null, false);
       }
       public static void Rescan() {
         if(_scanBusy==0) {

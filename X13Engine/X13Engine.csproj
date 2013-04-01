@@ -90,6 +90,8 @@
     <Compile Include="MQTT\MsDevice.serial.cs" />
     <Compile Include="MQTT\MsDevice.udp.cs" />
     <Compile Include="MQTT\MsMessages.cs" />
+    <Compile Include="Periphery\XBeeDevice.cs" />
+    <Compile Include="Periphery\XBeeDevice.serial.cs" />
     <Compile Include="PLC\BiultInStatements.cs" />
     <Compile Include="PLC\DVar.cs" />
     <Compile Include="PLC\IuiFeature.cs" />
@@ -180,6 +182,7 @@
   <ItemGroup>
     <EmbeddedResource Include="PLC\declarers.xst" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
