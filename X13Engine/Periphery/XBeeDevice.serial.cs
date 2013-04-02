@@ -280,6 +280,9 @@ namespace X13.Periphery {
               break;
             }
             if(length>=i) {
+              if(_verbose) {
+                Log.Debug("response {0}: {1}", cmd, BitConverter.ToString(frame, i, length-i));
+              }
               int j;
               switch(cmd) {
               case XBeeATCommand.NodeIdentifier: {

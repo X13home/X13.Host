@@ -21,16 +21,6 @@ namespace X13.Periphery {
     #region static
     private static DVar<bool> _verbose;
     private static List<IXBeeIF> _ifs;
-    private static Dictionary<string, uint> _initCmd=new Dictionary<string, uint>() {
-      {"DO0", 0x40000 | (uint)XBeeATCommand.D0},
-      {"DO1", 0x40000 | (uint)XBeeATCommand.D1},
-      {"DO2", 0x40000 | (uint)XBeeATCommand.D2},
-      {"DO3", 0x40000 | (uint)XBeeATCommand.D3},
-      {"DO4", 0x40000 | (uint)XBeeATCommand.D4},
-      {"DO5", 0x40000 | (uint)XBeeATCommand.D5},
-      {"DO6", 0x40000 | (uint)XBeeATCommand.D6},
-      {"DO7", 0x40000 | (uint)XBeeATCommand.D7},
-    };
 
     static XBeeDevice() {
       _verbose=Topic.root.Get<bool>("/system/Broker/XBee/verboseLog");
@@ -44,7 +34,9 @@ namespace X13.Periphery {
 
     private IXBeeIF _gate;
     private Timer _toTimer;
-    private List<uint> _initLst=new List<uint>();
+    private List<byte[]> _initLst=new List<byte[]>();
+    private ushort _pullUpMask;
+    private ushort _evntMask;
 
     [Newtonsoft.Json.JsonProperty]
     private string backName { get; set; }
@@ -69,7 +61,7 @@ namespace X13.Periphery {
         return;
       }
       if(_initLst.Count>0) {
-        _gate.SentATCommand(this, (XBeeATCommand)(_initLst[0] & 0xFFFF), new byte[] { (byte)(_initLst[0]>>16) });
+        _gate.SentATCommand(this, (XBeeATCommand)((_initLst[0][0]<<8) | _initLst[0][1]), _initLst[0].Skip(2).ToArray());
       }
     }
     internal void Disconnect() {
@@ -81,14 +73,10 @@ namespace X13.Periphery {
         Log.Error("{0} ATCommand: {1}, response={2}", Owner.path, cmd.ToString(), atStatus.ToString());
         return;
       }
-      int idx=_initLst.FindIndex(z => (z&0xFFFF) == (int)cmd);
-      if(idx<0) {
-
-      } else {
-        if(buf.Length==0 || (buf.Length==1 && buf[0]==(byte)(_initLst[idx]>>16))) {
-          _initLst.RemoveAt(idx);
-        }
-      }
+      _initLst.RemoveAll(z => z[0] == (byte)((int)cmd>>8) && z[1]== (byte)cmd);
+      //if(buf.Length>0) {
+        // TODO: create variables
+      //}
     }
 
     public Topic Owner { get; private set; }
@@ -113,50 +101,71 @@ namespace X13.Periphery {
               //TODO: rename
             }
           }
-          Owner.Subscribe("+", ChildChanged);
           foreach(Topic t in Owner.children.ToArray()) {
-            uint val;
-            if(_initCmd.TryGetValue(t.name, out val)) {
-              if(_initLst.Any(z => (z&0xFFFF)==(val&0xFFFF))) {
-                t.Remove();       // conflict
-              } else {
-
-                _initLst.Add(val);
-              }
-            } else {
-              // unknown variable
-            }
+            InitCmd(t);
           }
+          Owner.Subscribe("+", ChildChanged);
           backName=Owner.name;
         }
       }
     }
-
-    void ChildChanged(Topic sender, TopicChanged param) {
+    private void InitCmd(Topic t) {
+      switch(t.name) {
+      case "Op0":
+      case "Op1":
+      case "Op2":
+      case "Op3":
+      case "Op4":
+      case "Op5":
+      case "Op6":
+      case "Op7":
+        if(t.valueType==typeof(bool)) {
+          _initLst.Add(new byte[]{0x44,  (byte)t.name[2], (byte)((t as DVar<bool>).value?0x5:0x4)});
+        } else {
+          t.Remove();
+        }
+        break;
+      case "Ip0":
+      case "Ip1":
+      case "Ip2":
+      case "Ip3":
+      case "Ip4":
+      case "Ip5":
+      case "Ip6":
+      case "Ip7":
+      case "Ip8":
+        if(t.valueType==typeof(bool)) {
+          _initLst.Add(new byte[]{0x44,  (byte)t.name[2], 3});
+          _evntMask=(ushort)(_evntMask | 1<< (((byte)t.name[2])-0x30));
+          _initLst.Add(new byte[] {0x49, 0x43, (byte)(_evntMask>>8), (byte)_evntMask});
+        } else {
+          t.Remove();
+        }
+        break;
+      }
+    }
+    private void ChildChanged(Topic sender, TopicChanged param) {
       if(_gate==null) {
         return;
       }
       if(param.Art==TopicChanged.ChangeArt.Add) {
-        uint val;
-        if(_initCmd.TryGetValue(sender.name, out val)) {
-          _initLst.Add(val);
-        }
+        InitCmd(sender);
         return;
       }
       switch(sender.name) {
-      case "DO0":
-      case "DO1":
-      case "DO2":
-      case "DO3":
-      case "DO4":
-      case "DO5":
-      case "DO6":
-      case "DO7":
+      case "Op0":
+      case "Op1":
+      case "Op2":
+      case "Op3":
+      case "Op4":
+      case "Op5":
+      case "Op6":
+      case "Op7":
         if(sender.valueType==typeof(bool)) {
           if(param.Art==TopicChanged.ChangeArt.Remove) {
-            _gate.SentATCommand(this, (XBeeATCommand)(_initCmd[sender.name] &0xFFFF), new byte[] { 0 });
+            _gate.SentATCommand(this, (XBeeATCommand)(0x4400 | (byte)sender.name[2]), new byte[] { 0 });
           } else {
-            _gate.SentATCommand(this, (XBeeATCommand)(_initCmd[sender.name] &0xFFFF), new byte[] { (byte)((sender as DVar<bool>).value?5:4) });
+            _gate.SentATCommand(this, (XBeeATCommand)(0x4400 | (byte)sender.name[2]), new byte[] { (byte)((sender as DVar<bool>).value?5:4) });
           }
         }
         break;
@@ -262,6 +271,7 @@ namespace X13.Periphery {
       P1=0x5031,
       P2=0x5032,
       M0=0x4D30,
+      IODigitalChangeDetection=0x4943,
       PullUpResistor=0x5052,
       FirmwareVersion=0x5652,
       HardwareVersion=0x4856,
