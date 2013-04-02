@@ -69,7 +69,9 @@ namespace X13.MQTT {
         Topic devR=Topic.root.Get("/dev");
 
         var msgTyp=(MsMessageType)(buf[0]>1?buf[1]:buf[3]);
-        if(msgTyp==MsMessageType.SEARCHGW) {
+        if(msgTyp==MsMessageType.GWINFO || msgTyp==MsMessageType.ADVERTISE) {
+          return;
+        }else if(msgTyp==MsMessageType.SEARCHGW) {
           PrintPacket(null, new MsSearchGW(buf) { Addr=addr }, buf);
           this.Send(new MsGwInfo(gwIdx) { Addr=IPAddress.Broadcast.GetAddressBytes() });
         } else if(msgTyp==MsMessageType.CONNECT) {

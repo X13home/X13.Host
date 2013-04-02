@@ -7,3 +7,5 @@
 /CCWPF/obj/*
 /ViewWPF/obj/*
 /X13Engine/obj/*
+/bin/ViewWPF.exe.config
+/bin/ccwpf.cfg
