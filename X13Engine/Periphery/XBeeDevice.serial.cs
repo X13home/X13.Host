@@ -407,26 +407,18 @@ namespace X13.Periphery {
           #endregion ReceivePacket
           #region DataSampleRxIndicator 0x92
           case XBeeCmdID.DataSampleRxIndicator:
-            //  sn=(UInt64)frame[i++]<<56;
-            //  sn+=(UInt64)frame[i++]<<48;
-            //  sn+=(UInt64)frame[i++]<<40;
-            //  sn+=(UInt64)frame[i++]<<32;
-            //  sn+=(UInt64)frame[i++]<<24;
-            //  sn+=(UInt64)frame[i++]<<16;
-            //  sn+=(UInt64)frame[i++]<<08;
-            //  sn+=(UInt64)frame[i++];
-            //  addr=(UInt16)(frame[i++]<<08);
-            //  addr+=(UInt16)frame[i++];
-            //  i++;        //Recive Options
-            //  if(frame[i++]!=1)
-            //    break;    //Number of sample sets included in the payload. (Always set to 1)
-            //  cur=moduls[sn];
-            //  if(cur!=null) {
-            //    buf=new byte[frame.Length-i];
-            //    Array.Copy(frame, i, buf, 0, buf.Length);
-            //    cur.ReceiveDataSample(buf);
-            //    Manager.Post(cur.id, "DataSampleReceived");
-            //  }
+                  sn = ToULongNet(frame, ref i);
+                  addr=ToUShortNet(frame, ref i);
+
+              i++;        //Receive Options
+              if(frame[i++]!=1)
+                break;    //Number of sample sets included in the payload. (Always set to 1)
+              dev=devR.children.Where(z => z.valueType==typeof(XBeeDevice)).Cast<DVar<XBeeDevice>>().FirstOrDefault(z => z!=null && z.value!=null && (z.value._sn==sn || z.value._addr==addr));
+              if(dev!=null) {
+                buf=new byte[frame.Length-i];
+                Array.Copy(frame, i, buf, 0, buf.Length);
+                dev.value.ReceiveDataSample(buf);
+              }
             break;
           #endregion DataSampleRxIndicator
           #region ModulIdentificationIndicator  0x95
@@ -526,7 +518,7 @@ namespace X13.Periphery {
           buf[14]=(byte)((ushort)cmd);
         }
         if(buf!=null) {
-          SendRaw(_port, buf);
+          Send(new XBFrame() { buf=buf, length=buf.Length });
           if(_verbose){
             Log.Debug("SendAtCommand({0}, {1}, {2})", dev==null?string.Empty:dev.backName, cmd, param!=null?BitConverter.ToString(param):"null");
           }
@@ -544,9 +536,6 @@ namespace X13.Periphery {
           SentATCommand(null, XBeeATCommand.SerialNumberLow);
           break;
         case 3:
-          SentATCommand(null, XBeeATCommand.NetworkAddress);
-          break;
-        case 4:
           SentATCommand(null, XBeeATCommand.NodeDiscovery);
           break;
         }
@@ -588,5 +577,6 @@ namespace X13.Periphery {
         public byte[] buf;
       }
     }
+
   }
 }

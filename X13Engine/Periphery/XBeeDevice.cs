@@ -37,6 +37,8 @@ namespace X13.Periphery {
     private List<byte[]> _initLst=new List<byte[]>();
     private ushort _pullUpMask;
     private ushort _evntMask;
+    private ushort _usedMask;
+    private int _tryCnt;
 
     [Newtonsoft.Json.JsonProperty]
     private string backName { get; set; }
@@ -51,7 +53,7 @@ namespace X13.Periphery {
           var t=Owner.Get<string>("_via");
           t.saved=true;
           t.value=value;
-          _toTimer=new Timer(InitCB, null, 100, 200);
+          Connect();
         }
       }
     }
@@ -62,7 +64,14 @@ namespace X13.Periphery {
       }
       if(_initLst.Count>0) {
         _gate.SentATCommand(this, (XBeeATCommand)((_initLst[0][0]<<8) | _initLst[0][1]), _initLst[0].Skip(2).ToArray());
+        if(_tryCnt--<1) {
+          Disconnect();
+        }
       }
+    }
+    internal void Connect() {
+      _toTimer=new Timer(InitCB, null, 100, 1000);
+      _tryCnt=4;
     }
     internal void Disconnect() {
       throw new NotImplementedException();
@@ -73,43 +82,47 @@ namespace X13.Periphery {
         Log.Error("{0} ATCommand: {1}, response={2}", Owner.path, cmd.ToString(), atStatus.ToString());
         return;
       }
-      _initLst.RemoveAll(z => z[0] == (byte)((int)cmd>>8) && z[1]== (byte)cmd);
+      if(_initLst.RemoveAll(z => z[0] == (byte)((int)cmd>>8) && z[1]== (byte)cmd)>0) {
+        _tryCnt=4;
+      }
       //if(buf.Length>0) {
         // TODO: create variables
       //}
+      InitCB(null);
     }
-
-    public Topic Owner { get; private set; }
-
-    #region ITopicOwned Members
-    public void SetOwner(Topic owner) {
-      if(Owner!=owner) {
-        if(Owner!=null) {
-          Owner.Unsubscribe("+", ChildChanged);
-          //TODO: disconnect
-        }
-        Owner=owner;
-        if(Topic.brokerMode && Owner!=null) {
-          Owner.saved=true;
-
-          Topic oldT;
-          if(!string.IsNullOrEmpty(backName) && backName!=Owner.name && Owner.parent.Exist(backName, out oldT) && oldT.valueType==typeof(XBeeDevice)) {   // Device renamed
-            XBeeDevice old=(oldT as DVar<XBeeDevice>).value;
-            if(old!=null) {
-              _addr=old._addr;
-              _sn=old._sn;
-              //TODO: rename
+    internal void ReceiveDataSample(byte[] buf) {
+      int i=0;
+      UInt16 data;
+      UInt16 dMask=(UInt16)((buf[i++]<<8) | buf[i++]);
+      Topic ct;
+      byte aMask=(byte)buf[i++];
+      if(dMask!=0) {
+        data=(UInt16)((buf[i++]<<8) | buf[i++]);   // digital Inputs
+        for(int j=0; j<9; j++) {
+          if((dMask & 1<<j)!=0) {
+            if(Owner.Exist(string.Format("Ip{0}", (char)('0'+j)), out ct)) {
+              (ct as DVar<bool>).value=(data & 1<<j)!=0;
             }
           }
-          foreach(Topic t in Owner.children.ToArray()) {
-            InitCmd(t);
+        }
+      }
+      for(int j=0; j<4; j++) {
+        if((aMask & 1<<j)!=0) {
+          if(Owner.Exist(string.Format("Av{0}", (char)('0'+j)), out ct)) {
+            data=(UInt16)((buf[i++]<<8) | buf[i++]);   // analog Input
+            (ct as DVar<long>).value=data;
           }
-          Owner.Subscribe("+", ChildChanged);
-          backName=Owner.name;
+        }
+      }
+      if((aMask & 0x80)!=0) {
+        if(Owner.Exist("Vcc", out ct)) {
+          data=(UInt16)((buf[i++]<<8) | buf[i++]);   // power U
+          (ct as DVar<double>).value=data*1.2/1024.0;
         }
       }
     }
     private void InitCmd(Topic t) {
+      int idx;
       switch(t.name) {
       case "Op0":
       case "Op1":
@@ -119,8 +132,10 @@ namespace X13.Periphery {
       case "Op5":
       case "Op6":
       case "Op7":
-        if(t.valueType==typeof(bool)) {
-          _initLst.Add(new byte[]{0x44,  (byte)t.name[2], (byte)((t as DVar<bool>).value?0x5:0x4)});
+        idx=(((byte)t.name[2])-0x30);
+        if(t.valueType==typeof(bool) && (_usedMask & (1<<idx))==0) {
+          _initLst.Add(new byte[] { 0x44, (byte)t.name[2], (byte)((t as DVar<bool>).value?0x5:0x4) });
+          _usedMask=(ushort)(_usedMask | 1<< idx);
         } else {
           t.Remove();
         }
@@ -134,10 +149,12 @@ namespace X13.Periphery {
       case "Ip6":
       case "Ip7":
       case "Ip8":
-        if(t.valueType==typeof(bool)) {
-          _initLst.Add(new byte[]{0x44,  (byte)t.name[2], 3});
+        idx=(((byte)t.name[2])-0x30);
+        if(t.valueType==typeof(bool) && (_usedMask & (1<<idx))==0) {
+          _initLst.Add(new byte[] { 0x44, (byte)t.name[2], 3 });
           _evntMask=(ushort)(_evntMask | 1<< (((byte)t.name[2])-0x30));
-          _initLst.Add(new byte[] {0x49, 0x43, (byte)(_evntMask>>8), (byte)_evntMask});
+          _initLst.Add(new byte[] { 0x49, 0x43, (byte)(_evntMask>>8), (byte)_evntMask });
+          _usedMask=(ushort)(_usedMask | 1<< idx);
         } else {
           t.Remove();
         }
@@ -163,13 +180,32 @@ namespace X13.Periphery {
       case "Op7":
         if(sender.valueType==typeof(bool)) {
           if(param.Art==TopicChanged.ChangeArt.Remove) {
-            _gate.SentATCommand(this, (XBeeATCommand)(0x4400 | (byte)sender.name[2]), new byte[] { 0 });
+            _initLst.Add(new byte[] { 0x44, (byte)sender.name[2], 0 });
+            _usedMask=(ushort)(_usedMask & ~(1<<(((byte)sender.name[2])-0x30)));
           } else {
-            _gate.SentATCommand(this, (XBeeATCommand)(0x4400 | (byte)sender.name[2]), new byte[] { (byte)((sender as DVar<bool>).value?5:4) });
+            _initLst.Add(new byte[] { 0x44, (byte)sender.name[2], (byte)((sender as DVar<bool>).value?5:4) });
           }
         }
         break;
-      case "PP0":
+      case "Ip0":
+      case "Ip1":
+      case "Ip2":
+      case "Ip3":
+      case "Ip4":
+      case "Ip5":
+      case "Ip6":
+      case "Ip7":
+      case "Ip8":
+        if(param.Art==TopicChanged.ChangeArt.Remove) {
+          int idx=(((byte)sender.name[2])-0x30);
+          _initLst.Add(new byte[] { 0x44, (byte)sender.name[2], 0 });
+          _evntMask=(ushort)(_evntMask &~(1<< idx));
+          _initLst.Add(new byte[] { 0x49, 0x43, (byte)(_evntMask>>8), (byte)_evntMask });
+          _usedMask=(ushort)(_usedMask& ~(1<< idx));
+
+        }
+        break;
+      case "Pp0":
         if(sender.valueType==typeof(long)) {
           if(param.Art==TopicChanged.ChangeArt.Remove) {
             _gate.SentATCommand(this, XBeeATCommand.P0, new byte[] { 0 });
@@ -180,6 +216,38 @@ namespace X13.Periphery {
           }
         }
         break;
+      }
+    }
+
+    public Topic Owner { get; private set; }
+
+    #region ITopicOwned Members
+    public void SetOwner(Topic owner) {
+      if(Owner!=owner) {
+        if(Owner!=null) {
+          Owner.Unsubscribe("+", ChildChanged);
+          //TODO: disconnect
+        }
+        Owner=owner;
+        if(Topic.brokerMode && Owner!=null) {
+          Owner.saved=true;
+
+          Topic oldT;
+          if(!string.IsNullOrEmpty(backName) && backName!=Owner.name && Owner.parent.Exist(backName, out oldT) && oldT.valueType==typeof(XBeeDevice)) {   // Device renamed
+            XBeeDevice old=(oldT as DVar<XBeeDevice>).value;
+            if(old!=null) {
+              _addr=old._addr;
+              _sn=old._sn;
+              //TODO: rename
+            }
+          }
+
+          foreach(Topic t in Owner.children.ToArray()) {
+            InitCmd(t);
+          }
+          Owner.Subscribe("+", ChildChanged);
+          backName=Owner.name;
+        }
       }
     }
     #endregion ITopicOwned Members
