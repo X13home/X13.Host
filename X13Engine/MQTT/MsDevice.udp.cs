@@ -25,7 +25,10 @@ namespace X13.MQTT {
     private class MsGUdp : IMsGate {
 
       #region static
+      private static IPAddress[] _myIps;
+
       public static void Open() {
+        _myIps=Dns.GetHostEntry(Dns.GetHostName()).AddressList.Where(z => z.AddressFamily==AddressFamily.InterNetwork).ToArray();
         MsGUdp ret;
         if(_gates!=null) {
           lock(_gates) {
@@ -56,7 +59,9 @@ namespace X13.MQTT {
         Byte[] buf=null;
         try {
           buf = _udp.EndReceive(ar, ref re);
-          ParseInPacket(buf, re.Address.GetAddressBytes());
+          if(!_myIps.Any(z=>re.Address==z)){
+            ParseInPacket(buf, re.Address.GetAddressBytes());
+          }
         }
         catch(Exception ex) {
           Log.Error("ReceiveCallback({0}, {1}) - {2}", re, BitConverter.ToString(buf), ex.ToString());
