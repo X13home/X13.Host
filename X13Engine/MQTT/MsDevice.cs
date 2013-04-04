@@ -88,10 +88,10 @@ namespace X13.MQTT {
     public Topic Owner { get; private set; }
 
     private string via {
-      get { return Owner!=null?Owner.Get<string>("_via").value:string.Empty; }
+      get { return Owner!=null?Owner.Get<string>(".cfg/_via").value:string.Empty; }
       set {
         if(Owner!=null) {
-          var t=Owner.Get<string>("_via");
+          var t=Owner.Get<string>(".cfg/_via");
           t.saved=true;
           t.value=value;
         }
@@ -321,7 +321,7 @@ namespace X13.MQTT {
         this.Send(new MsDisconnect());
         _tryCounter=0;
         state=State.ASleep;
-        var st=Owner.Get<long>(PredefinedTopics._WSleepTime.ToString(), Owner);
+        var st=Owner.Get<long>(".cfg/XD_SleepTime", Owner);
         st.saved=true;
         st.SetValue((short)duration, new TopicChanged(TopicChanged.ChangeArt.Value, Owner) { Source=st });
       } else if(state!=State.Lost) {
@@ -340,6 +340,9 @@ namespace X13.MQTT {
       }
     }
     private void PublishTopic(Topic topic, TopicChanged param) {
+      if(topic.valueType==null || topic==Owner) {
+        return;
+      }
       if(param.Art==TopicChanged.ChangeArt.Add) {
         GetTopicInfo(topic);
         return;
@@ -358,7 +361,7 @@ namespace X13.MQTT {
       if(rez==null && param.Art==TopicChanged.ChangeArt.Value) {
         rez=GetTopicInfo(topic, true);
       }
-      if(rez==null || rez.TopicId>=0xFF00 || rez.TopicId==0xFE00 || !rez.registred) {
+      if(rez==null || rez.TopicId>=0xFFC0 || !rez.registred) {
         return;
       }
       if(param.Art==TopicChanged.ChangeArt.Value) {
@@ -383,9 +386,9 @@ namespace X13.MQTT {
         rez=new TopicInfo();
         rez.topic=tp;
         rez.path=tp.path;
-        PredefinedTopics rtId;
-        if(Enum.TryParse(tpc, false, out rtId)) {
-          rez.TopicId=(ushort)rtId;
+        ushort rtId;
+        if(PredefinedTopics.TryGetValue(tpc, out rtId)) {
+          rez.TopicId=rtId;
           rez.it=TopicIdType.PreDefined;
           rez.registred=true;
         } else {
@@ -406,7 +409,7 @@ namespace X13.MQTT {
     private ushort CalculateTopicId(string path) {
       byte[] buf=Encoding.UTF8.GetBytes(path);
       ushort id=Crc16.ComputeChecksum(buf);
-      while(id==0 || id==0xF000 || _topics.Any(z=>z.it==TopicIdType.Normal && z.TopicId==id)) {
+      while(id==0 || id==0xF000 || _topics.Any(z => z.it==TopicIdType.Normal && z.TopicId==id)) {
         if(id==0 || id==0xF000) {
           Log.Warning("{0} restrickted id={1:X4}", path, id);
         } else {
@@ -436,9 +439,8 @@ namespace X13.MQTT {
       TopicInfo rez=_topics.Find(z => z.it==topicIdType && z.TopicId==topicId);
       if(rez==null) {
         if(topicIdType==TopicIdType.PreDefined) {
-          PredefinedTopics a=(PredefinedTopics)topicId;
-          if(Enum.IsDefined(typeof(PredefinedTopics), a)) {
-            string cPath=Enum.GetName(typeof(PredefinedTopics), a);
+          var cPath=PredefinedTopics.FirstOrDefault(z => z.Value==topicId).Key;
+          if(cPath!=null) {
             rez=GetTopicInfo(cPath, sendRegister);
           }
         } else if(topicIdType==TopicIdType.ShortName) {
@@ -591,34 +593,39 @@ namespace X13.MQTT {
           _stateVar=null;
         }
         Owner=owner;
-        if(Topic.brokerMode && Owner!=null) {
-          Owner.saved=true;
-          _stateVar=Owner.Get<State>(PredefinedTopics._state.ToString());
-          var dc=Owner.Get<string>(PredefinedTopics._declarer.ToString(), Owner);
-          dc.saved=true;
-          dc.value=_declarer;
-          var st=Owner.Get<long>(PredefinedTopics._WSleepTime.ToString(), Owner);
-          st.saved=true;
-          _present=Owner.Get<bool>(PredefinedTopics.present.ToString(), Owner);
-          _present.value=(state==State.Connected || state==State.ASleep || state==State.AWake);
+        if(Owner!=null) {
+          _stateVar=Owner.Get<State>(".cfg/_state");
+          if(Topic.brokerMode) {
+            Owner.saved=true;
+            Owner.Get<string>(".cfg/_declarer").value="mqtts_cfg";
+            var dc=Owner.Get<string>("_declarer", Owner);
+            dc.saved=true;
+            dc.value=_declarer;
+            _present=Owner.Get<bool>("present", Owner);
+            _present.value=(state==State.Connected || state==State.ASleep || state==State.AWake);
 
-          Topic oldT;
-          if(!string.IsNullOrEmpty(backName) && backName!=Owner.name && Owner.parent.Exist(backName, out oldT) && oldT.valueType==typeof(MsDevice)) {   // Device renamed
-            MsDevice old=(oldT as DVar<MsDevice>).value;
-            if(old!=null) {
-              Addr=old.Addr;
-              old.Send(new MsPublish(null, (ushort)PredefinedTopics._sName, QoS.AtLeastOnce) { Data=Encoding.UTF8.GetBytes(Owner.name.Substring(0, Owner.name.Length)) });
-              old.Send(new MsDisconnect());
+            Topic oldT;
+            if(!string.IsNullOrEmpty(backName) && backName!=Owner.name && Owner.parent.Exist(backName, out oldT) && oldT.valueType==typeof(MsDevice)) {   // Device renamed
+              MsDevice old=(oldT as DVar<MsDevice>).value;
+              if(old!=null) {
+                Addr=old.Addr;
+                old.Send(new MsPublish(null, PredefinedTopics["_sName"], QoS.AtLeastOnce) { Data=Encoding.UTF8.GetBytes(Owner.name.Substring(0, Owner.name.Length)) });
+                old.Send(new MsDisconnect());
+              }
             }
+            backName=Owner.name;
           }
-          backName=Owner.name;
         }
       }
     }
     #endregion ITopicOwned Members
     public override string ToString() {
       if(Owner!=null) {
-        return string.Format("{0} via {1}", Addr==null?"N/A":BitConverter.ToString(Addr), via);
+        if(state==State.Disconnected || state==State.Lost) {
+          return state.ToString();
+        } else {
+          return string.Format("{0} via {1}", Addr==null?"N/A":BitConverter.ToString(Addr), via);
+        }
       }
       return _declarer;
     }
@@ -630,41 +637,64 @@ namespace X13.MQTT {
       public string path;
     }
     private static NTRecord[] _NTTable= new NTRecord[]{ 
-                                          new NTRecord("In", typeof(bool)),
-                                          new NTRecord("Ip", typeof(bool)),
-                                          new NTRecord("Op", typeof(bool)),
-                                          new NTRecord("On", typeof(bool)),
-                                          new NTRecord("Ai", typeof(long)),   //uint16
-                                          new NTRecord("Av", typeof(long)),   //uint16
-                                          new NTRecord("Ae", typeof(long)),   //uint16
-                                          new NTRecord("_B", typeof(long)),   //uint8
-                                          new NTRecord("Pp", typeof(long)),   //uint8 PWM positive[29, 30]
-                                          new NTRecord("Pn", typeof(long)),   //uint8 PWM negative[29, 30]
-                                          new NTRecord("_W", typeof(long)),   //uint16
-                                          new NTRecord("_s", typeof(string)),
-                                          new NTRecord("St", typeof(string)),  // Serial port transmit
-                                          new NTRecord("Sr", typeof(string)),  // Serial port recieve
-                                          new NTRecord("Tz", typeof(bool)),
-                                          new NTRecord("Tb", typeof(long)),   //int8
-                                          new NTRecord("TB", typeof(long)),   //uint8
-                                          new NTRecord("Tw", typeof(long)),   //int16
-                                          new NTRecord("TW", typeof(long)),   //uint16
-                                          new NTRecord("Td", typeof(long)),   //int32
-                                          new NTRecord("TD", typeof(long)),   //uint32
-                                          new NTRecord("Ts", typeof(string)),
-                                          new NTRecord("Ta", typeof(byte[])),
-                                          new NTRecord("Xz", typeof(bool)),   // user defined
-                                          new NTRecord("Xb", typeof(long)),   //int8
-                                          new NTRecord("XB", typeof(long)),   //uint8
-                                          new NTRecord("Xw", typeof(long)),   //int16
-                                          new NTRecord("XW", typeof(long)),   //uint16
-                                          new NTRecord("Xd", typeof(long)),   //int32
-                                          new NTRecord("XD", typeof(long)),   //uint32
-                                          new NTRecord("Xs", typeof(string)),
-                                          new NTRecord("Xa", typeof(byte[])),
-                                          new NTRecord(PredefinedTopics._declarer.ToString(), typeof(string)),
-                                          new NTRecord(PredefinedTopics.present.ToString(), typeof(bool)),
-                                        };
+      new NTRecord("In", typeof(bool)),
+      new NTRecord("Ip", typeof(bool)),
+      new NTRecord("Op", typeof(bool)),
+      new NTRecord("On", typeof(bool)),
+      new NTRecord("Ai", typeof(long)),   //uint16
+      new NTRecord("Av", typeof(long)),   //uint16
+      new NTRecord("Ae", typeof(long)),   //uint16
+      new NTRecord("Pp", typeof(long)),   //uint8 PWM positive[29, 30]
+      new NTRecord("Pn", typeof(long)),   //uint8 PWM negative[29, 30]
+      new NTRecord("_B", typeof(long)),   //uint8
+      new NTRecord("_W", typeof(long)),   //uint16
+      new NTRecord("_D", typeof(long)),   //uint32
+      new NTRecord("_s", typeof(string)),
+      new NTRecord("St", typeof(string)),  // Serial port transmit
+      new NTRecord("Sr", typeof(string)),  // Serial port recieve
+      new NTRecord("Tz", typeof(bool)),
+      new NTRecord("Tb", typeof(long)),   //int8
+      new NTRecord("TB", typeof(long)),   //uint8
+      new NTRecord("Tw", typeof(long)),   //int16
+      new NTRecord("TW", typeof(long)),   //uint16
+      new NTRecord("Td", typeof(long)),   //int32
+      new NTRecord("TD", typeof(long)),   //uint32
+      new NTRecord("Ts", typeof(string)),
+      new NTRecord("Ta", typeof(byte[])),
+      new NTRecord("Xz", typeof(bool)),   // user defined
+      new NTRecord("Xb", typeof(long)),   //int8
+      new NTRecord("XB", typeof(long)),   //uint8
+      new NTRecord("Xw", typeof(long)),   //int16
+      new NTRecord("XW", typeof(long)),   //uint16
+      new NTRecord("Xd", typeof(long)),   //int32
+      new NTRecord("XD", typeof(long)),   //uint32
+      new NTRecord("Xs", typeof(string)),
+      new NTRecord("Xa", typeof(byte[])),
+      new NTRecord("_declarer", typeof(string)),
+      new NTRecord("present", typeof(bool)),
+    };
+    internal static Dictionary<string, ushort> PredefinedTopics=new Dictionary<string, ushort>(){
+      {"_sName",            0xFF00},
+      {".cfg/XD_SleepTime",  0xFF01},
+
+      {".cfg/XD_DeviceAddr", 0xFF10},
+      {".cfg/XD_GroupID",    0xFF11},
+      {".cfg/XD_Channel",    0xFF12},
+      {".cfg/XD_RSSI",       0xFF13},
+
+      {".cfg/XD_MACAddr",    0xFF20},
+      {".cfg/XD_IPAddr",     0xFE21},
+      {".cfg/XD_IPMask",     0xFE22},
+      {".cfg/XD_IPRouter",   0xFE23},
+      //{".cfg/XD_IPBroker",    0xFE24},
+
+      {"_declarer",         0xFFC0},
+      {".cfg/_state",        0xFFC1},
+      {"present",           0xFFC2},
+      {".cfg/_via",          0xFFC3},
+      {".cfg/_declarer",     0xFFD0},
+    };
+
     private struct NTRecord {
       public NTRecord(string name, Type type) {
         this.name=name;
@@ -688,18 +718,5 @@ namespace X13.MQTT {
       AWake,
       Lost,
     }
-  }
-
-  internal enum PredefinedTopics : ushort {
-    _declarer=0xFE00,
-    _DeviceAddr=0xFE01,
-    _WGroupID=0xFE02,
-    _BChannel=0xFE03,
-    _sName=0xFE04,
-    _WSleepTime=0xFE05,
-    _BRSSI=0xFE08,
-    _state=0xFF01,
-    present=0xFF02,
-    _via=0xFF03
   }
 }

@@ -77,7 +77,7 @@ namespace X13.CC {
           }
         }
         foreach(Topic tp in obj.children) {
-          if(tp.name=="_declarer" || tp.name=="_location") {
+          if(tp.name=="_declarer" || tp.name=="_location" || tp.valueType==null) {
             continue;
           }
           PropertyDescriptor np=new DVarPropertyDescriptor(tp);
