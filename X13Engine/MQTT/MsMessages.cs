@@ -361,7 +361,7 @@ namespace X13.MQTT {
       this.qualityOfService=qualityOfService;
       this.TopicId=topicId;
       this._val=val;
-      if(MsDevice.PredefinedTopics.ContainsValue(topicId) && (_val==null || MsDevice.PredefinedTopics.ContainsKey(_val.name) || MsDevice.PredefinedTopics.ContainsKey("cfg/"+_val.name))) {
+      if(MsDevice.PredefinedTopics.ContainsValue(topicId) && (_val==null || MsDevice.PredefinedTopics.ContainsKey(_val.name) || MsDevice.PredefinedTopics.ContainsKey(".cfg/"+_val.name))) {
         this.topicIdType=TopicIdType.PreDefined;
       }
     }

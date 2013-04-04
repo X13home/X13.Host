@@ -89,10 +89,10 @@ namespace X13.MQTT {
     public Topic Owner { get; private set; }
 
     private string via {
-      get { return Owner!=null?Owner.Get<string>("cfg/_via").value:string.Empty; }
+      get { return Owner!=null?Owner.Get<string>(".cfg/_via").value:string.Empty; }
       set {
         if(Owner!=null) {
-          var t=Owner.Get<string>("cfg/_via");
+          var t=Owner.Get<string>(".cfg/_via");
           t.saved=true;
           t.value=value;
         }
@@ -322,7 +322,7 @@ namespace X13.MQTT {
         this.Send(new MsDisconnect());
         _tryCounter=0;
         state=State.ASleep;
-        var st=Owner.Get<long>("cfg/XD_SleepTime", Owner);
+        var st=Owner.Get<long>(".cfg/XD_SleepTime", Owner);
         st.saved=true;
         st.SetValue((short)duration, new TopicChanged(TopicChanged.ChangeArt.Value, Owner) { Source=st });
       } else if(state!=State.Lost) {
@@ -362,7 +362,7 @@ namespace X13.MQTT {
       if(rez==null && param.Art==TopicChanged.ChangeArt.Value) {
         rez=GetTopicInfo(topic, true);
       }
-      if(rez==null || rez.TopicId>=0xFF00 || rez.TopicId==0xFE00 || !rez.registred) {
+      if(rez==null || rez.TopicId>=0xFC00 || !rez.registred) {
         return;
       }
       if(param.Art==TopicChanged.ChangeArt.Value) {
@@ -595,10 +595,10 @@ namespace X13.MQTT {
         }
         Owner=owner;
         if(Owner!=null) {
-          _stateVar=Owner.Get<State>("cfg/_state");
+          _stateVar=Owner.Get<State>(".cfg/_state");
           if(Topic.brokerMode) {
             Owner.saved=true;
-            Owner.Get<string>("cfg/_declarer").value="mqtts_cfg";
+            Owner.Get<string>(".cfg/_declarer").value="mqtts_cfg";
             var dc=Owner.Get<string>("_declarer", Owner);
             dc.saved=true;
             dc.value=_declarer;
@@ -675,22 +675,25 @@ namespace X13.MQTT {
       new NTRecord("present", typeof(bool)),
     };
     internal static Dictionary<string, ushort> PredefinedTopics=new Dictionary<string, ushort>(){
-      {"_declarer",         0xFE00},
-      {"cfg/XD_DeviceAddr", 0xFE01},
-      {"cfg/XD_GroupID",    0xFE02},
-      {"cfg/XD_Channel",    0xFE03},
-      {"_sName",            0xFE04},
-      {"cfg/XD_SleepTime",  0xFE05},
-      {"cfg/XD_RSSI",       0xFE08},
-      {"cfg/XD_MACAddr",    0xFE10},
-      {"cfg/XD_IPAddr",     0xFE11},
-      {"cfg/XD_IPMask",     0xFE12},
-      {"cfg/XD_IPRouter",   0xFE13},
-      //{"cfg/XDIPBroker",    0xFE14},
-      {"cfg/_declarer",     0xFF00},
-      {"cfg/_state",        0xFF01},
-      {"present",           0xFF02},
-      {"cfg/_via",          0xFF03},
+      {"_sName",            0xFF00},
+      {".cfg/XD_SleepTime",  0xFF01},
+
+      {".cfg/XD_DeviceAddr", 0xFF10},
+      {".cfg/XD_GroupID",    0xFF11},
+      {".cfg/XD_Channel",    0xFF12},
+      {".cfg/XD_RSSI",       0xFF13},
+
+      {".cfg/XD_MACAddr",    0xFF20},
+      {".cfg/XD_IPAddr",     0xFE21},
+      {".cfg/XD_IPMask",     0xFE22},
+      {".cfg/XD_IPRouter",   0xFE23},
+      //{".cfg/XD_IPBroker",    0xFE24},
+
+      {"_declarer",         0xFFC0},
+      {".cfg/_state",        0xFFC1},
+      {"present",           0xFFC2},
+      {".cfg/_via",          0xFFC3},
+      {".cfg/_declarer",     0xFFD0},
     };
 
     private struct NTRecord {

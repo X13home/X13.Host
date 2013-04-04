@@ -23,6 +23,7 @@ using X13.WOUM;
 using System.IO;
 using System.Reflection;
 using X13;
+//using X13.Periphery;
 
 namespace X13.Svc {
   public partial class X13Svc : ServiceBase {
@@ -132,6 +133,7 @@ namespace X13.Svc {
 
       Topic.ready.WaitOne(2500);
       MsDevice.Open();
+      //XBeeDevice.Open();
       MqBroker.Open();
     }
     private void SetTopic<T>(string path, T value, Topic mp) {
