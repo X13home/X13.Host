@@ -362,7 +362,7 @@ namespace X13.MQTT {
       if(rez==null && param.Art==TopicChanged.ChangeArt.Value) {
         rez=GetTopicInfo(topic, true);
       }
-      if(rez==null || rez.TopicId>=0xFC00 || !rez.registred) {
+      if(rez==null || rez.TopicId>=0xFFC0 || !rez.registred) {
         return;
       }
       if(param.Art==TopicChanged.ChangeArt.Value) {
