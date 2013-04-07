@@ -43,6 +43,8 @@ namespace X13.Periphery {
         XBFrame iFrame=new XBFrame() { buf=new byte[64] };
         SerialPort port=null;
         XISerial gw;
+        byte[] xbIdentPacket1=new byte[]{(byte)XBeeCmdID.ModemStatus, 1};
+        byte[] xbIdentPacket2=new byte[]{(byte)XBeeCmdID.ATCommandResponse, 0x01, (byte)((ushort)XBeeATCommand.SoftwareReset>>8), (byte)((ushort)XBeeATCommand.SoftwareReset&0xFF), (byte)XBeeATCommandStatus.OK};
 
         List<string> pns=new List<string>();
         Topic dev=Topic.root.Get("/dev");
@@ -85,7 +87,8 @@ namespace X13.Periphery {
               if(GetFrame(port, ref iFrame)) {
                 if(_verbose)
                   Log.Debug("{0} r {1}", pns[i], BitConverter.ToString(iFrame.buf, 0, iFrame.length));
-                if(iFrame.length==2 && iFrame.buf[0]==(byte)XBeeCmdID.ModemStatus && iFrame.buf[1]==1) {
+                if((xbIdentPacket1.Length==iFrame.length && xbIdentPacket1.SequenceEqual(iFrame.buf.Take(xbIdentPacket1.Length))) 
+                  || (xbIdentPacket2.Length==iFrame.length && xbIdentPacket2.SequenceEqual(iFrame.buf.Take(xbIdentPacket2.Length)))){
                   gw=new XISerial(port);
                   _ifs.Add(gw);
                   break;
@@ -207,7 +210,7 @@ namespace X13.Periphery {
       #region instance
       private SerialPort _port;
       private Queue<XBFrame> _sendQueue;
-      private DVar<XBeeDevice> _gwTopic;
+      public DVar<XBeeDevice> gwTopic { get; private set; }
       private int _initSt;
 
       public XISerial(SerialPort port) {
@@ -239,9 +242,9 @@ namespace X13.Periphery {
               SendRaw(this, oFrm);
             }
             Thread.Sleep(15);
-            //if(_gwTopic!=null && _gwTopic.value!=null && (_gwTopic.value.state==State.Disconnected || _gwTopic.value.state==State.Lost)) {
-            //  break;
-            //}
+            if(gwTopic!=null && gwTopic.value!=null && gwTopic.value._gate==null) {
+              break;
+            }
           }
         }
         catch(IOException) {
@@ -275,10 +278,10 @@ namespace X13.Periphery {
             frameId=frame[i++];
             cmd=(XBeeATCommand)ToUShortNet(frame, ref i);
             atStatus=(XBeeATCommandStatus)frame[i++];
-            if(atStatus!=XBeeATCommandStatus.OK) {
-              Log.Error("ATCommandResponse FrameID={0}, Command={1}, Status={2}", frameId, cmd, atStatus);
-              break;
-            }
+            //if(atStatus!=XBeeATCommandStatus.OK) {
+            //  Log.Error("ATCommandResponse FrameID={0}, Command={1}, Status={2}", frameId, cmd, atStatus);
+            //  break;
+            //}
             if(length>=i) {
               if(_verbose) {
                 Log.Debug("response {0}: {1}", cmd, BitConverter.ToString(frame, i, length-i));
@@ -287,35 +290,35 @@ namespace X13.Periphery {
               switch(cmd) {
               case XBeeATCommand.NodeIdentifier: {
                   id=ASCIIEncoding.ASCII.GetString(frame, i, length-i);
-                  _gwTopic=devR.Get<XBeeDevice>(id);
-                  if(_gwTopic.value==null) {
-                    _gwTopic.value=new XBeeDevice();
+                  gwTopic=devR.Get<XBeeDevice>(id);
+                  if(gwTopic.value==null) {
+                    gwTopic.value=new XBeeDevice();
                   }
-                  _gwTopic.value._gate=this;
+                  gwTopic.value._gate=this;
                   Thread.Sleep(0);
-                  _gwTopic.value.via=_port.PortName;
+                  gwTopic.value.via=_port.PortName;
                   InitStep();
                 }
                 break;
               case XBeeATCommand.SerialNumberHigh:
-                if(_gwTopic!=null && _gwTopic.value!=null) {
-                  _gwTopic.value._sn=((UInt64)frame[i++]<<56) | ((UInt64)frame[i++]<<48) | ((UInt64)frame[i++]<<40) | ((UInt64)frame[i++]<<32);
+                if(gwTopic!=null && gwTopic.value!=null) {
+                  gwTopic.value._sn=((UInt64)frame[i++]<<56) | ((UInt64)frame[i++]<<48) | ((UInt64)frame[i++]<<40) | ((UInt64)frame[i++]<<32);
                 } else {
                   _initSt=0;
                 }
                 InitStep();
                 break;
               case XBeeATCommand.SerialNumberLow:
-                if(_gwTopic!=null && _gwTopic.value!=null) {
-                  _gwTopic.value._sn|=((UInt64)frame[i++]<<24) | ((UInt64)frame[i++]<<16) | ((UInt64)frame[i++]<<8) | (UInt64)frame[i++];
+                if(gwTopic!=null && gwTopic.value!=null) {
+                  gwTopic.value._sn|=((UInt64)frame[i++]<<24) | ((UInt64)frame[i++]<<16) | ((UInt64)frame[i++]<<8) | (UInt64)frame[i++];
                 } else {
                   _initSt=0;
                 }
                 InitStep();
                 break;
               case XBeeATCommand.NetworkAddress:
-                if(_gwTopic!=null && _gwTopic.value!=null) {
-                  _gwTopic.value._addr=ToUShortNet(frame, ref i);
+                if(gwTopic!=null && gwTopic.value!=null) {
+                  gwTopic.value._addr=ToUShortNet(frame, ref i);
                 } else {
                   _initSt=0;
                 }
@@ -344,7 +347,14 @@ namespace X13.Periphery {
                     pDev=devR.children.Where(z => z.valueType==typeof(XBeeDevice)).Cast<DVar<XBeeDevice>>().FirstOrDefault(z => z!=null && z.value!=null && z.value._addr==pAddr);
                   }
                   Thread.Sleep(0);
-                  dev.value.via=pDev!=null?pDev.name:(_gwTopic==null?string.Empty:_gwTopic.name);
+                  dev.value.via=pDev!=null?pDev.name:(gwTopic==null?string.Empty:gwTopic.name);
+                }
+                break;
+              default:
+                if(gwTopic!=null && gwTopic.value!=null) {
+                  buf=new byte[length-i];
+                  Array.Copy(frame, i, buf, 0, buf.Length);
+                  gwTopic.value.CmdResponse(cmd, atStatus, buf);
                 }
                 break;
               }
@@ -446,7 +456,7 @@ namespace X13.Periphery {
                 pDev=devR.children.Where(z => z.valueType==typeof(XBeeDevice)).Cast<DVar<XBeeDevice>>().FirstOrDefault(z => z!=null && z.value!=null && z.value._addr==pAddr);
               }
               Thread.Sleep(0);
-              dev.value.via=pDev!=null?pDev.name:(_gwTopic==null?string.Empty:_gwTopic.name);
+              dev.value.via=pDev!=null?pDev.name:(gwTopic==null?string.Empty:gwTopic.name);
             }
             break;
           #endregion ModulIdentificationIndicator
@@ -483,7 +493,7 @@ namespace X13.Periphery {
       }
       public void SentATCommand(XBeeDevice dev, XBeeATCommand cmd, byte[] param=null) {
         byte[] buf=null;
-        if(dev==null || (_gwTopic!=null && dev==_gwTopic.value)) {
+        if(dev==null || (gwTopic!=null && dev==gwTopic.value)) {
           if(param==null || param.Length==0) {
             buf=new byte[4];
           } else {

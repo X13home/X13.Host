@@ -51,7 +51,7 @@ namespace X13.MQTT {
           _gates.Insert(0, this);
         }
         catch(Exception ex) {
-          Log.Error("MsGUdp.ctor() {1}", ex.Message);
+          Log.Error("MsGUdp.ctor() {0}", ex.Message);
         }
       }
       private void ReceiveCallback(IAsyncResult ar) {
