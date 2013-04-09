@@ -42,6 +42,7 @@ namespace X13.Periphery {
     private AutoResetEvent _sendPush=new AutoResetEvent(false);
     private RegisteredWaitHandle _sendPushWH;
     private UInt32 _devVer;
+    private int _serialSpeed;
 
     [Newtonsoft.Json.JsonProperty]
     private string backName { get; set; }
@@ -66,16 +67,25 @@ namespace X13.Periphery {
         return;
       }
       byte[] cmd=null;
+      if(!to) {
+        _tryCnt=4;
+      }
       lock(_sendQueue) {
         if(_sendQueue.Count>0) {
           cmd=_sendQueue[0];
         }
       }
       if(cmd!=null) {
-        _gate.SentATCommand(this, (XBeeATCommand)((cmd[0]<<8) | cmd[1]), cmd.Skip(2).ToArray());
+        if(cmd[0]!=0x01 && cmd[1]!=0x00) {
+          _gate.SentATCommand(this, (XBeeATCommand)((cmd[0]<<8) | cmd[1]), cmd.Skip(2).ToArray());
+        } else {
+          _gate.SendToSerial(this, cmd.Skip(2).ToArray());
+        }
         if(_tryCnt--<1) {
           Disconnect();
         }
+      } else {
+        _tryCnt=4;
       }
     }
     private void SendAT(XBeeATCommand cmd, byte[] buf=null) {
@@ -98,7 +108,6 @@ namespace X13.Periphery {
         _sendQueue.Add(cmd);
       }
       if(send && _gate!=null) {
-        _tryCnt=4;
         _sendPush.Set();
       }
     }
@@ -129,11 +138,11 @@ namespace X13.Periphery {
         }
       }
       SendAT(XBeeATCommand.IR_SampleRate, new byte[] { 0x40, 0x00 });    // IR=0x4000 
-      //for(i=10; i<12; i++) {
-      //  if((_usedMask & (1<<i))==0) {
-      //    SendAT(new byte[] { 0x50, (byte)(0x30-10+i) });   // P[0-1]
-      //  }
-      //}
+      for(i=10; i<13; i++) {
+        if((_usedMask & (1<<i))==0) {
+          SendAT(new byte[] { 0x50, (byte)(0x30+i-10) });   // P[0-2]
+        }
+      }
       Owner.Get<bool>("present").value=true;
     }
     internal void Disconnect() {
@@ -147,24 +156,171 @@ namespace X13.Periphery {
       }
       _sendQueue.Clear();
       if(_gate!=null) {
-        _gate.SentATCommand(this, XBeeATCommand.ForceDisassociation);
+        _gate.SentATCommand(this, XBeeATCommand.SoftwareReset);
       }
       _gate=null;
     }
 
+    private void InitCmd(Topic t) {
+      int idx;
+      switch(t.name) {
+      case "Op0":
+      case "Op1":
+      case "Op2":
+      case "Op3":
+      case "Op4":
+      case "Op5":
+      case "Op6":
+      case "Op7":
+        idx=(((byte)t.name[2])-0x30);
+        if(t.valueType==typeof(bool) && (_usedMask & (1<<idx))==0) {
+          SendAT(new byte[] { 0x44, (byte)t.name[2], (byte)((t as DVar<bool>).value?0x5:0x4) }); //Dx
+          _usedMask=(ushort)(_usedMask | 1<< idx);
+        } else {
+          t.Remove();
+        }
+        break;
+      case "Op10":
+      case "Op11":
+      case "Op12":
+        idx=(((byte)t.name[3])-0x30);
+        if(t.valueType==typeof(bool) && (_usedMask & (1<<(10+idx)))==0) {
+          SendAT(new byte[] { 0x50, (byte)t.name[3], (byte)((t as DVar<bool>).value?0x5:0x4) }); //P[0..2]
+          _usedMask=(ushort)(_usedMask | 1<< (10+idx));
+        } else {
+          t.Remove();
+        }
+        break;
+      //case "Pp0":
+      //case "Pp1":
+      //case "Pn0":
+      //case "Pn1":
+      //  idx=(((byte)t.name[2])-0x30);
+      //  if(t.valueType==typeof(long) && (_usedMask & (1<<(idx+10)))==0) {
+      //    _usedMask=(ushort)(_usedMask | 1<< (idx+10));
+      //    SendAT(new byte[] { 0x50, (byte)t.name[2], (byte)(t.name[1]=='p'?0x4:0x05) }); //P[0-1]
+      //    SendAT(new byte[] { 0x4D, (byte)t.name[2], (byte)(((t as DVar<long>).value>>8) & 0x03), (byte)((t as DVar<long>).value) }); //M[0-1]
+      //  } else {
+      //    t.Remove();
+      //  }
+      //  break;
+      case "St1":   // TxD 1200
+      case "Sr1":   // RxD 1200 
+      case "St2":   // TxD 2400
+      case "Sr2":   // RxD 2400 
+      case "St3":   // TxD 4800
+      case "Sr3":   // RxD 4800 
+      case "St4":   // TxD 9600
+      case "Sr4":   // RxD 9600
+      case "St5":   // TxD 19200
+      case "Sr5":   // RxD 19200
+      case "St6":   // TxD 38400
+      case "Sr6":   // RxD 38400
+      case "St7":   // TxD 57600
+      case "Sr7":   // RxD 57600
+      case "St8":   // TxD 115200
+      case "Sr8":   // RxD 115200
+        idx=(((byte)t.name[2])-0x30);
+        if(t.valueType==typeof(string) && (_serialSpeed==0 || _serialSpeed==idx)) {
+          if(_serialSpeed==0) {
+            SendAT(XBeeATCommand.InterfaceDataRate, new byte[] { (byte)(idx-1) });  // 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200
+            _serialSpeed=idx;
+          }
+        } else {
+          t.Remove();
+        }
+
+        break;
+      case "Ip0":
+      case "Ip1":
+      case "Ip2":
+      case "Ip3":
+      case "Ip4":
+      case "Ip5":
+      case "Ip6":
+      case "Ip7":
+      case "Ip8":
+        idx=(((byte)t.name[2])-0x30);
+        if(t.valueType==typeof(bool) && (_usedMask & (1<<idx))==0) {
+          SendAT(new byte[] { 0x44, (byte)t.name[2], 3 });                                //Dx
+          _evntMask=(ushort)(_evntMask | 1<< (((byte)t.name[2])-0x30));
+          SendAT(XBeeATCommand.IODigitalChangeDetection, new byte[] { (byte)(_evntMask>>8), (byte)_evntMask });
+          ushort tmp=_pullUpMask;
+          _pullUpMask=(ushort)(_pullUpMask  |(1<<idx));
+          if(_pullUpMask!=tmp) {
+            SendAT(XBeeATCommand.PullUpResistor, new byte[] { (byte)(_pullUpMask>>8), (byte)(_pullUpMask) });
+          }
+          _usedMask=(ushort)(_usedMask | 1<< idx);
+          SendAT(XBeeATCommand.ForceSample);
+        } else {
+          t.Remove();
+        }
+        break;
+      case "Ip10":
+      case "Ip11":
+      case "Ip12":
+        idx=(((byte)t.name[3])-0x30+10);
+        if(t.valueType==typeof(bool) && (_usedMask & (1<<idx))==0) {
+          SendAT(new byte[] { 0x50, (byte)t.name[3], 3 });                                //P[0..2]
+          _evntMask=(ushort)(_evntMask | 1<<idx);
+          SendAT(XBeeATCommand.IODigitalChangeDetection, new byte[] { (byte)(_evntMask>>8), (byte)_evntMask });
+          ushort tmp=_pullUpMask;
+          _pullUpMask=(ushort)(_pullUpMask  |(1<<idx));
+          if(_pullUpMask!=tmp) {
+            SendAT(XBeeATCommand.PullUpResistor, new byte[] { (byte)(_pullUpMask>>8), (byte)(_pullUpMask) });
+          }
+          _usedMask=(ushort)(_usedMask | 1<< idx);
+          SendAT(XBeeATCommand.ForceSample);
+        } else {
+          t.Remove();
+        }
+
+        break;
+      case "Ai0":
+      case "Ai1":
+      case "Ai2":
+      case "Ai3":
+      case "Ai4":
+        idx=(((byte)t.name[2])-0x30);
+        if(t.valueType==typeof(double) && (_usedMask & (1<<idx))==0) {
+          _usedMask=(ushort)(_usedMask | 1<< idx);
+          SendAT(new byte[] { 0x44, (byte)t.name[2], 2 });                            //Dx
+          ushort tmp=_pullUpMask;
+          _pullUpMask=(ushort)(_pullUpMask & ~(1<<idx));
+          if(_pullUpMask!=tmp) {
+            SendAT(XBeeATCommand.PullUpResistor, new byte[] { (byte)(_pullUpMask>>8), (byte)(_pullUpMask) });
+          }
+          SendAT(XBeeATCommand.ForceSample);
+        } else {
+          t.Remove();
+        }
+        break;
+      case "Vcc":
+        if(t.valueType==typeof(double)) {
+          SendAT(XBeeATCommand.VccThresold, new byte[] { 0x0C, 0x00 });
+          SendAT(XBeeATCommand.ForceSample);
+        } else {
+          t.Remove();
+        }
+        break;
+      }
+    }
     internal void CmdResponse(XBeeATCommand cmd, XBeeATCommandStatus atStatus, byte[] buf) {
       int idx;
+      bool actuell=false;
       lock(_sendQueue) {
         if(_sendQueue.Any() && _sendQueue[0][0] == (byte)((int)cmd>>8) && _sendQueue[0][1]== (byte)cmd) {
-          _sendQueue.RemoveAt(0);
-          _tryCnt=4;
+          if(atStatus!=XBeeATCommandStatus.ERROR) {
+            _sendQueue.RemoveAt(0);
+          }
+          actuell=true;
         }
       }
       if(atStatus!=XBeeATCommandStatus.OK) {
-        Log.Error("{0} ATCommand: {1}, response={2}", Owner.path, cmd.ToString(), atStatus.ToString());
+        Log.Error("{0} ATCommand: {1}, response={2}", Owner.name, cmd.ToString(), atStatus.ToString());
         return;
       }
-      if(Owner!=null && buf.Length>0) {
+      if(actuell && Owner!=null && buf!=null && buf.Length>0) {
         switch(cmd) {
         case XBeeATCommand.D0:
         case XBeeATCommand.D1:
@@ -183,26 +339,41 @@ namespace X13.Periphery {
             Owner.Get<double>(string.Format("Ai{0}", idx));
           }
           break;
-        case XBeeATCommand.HardwareVersion:   //1944
+        case XBeeATCommand.P0:
+        case XBeeATCommand.P1:
+        case XBeeATCommand.P2:
+          idx=(int)cmd-(int)XBeeATCommand.P0;
+          if(buf[0]==4 || buf[0]==5) {
+            Owner.Get<bool>(string.Format("Op1{0}", idx)).value=buf[0]==5;
+          } else if(buf[0]==3) {
+            Owner.Get<bool>(string.Format("Ip1{0}", idx));
+          }
+          break;
+        case XBeeATCommand.ForceSample:
+          ReceiveDataSample(buf);
+          break;
+        case XBeeATCommand.HardwareVersion:   //1944, 1945
           _devVer=(uint)(buf[0]<<24 | buf[1]<<16);
           break;
-        case XBeeATCommand.FirmwareVersion:   //1147
+        case XBeeATCommand.FirmwareVersion:   //1147, 21A7, 22A7, 28A7
           _devVer|=(uint)(buf[0]<<8 | buf[1]);
           Owner.Get<string>("_declarer").value=string.Format("XB{0:X2}{1:X2}.{2:X2}{3:X2}", (_devVer>>24)&0xFF, (_devVer>>8)&0xFF, (_devVer>>16)&0xFF, _devVer&0xFF);
           break;
         }
       }
-      _sendPush.Set();
+      if(actuell) {
+        _sendPush.Set();
+      }
     }
     internal void ReceiveDataSample(byte[] buf) {
-      int i=0;
+      int i=1, j;
       UInt16 data;
       UInt16 dMask=(UInt16)((buf[i++]<<8) | buf[i++]);
       Topic ct;
       byte aMask=(byte)buf[i++];
       if(dMask!=0) {
         data=(UInt16)((buf[i++]<<8) | buf[i++]);   // digital Inputs
-        for(int j=0; j<9; j++) {
+        for(j=0; j<13; j++) {
           if((dMask & 1<<j)!=0) {
             if(Owner.Exist(string.Format("Ip{0}", j), out ct)) {
               (ct as DVar<bool>).value=(data & 1<<j)!=0;
@@ -217,7 +388,7 @@ namespace X13.Periphery {
           }
         }
       }
-      for(int j=0; j<4; j++) {
+      for(j=0; j<4; j++) {
         if((aMask & 1<<j)!=0) {
           data=(UInt16)((buf[i++]<<8) | buf[i++]);   // analog Input
           double ad=data*1.2/1024.0;
@@ -249,90 +420,13 @@ namespace X13.Periphery {
         }
       }
     }
-    private void InitCmd(Topic t) {
-      int idx;
-      switch(t.name) {
-      case "Op0":
-      case "Op1":
-      case "Op2":
-      case "Op3":
-      case "Op4":
-      case "Op5":
-      case "Op6":
-      case "Op7":
-        idx=(((byte)t.name[2])-0x30);
-        if(t.valueType==typeof(bool) && (_usedMask & (1<<idx))==0) {
-          SendAT(new byte[] { 0x44, (byte)t.name[2], (byte)((t as DVar<bool>).value?0x5:0x4) }); //Dx
-          _usedMask=(ushort)(_usedMask | 1<< idx);
-        } else {
-          t.Remove();
+    internal void ReceivePacket(byte[] buf) {
+      Topic Sr;
+      if(buf!=null && Owner!=null && Owner.Exist(string.Format("Sr{0}", _serialSpeed), out Sr) && Sr.valueType==typeof(string)) {
+        (Sr as DVar<string>).value=Encoding.Default.GetString(buf);
+        if(_verbose) {
+          Log.Debug("{0}={1}", Sr.path, BitConverter.ToString(buf));
         }
-        break;
-      case "Pp0":
-      case "Pp1":
-      case "Pn0":
-      case "Pn1":
-        idx=(((byte)t.name[2])-0x30);
-        if(t.valueType==typeof(long) && (_usedMask & (1<<(idx+10)))==0) {
-          _usedMask=(ushort)(_usedMask | 1<< (idx+10));
-          SendAT(new byte[] { 0x50, (byte)t.name[2], (byte)(t.name[1]=='p'?0x4:0x05) }); //P[0-1]
-          SendAT(new byte[] { 0x4D, (byte)t.name[2], (byte)(((t as DVar<long>).value>>8) & 0x03), (byte)((t as DVar<long>).value) }); //M[0-1]
-        } else {
-          t.Remove();
-        }
-        break;
-      case "Ip0":
-      case "Ip1":
-      case "Ip2":
-      case "Ip3":
-      case "Ip4":
-      case "Ip5":
-      case "Ip6":
-      case "Ip7":
-      case "Ip8":
-        idx=(((byte)t.name[2])-0x30);
-        if(t.valueType==typeof(bool) && (_usedMask & (1<<idx))==0) {
-          SendAT(new byte[] { 0x44, (byte)t.name[2], 3 });                                //Dx
-          _evntMask=(ushort)(_evntMask | 1<< (((byte)t.name[2])-0x30));
-          SendAT(XBeeATCommand.IODigitalChangeDetection, new byte[] { (byte)(_evntMask>>8), (byte)_evntMask });
-          ushort tmp=_pullUpMask;
-          _pullUpMask=(ushort)(_pullUpMask  |(1<<idx));
-          if(_pullUpMask!=tmp) {
-            SendAT(XBeeATCommand.PullUpResistor, new byte[] { (byte)(_pullUpMask>>8), (byte)(_pullUpMask) });
-          }
-          _usedMask=(ushort)(_usedMask | 1<< idx);
-          SendAT(XBeeATCommand.ForceSample);
-        } else {
-          t.Remove();
-        }
-        break;
-      case "Ai0":
-      case "Ai1":
-      case "Ai2":
-      case "Ai3":
-      case "Ai4":
-        idx=(((byte)t.name[2])-0x30);
-        if(t.valueType==typeof(double) && (_usedMask & (1<<idx))==0) {
-          _usedMask=(ushort)(_usedMask | 1<< idx);
-          SendAT(new byte[] { 0x44, (byte)t.name[2], 2 });                            //Dx
-          ushort tmp=_pullUpMask;
-          _pullUpMask=(ushort)(_pullUpMask & ~(1<<idx));
-          if(_pullUpMask!=tmp) {
-            SendAT(XBeeATCommand.PullUpResistor, new byte[] { (byte)(_pullUpMask>>8), (byte)(_pullUpMask) });
-          }
-          SendAT(XBeeATCommand.ForceSample);
-        } else {
-          t.Remove();
-        }
-        break;
-      case "Vcc":
-        if(t.valueType==typeof(double)) {
-          SendAT(XBeeATCommand.VccThresold, new byte[] { 0x0C, 0x00 });
-          SendAT(XBeeATCommand.ForceSample);
-        } else {
-          t.Remove();
-        }
-        break;
       }
     }
     private void ChildChanged(Topic sender, TopicChanged param) {
@@ -362,6 +456,53 @@ namespace X13.Periphery {
           }
         }
         break;
+      case "Op10":
+      case "Op11":
+      case "Op12":
+        idx=(((byte)sender.name[3])-0x30);
+        if(sender.valueType==typeof(bool)) {
+          if(param.Art==TopicChanged.ChangeArt.Remove) {
+            SendAT(new byte[] { 0x50, (byte)sender.name[3], 0 });
+            _usedMask=(ushort)(_usedMask & ~(1<<(idx+10)));
+          } else {
+            SendAT(new byte[] { 0x50, (byte)sender.name[3], (byte)((sender as DVar<bool>).value?5:4) });
+          }
+        }
+
+        break;
+      case "St1":
+      case "St2":
+      case "St3":
+      case "St4":
+      case "St5":
+      case "St6":
+      case "St7":
+      case "St8":
+        idx=(((byte)sender.name[2])-0x30);
+        if(sender.valueType==typeof(string)) {
+          if(param.Art!=TopicChanged.ChangeArt.Remove) {
+            string str=(sender as DVar<string>).value;
+            if(str!=null && str.Length>0) {
+              SendAT(XBeeATCommand.TransmitRequest, Encoding.Default.GetBytes(str));
+            }
+          } else if(!Owner.Exist(string.Format("Sr{0}", idx))) {
+            _serialSpeed=0;
+          }
+        }
+        break;
+      case "Sr1":
+      case "Sr2":
+      case "Sr3":
+      case "Sr4":
+      case "Sr5":
+      case "Sr6":
+      case "Sr7":
+      case "Sr8":
+        idx=(((byte)sender.name[2])-0x30);
+        if(param.Art==TopicChanged.ChangeArt.Remove && !Owner.Exist(string.Format("St{0}", idx))) {
+          _serialSpeed=0;
+        }
+        break;
       case "Ip0":
       case "Ip1":
       case "Ip2":
@@ -387,18 +528,32 @@ namespace X13.Periphery {
           _usedMask=(ushort)(_usedMask& ~(1<< idx));
         }
         break;
-      case "Pp0":
-      case "Pp1":
-      case "Pn0":
-      case "Pn1":
-        idx=(((byte)sender.name[2])-0x30);
+      case "Ip10":
+      case "Ip11":
+      case "Ip12":
         if(param.Art==TopicChanged.ChangeArt.Remove) {
-          _usedMask=(ushort)(_usedMask & ~(1<<(idx+10)));
-          SendAT(new byte[] { 0x50, (byte)sender.name[2], 0 }); //P[0-1]
-        } else {
-          SendAT(new byte[] { 0x4D, (byte)sender.name[2], (byte)(((sender as DVar<long>).value>>8) & 0x03), (byte)((sender as DVar<long>).value) }); //M[0-1]
+          idx=(((byte)sender.name[3])-0x30+10);
+          SendAT(new byte[] { 0x50, (byte)sender.name[3], 0 });
+          ushort oldEM=_evntMask;
+          _evntMask=(ushort)(_evntMask &~(1<< idx));
+          if(oldEM!=_evntMask) {
+            SendAT(new byte[] { 0x49, 0x43, (byte)(_evntMask>>8), (byte)_evntMask });
+          }
+          _usedMask=(ushort)(_usedMask& ~(1<< idx));
         }
         break;
+      //case "Pp0":
+      //case "Pp1":
+      //case "Pn0":
+      //case "Pn1":
+      //  idx=(((byte)sender.name[2])-0x30);
+      //  if(param.Art==TopicChanged.ChangeArt.Remove) {
+      //    _usedMask=(ushort)(_usedMask & ~(1<<(idx+10)));
+      //    SendAT(new byte[] { 0x50, (byte)sender.name[2], 0 }); //P[0-1]
+      //  } else {
+      //    SendAT(new byte[] { 0x4D, (byte)sender.name[2], (byte)(((sender as DVar<long>).value>>8) & 0x03), (byte)((sender as DVar<long>).value) }); //M[0-1]
+      //  }
+      //  break;
       }
     }
 
@@ -434,6 +589,7 @@ namespace X13.Periphery {
 
     private interface IXBeeIF {
       void SentATCommand(XBeeDevice dev, XBeeATCommand cmd, byte[] param=null);
+      void SendToSerial(XBeeDevice dev, byte[] buf);
       DVar<XBeeDevice> gwTopic { get; }
     }
     private enum XBeeCmdID : byte {
@@ -461,13 +617,14 @@ namespace X13.Periphery {
       NotJoinedToNetwork=0x22,
       SelfAddressed=0x23,
       AddressNotFound=0x24,
-      RouteNotFound=0x25
+      RouteNotFound=0x25,
+      PayloadTooLarge=0x74,
     }
     private enum DiscoveryStatus : byte {
-      NoDiscoveryOverhead=0x00,
+      Ok=0x00,
       AddressDiscovery=0x01,
       RouteDiscovery=0x02,
-      AddressAndRouteDiscovery=0x03
+      AddressAndRouteDiscovery=0x03,
     }
     public enum XBeeATCommand : ushort {
       Write=0x5752,
@@ -538,6 +695,7 @@ namespace X13.Periphery {
       ForceDisassociation=0x4441,
       IR_SampleRate=0x4952,
       VccThresold=0x562B,
+      TransmitRequest=0x0100,       // Sent to serial port
       //  A   B   C   D   E   F   G   H   I   J   K   L   M   N   O   P   Q   R   S   T   U   V   W   X   Y   Z
       //  41  42  43  44  45  46  47  48  49  4A  4B  4C  4D  4E  4F  50  51  52  53  54  55  56  57  58  59  5A 
     }
