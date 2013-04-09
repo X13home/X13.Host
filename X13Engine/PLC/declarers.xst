@@ -358,8 +358,20 @@
         <item name="Op25" value="&quot;8zX8&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Digital output, RX&quot;" saved="True" type="System.String" />
         </item>
-        <item name="Sr4" value="&quot;AsX8&quot;" saved="True" type="System.String">
-          <item name="_description" value="&quot;RxD 38400, RX&quot;" saved="True" type="System.String" />
+        <item name="St0" value="&quot;AsX7,S20,B21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 2400, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St1" value="&quot;AsX7,B20,S21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 4800, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St2" value="&quot;AsX7,B20,B21,S22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 9600, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St3" value="&quot;AsX7,B20,B21,B22,S23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 19200, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St4" value="&quot;AsX7,B20,B21,B22,B23,S24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 38400, TX&quot;" saved="True" type="System.String" />
         </item>
       </item>
       <item name="TX">
@@ -375,8 +387,20 @@
         <item name="Op24" value="&quot;8zX7&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Digital output, TX&quot;" saved="True" type="System.String" />
         </item>
-        <item name="St4" value="&quot;AsX7&quot;" saved="True" type="System.String">
-          <item name="_description" value="&quot;TxD 38400, TX&quot;" saved="True" type="System.String" />
+        <item name="Sr0" value="&quot;AsX8,S20,B21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 2400, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr1" value="&quot;AsX8,B20,S21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 4800, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr2" value="&quot;AsX8,B20,B21,S22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 9600, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr3" value="&quot;AsX8,B20,B21,B22,S23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 19200, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr4" value="&quot;AsX8,B20,B21,B22,B23,S24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 38400, RX&quot;" saved="True" type="System.String" />
         </item>
       </item>
       <item name="Vcc">
@@ -768,10 +792,21 @@
         <item name="Op25" value="&quot;8zX8&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Digital output, 2.08&quot;" saved="True" type="System.String" />
         </item>
-        <item name="St4" value="&quot;AsX8&quot;" saved="True" type="System.String">
-          <item name="_description" value="&quot;TxD 38400, 2.08&quot;" saved="True" type="System.String" />
+        <item name="St0" value="&quot;AsX7,S20,B21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 2400, TX&quot;" saved="True" type="System.String" />
         </item>
-      </item>
+        <item name="St1" value="&quot;AsX7,B20,S21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 4800, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St2" value="&quot;AsX7,B20,B21,S22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 9600, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St3" value="&quot;AsX7,B20,B21,B22,S23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 19200, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St4" value="&quot;AsX7,B20,B21,B22,B23,S24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 38400, TX&quot;" saved="True" type="System.String" />
+        </item>      </item>
       <item name="2.09">
         <item name="In24" value="&quot;7zX7&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Digital Pull-Up inverted input, 2.09&quot;" saved="True" type="System.String" />
@@ -785,8 +820,20 @@
         <item name="Op24" value="&quot;8zX7&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Digital output, 2.09&quot;" saved="True" type="System.String" />
         </item>
-        <item name="Sr4" value="&quot;AsX7&quot;" saved="True" type="System.String">
-          <item name="_description" value="&quot;RxD 38400, 2.09&quot;" saved="True" type="System.String" />
+        <item name="Sr0" value="&quot;AsX8,S20,B21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 2400, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr1" value="&quot;AsX8,B20,S21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 4800, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr2" value="&quot;AsX8,B20,B21,S22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 9600, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr3" value="&quot;AsX8,B20,B21,B22,S23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 19200, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr4" value="&quot;AsX8,B20,B21,B22,B23,S24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 38400, RX&quot;" saved="True" type="System.String" />
         </item>
       </item>
       <item name="Add">
@@ -1106,8 +1153,20 @@
         <item name="Op24" value="&quot;8zX7&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Digital output, SV1-11&quot;" saved="True" type="System.String" />
         </item>
-        <item name="St4" value="&quot;AsX7&quot;" saved="True" type="System.String">
-          <item name="_description" value="&quot;TxD 38400, SV1-11&quot;" saved="True" type="System.String" />
+        <item name="Sr0" value="&quot;AsX8,S20,B21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 2400, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr1" value="&quot;AsX8,B20,S21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 4800, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr2" value="&quot;AsX8,B20,B21,S22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 9600, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr3" value="&quot;AsX8,B20,B21,B22,S23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 19200, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr4" value="&quot;AsX8,B20,B21,B22,B23,S24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 38400, RX&quot;" saved="True" type="System.String" />
         </item>
       </item>
       <item name="SV1-12">
@@ -1123,10 +1182,21 @@
         <item name="Op25" value="&quot;8zX8&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Digital output, SV1-12&quot;" saved="True" type="System.String" />
         </item>
-        <item name="Sr4" value="&quot;AsX8&quot;" saved="True" type="System.String">
-          <item name="_description" value="&quot;RxD 38400, SV1-12&quot;" saved="True" type="System.String" />
+        <item name="St0" value="&quot;AsX7,S20,B21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 2400, TX&quot;" saved="True" type="System.String" />
         </item>
-      </item>
+        <item name="St1" value="&quot;AsX7,B20,S21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 4800, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St2" value="&quot;AsX7,B20,B21,S22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 9600, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St3" value="&quot;AsX7,B20,B21,B22,S23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 19200, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St4" value="&quot;AsX7,B20,B21,B22,B23,S24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 38400, TX&quot;" saved="True" type="System.String" />
+        </item>      </item>
       <item name="SV1-13">
         <item name="In26" value="&quot;7zX9&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Digital Pull-Up inverted input, SV1-13&quot;" saved="True" type="System.String" />
@@ -1337,8 +1407,20 @@
         <item name="Op24" value="&quot;8zX7&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Digital output, SV1-11&quot;" saved="True" type="System.String" />
         </item>
-        <item name="St4" value="&quot;AsX7&quot;" saved="True" type="System.String">
-          <item name="_description" value="&quot;TxD 38400, SV1-11&quot;" saved="True" type="System.String" />
+        <item name="Sr0" value="&quot;AsX8,S20,B21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 2400, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr1" value="&quot;AsX8,B20,S21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 4800, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr2" value="&quot;AsX8,B20,B21,S22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 9600, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr3" value="&quot;AsX8,B20,B21,B22,S23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 19200, RX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr4" value="&quot;AsX8,B20,B21,B22,B23,S24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;RxD 38400, RX&quot;" saved="True" type="System.String" />
         </item>
       </item>
       <item name="SV1-12">
@@ -1354,10 +1436,21 @@
         <item name="Op25" value="&quot;8zX8&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Digital output, SV1-12&quot;" saved="True" type="System.String" />
         </item>
-        <item name="Sr4" value="&quot;AsX8&quot;" saved="True" type="System.String">
-          <item name="_description" value="&quot;RxD 38400, SV1-12&quot;" saved="True" type="System.String" />
+        <item name="St0" value="&quot;AsX7,S20,B21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 2400, TX&quot;" saved="True" type="System.String" />
         </item>
-      </item>
+        <item name="St1" value="&quot;AsX7,B20,S21,B22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 4800, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St2" value="&quot;AsX7,B20,B21,S22,B23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 9600, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St3" value="&quot;AsX7,B20,B21,B22,S23,B24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 19200, TX&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St4" value="&quot;AsX7,B20,B21,B22,B23,S24&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;TxD 38400, TX&quot;" saved="True" type="System.String" />
+        </item>      </item>
       <item name="SV1-13">
         <item name="In26" value="&quot;7zX9&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Digital Pull-Up inverted input, SV1-13&quot;" saved="True" type="System.String" />
@@ -1457,6 +1550,432 @@
       <item name="Vcc">
         <item name="Av14" value="&quot;BiX15&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Analog value, Vcc=1.1*1024/Av14&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+    </item>
+    <item name="XB1921" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
+      <item name="Add">
+        <item name="bool" value="&quot;2Z&quot;" saved="True" type="System.String" />
+        <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />
+        <item name="double" value="&quot;4H&quot;" saved="True" type="System.String" />
+      </item>
+      <item name="Pin 20">
+        <item name="Ai0" value="&quot;9gX1&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 20&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip0" value="&quot;7zX1&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 20&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op0" value="&quot;8zX1&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 20&quot;" saved="True" type="System.String" />
+        </item>
+
+      </item>
+      <item name="Pin 19">
+        <item name="Ai1" value="&quot;9gX2&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 19&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip1" value="&quot;7zX2&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 19&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op1" value="&quot;8zX2&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 19&quot;" saved="True" type="System.String" />
+        </item>
+
+      </item>
+      <item name="Pin 18">
+        <item name="Ai2" value="&quot;9gX3&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 18&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip2" value="&quot;7zX3&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 18&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op2" value="&quot;8zX3&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 18&quot;" saved="True" type="System.String" />
+        </item>
+
+      </item>
+      <item name="Pin 17">
+        <item name="Ai3" value="&quot;9gX4&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 17&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip3" value="&quot;7zX4&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 17&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op3" value="&quot;8zX4&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 17&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 16">
+        <item name="Ip6" value="&quot;7zX7&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 16&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op6" value="&quot;8zX7&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 16&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 15">
+        <item name="Ip5" value="&quot;7zX6&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 15&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op5" value="&quot;8zX6&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 15&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 12">
+        <item name="Ip7" value="&quot;7zX8&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 12&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op7" value="&quot;8zX8&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 12&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 11">
+        <item name="Ip4" value="&quot;7zX5&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 11&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op4" value="&quot;8zX5&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 11&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 7">
+        <item name="Ip11" value="&quot;AzX12&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 7&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op11" value="&quot;BzX12&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 7&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 6">
+        <item name="Ip10" value="&quot;AzX11&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 6&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op10" value="&quot;BzX11&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 6&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 4">
+        <item name="Ip12" value="&quot;AzX13&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 4&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op12" value="&quot;BzX13&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 4&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
+    </item>
+    <item name="XB1922" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
+      <item name="Pin 20">
+        <item name="Ai0" value="&quot;9gX1&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 20&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip0" value="&quot;7zX1&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 20&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op0" value="&quot;8zX1&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 20&quot;" saved="True" type="System.String" />
+        </item>
+
+      </item>
+      <item name="Pin 19">
+        <item name="Ai1" value="&quot;9gX2&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 19&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip1" value="&quot;7zX2&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 19&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op1" value="&quot;8zX2&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 19&quot;" saved="True" type="System.String" />
+        </item>
+
+      </item>
+      <item name="Pin 18">
+        <item name="Ai2" value="&quot;9gX3&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 18&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip2" value="&quot;7zX3&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 18&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op2" value="&quot;8zX3&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 18&quot;" saved="True" type="System.String" />
+        </item>
+
+      </item>
+      <item name="Pin 17">
+        <item name="Ai3" value="&quot;9gX4&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 17&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip3" value="&quot;7zX4&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 17&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op3" value="&quot;8zX4&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 17&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 16">
+        <item name="Ip6" value="&quot;7zX7&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 16&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op6" value="&quot;8zX7&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 16&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 15">
+        <item name="Ip5" value="&quot;7zX6&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 15&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op5" value="&quot;8zX6&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 15&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 12">
+        <item name="Ip7" value="&quot;7zX8&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 12&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op7" value="&quot;8zX8&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 12&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 11">
+        <item name="Ip4" value="&quot;7zX5&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 11&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op4" value="&quot;8zX5&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 11&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 7">
+        <item name="Ip11" value="&quot;AzX12&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 7&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op11" value="&quot;BzX12&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 7&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 6">
+        <item name="Ip10" value="&quot;AzX11&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 6&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op10" value="&quot;BzX11&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 6&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 4">
+        <item name="Ip12" value="&quot;AzX13&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 4&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op12" value="&quot;BzX13&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 4&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 3">
+        <item name="St1" value="&quot;CsX18,S21,B22,B23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 1200&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St2" value="&quot;CsX18,B21,S22,B23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 2400&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St3" value="&quot;CsX18,B21,B22,S23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 4800&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St4" value="&quot;CsX18,B21,B22,B23,S24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 9600&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St5" value="&quot;CsX18,B21,B22,B23,B24,S25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 19200&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St6" value="&quot;CsX18,B21,B22,B23,B24,B25,S26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 38400&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St7" value="&quot;CsX18,B21,B22,B23,B24,B25,B26,S27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 57600&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St8" value="&quot;CsX18,B21,B22,B23,B24,B25,B26,B27,S28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 115200&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 2">
+        <item name="Sr1" value="&quot;DsX19,S21,B22,B23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 1200&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr2" value="&quot;DsX19,B21,S22,B23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 2400&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr3" value="&quot;DsX19,B21,B22,S23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 4800&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr4" value="&quot;DsX19,B21,B22,B23,S24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 9600&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr5" value="&quot;DsX19,B21,B22,B23,B24,S25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 19200&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr6" value="&quot;DsX19,B21,B22,B23,B24,B25,S26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 38400&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr7" value="&quot;DsX19,B21,B22,B23,B24,B25,B26,S27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 57600&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr8" value="&quot;DsX19,B21,B22,B23,B24,B25,B26,B27,S28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 115200&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
+    </item>
+    <item name="XB1928" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
+      <item name="Pin 20">
+        <item name="Ai0" value="&quot;9gX1&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 20&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip0" value="&quot;7zX1&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 20&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op0" value="&quot;8zX1&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 20&quot;" saved="True" type="System.String" />
+        </item>
+
+      </item>
+      <item name="Pin 19">
+        <item name="Ai1" value="&quot;9gX2&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 19&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip1" value="&quot;7zX2&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 19&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op1" value="&quot;8zX2&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 19&quot;" saved="True" type="System.String" />
+        </item>
+
+      </item>
+      <item name="Pin 18">
+        <item name="Ai2" value="&quot;9gX3&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 18&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip2" value="&quot;7zX3&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 18&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op2" value="&quot;8zX3&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 18&quot;" saved="True" type="System.String" />
+        </item>
+
+      </item>
+      <item name="Pin 17">
+        <item name="Ai3" value="&quot;9gX4&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Analog input, internal reference, Pin 17&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Ip3" value="&quot;7zX4&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 17&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op3" value="&quot;8zX4&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 17&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 16">
+        <item name="Ip6" value="&quot;7zX7&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 16&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op6" value="&quot;8zX7&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 16&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 15">
+        <item name="Ip5" value="&quot;7zX6&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 15&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op5" value="&quot;8zX6&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 15&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 12">
+        <item name="Ip7" value="&quot;7zX8&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 12&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op7" value="&quot;8zX8&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 12&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 11">
+        <item name="Ip4" value="&quot;7zX5&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 11&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op4" value="&quot;8zX5&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 11&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 7">
+        <item name="Ip11" value="&quot;AzX12&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 7&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op11" value="&quot;BzX12&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 7&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 6">
+        <item name="Ip10" value="&quot;AzX11&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 6&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op10" value="&quot;BzX11&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 6&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 4">
+        <item name="Ip12" value="&quot;AzX13&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital input, Pin 4&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Op12" value="&quot;BzX13&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Digital output, Pin 4&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 3">
+        <item name="St1" value="&quot;CsX18,S21,B22,B23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 1200&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St2" value="&quot;CsX18,B21,S22,B23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 2400&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St3" value="&quot;CsX18,B21,B22,S23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 4800&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St4" value="&quot;CsX18,B21,B22,B23,S24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 9600&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St5" value="&quot;CsX18,B21,B22,B23,B24,S25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 19200&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St6" value="&quot;CsX18,B21,B22,B23,B24,B25,S26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 38400&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St7" value="&quot;CsX18,B21,B22,B23,B24,B25,B26,S27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 57600&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="St8" value="&quot;CsX18,B21,B22,B23,B24,B25,B26,B27,S28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial output, 115200&quot;" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Pin 2">
+        <item name="Sr1" value="&quot;DsX19,S21,B22,B23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 1200&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr2" value="&quot;DsX19,B21,S22,B23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 2400&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr3" value="&quot;DsX19,B21,B22,S23,B24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 4800&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr4" value="&quot;DsX19,B21,B22,B23,S24,B25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 9600&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr5" value="&quot;DsX19,B21,B22,B23,B24,S25,B26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 19200&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr6" value="&quot;DsX19,B21,B22,B23,B24,B25,S26,B27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 38400&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr7" value="&quot;DsX19,B21,B22,B23,B24,B25,B26,S27,B28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 57600&quot;" saved="True" type="System.String" />
+        </item>
+        <item name="Sr8" value="&quot;DsX19,B21,B22,B23,B24,B25,B26,B27,S28&quot;" saved="True" type="System.String">
+          <item name="_description" value="&quot;Serial input, 115200&quot;" saved="True" type="System.String" />
         </item>
       </item>
     </item>

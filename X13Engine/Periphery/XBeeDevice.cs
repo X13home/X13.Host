@@ -137,12 +137,12 @@ namespace X13.Periphery {
           SendAT(new byte[] { 0x44, (byte)(0x30+i) });      //D[0-7]
         }
       }
-      SendAT(XBeeATCommand.IR_SampleRate, new byte[] { 0x40, 0x00 });    // IR=0x4000 
       for(i=10; i<13; i++) {
         if((_usedMask & (1<<i))==0) {
           SendAT(new byte[] { 0x50, (byte)(0x30+i-10) });   // P[0-2]
         }
       }
+      SendAT(XBeeATCommand.IR_SampleRate, new byte[] { 0x40, 0x00 });    // IR=0x4000 
       Owner.Get<bool>("present").value=true;
     }
     internal void Disconnect() {

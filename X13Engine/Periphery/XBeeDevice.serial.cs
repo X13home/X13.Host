@@ -205,8 +205,6 @@ namespace X13.Periphery {
         UInt64 sn=((UInt64)frame[i++]<<56) | ((UInt64)frame[i++]<<48) | ((UInt64)frame[i++]<<40) | ((UInt64)frame[i++]<<32) | ((UInt64)frame[i++]<<24) | ((UInt64)frame[i++]<<16) | ((UInt64)frame[i++]<<08) | (UInt64)frame[i++];
         return sn;
       }
-
-
       #endregion static
 
       #region instance
@@ -402,6 +400,10 @@ namespace X13.Periphery {
             i++;        //Recive Options
             dev=devR.children.Where(z => z.valueType==typeof(XBeeDevice)).Cast<DVar<XBeeDevice>>().FirstOrDefault(z => z!=null && z.value!=null && (z.value._sn==sn || z.value._addr==addr));
             if(dev!=null && length-i>0) {
+              if(dev.value._gate==null) {
+                SentATCommand(dev, XBeeATCommand.SoftwareReset);
+                break;
+              }
               dev.value.ReceivePacket(frame.Take(length).Skip(i).ToArray());
             }
             break;
@@ -416,6 +418,10 @@ namespace X13.Periphery {
               break;    //Number of sample sets included in the payload. (Always set to 1)
             dev=devR.children.Where(z => z.valueType==typeof(XBeeDevice)).Cast<DVar<XBeeDevice>>().FirstOrDefault(z => z!=null && z.value!=null && (z.value._sn==sn || z.value._addr==addr));
             if(dev!=null) {
+              if(dev.value._gate==null) {
+                SentATCommand(dev, XBeeATCommand.SoftwareReset);
+                break;
+              }
               buf=new byte[frame.Length-i];
               Array.Copy(frame, i, buf, 0, buf.Length);
               dev.value.ReceiveDataSample(buf);
@@ -469,6 +475,10 @@ namespace X13.Periphery {
             Array.Copy(frame, i, buf, 0, buf.Length);
             if(_verbose) {
               Log.Debug("{0} Response {1}={2}, {3}", dev==null?sn.ToString("X"):dev.path, cmd, atStatus, BitConverter.ToString(buf));
+            }
+            if(dev.value._gate==null) {
+              SentATCommand(dev, XBeeATCommand.SoftwareReset);
+              break;
             }
             dev.value.CmdResponse(cmd, atStatus, buf);
             break;

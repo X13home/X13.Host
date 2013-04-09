@@ -523,10 +523,8 @@ namespace X13.CC {
               for(int i=pos-resource.Count; i>=0; i--) {
                 resource.Add(RcUse.None);
               }
-              if(curRC[0]==(char)RcUse.Exclusive) {
-                resource[pos]=RcUse.Exclusive;
-              } else if(curRC[0]==(char)RcUse.Shared && resource[pos]==RcUse.None) {
-                resource[pos]=RcUse.Shared;
+              if(curRC[0]!=(char)RcUse.None && (curRC[0]!=(char)RcUse.Shared || resource[pos]!=RcUse.None)) {
+                resource[pos]=(RcUse)curRC[0];
               }
             }
           }
@@ -542,7 +540,9 @@ namespace X13.CC {
             if(!int.TryParse(curRC.Substring(1), out pos)) {
               continue;
             }
-            if(pos<resource.Count && curRC[0]!=(char)RcUse.None && resource[pos]==RcUse.Exclusive) {
+            if(pos<resource.Count 
+               && ((curRC[0]==(char)RcUse.Exclusive && resource[pos]!=RcUse.None) 
+                 || (curRC[0]==(char)RcUse.Shared && resource[pos]!=RcUse.None && resource[pos]!=RcUse.Shared))) {
               busy=true;
               break;
             }
@@ -578,8 +578,9 @@ namespace X13.CC {
     }
     private enum RcUse : ushort {
       None='0',
-      Exclusive='X',
+      Baned='B',
       Shared='S',
+      Exclusive='X',
     }
     public void Remove() {
       if(_parent!=null) {

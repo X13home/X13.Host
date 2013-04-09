@@ -136,8 +136,10 @@ namespace X13.MQTT {
         _tLoaded.Change(6500, 0);
       }
       catch(Exception ex) {
-        _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
-        Topic.paused=false;
+        if(_tLoaded!=null) {
+          _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
+          Topic.paused=false;
+        }
         Log.Error("Connect to {0}:{1} failed, {2}", addr, port, ex.Message);
         if(_statusDelegate!=null) {
           _statusDelegate(false);
