@@ -247,6 +247,12 @@
   <ItemGroup>
     <Resource Include="Images\ty_dt.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\ty_cfg.png" />
+    <Resource Include="Images\xb_c.png" />
+    <Resource Include="Images\xb_d.png" />
+    <Resource Include="Images\xb_r.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -37,7 +37,7 @@ namespace X13.MQTT {
       public static void Open() {
         Log.Info("Search for MQTTS.serial devices");
         Topic dev=Topic.root.Get("/dev");
-        dev.Get<string>("_declarer").value="MsGateway";
+        dev.Get<string>("_declarer").value="DevFolder";
         _scanAllPorts=true;
         ScanPorts(null, false);
       }

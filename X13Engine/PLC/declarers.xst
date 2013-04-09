@@ -1553,7 +1553,7 @@
         </item>
       </item>
     </item>
-    <item name="XB1921" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
+    <item name="XB1921" value="&quot;/CC;component/Images/xb_c.png&quot;" saved="True" type="System.String">
       <item name="Add">
         <item name="bool" value="&quot;2Z&quot;" saved="True" type="System.String" />
         <item name="long" value="&quot;4I&quot;" saved="True" type="System.String" />
@@ -1664,7 +1664,7 @@
       </item>
       <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
     </item>
-    <item name="XB1922" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
+    <item name="XB1922" value="&quot;/CC;component/Images/xb_r.png&quot;" saved="True" type="System.String">
       <item name="Pin 20">
         <item name="Ai0" value="&quot;9gX1&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Analog input, internal reference, Pin 20&quot;" saved="True" type="System.String" />
@@ -1822,7 +1822,7 @@
       </item>
       <item name="remove" value="&quot;ZD&quot;" saved="True" type="System.String" />
     </item>
-    <item name="XB1928" value="&quot;/CC;component/Images/ty_jnode.png&quot;" saved="True" type="System.String">
+    <item name="XB1928" value="&quot;/CC;component/Images/xb_d.png&quot;" saved="True" type="System.String">
       <item name="Pin 20">
         <item name="Ai0" value="&quot;9gX1&quot;" saved="True" type="System.String">
           <item name="_description" value="&quot;Analog input, internal reference, Pin 20&quot;" saved="True" type="System.String" />
@@ -1986,8 +1986,8 @@
       <item name="open" value="&quot;1O&quot;" saved="True" type="System.String" />
       <item name="remove" value="&quot;3D&quot;" saved="True" type="System.String" />
     </item>
-    <item name="MsGateway" value="&quot;/CC;component/Images/ty_gateway.png&quot;" saved="True" type="System.String" />
-    <item name="mqtts_cfg" value="&quot;/CC;component/Images/ty_topic.png&quot;" saved="True" type="System.String">
+    <item name="DevFolder" value="&quot;/CC;component/Images/ty_gateway.png&quot;" saved="True" type="System.String" />
+    <item name="mqtts_cfg" value="&quot;/CC;component/Images/ty_cfg.png&quot;" saved="True" type="System.String">
       <item name="XD_GroupID" value="&quot;4i&quot;" saved="True" type="System.String" />
       <item name="XD_Channel" value="&quot;4i&quot;" saved="True" type="System.String" />
       <item name="XD_SleepTime" value="&quot;4i&quot;" saved="True" type="System.String" />
