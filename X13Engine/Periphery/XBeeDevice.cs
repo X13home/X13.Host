@@ -24,7 +24,7 @@ namespace X13.Periphery {
 
     static XBeeDevice() {
       _verbose=Topic.root.Get<bool>("/system/Broker/XBee/verboseLog");
-      _verbose.value=true;
+      _verbose.saved=true;
       _ifs=new List<IXBeeIF>();
     }
     internal static void Open() {

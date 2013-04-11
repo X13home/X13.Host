@@ -32,6 +32,7 @@ namespace X13.Svc {
     private string _lfPath;
     private DateTime _firstDT;
     private DVar<LogLevel> _lThreshold;
+    private DVar<long> _lHead;
     private PersistentStorage _pStorage;
     private DVar<bool> _debug;
     public X13Svc() {
@@ -59,8 +60,8 @@ namespace X13.Svc {
       Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
       Topic.brokerMode=true;
       var root=Topic.root;
+      _lHead=root.Get<long>("/system/log/history");
       _lThreshold=root.Get<LogLevel>("/system/log/threshold");
-      Log.Info("Starting");
       BiultInStatements.Initialize();
       _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 5050-DateTime.Now.Millisecond, 1000);
       {
@@ -101,6 +102,7 @@ namespace X13.Svc {
       if(!db || dbVer.value!=dbVersion) {
         dbVer.saved=true;
         dbVer.value=dbVersion;
+        _lHead.saved=true;
         _lThreshold.saved=true;
 #if DEBUG
         _lThreshold.value=LogLevel.Debug;
@@ -126,6 +128,7 @@ namespace X13.Svc {
           }
         }
       }
+      Log.Info("Starting");
       root.Get<string>("/plc/_declarer").value="L_Folder";
       foreach(Topic acl in Topic.root.Get("/local/security/acls").children){
         SetAcl(acl, Topic.root);
@@ -179,18 +182,27 @@ namespace X13.Svc {
       string rez=null;
       switch(en.ll) {
       case LogLevel.Error:
-        rez=string.Format("{0:HH:mm:ss.ff}[E] {1}", en.dt, en.msg);
+        rez=string.Format("{0:dd HH:mm:ss.ff}[E] {1}", en.dt, en.msg);
         break;
       case LogLevel.Warning:
-        rez=string.Format("{0:HH:mm:ss.ff}[W] {1}", en.dt, en.msg);
+        rez=string.Format("{0:dd HH:mm:ss.ff}[W] {1}", en.dt, en.msg);
         break;
       case LogLevel.Info:
-        rez=string.Format("{0:HH:mm:ss.ff}[I] {1}", en.dt, en.msg);
+        rez=string.Format("{0:dd HH:mm:ss.ff}[I] {1}", en.dt, en.msg);
         break;
       case LogLevel.Debug:
-        rez=string.Format("{0:HH:mm:ss.ff}[D] {1}", en.dt, en.msg);
+        rez=string.Format("{0:dd HH:mm:ss.ff}[D] {1}", en.dt, en.msg);
         break;
       }
+      if(en.ll!=LogLevel.Debug) {
+        var dMsg=_lHead.Get<string>((_lHead.value).ToString("D2"));
+        dMsg.saved=true;
+        dMsg.value=rez;
+        _lHead.value=(_lHead.value+1)%100;
+      } else {
+        _lHead.Get<string>("A0").value=rez;
+      }
+
       //Console.WriteLine(rez);
       LogLevel lt=LogLevel.Info;
       if(_lThreshold!=null) {
@@ -273,7 +285,7 @@ namespace X13.Svc {
     }
 
     private void MQTT_Main_changed(Topic sender, TopicChanged param) {
-      if(!_debug.value) {
+      if(!_debug.value || sender.path.StartsWith("/system/log/history")) {
         return;
       }
       var ir=param.Initiator;
