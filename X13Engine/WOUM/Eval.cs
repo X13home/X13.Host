@@ -240,7 +240,7 @@ namespace SoftCircuits {
             stack.Push(UnaryMinus);
             result = Math.Abs(result);
           }
-          tokens.Add(result.ToString(CultureInfo.InvariantCulture));
+          tokens.Add(result.ToString("F5", CultureInfo.InvariantCulture));
           state = State.Operand;
           continue;
         }

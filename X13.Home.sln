@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CCWPF", "CCWPF\CCWPF.csproj", "{DFB92EB3-DE1A-4380-BFCC-12EC507F4E65}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bin", "bin", "{87CA42E3-D766-40F4-AC9E-8F87A138A822}"
@@ -20,6 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		LICENSE-3rd-party.txt = LICENSE-3rd-party.txt
 		LICENSE.txt = LICENSE.txt
+		vu.exe = vu.exe
 	EndProjectSection
 EndProject
 Global
