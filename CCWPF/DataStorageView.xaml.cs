@@ -31,7 +31,7 @@ namespace X13.CC {
       InitializeComponent();
       this.DataContext = this;
 
-      DVar<bool> av=Topic.root.Get<bool>("/system/CC/DSView/_advancedView");
+      DVar<bool> av=Topic.root.Get<bool>("/etc/CC/DSView/_advancedView");
       TopicView._advancedView=av.value;
       av.changed+=new Action<Topic, TopicChanged>(av_changed);
 
@@ -323,7 +323,7 @@ namespace X13.CC {
         if(i>0) {
           dp=dp.Substring(0, i);
         }
-        Topic ds=Topic.root.Get("/system/declarers");
+        Topic ds=Topic.root.Get("/etc/declarers");
         if(!string.IsNullOrEmpty(dp)) {
           if((ptr.valueType==typeof(PiStatement) && ds.Get("func").Exist(dp, out dt)) || ds.Exist(dp, out dt)) {
             _declarer=dt as DVar<string>;
@@ -447,7 +447,7 @@ namespace X13.CC {
           }
           Topic td=null;
           if(!string.IsNullOrEmpty(dp)) {
-            Topic ds=Topic.root.Get("/system/declarers");
+            Topic ds=Topic.root.Get("/etc/declarers");
             if((ptr.valueType==typeof(PiStatement) && ds.Get("func").Exist(dp, out dt)) || ds.Exist(dp, out dt)) {
               td=dt as DVar<string>;
             } else {

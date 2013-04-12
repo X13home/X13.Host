@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<root head="/system/declarers">
+<root head="/etc/declarers">
   <item name="dev">
     <item name="GWJNv6" value="&quot;/CC;component/Images/ty_jgate.png&quot;" saved="True" type="System.String">
       <item name="Add">

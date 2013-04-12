@@ -100,10 +100,10 @@ namespace X13.CC {
         break;
       case X13.PLC.TopicChanged.ChangeArt.Value:
         if(ir==null) {
-          if(!sender.path.StartsWith("/system/now/")) {
+          if(!sender.path.StartsWith("/dev/.clock/")) {
             Log.Debug("! {0}={1}", sender.path, sender.GetValue());
           }
-        } else if(!ir.path.StartsWith("/system/now/")) {
+        } else if(!ir.path.StartsWith("/dev/.clock/")) {
           Log.Debug("! {0}={1} : {2}", sender.path, sender.GetValue(), ir.name);
         }
         break;

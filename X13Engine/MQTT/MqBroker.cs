@@ -35,7 +35,7 @@ namespace X13.MQTT {
       _connections=new List<MqBroker>();
       _tcp.Start();
       _admGroup=Topic.root.Get<string>("/local/security/groups/0");
-      _debug=Topic.root.Get<bool>("/system/log/MQTT");
+      _debug=Topic.root.Get<bool>("/etc/log/MQTT");
       _tcp.BeginAcceptTcpClient(new AsyncCallback(Connect), null);
       Log.Info("Broker started on {0}", Environment.MachineName);
     }

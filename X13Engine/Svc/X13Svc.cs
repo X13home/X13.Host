@@ -60,12 +60,12 @@ namespace X13.Svc {
       Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
       Topic.brokerMode=true;
       var root=Topic.root;
-      _lHead=root.Get<long>("/system/log/history");
-      _lThreshold=root.Get<LogLevel>("/system/log/threshold");
+      _lHead=root.Get<long>("/etc/log/history");
+      _lThreshold=root.Get<LogLevel>("/etc/log/threshold");
       BiultInStatements.Initialize();
       _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 5050-DateTime.Now.Millisecond, 1000);
       {
-        DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/system/now");
+        DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/dev/.clock");
         DateTime nowDT=DateTime.Now;
         nowTp.value=nowDT;
         nowTp.Get<long>("second").value=nowDT.Second;
@@ -88,7 +88,7 @@ namespace X13.Svc {
         sec.Get("groups/0/root");
         SetTopic("groups/1", "Users", sec);
         sec.Get("groups/1/user");
-        SetTopic<uint>("acls/Public", 0x1F000001, sec);
+        SetTopic<uint>("acls/var", 0x1F000001, sec);
 
         Topic.Export(@"../data/security.dat", sec);
       }
@@ -98,7 +98,7 @@ namespace X13.Svc {
       _pStorage=new PersistentStorage();
       bool db=_pStorage.Open(pmPath);
       string dbVersion=Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
-      var dbVer=Topic.root.Get<string>("/system/db/version");
+      var dbVer=Topic.root.Get<string>("/etc/db_version");
       if(!db || dbVer.value!=dbVersion) {
         dbVer.saved=true;
         dbVer.value=dbVersion;
@@ -114,13 +114,6 @@ namespace X13.Svc {
         devDec.value="DevFolder";
 
         Log.Info("Load default declarers");
-        //Topic decl;
-        //if(Topic.root.Exist("/system/declarers", out decl)) {
-        //  Topic.paused=false;
-        //  decl.Remove();
-        //  Thread.Sleep(500);
-        //  Topic.paused=true;
-        //}
         var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.PLC.declarers.xst");
         if(st!=null) {
           using(var sr=new StreamReader(st)){
@@ -133,7 +126,7 @@ namespace X13.Svc {
       foreach(Topic acl in Topic.root.Get("/local/security/acls").children){
         SetAcl(acl, Topic.root);
       }
-      _debug=Topic.root.Get<bool>("/system/log/Repository");
+      _debug=Topic.root.Get<bool>("/etc/log/Repository");
       root.Subscribe("/#", MQTT_Main_changed);
       Topic.ready.Reset();
       Topic.paused=false;
@@ -263,7 +256,7 @@ namespace X13.Svc {
     private void Tick1Sec(object o) {
       DateTime nowDT=DateTime.Now;
       _1SecTimer.Change(1050-nowDT.Millisecond, 1000);
-      DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/system/now");
+      DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/dev/.clock");
       nowTp.SetValue(nowDT, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
       nowTp.Get<long>("second").SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
       if(nowDT.Second==0) {
@@ -285,7 +278,7 @@ namespace X13.Svc {
     }
 
     private void MQTT_Main_changed(Topic sender, TopicChanged param) {
-      if(!_debug.value || sender.path.StartsWith("/system/log/history")) {
+      if(!_debug.value || sender.path.StartsWith("/etc/log/history")) {
         return;
       }
       var ir=param.Initiator;
@@ -299,10 +292,10 @@ namespace X13.Svc {
         break;
       case TopicChanged.ChangeArt.Value:
         if(ir==null) {
-          if(!param.Source.path.StartsWith("/system/now/")) {
+          if(!param.Source.path.StartsWith("/dev/.clock/")) {
             Log.Debug("! {0}={1}", param.Source.path, param.Source.GetValue());
           }
-        } else if(!ir.path.StartsWith("/system/now/")) {
+        } else if(!ir.path.StartsWith("/dev/.clock/")) {
           Log.Debug("! {0}={1} : {2}", param.Source.path, param.Source.GetValue(), ir.name);
         }
         break;
