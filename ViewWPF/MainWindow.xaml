@@ -167,17 +167,17 @@
           <Grid.Resources>
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wtCurDelta">
               <ObjectDataProvider.ConstructorParameters>
-                <system:String>/var/outdoor/TemperatureDelta</system:String>
+                <system:String>/var/Outdoor/TemperaturDelta</system:String>
               </ObjectDataProvider.ConstructorParameters>
             </ObjectDataProvider>
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wpCur">
               <ObjectDataProvider.ConstructorParameters>
-                <system:String>/var/outdoor/Pressure</system:String>
+                <system:String>/var/Hall/Pressure</system:String>
               </ObjectDataProvider.ConstructorParameters>
             </ObjectDataProvider>
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wpCurDelta">
               <ObjectDataProvider.ConstructorParameters>
-                <system:String>/var/outdoor/PressureDelta</system:String>
+                <system:String>/var/Hall/PressureDelta</system:String>
               </ObjectDataProvider.ConstructorParameters>
             </ObjectDataProvider>
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wpCurSecond">
@@ -207,7 +207,7 @@
             </ObjectDataProvider>
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wtCur">
               <ObjectDataProvider.ConstructorParameters>
-                <system:String>/var/outdoor/Temperature</system:String>
+                <system:String>/var/Outdoor/Temperatur</system:String>
               </ObjectDataProvider.ConstructorParameters>
             </ObjectDataProvider>
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf0w">
