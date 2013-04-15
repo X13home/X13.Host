@@ -65,7 +65,7 @@ namespace X13.Svc {
       BiultInStatements.Initialize();
       _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 5050-DateTime.Now.Millisecond, 1000);
       {
-        DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/dev/.clock");
+        DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/var/now");
         DateTime nowDT=DateTime.Now;
         nowTp.value=nowDT;
         nowTp.Get<long>("second").value=nowDT.Second;
@@ -256,7 +256,7 @@ namespace X13.Svc {
     private void Tick1Sec(object o) {
       DateTime nowDT=DateTime.Now;
       _1SecTimer.Change(1050-nowDT.Millisecond, 1000);
-      DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/dev/.clock");
+      DVar<DateTime> nowTp=Topic.root.Get<DateTime>("/var/now");
       nowTp.SetValue(nowDT, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
       nowTp.Get<long>("second").SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, nowTp));
       if(nowDT.Second==0) {
@@ -292,10 +292,10 @@ namespace X13.Svc {
         break;
       case TopicChanged.ChangeArt.Value:
         if(ir==null) {
-          if(!param.Source.path.StartsWith("/dev/.clock/")) {
+          if(!param.Source.path.StartsWith("/var/now")) {
             Log.Debug("! {0}={1}", param.Source.path, param.Source.GetValue());
           }
-        } else if(!ir.path.StartsWith("/dev/.clock/")) {
+        } else if(!ir.path.StartsWith("/var/now")) {
           Log.Debug("! {0}={1} : {2}", param.Source.path, param.Source.GetValue(), ir.name);
         }
         break;

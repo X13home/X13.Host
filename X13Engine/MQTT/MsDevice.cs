@@ -280,6 +280,9 @@ namespace X13.MQTT {
     }
     //TODO: Unsubscribe
     private void SetValue(TopicInfo ti, byte[] msgData) {
+      if(!ti.path.StartsWith(Owner.path)) {
+        return;     // not allow publish
+      }
       if(ti!=null) {
         object val;
         switch(Type.GetTypeCode(ti.topic.valueType)) {
@@ -428,7 +431,7 @@ namespace X13.MQTT {
 
       var rec=_NTTable.FirstOrDefault(z => cName.StartsWith(z.name));
       TopicInfo ret;
-      if(rec.name!=null) {
+      if(rec.name!=null && !path.StartsWith("/local")) {
         cur=Topic.GetP(path, rec.type, Owner, Owner);
         ret=GetTopicInfo(cur, sendRegister);
       } else {
