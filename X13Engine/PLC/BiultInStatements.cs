@@ -525,7 +525,10 @@ namespace X13.PLC {
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        if(!string.IsNullOrEmpty(_feed.value) && !string.IsNullOrEmpty(_key.value) && source==_push && _push.value) {
+        if(string.IsNullOrEmpty(_feed.value) || string.IsNullOrEmpty(_key.value) || !_push.value) {
+          return;
+        }
+        if(source==_push) {
           StringBuilder sb=new StringBuilder();
           foreach(var inp in model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
             string valS=inp.value.ToString(CultureInfo.InvariantCulture);
@@ -538,6 +541,10 @@ namespace X13.PLC {
             sb.AppendFormat("{0},{1}\n", inp.name, valS);
           }
           ThreadPool.QueueUserWorkItem((o) => Send(_key.value, _feed.value, sb.ToString()));
+        } else if(source.valueType==typeof(double) && source.name.Length==1 && source.name[0]>='A' && source.name[0]<='G') {
+          string p=_feed.value+"/datastreams/"+source.name;
+          string v=(source as DVar<double>).value.ToString(CultureInfo.InvariantCulture);
+          ThreadPool.QueueUserWorkItem((o) => Send(_key.value, p, v));
         }
       }
       private void Send(string apiKey, string feedId, string sample) {

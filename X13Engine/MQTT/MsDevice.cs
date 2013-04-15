@@ -25,7 +25,7 @@ namespace X13.MQTT {
     private static List<IMsGate> _gates;
 
     static MsDevice() {
-      _verbose=Topic.root.Get<bool>("/etc/Broker/MQTTS/verboseLog");
+      _verbose=Topic.root.Get<bool>("/etc/log/MQTTS");
       _verbose.saved=true;
       _gates=new List<IMsGate>();
     }
