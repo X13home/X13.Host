@@ -17,6 +17,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using AvalonDock;
 using X13.PLC;
+using System.Diagnostics;
+using System.Threading;
 
 namespace X13.CC {
   /// <summary>
@@ -26,21 +28,41 @@ namespace X13.CC {
     private X13.MQTT.MqClient _cl;
     private int _tryCounter;
     private bool _docLoaded=false;
+    private Process _engine; // for embedded mode
+    private ManualResetEventSlim _engineReady;
 
     private const string _settPath="ccwpf.cfg";
 
     public MainWindow() {
       App.mainWindow=this;
       _tryCounter=3;
-      Topic.Import(_settPath, "/local/settings");
       Topic brokerSettings=Topic.root.Get("/local/settings/Broker");
-      //Topic.root.Subscribe("/#", root_changed);
       brokerSettings.Subscribe("_URL", BrokerUrlChanged);
       BrokerState="OFFLINE";
       _clState=0;   // offline
       _cl=new X13.MQTT.MqClient(MqClientStatusChanged);
+      Topic.Import(_settPath, "/local/settings");
 
-      #region Load Security
+      InitializeComponent();
+      //Topic.root.Subscribe("/#", root_changed);
+
+      Log.Info("CC Start");
+      DataContext = this;
+      if(Settings.MainWindowWidth>0 && Settings.MainWindowHeight>0) {
+        this.Width=Settings.MainWindowWidth;
+        this.Height=Settings.MainWindowHeight;
+        this.Left=Settings.MainWindowLeft;
+        this.Top=Settings.MainWindowTop;
+        this.WindowState=Settings.MainWindowState;
+      } else {
+        this.WindowStartupLocation=System.Windows.WindowStartupLocation.CenterScreen;
+        this.Width=System.Windows.SystemParameters.PrimaryScreenWidth*0.6;
+        this.Height=System.Windows.SystemParameters.PrimaryScreenHeight*0.8;
+      }
+      this.dockManager.ActiveDocumentChanged+=new EventHandler(dockManager_ActiveDocumentChanged);
+    }
+
+    private void LoadSecurity(Topic brokerSettings) {
       string securPath=brokerSettings.Get<string>("_path");
       if(string.IsNullOrEmpty(securPath)) {
         securPath=@"..\data\security.dat";
@@ -60,23 +82,13 @@ namespace X13.CC {
           _cl.UserPass=(tp as DVar<string>).value;
         }
       }
-      #endregion Load security
-      InitializeComponent();
+    }
 
-      Log.Info("CC Start");
-      DataContext = this;
-      if(Settings.MainWindowWidth>0 && Settings.MainWindowHeight>0) {
-        this.Width=Settings.MainWindowWidth;
-        this.Height=Settings.MainWindowHeight;
-        this.Left=Settings.MainWindowLeft;
-        this.Top=Settings.MainWindowTop;
-        this.WindowState=Settings.MainWindowState;
-      } else {
-        this.WindowStartupLocation=System.Windows.WindowStartupLocation.CenterScreen;
-        this.Width=System.Windows.SystemParameters.PrimaryScreenWidth*0.6;
-        this.Height=System.Windows.SystemParameters.PrimaryScreenHeight*0.8;
+    private void _engine_OutputDataReceived(object sender, DataReceivedEventArgs e) {
+      if(!string.IsNullOrEmpty(e.Data)) {
+        Log.Info("Engine: {0}", e.Data);
+        _engineReady.Set();
       }
-      this.dockManager.ActiveDocumentChanged+=new EventHandler(dockManager_ActiveDocumentChanged);
     }
 
     private void BrokerUrlChanged(Topic arg1, TopicChanged arg2) {
@@ -84,6 +96,38 @@ namespace X13.CC {
         if(_clState==2) {
           _cl.Disconnect();
         }
+        Topic brokerSettings=Topic.root.Get("/local/settings/Broker");
+        string url=brokerSettings.Get<string>("_URL").value;
+        if(string.IsNullOrWhiteSpace(url)) {
+          return;
+        }else if(url=="#local") {
+          if(_engine==null || _engine.HasExited) {
+            Directory.SetCurrentDirectory(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
+            _engine = new Process();
+            _engine.StartInfo.FileName = "X13Engine.exe";
+            _engine.StartInfo.Arguments="/C";
+
+            _engine.StartInfo.RedirectStandardInput=true;
+            _engine.StartInfo.RedirectStandardOutput=true;
+            _engine.StartInfo.RedirectStandardError=true;
+            _engine.EnableRaisingEvents=true;
+            _engine.StartInfo.UseShellExecute=false;
+            _engine.StartInfo.CreateNoWindow = true;
+            _engine.OutputDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
+            _engine.ErrorDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
+
+            _engineReady=new ManualResetEventSlim(false);
+            _engine.Start();
+
+            _engine.BeginErrorReadLine();
+            _engine.BeginOutputReadLine();
+            _engineReady.Wait(5000);
+          } else {
+            Thread.Sleep(1500);
+          }
+        }
+        LoadSecurity(brokerSettings);
+
         dockManager_Loaded(null, null);
       }));
     }
@@ -180,7 +224,7 @@ namespace X13.CC {
         rez=dockManager.DockableContents.FirstOrDefault(p => p is LogView)??new LogView();
       } else if(name=="DataStoragePanel") {
         rez=dockManager.DockableContents.FirstOrDefault(p => p is DataStorageView)??new DataStorageView();
-      } else if(name=="SetupView"){
+      } else if(name=="SetupView") {
         rez=dockManager.Documents.FirstOrDefault(p => p is SetupView)??new SetupView();
       } else if(name=="Logram") {
         string baseDocTitle = "Logram_New_1Logram_1";
@@ -214,6 +258,11 @@ namespace X13.CC {
       }
       System.Threading.Thread.Sleep(150);
       _cl.Disconnect();
+      if(_engine!=null) {
+        _engine.StandardInput.WriteLine(" ");
+        _engine.WaitForExit(1500);
+        _engine=null;
+      }
       Topic.Export(_settPath, Topic.root.Get("/local/settings"));
     }
     private int _clState=0;

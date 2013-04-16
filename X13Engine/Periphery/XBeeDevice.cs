@@ -23,8 +23,7 @@ namespace X13.Periphery {
     private static List<IXBeeIF> _ifs;
 
     static XBeeDevice() {
-      _verbose=Topic.root.Get<bool>("/etc/log/XBee/verboseLog");
-      _verbose.saved=true;
+      _verbose=Topic.root.Get<bool>("/etc/log/XBee");
       _ifs=new List<IXBeeIF>();
     }
     internal static void Open() {

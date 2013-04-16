@@ -25,7 +25,7 @@ namespace X13.MQTT {
     private static List<IMsGate> _gates;
 
     static MsDevice() {
-      _verbose=Topic.root.Get<bool>("/etc/Broker/MQTTS/verboseLog");
+      _verbose=Topic.root.Get<bool>("/etc/log/MQTTS");
       _verbose.saved=true;
       _gates=new List<IMsGate>();
     }
@@ -281,6 +281,9 @@ namespace X13.MQTT {
     //TODO: Unsubscribe
     private void SetValue(TopicInfo ti, byte[] msgData) {
       if(ti!=null) {
+        if(!ti.path.StartsWith(Owner.path)) {
+          return;     // not allow publish
+        }
         object val;
         switch(Type.GetTypeCode(ti.topic.valueType)) {
         case TypeCode.Boolean:
@@ -428,7 +431,7 @@ namespace X13.MQTT {
 
       var rec=_NTTable.FirstOrDefault(z => cName.StartsWith(z.name));
       TopicInfo ret;
-      if(rec.name!=null) {
+      if(rec.name!=null && !path.StartsWith("/local")) {
         cur=Topic.GetP(path, rec.type, Owner, Owner);
         ret=GetTopicInfo(cur, sendRegister);
       } else {

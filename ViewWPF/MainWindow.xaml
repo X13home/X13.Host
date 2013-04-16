@@ -182,7 +182,7 @@
             </ObjectDataProvider>
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wpCurSecond">
               <ObjectDataProvider.ConstructorParameters>
-                <system:String>/dev/.clock/second</system:String>
+                <system:String>/var/now/second</system:String>
               </ObjectDataProvider.ConstructorParameters>
             </ObjectDataProvider>
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf0img">

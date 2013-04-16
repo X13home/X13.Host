@@ -99,7 +99,7 @@ namespace X13.MQTT {
               if(_verbose)
                 Log.Debug("{0} r {1:X2}:{2}", pns[i], addr, BitConverter.ToString(buf, 0, cnt));
               if(cnt==3 && buf[1]==0x02) {   // Received GWInfo
-                curAddr=new byte[] { buf[2] };
+                curAddr=new byte[] { addr };
                 break;
               }
             }
