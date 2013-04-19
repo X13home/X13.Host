@@ -331,7 +331,8 @@ namespace X13.PLC {
           var jo=JObject.Parse(json);
           this.SetValue(JsonConvert.DeserializeObject(jo["v"].ToString(), valueType), param);
         } else if(valueType==typeof(DateTime)) {
-          this.SetValue(JsonConvert.DeserializeObject(json, valueType, new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter()), param);
+          var dtUtc=JsonConvert.DeserializeObject<DateTime>(json, new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter());
+          this.SetValue(dtUtc.ToLocalTime(), param);
           //} else if(valueType==typeof(object)) {
           //  object rez=JsonConvert.DeserializeObject(json, typeof(object));
         } else {
