@@ -39,9 +39,9 @@ namespace X13.CC {
       _root.Subscribe("/#", _root_changed);
       {
         var ro_ch=TopicView.root.children;
-        var tv1=TopicView.root.Get(_root.Get("/local"));
+        var tv1=TopicView.root.Get(_root.Get("/local/cfg"), true);
         var tv1_ch=tv1.children;
-        tv1.Get(_root.Get("/local/settings"));
+        tv1.Get(_root.Get("/local/cfg"));
       }
       TopicView.root.IsExpanded=true;
       TopicView.root.Get(Topic.root.Get("/plc")).IsExpanded=true;
@@ -637,5 +637,23 @@ namespace X13.CC {
         OnPropertyChanged("image");
       }
     }
+  }
+  public enum ItemAction : ushort {
+    empty=' ',
+    createNodeMask='N',
+    createBoolMask='Z',
+    createLongMask='I',
+    createDoubleMask='G',
+    createStringMask='S',
+
+    createBoolDef='z',
+    createLongDef='i',
+    createDoubleDef='g',
+    createStringDef='s',
+    createObjectDef='o',
+
+    addToLogram='A',
+    remove='D',
+    open='O',
   }
 }

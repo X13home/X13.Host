@@ -57,7 +57,7 @@ namespace X13.CC {
       } else {
         (lvLog.ItemsSource as System.ComponentModel.ICollectionView).Filter=(o) => (o as LogEntry).ll!=LogLevel.Debug;
       }
-      _lHead=Topic.root.Get<long>("/etc/log/history");
+      _lHead=Topic.root.Get<long>("/var/log");
       _oldHead=(_lHead.value+1)%100;
       _lHead.changed+=_lHead_changed;
       _lDebug=_lHead.Get<string>("A0");

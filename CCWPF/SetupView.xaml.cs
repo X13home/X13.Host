@@ -23,7 +23,7 @@ namespace X13.CC {
     private DVar<string> _brokerUrl;
     public SetupView() {
       InitializeComponent();
-      _brokerUrl=Topic.root.Get<string>("/local/settings/Broker/_URL");
+      _brokerUrl=Topic.root.Get<string>("/local/cfg/Client/_URL");
       if(string.IsNullOrWhiteSpace(_brokerUrl.value)) {
         RemoteUrl.Text=_enterUrlText;
       } else {
@@ -57,7 +57,7 @@ namespace X13.CC {
     }
 
     private void InstallService() {
-      ProcessStartInfo pi=new ProcessStartInfo("X13Engine.exe", "/i");
+      ProcessStartInfo pi=new ProcessStartInfo("X13Svc.exe", "/i");
       if(System.Environment.OSVersion.Version.Major >= 6) {
         pi.Verb = "runas";
       }

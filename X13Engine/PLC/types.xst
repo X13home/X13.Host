@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root head="/etc/declarers/type">
+    <item name="L_Folder" value="/CC;component/Images/ty_PLC.png" saved="True" type="System.String" />
+    <item name="Logram" value="/CC;component/Images/ty_logram.png" saved="True" type="System.String">
+      <item name="open" value="1O" saved="True" type="System.String" />
+      <item name="remove" value="3D" saved="True" type="System.String" />
+    </item>
+    <item name="DevFolder" value="/CC;component/Images/ty_gateway.png" saved="True" type="System.String" />
+    <item name="Wire" value="/CC;component/Images/ty_wire.png" saved="True" type="System.String">
+      <item name="remove" value="1D" saved="True" type="System.String" />
+    </item>
+</root>

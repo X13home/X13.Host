@@ -5,7 +5,11 @@
         xmlns:system="clr-namespace:System;assembly=mscorlib"
         Title="X13.View" Height="560" Width="800" FontFamily="Tahoma" Icon="/ViewWPF;component/logo64.ico" FontSize="10">
   <Grid>
-    <StackPanel Name="content" Grid.Column="1">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition />
+      <ColumnDefinition Width="66px" />
+    </Grid.ColumnDefinitions>
+    <StackPanel Name="content">
       <StackPanel.Resources>
         <Style TargetType="Border">
           <Setter Property="BorderThickness" Value="1" />
@@ -131,7 +135,7 @@
           <TextBlock Text="{Binding Source={StaticResource Route5Wait}, Path=value}" Grid.Column="1" Grid.Row="5" Background="AliceBlue" TextAlignment="Right" />
           <TextBlock Text="{Binding Source={StaticResource Route6Info}, Path=value}" Grid.Column="0" Grid.Row="6" />
           <TextBlock Text="{Binding Source={StaticResource Route6Wait}, Path=value}" Grid.Column="1" Grid.Row="6" TextAlignment="Right" />
-          <TextBlock Text="{Binding Source={StaticResource TimeLong}, Path=value}" FontSize="80"  Grid.Column="2" Grid.Row="0" Grid.RowSpan="5" TextAlignment="Center" Background="AliceBlue" FontWeight="ExtraBlack" Padding="0"/>
+          <TextBlock Text="{Binding Source={StaticResource TimeLong}, Path=value}" FontSize="72"  Grid.Column="2" Grid.Row="0" Grid.RowSpan="5" TextAlignment="Center" Background="AliceBlue" FontWeight="ExtraBlack" Padding="0"/>
           <TextBlock Text="{Binding Source={StaticResource DateLong}, Path=value}"  FontSize="28" Grid.Column="2" Grid.Row="5" Grid.RowSpan="2" TextAlignment="Center" Background="White" Padding="0"/>
         </Grid>
       </Border>
@@ -178,11 +182,6 @@
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wpCurDelta">
               <ObjectDataProvider.ConstructorParameters>
                 <system:String>/var/Hall/PressureDelta</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wpCurSecond">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/var/now/second</system:String>
               </ObjectDataProvider.ConstructorParameters>
             </ObjectDataProvider>
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf0img">
@@ -235,7 +234,6 @@
               <Setter Property="TextAlignment" Value="Center" />
             </Style>
           </Grid.Resources>
-          <TextBlock Text="{Binding Source={StaticResource wpCurSecond}, Path=value, StringFormat=\{0:D2\}}" Grid.Column="1" Grid.Row="0" Foreground="LightGray" />
           <TextBlock Text="{Binding Source={StaticResource wtCur}, Path=value, StringFormat=\{0:F1\} °C}" Grid.Column="5" Grid.Row="0" FontWeight="Bold" FontSize="14" Background="Gainsboro" />
           <TextBlock Text="{Binding Source={StaticResource wtCurDelta}, Path=value, StringFormat=\{0:F1\}}" Grid.Column="6" Grid.Row="0" Background="Gainsboro" />
           <TextBlock Text="{Binding Source={StaticResource wpCur}, Path=value, StringFormat=\{0:F0\} mm}" Grid.Column="7" Grid.Row="0" FontSize="14" FontWeight="Bold" Background="Gainsboro" />
@@ -311,6 +309,15 @@
           </Grid.ColumnDefinitions>
         </Grid>
       </Border>
+    </StackPanel>
+    <StackPanel Grid.Column="1">
+      <Image Name="imLight" Source="/ViewWPF;component/Resources/Images/Light.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" />
+      <Image Name="imCamera" Source="/ViewWPF;component/Resources/Images/Camera.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" />
+      <Image Name="imTemperature" Source="/ViewWPF;component/Resources/Images/Temperature.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" />
+      <Image Name="imVolDn" Source="/ViewWPF;component/Resources/Images/VolumeDown.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" />
+      <Image Name="imLock" Source="/ViewWPF;component/Resources/Images/Lock.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" />
+      <Image Name="imHome" Source="/ViewWPF;component/Resources/Images/Home.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" />
+      <Image Name="imOffAll" Source="/ViewWPF;component/Resources/Images/OffAll.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,0,0,5" />
     </StackPanel>
   </Grid>
 </Window>

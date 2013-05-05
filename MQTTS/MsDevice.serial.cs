@@ -10,15 +10,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using X13.PLC;
-using X13.MQTT;
-using System.IO.Ports;
 using System.IO;
+using System.IO.Ports;
+using System.Linq;
+using System.Threading;
 
-namespace X13.MQTT {
+namespace X13.Periphery {
   public partial class MsDevice : ITopicOwned {
 
     private class MsGSerial : IMsGate {
@@ -31,7 +28,7 @@ namespace X13.MQTT {
       static MsGSerial() {
         _startScan=new AutoResetEvent(false);
         _scanBusy=0;
-        ThreadPool.RegisterWaitForSingleObject(_startScan, ScanPorts, null, TimeSpan.FromMinutes(15), false);
+        ThreadPool.RegisterWaitForSingleObject(_startScan, ScanPorts, null, TimeSpan.FromMinutes(3), false);
       }
 
       public static void Open() {
@@ -99,7 +96,7 @@ namespace X13.MQTT {
               if(_verbose)
                 Log.Debug("{0} r {1:X2}:{2}", pns[i], addr, BitConverter.ToString(buf, 0, cnt));
               if(cnt==3 && buf[1]==0x02) {   // Received GWInfo
-                curAddr=new byte[] { addr };
+                curAddr=new byte[] { buf[2] }; // addr
                 break;
               }
             }
@@ -279,6 +276,10 @@ namespace X13.MQTT {
             }
             Thread.Sleep(15);
             if(_gwTopic!=null && _gwTopic.value!=null && (_gwTopic.value.state==State.Disconnected || _gwTopic.value.state==State.Lost)) {
+              ThreadPool.QueueUserWorkItem(obj => {
+                Thread.Sleep(3500);
+                _startScan.Set();
+              });
               break;
             }
           }

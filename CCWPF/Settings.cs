@@ -21,7 +21,7 @@ namespace X13.CC {
     private static Topic _settings;
 
     static Settings() {
-      _settings=Topic.root.Get("/local/settings");
+      _settings=Topic.root.Get("/local/cfg");
     }
 
     public static bool LogShowDebug {

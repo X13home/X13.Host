@@ -9,18 +9,12 @@
 #endregion license
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using X13.PLC;
-using X13.MQTT;
-using System.IO.Ports;
-using System.IO;
-using System.Net.Sockets;
 using System.Net;
+using System.Net.Sockets;
+using System.Threading;
 
-namespace X13.MQTT {
+namespace X13.Periphery {
   public partial class MsDevice : ITopicOwned {
     private class MsGUdp : IMsGate {
 

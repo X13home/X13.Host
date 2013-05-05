@@ -10,14 +10,51 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Composition;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
-using X13.PLC;
-using X13.MQTT;
-using X13.WOUM;
 
-namespace X13.MQTT {
+namespace X13.Periphery {
+  [Export(typeof(IPlugModul))]
+  [ExportMetadata("priority", 4)]
+  [ExportMetadata("name", "MQTTS")]
+  public class MQTTSPlugin : IPlugModul {
+    private const long  _version=3;
+
+    public void Start() {
+      Topic.root.Subscribe("/etc/MQTTS/#", Dummy);
+      Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
+      Thread.Sleep(350);
+      var ver=Topic.root.Get<long>("/etc/MQTTS/version");
+      if(ver.value<_version) {
+        ver.saved=true;
+        ver.value=_version;
+        Log.Info("Load MQTTS declarers");
+        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTS.xst");
+        if(st!=null) {
+          using(var sr=new StreamReader(st)) {
+            Topic.Import(sr, null);
+          }
+        }
+
+      }
+      MsDevice.Open();
+    }
+
+    void Dummy(Topic src, TopicChanged arg) {
+    }
+
+    public void Stop() {
+      Topic.root.Unsubscribe("/etc/MQTTS/#", Dummy);
+      Topic.root.Unsubscribe("/etc/declarers/#", Dummy);
+      //TODO: Close
+    }
+
+  }
+
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public partial class MsDevice : ITopicOwned {
     private const int ACK_TIMEOUT=550;
@@ -25,7 +62,7 @@ namespace X13.MQTT {
     private static List<IMsGate> _gates;
 
     static MsDevice() {
-      _verbose=Topic.root.Get<bool>("/etc/log/MQTTS");
+      _verbose=Topic.root.Get<bool>("/etc/MQTTS/verbose");
       _verbose.saved=true;
       _gates=new List<IMsGate>();
     }
@@ -50,7 +87,7 @@ namespace X13.MQTT {
     private List<TopicInfo> _topics;
     private List<Topic.Subscription> _subsscriptions;
     private Queue<MsMessage> _sendQueue;
-    private string _declarer="RF12_Default";
+    private string _declarer="MQTTS";
     private int _tryCounter;
     private int _messageIdGen=0;
     private DVar<bool> _present;
@@ -687,10 +724,10 @@ namespace X13.MQTT {
       {".cfg/XD_RSSI",       0xFF13},
 
       {".cfg/XD_MACAddr",    0xFF20},
-      {".cfg/XD_IPAddr",     0xFE21},
-      {".cfg/XD_IPMask",     0xFE22},
-      {".cfg/XD_IPRouter",   0xFE23},
-      //{".cfg/XD_IPBroker",    0xFE24},
+      {".cfg/XD_IPAddr",     0xFF21},
+      {".cfg/XD_IPMask",     0xFF22},
+      {".cfg/XD_IPRouter",   0xFF23},
+      //{".cfg/XD_IPBroker",    0xFF24},
 
       {"_declarer",         0xFFC0},
       {".cfg/_state",        0xFFC1},

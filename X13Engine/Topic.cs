@@ -17,7 +17,7 @@ using System.IO;
 using System.Threading;
 using System.Xml.Linq;
 
-namespace X13.PLC {
+namespace X13 {
   /// <summary> Basis class in Message Queue Telemetry Library</summary>
   public partial class Topic : IComparable<Topic> {
 
@@ -32,7 +32,6 @@ namespace X13.PLC {
       }
       return true;
     }
-
     public static void Export(string filename, Topic head) {
       if(filename==null || head==null) {
         throw new ArgumentNullException();
@@ -52,6 +51,8 @@ namespace X13.PLC {
         doc.Save(writer);
       }
     }
+
+    internal static event Action<Subscription, bool> SubscriptionsChg;
 
     [Browsable(false)]
     public Topic parent { get; protected set; }
@@ -81,10 +82,12 @@ namespace X13.PLC {
     [Browsable(false)]
     public IEnumerable<Topic> children { get { return new TopicEnumerator(this, false); } }
 
+    [Browsable(false)]
+    public IEnumerable<Subscription> subscriptions { get { return new SubscriptionEnumerator(this); } }
+
     public event Action<Topic, TopicChanged> changed {
       add { 
         Subscribe("", value);
-
       }
       remove { 
         Unsubscribe("", value);
@@ -128,7 +131,7 @@ namespace X13.PLC {
       Topic cur;
       string[] lvls;
       int i=0;
-      if(string.IsNullOrWhiteSpace(path)) {
+      if(string.IsNullOrEmpty(path)) {
         cur=this;
         lvls=new string[0];
       } else {
@@ -158,14 +161,16 @@ l1: { }
         }
       }
       if(s==null) {
-        s=new Subscription(lvls.Skip(i).ToArray(), func) { path=path, qos=qos };
+        s=new Subscription(lvls.Skip(i).ToArray(), func, cur) { qos=qos };
         lock(cur._subs) {
           cur._subs.Add(s);
         }
       }
-
+      if(SubscriptionsChg!=null) {
+        SubscriptionsChg(s, true);
+      }
       // publish
-      if(Topic.brokerMode) {
+      if(func.Method.DeclaringType!=typeof(MQTT.MqClient)) {
         var ts=(new TopicEnumerator(s.lvls, 0, cur)).GetEnumerator();
         if(ts.MoveNext()) {
           _publishQueue.Enqueue(new TopicChanged(TopicChanged.ChangeArt.Value) { Sender=cur, Subscription=s, Task=ts });
@@ -203,6 +208,9 @@ l1: { }
             }
           }
           cur._subs.Remove(s);
+          if(SubscriptionsChg!=null) {
+            SubscriptionsChg(s, false);
+          }
           break;
 l1: { }
         }
@@ -274,15 +282,52 @@ l1: { }
     public class Subscription {
       public readonly string[] lvls;
       public readonly Action<Topic, TopicChanged> func;
-      public string path;
+      public readonly Topic owner;
+      public string path { get { return (owner==Topic.root?string.Empty:owner.path)+(lvls.Length>0?("/"+string.Join("/", lvls)):string.Empty); } }
       public QoS qos;
 
-      public Subscription(string[] lvls, Action<Topic, TopicChanged> func) {
+      public Subscription(string[] lvls, Action<Topic, TopicChanged> func, Topic owner) {
         this.lvls=lvls;
         this.func=func;
+        this.owner=owner;
+      }
+      public override string ToString() {
+        return path;
       }
     }
+    private class SubscriptionEnumerator : IEnumerable<Subscription> {
+      private Topic _topic;
+      public SubscriptionEnumerator(Topic cur) {
+        this._topic=cur;
+      }
 
+      IEnumerator<Subscription> IEnumerable<Subscription>.GetEnumerator() {
+        if(_topic._subs!=null) {
+          foreach(var s in _topic._subs) {
+            if(s.func.Method.DeclaringType!=typeof(MQTT.MqClient) && s.lvls.Length==1 && s.lvls[0]=="#") {
+              yield return s;
+              yield break;
+            }
+          }
+          foreach(var s in _topic._subs) {
+            if(s.func.Method.DeclaringType!=typeof(MQTT.MqClient)) {
+              yield return s;
+            }
+          }
+        }
+        if(_topic._childNodes!=null) {
+          foreach(var t in _topic._childNodes) {
+            foreach(var s in new SubscriptionEnumerator(t.Value)) {
+              yield return s;
+            }
+          }
+        }
+      }
+
+      System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() {
+        throw new NotImplementedException();
+      }
+    }
   }
   public struct TopicChanged {
     public enum ChangeArt {
@@ -292,7 +337,7 @@ l1: { }
     }
     private List<Topic> _route;
     internal IEnumerator<Topic> Task;
-    internal Topic Source;
+    public Topic Source;
     internal Topic Sender;
     public Topic.Subscription Subscription;
     public  ChangeArt Art;
@@ -309,12 +354,15 @@ l1: { }
       }
     }
     public TopicChanged(TopicChanged old) {
-      _route=old._route.Where(t => !t.path.StartsWith("/local/MQ") && t.valueType!=typeof(X13.MQTT.MsDevice)).ToList();
+      _route=old._route.Where(t => !t.path.StartsWith("/local/MQ")).ToList();
       Art=old.Art;
       Source=old.Source;
       Sender=old.Sender;
       Subscription=old.Subscription;
       Task=old.Task;
+      if(Source!=null) {
+        Visited(Source, true);
+      }
     }
     public bool Visited(Topic it, bool save) {
       if(it==null) {

@@ -14,8 +14,38 @@ using System.Linq;
 using System.Text;
 using X13.PLC;
 using System.Threading;
+using System.ComponentModel.Composition;
+using System.Reflection;
+using System.IO;
 
 namespace X13.Periphery {
+  [Export(typeof(IPlugModul))]
+  [ExportMetadata("priority", 5)]
+  [ExportMetadata("name", "XBee")]
+  public class XBeePlugin : IPlugModul {
+    private const long  _version=3;
+
+    public void Start() {
+      var ver=Topic.root.Get<long>("/etc/XBee/version");
+      if(ver.value<_version) {
+        ver.saved=true;
+        ver.value=_version;
+        Log.Info("Load XBee declarers");
+        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.XBee.xst");
+        if(st!=null) {
+          using(var sr=new StreamReader(st)) {
+            Topic.Import(sr, null);
+          }
+        }
+
+      }
+      XBeeDevice.Open();
+    }
+
+    public void Stop() {
+    }
+  }
+
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public partial class XBeeDevice : ITopicOwned {
     #region static
@@ -23,7 +53,7 @@ namespace X13.Periphery {
     private static List<IXBeeIF> _ifs;
 
     static XBeeDevice() {
-      _verbose=Topic.root.Get<bool>("/etc/log/XBee");
+      _verbose=Topic.root.Get<bool>("/etc/XBee/verbose");
       _ifs=new List<IXBeeIF>();
     }
     internal static void Open() {
@@ -32,7 +62,7 @@ namespace X13.Periphery {
     #endregion static
 
     private IXBeeIF _gate;
-    private Timer _toTimer;
+    //private Timer _toTimer;
     private List<byte[]> _sendQueue=new List<byte[]>();
     private ushort _pullUpMask=0x1FFF;
     private ushort _evntMask;

@@ -19,21 +19,24 @@ using System.Data;
 using Newtonsoft.Json;
 using System.Threading;
 using Newtonsoft.Json.Linq;
+using System.ComponentModel.Composition;
+using System.Reflection;
 
 namespace X13.PLC {
-  internal class PersistentStorage {
+  [Export(typeof(IPlugModul))]
+  [ExportMetadata("priority", 1)]
+  [ExportMetadata("name", "PersistentStorage")]
+  public class PersistentStorage : IPlugModul {
     private SqliteConnection _connection;
     private List<LazyAction> _actions;
     private Thread _thread;
     private ManualResetEvent _close;
 
-    public bool Open(string dbFilename) {
+    public void Start() {
+      string dbFilename=@"../data/persist.db3";
       bool ret;
 
       _connection = new SqliteConnection();
-      if(!Directory.Exists(Path.GetDirectoryName(dbFilename))) {
-        Directory.CreateDirectory(Path.GetDirectoryName(dbFilename));
-      }
       ret=File.Exists(dbFilename);
       _connection.ConnectionString = string.Format("Version=3,uri=file:{0}", dbFilename);
       _connection.Open();
@@ -58,7 +61,8 @@ namespace X13.PLC {
           if(string.IsNullOrEmpty(v2)) {
             vt=null;
           } else {
-            vt=Type.GetType(v2);
+            vt=X13.WOUM.ExConverter.FullName2Type(v2);
+            //vt=Type.GetType(v2);
             switch(Type.GetTypeCode(vt)) {
             case TypeCode.Byte:
             case TypeCode.Int16:
@@ -86,17 +90,18 @@ namespace X13.PLC {
       _thread.Priority=ThreadPriority.Lowest;
       _thread.Start();
       Topic.root.Subscribe("/#", MqChanged);
-      return ret;
     }
-    public void Close() {
-      Topic.root.Unsubscribe("/#", MqChanged);
-      _close.Set();
-      _thread.Join(2500);
+
+    public void Stop() {
       if(_connection!=null) {
+        Topic.root.Unsubscribe("/#", MqChanged);
+        _close.Set();
+        _thread.Join(3500);
         _connection.Close();
         _connection = null;
       }
     }
+
 
     private void MqChanged(Topic sender, TopicChanged param) {
       if(param.Source!=null && !param.Source.path.StartsWith("/local") && (param.Art==TopicChanged.ChangeArt.Remove || (param.Art==TopicChanged.ChangeArt.Value && param.Source.saved))) {
@@ -108,6 +113,9 @@ namespace X13.PLC {
     }
     private void PrThread() {
       try {
+        while(_connection==null) {
+          Thread.Sleep(300);
+        }
         LazyAction cur;
         while(!_close.WaitOne(1100)) {
           long th=DateTime.Now.AddMilliseconds(-4500).Ticks;
@@ -134,16 +142,26 @@ namespace X13.PLC {
       }
     }
     private void Process(LazyAction act) {
+      if(_connection==null) {
+        return;
+      }
       IDbCommand cmd=_connection.CreateCommand();
       cmd.Parameters.Add(new SqliteParameter { ParameterName = "@path", Value = act.src.path });
-      if(act.art==PLC.TopicChanged.ChangeArt.Value) {
+      if(act.art==TopicChanged.ChangeArt.Value) {
         cmd.CommandText="INSERT OR REPLACE INTO topics VALUES (@path, @type, @val);";
         string st=act.src.valueType==null?null:act.src.valueType.FullName;
-        cmd.Parameters.Add(new SqliteParameter { ParameterName = "@type", Value = st });
         string sv=act.src.ToJson();
+        if(act.src.valueType==typeof(JObject)) {
+          var jo=JObject.Parse(sv);
+          JToken jt1;
+          if(jo.TryGetValue("+", out jt1)) {
+            st=jt1.Value<string>();
+          }
+        }
+        cmd.Parameters.Add(new SqliteParameter { ParameterName = "@type", Value = st });
         cmd.Parameters.Add(new SqliteParameter { ParameterName = "@val", Value = sv });
         //Log.Debug("$+{0}[{1}]={2}", act.src.path, st, sv);
-      } else if(act.art==PLC.TopicChanged.ChangeArt.Remove) {
+      } else if(act.art==TopicChanged.ChangeArt.Remove) {
         cmd.CommandText="DELETE FROM topics WHERE path=@path;";
         //Log.Debug("$-{0}", act.src.path);
       }
@@ -151,7 +169,7 @@ namespace X13.PLC {
     }
 
     private struct LazyAction {
-      public PLC.TopicChanged.ChangeArt art;
+      public TopicChanged.ChangeArt art;
       public Topic src;
       public long marker;
     }

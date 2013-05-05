@@ -16,7 +16,6 @@ using System.Net.Sockets;
 using System.IO;
 using System.Net;
 using System.Threading;
-using X13.PLC;
 
 namespace X13.MQTT {
   internal class MqStreamer {
@@ -144,7 +143,7 @@ namespace X13.MQTT {
       if(_waitAck.Count>0) {
         _waitAck[0].cnt++;
         this.Send(_waitAck[0].msg);
-        if(_waitAck[0].cnt>2) {
+        if(_waitAck.Count>0 && _waitAck[0].cnt>2) {
           _waitAck.RemoveAt(0);
         }
       } else if(_idleCB!=null) {

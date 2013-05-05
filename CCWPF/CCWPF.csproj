@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{DFB92EB3-DE1A-4380-BFCC-12EC507F4E65}</ProjectGuid>
+    <ProjectGuid>{B57A47E1-8602-4A85-A160-E84FF9622420}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>X13.CC</RootNamespace>
@@ -51,6 +51,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Activities.Presentation" />
+    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -73,6 +74,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="PriorityQueue.cs" />
     <Compile Include="Schema.cs" />
     <Compile Include="DataStorageView.xaml.cs">
       <DependentUpon>DataStorageView.xaml</DependentUpon>
@@ -156,9 +158,9 @@
     <Resource Include="Images\logo64.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\X13Engine\X13Engine.csproj">
+    <ProjectReference Include="..\X13Engine\Engine.csproj">
       <Project>{95861A56-393C-4779-A84C-3840EC0A9304}</Project>
-      <Name>X13Engine</Name>
+      <Name>Engine</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -222,9 +224,6 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\log_deb.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Images\fu_sun.png" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\fu_cosm.png" />

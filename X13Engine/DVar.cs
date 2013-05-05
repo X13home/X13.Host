@@ -17,7 +17,7 @@ using System.IO;
 using System.Reflection;
 using X13.WOUM;
 
-namespace X13.PLC {
+namespace X13 {
   /// <summary>Generic class of data storage in Message Queue Telemetry Library</summary>
   /// <typeparam name="T">type of stored data</typeparam>
   public class DVar<T> : Topic {

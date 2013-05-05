@@ -21,8 +21,8 @@ using System.Windows;
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("X13")]
-[assembly: AssemblyProduct("ViewWPF")]
-[assembly: AssemblyCopyright("Copyright ©  X13 2013")]
+[assembly: AssemblyProduct("X13.Home")]
+[assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -61,5 +61,5 @@ using System.Windows;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.3.1316.5")]
-[assembly: AssemblyFileVersion("0.3.1316.5")]
+[assembly: AssemblyVersion("0.3.1319.21")]
+[assembly: AssemblyFileVersion("0.3.1319.21")]

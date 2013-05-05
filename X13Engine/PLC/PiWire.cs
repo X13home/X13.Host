@@ -29,6 +29,7 @@ namespace X13.PLC {
     private DVar<Topic> _aAlias;
     private DVar<Topic> _bAlias;
     private DVar<long> _direction;
+    private PiLogram _parent;
 
     public PiWire() {
       _dummy=1000;
@@ -95,6 +96,7 @@ namespace X13.PLC {
           if(_b!=null) {
             _b.changed-=_b_changed;
           }
+          _parent=null;
         }
         _owner=owner as DVar<PiWire>;
         if(_owner!=null) {
@@ -104,6 +106,9 @@ namespace X13.PLC {
           var dc=_owner.Get<string>("_declarer");
           dc.saved=true;
           dc.value="Wire";
+          if(_owner.parent!=null && _owner.parent.valueType==typeof(PiLogram)) {
+            _parent=(_owner.parent as DVar<PiLogram>).value;
+          }
 
           foreach(Topic tp in _owner.children.Where(t => t.valueType==typeof(Topic))) {
             var p=tp as DVar<Topic>;
@@ -207,6 +212,9 @@ namespace X13.PLC {
     }
 
     private void _a_changed(Topic sender, TopicChanged param) {
+      if(_parent==null || !_parent.exec) {
+        return;
+      }
       if(param.Art==TopicChanged.ChangeArt.Value && _b!=null && !param.Visited(_b, true)) {
         if(Direction==0 || Direction==1) {
           _b.SetValue(_a.GetValue(), new TopicChanged(param));
@@ -216,6 +224,9 @@ namespace X13.PLC {
       }
     }
     private void _b_changed(Topic sender, TopicChanged param) {
+      if(_parent==null || !_parent.exec) {
+        return;
+      }
       if(param.Art==TopicChanged.ChangeArt.Value && _a!=null && !param.Visited(_a, true)) {
         if(Direction==0 || Direction==2) {
           _a.SetValue(_b.GetValue(), new TopicChanged(param));

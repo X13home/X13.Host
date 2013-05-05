@@ -8,23 +8,15 @@
 //See LICENSE.txt file for license details.
 #endregion license
 
+using CSWindowsServiceRecoveryProperty;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.ServiceProcess;
-using System.Text;
 using System.Configuration.Install;
 using System.Reflection;
-using System.IO;
-using CSWindowsServiceRecoveryProperty;
-using System.Diagnostics;
-using X13.Svc;
+using System.ServiceProcess;
 
-namespace X13 {
-  static class Program {
-    /// <summary>
-    /// The main entry point for the application.
-    /// </summary>
+namespace X13.Svc {
+  public partial class X13Svc : ServiceBase {
     static void Main(string[] args) {
       if(args.Length>0) {
         string name=Assembly.GetExecutingAssembly().Location;
@@ -83,17 +75,6 @@ namespace X13 {
           }
           return;
         }
-        if(args[0]=="/c" || args[0]=="/C") {
-          if(args[0]=="/c") {
-            CSWindowsServiceRecoveryProperty.Win32.AttachConsole(-1); // ATTACH_PARENT_PROCESS = -1;
-          }
-          var svc=new X13Svc();
-          svc.StartUp();
-          Console.WriteLine("X13Engine running; press Enter to Exit");
-          Console.Read();
-          svc.Shutdown();
-          return;
-        }
       }
 
       ServiceBase[] ServicesToRun;
@@ -102,6 +83,18 @@ namespace X13 {
 				new X13Svc() 
 			};
       ServiceBase.Run(ServicesToRun);
+    }
+    private X13.Engine _eng;
+    public X13Svc() {
+      InitializeComponent();
+    }
+
+    protected override void OnStart(string[] args) {
+      _eng=new Engine();
+      _eng.StartUp();
+    }
+    protected override void OnStop() {
+      _eng.Shutdown();
     }
   }
 }

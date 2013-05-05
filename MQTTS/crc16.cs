@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace X13.WOUM {
+namespace X13.Periphery {
   public static class Crc16 {
     private const ushort polynomial = 0xA001;
     private static ushort[] table = new ushort[256];

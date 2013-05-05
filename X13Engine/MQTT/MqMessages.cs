@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using X13.PLC;
 
 namespace X13.MQTT {
   /// <summary>The different types of messages defined in the MQTT protocol</summary>

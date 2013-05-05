@@ -15,6 +15,11 @@ using System.Text;
 
 namespace X13 {
   public class Log {
+    private static DVar<long> _nowOffset;
+    static Log() {
+      _nowOffset=Topic.root.Get<long>("/local/cfg/Client/TimeOffset");
+    }
+
     public static void Debug(string format, params object[] arg) {
       onWrite(LogLevel.Debug, format, arg);
       //System.Diagnostics.Debug.WriteLine(string.Format("B {0};{1}", DateTime.Now.ToString("mm:ss.fff"), string.Format(format, arg)));
@@ -30,7 +35,7 @@ namespace X13 {
     }
     public static void onWrite(LogLevel ll, string format, params object[] arg) {
       if (Write!=null) {
-        Write(ll, DateTime.Now, string.Format(format, arg));
+        Write(ll, DateTime.Now .AddMilliseconds(_nowOffset.value), string.Format(format, arg));
       }
     }
     public static event Action<LogLevel, DateTime, string> Write;

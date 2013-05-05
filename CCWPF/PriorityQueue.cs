@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace X13.WOUM {
+namespace X13.CC {
   public class PriorityQueue<T>{
     #region Variables Declaration
     protected List<T> InnerList = new List<T>();

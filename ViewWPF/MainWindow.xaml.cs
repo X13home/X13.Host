@@ -25,39 +25,62 @@ namespace X13.View {
   /// </summary>
 
   public partial class MainWindow : Window {
-
-    public MainWindow() {
-      Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
-      InitializeComponent();
-      _lv=Topic.root.Get("/local/vars");
-      _1sek=new Timer(Tick, null, 500, 1000);
-
-    }
     private Timer _1sek;
     private Topic _lv;
     private bool _setted;
     private SayTimeRu _sayTime;
+    private DVar<DateTime> _now;
+    private DVar<long> _nowOffset;
 
+
+    public MainWindow() {
+      Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
+      _nowOffset=Topic.root.Get<long>("/local/cfg/Client/TimeOffset");
+      _now=Topic.root.Get<DateTime>("/var/now");
+      InitializeComponent();
+      _lv=Topic.root.Get("/local/vars");
+      _1sek=new Timer(Tick, null, 500, 1000);
+    }
     private void Tick(object o) {
-      DateTime now=DateTime.Now;
-      _lv.Get<string>("TimeLong").value=now.ToLongTimeString();
-      if(now.Second==0 || !_setted) {
+      DateTime nowDT=DateTime.Now.AddMilliseconds(_nowOffset.value);
+
+      _now.SetValue(nowDT, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
+      _now.Get<long>("second").SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
+      if(nowDT.Second==0) {
+        _now.Get<long>("minute").SetValue(nowDT.Minute, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
+        if(nowDT.Minute==0) {
+          _now.Get<long>("hour").SetValue(nowDT.Hour, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
+          if(nowDT.Hour==0) {
+            _now.Get<long>("wDay").SetValue((long)nowDT.DayOfWeek, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
+            _now.Get<long>("day").SetValue(nowDT.Day, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
+            if(nowDT.Day==1) {
+              _now.Get<long>("month").SetValue(nowDT.Month, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
+              if(nowDT.Month==1) {
+                _now.Get<long>("year").SetValue(nowDT.Year, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
+              }
+            }
+          }
+        }
+      }
+
+      _lv.Get<string>("TimeLong").value=nowDT.ToLongTimeString();
+      if(nowDT.Second==0 || !_setted) {
         Transport.Update();
         for(int i=0; i<7; i++) {
           var t=Transport.At(i);
           if(t!=null) {
             _lv.Get<string>(string.Format("Route{0}Info", i)).value=string.Format("{0:HH:mm}    {1}", t.dt, t.route.name);
-            _lv.Get<string>(string.Format("Route{0}Wait", i)).value=string.Format("{0:f0} мин", (t.dt-now).TotalMinutes);
+            _lv.Get<string>(string.Format("Route{0}Wait", i)).value=string.Format("{0:f0} мин", (t.dt-nowDT).TotalMinutes);
           } else {
             _lv.Get<string>(string.Format("Route{0}Info", i)).value=string.Empty;
             _lv.Get<string>(string.Format("Route{0}Wait", i)).value=string.Empty;
           }
         }
-        if(now.Minute==0 || !_setted) {
+        if(nowDT.Minute==0 || !_setted) {
           ThreadPool.QueueUserWorkItem(GetWeatherForecast);
-          if(now.Hour==0 || !_setted) {
-            _lv.Get<string>("DateLong").value=now.ToLongDateString();
-            this.Dispatcher.Invoke(new Action<DateTime>(this.DrawCalender), now.Date);
+          if(nowDT.Hour==0 || !_setted) {
+            _lv.Get<string>("DateLong").value=nowDT.ToLongDateString();
+            this.Dispatcher.Invoke(new Action<DateTime>(this.DrawCalender), nowDT.Date);
             if(!_setted) {
               _sayTime=new SayTimeRu();
               _setted=true;
@@ -66,6 +89,7 @@ namespace X13.View {
         }
       }
     }
+
     private const int wtsCount=140;
     private void GetWeatherForecast(object o) {
       for(int tr=0; tr<3; tr++) {
@@ -117,7 +141,7 @@ namespace X13.View {
 
             i++;
           }
-          string wlPath=Topic.root.Get<string>("/local/settings/Broker/_path");
+          string wlPath=Topic.root.Get<string>("/local/cfg/Broker/_path");
           if(string.IsNullOrEmpty(wlPath)) {
             wlPath=@"..\log\weather.log";
           } else {

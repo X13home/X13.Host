@@ -96,6 +96,9 @@ namespace X13.CC {
       if(m.value==null) {
         m.saved=true;
         m.value=new PiLogram();
+        var via=m.Get<string>("_via");
+        via.saved=true;
+        via.value=Topic.root.Get<string>("/etc/PLC/default").value;
       }
       this.Title=m.name;
       InitializeComponent();

@@ -9,12 +9,11 @@
 #endregion license
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using X13.PLC;
-using System.Collections.Generic;
 
-namespace X13.MQTT {
+namespace X13.Periphery {
   internal enum MsMessageType : byte {
     ADVERTISE=0,
     SEARCHGW=1,

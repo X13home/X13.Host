@@ -112,12 +112,16 @@ namespace X13.CC {
           name=string.Format("A{0:D02}", i);
           i++;
         } while(model.Exist(name));
-        var it=model.Get<PiStatement>(name);
-        var sLoc=it.Get<long>("_location");
-        sLoc.saved=true;
-        sLoc.value=loc;
-        it.saved=true;
-        it.value=st;
+        try {
+          var it=model.Get<PiStatement>(name);
+          var sLoc=it.Get<long>("_location");
+          sLoc.saved=true;
+          sLoc.value=loc;
+          it.saved=true;
+          it.value=st;
+        }
+        catch(ObjectDisposedException) {
+        }
       }
     }
 
