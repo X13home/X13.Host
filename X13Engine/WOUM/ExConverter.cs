@@ -19,6 +19,11 @@ using Newtonsoft.Json.Linq;
 namespace X13.WOUM {
   public static class ExConverter {
 
+    static ExConverter() {
+      _fn2t=new Dictionary<string, Type>();
+      _fn2t.Add("X13.PLC.Topic", typeof(X13.Topic));
+    }
+
     #region String2Name
     private static string nsTable="123456789abcdefg_ !\"#$%&'()hijklmn_________________________opqr_s)*+,-./:;<=>?@[\\]^`{|}~__tuvwx";
     public static string Name2String(string name) {
@@ -61,6 +66,28 @@ namespace X13.WOUM {
     }
     #endregion String2Name
 
+    private static Dictionary<string, Type> _fn2t;
+    public static Type FullName2Type(string fullName) {
+      Type ret=null;
+      if(string.IsNullOrWhiteSpace(fullName)) {
+        //Do nothing
+      } else if(_fn2t.TryGetValue(fullName, out ret)) {
+        //Do nothing
+      } else if((ret=Type.GetType(fullName))!=null) {
+        _fn2t[fullName]=ret;
+      } else {
+        foreach(var a in AppDomain.CurrentDomain.GetAssemblies()) {
+          if((ret=a.GetType(fullName))!=null) {
+            _fn2t[fullName]=ret;
+            break;
+          }
+        }
+      }
+      if(ret==null) {
+        ret=typeof(JObject);
+      }
+      return ret;
+    }
     public static Type Json2Type(string json) {
       if(string.IsNullOrWhiteSpace(json)) {
         return null;
@@ -107,27 +134,5 @@ namespace X13.WOUM {
       return dotCnt==0?typeof(Int64):typeof(double);
     }
 
-    private static Dictionary<string, Type> _fn2t=new Dictionary<string, Type>();
-    public static Type FullName2Type(string fullName) {
-      Type ret=null;
-      if(string.IsNullOrWhiteSpace(fullName)) {
-        //Do nothing
-      }else if(_fn2t.TryGetValue(fullName, out ret)) {
-        //Do nothing
-      } else if((ret=Type.GetType(fullName))!=null) {
-        _fn2t[fullName]=ret;
-      } else {
-        foreach(var a in AppDomain.CurrentDomain.GetAssemblies()) {
-          if((ret=a.GetType(fullName))!=null) {
-            _fn2t[fullName]=ret;
-            break;
-          }
-        }
-      }
-      if(ret==null) {
-        ret=typeof(JObject);
-      }
-      return ret;
-    }
   }
 }
