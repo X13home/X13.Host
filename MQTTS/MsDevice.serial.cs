@@ -28,7 +28,7 @@ namespace X13.Periphery {
       static MsGSerial() {
         _startScan=new AutoResetEvent(false);
         _scanBusy=0;
-        ThreadPool.RegisterWaitForSingleObject(_startScan, ScanPorts, null, TimeSpan.FromMinutes(3), false);
+        ThreadPool.RegisterWaitForSingleObject(_startScan, ScanPorts, null, 180000, false);
       }
 
       public static void Open() {
@@ -50,9 +50,10 @@ namespace X13.Periphery {
         }
 
         byte[] buf=new byte[64];
+        byte[] searchGW=new byte[] { 0x03, 0x01, 0x00 };
         byte addr=0xFF;
         bool escChar;
-        int cnt;
+        int cnt=0, tryCnt;
         SerialPort port=null;
 
         byte[] curAddr;
@@ -62,6 +63,7 @@ namespace X13.Periphery {
         lock(dev) {
           var ifs=dev.children.Where(z => z.valueType==typeof(MsDevice)).Cast<DVar<MsDevice>>().Where(z => z.value!=null && z.value.state!=State.Connected).Select(z => z.value).ToArray();
           foreach(var devSer in ifs) {
+            cnt++;
             if(string.IsNullOrWhiteSpace(devSer.via)) {
               _scanAllPorts=true;
               continue;
@@ -72,7 +74,7 @@ namespace X13.Periphery {
             }
           }
         }
-        if(_scanAllPorts) {
+        if(_scanAllPorts || cnt==0) {
           _scanAllPorts=false;
           foreach(var pn in SerialPort.GetPortNames()) {
             if(!pns.Exists(z => string.Equals(z, pn))) {
@@ -87,18 +89,23 @@ namespace X13.Periphery {
             port.WriteBufferSize=300;
             port.Open();
             port.DiscardInBuffer();
-            SendRaw(port, 0, new byte[] { 0x03, 0x01, 0x00 }); // Send SearchGW
-            Thread.Sleep(50);
+            SendRaw(port, 0, searchGW); // Send SearchGW
+            Thread.Sleep(70);
             cnt=-1;
+            tryCnt=5;
             escChar=false;
             curAddr=null;
-            while(GetPacket(port, ref addr, buf, ref cnt, ref escChar)) {
-              if(_verbose)
-                Log.Debug("{0} r {1:X2}:{2}", pns[i], addr, BitConverter.ToString(buf, 0, cnt));
-              if(cnt==3 && buf[1]==0x02) {   // Received GWInfo
-                curAddr=new byte[] { buf[2] }; // addr
-                break;
+            while(--tryCnt>0) {
+              if(GetPacket(port, ref addr, buf, ref cnt, ref escChar)) {
+                if(_verbose)
+                  Log.Debug("{0} r {1:X2}:{2}", pns[i], addr, BitConverter.ToString(buf, 0, cnt));
+                if(cnt==3 && buf[1]==0x02) {   // Received GWInfo
+                  curAddr=new byte[] { buf[2] }; // addr
+                  break;
+                }
+                SendRaw(port, 0, searchGW); // Send SearchGW
               }
+              Thread.Sleep(50);
             }
             if(curAddr==null) {
               port.Close();
@@ -355,7 +362,7 @@ namespace X13.Periphery {
         }
         _port=null;
         _gates.Remove(this);
-        byte[] gwAddr=new byte[]{_gwAddr};
+        byte[] gwAddr=new byte[] { _gwAddr };
         Topic dev=Topic.root.Get("/dev");
         lock(dev) {
           var ifs=dev.children.Where(z => z.valueType==typeof(MsDevice)).Cast<DVar<MsDevice>>().Where(z => z.value!=null && z.value._gate==this).Select(z => z.value).ToArray();

@@ -215,6 +215,9 @@ namespace X13.MQTT {
       if((connectFlags & 0x40)!=0) {
         userPassword=ReadStringFromStream(str);
       }
+      if(userPassword==null) {
+        userPassword=string.Empty;
+      }
     }
     public override void Serialise(Stream str) {
       byte _connectFlags=(byte)((cleanSession ? 0x02 : 0)); // Clean Start

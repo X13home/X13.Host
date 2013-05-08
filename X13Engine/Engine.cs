@@ -64,9 +64,10 @@ namespace X13 {
       Topic.paused=true;
       Log.Info("Starting");
       Topic.Import("../data/engine.xst", "/local/cfg");
-      _debug=Topic.root.Get<bool>("/etc/repository/verbose");
-      //root.Subscribe("/#", MQTT_Main_changed);
-
+      _debug=Topic.root.Get<bool>("/local/cfg/repository/_verbose");
+      if(_debug.value) {
+        root.Subscribe("/#", MQTT_Main_changed);
+      }
       var myId=Topic.root.Get<string>("/local/cfg/id");
       if(string.IsNullOrWhiteSpace(myId.value)) {
         myId.saved=true;
@@ -269,11 +270,11 @@ namespace X13 {
     }
 
     private void Tick1Sec(object o) {
-      DateTime nowDT=DateTime.Now.AddMilliseconds(_nowOffset.value);
+      DateTime nowDT=DateTime.Now.AddTicks(_nowOffset.value);
+      var mq=(nowDT.Second!=0?Topic.root.Get("/local/MQ"):_now);
       _1SecTimer.Change(1050-nowDT.Millisecond, 1000);
-      DVar<DateTime> _now=Topic.root.Get<DateTime>("/var/now");
-      _now.SetValue(nowDT, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-      _now.Get<long>("second").SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
+      _now.SetValue(nowDT, new TopicChanged(TopicChanged.ChangeArt.Value, mq));
+      _now.Get<long>("second").SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, mq));
       if(nowDT.Second==0) {
         _now.Get<long>("minute").SetValue(nowDT.Minute, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
         if(nowDT.Minute==0) {
@@ -293,7 +294,7 @@ namespace X13 {
     }
 
     private void MQTT_Main_changed(Topic sender, TopicChanged param) {
-      if(!_debug.value || sender.path.StartsWith("/etc/log/history")) {
+      if(sender.path.StartsWith("/var/log") || sender.path.StartsWith("/var/now")) {
         return;
       }
       var ir=param.Initiator;
@@ -307,10 +308,8 @@ namespace X13 {
         break;
       case TopicChanged.ChangeArt.Value:
         if(ir==null) {
-          if(!param.Source.path.StartsWith("/var/now")) {
-            Log.Debug("! {0}={1}", param.Source.path, param.Source.GetValue());
-          }
-        } else if(!ir.path.StartsWith("/var/now")) {
+          Log.Debug("! {0}={1}", param.Source.path, param.Source.GetValue());
+        } else {
           Log.Debug("! {0}={1} : {2}", param.Source.path, param.Source.GetValue(), ir.name);
         }
         break;

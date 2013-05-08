@@ -44,12 +44,16 @@ namespace X13.CC {
     }
 
     private void Button_Click(object sender, RoutedEventArgs e) {
+      DVar<string> userName=Topic.root.Get<string>("/local/cfg/Client/_username");
       _brokerUrl.saved=true;
+      userName.saved=true;
       if(EngineEmbedded.IsChecked.Value) {
         _brokerUrl.value="#local";
+        userName.value="local";
       } else if(EngineInstall.IsChecked.Value) {
         InstallService();
         _brokerUrl.value="localhost";
+        userName.value="local";
       } else {
         _brokerUrl.value=RemoteUrl.Text;
       }

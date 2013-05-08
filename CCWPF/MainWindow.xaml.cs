@@ -146,7 +146,7 @@ namespace X13.CC {
     }
 
     private void Tick1Sec(object o) {
-      DateTime nowDT=DateTime.Now.AddMilliseconds(_nowOffset.value);
+      DateTime nowDT=DateTime.Now.AddTicks(_nowOffset.value);
       _1SecTimer.Change(1050-nowDT.Millisecond, 1000);
       _now=Topic.root.Get<DateTime>("/var/now");
       _now.SetValue(nowDT, new TopicChanged(TopicChanged.ChangeArt.Value, _now));

@@ -42,7 +42,7 @@ namespace X13.View {
       _1sek=new Timer(Tick, null, 500, 1000);
     }
     private void Tick(object o) {
-      DateTime nowDT=DateTime.Now.AddMilliseconds(_nowOffset.value);
+      DateTime nowDT=DateTime.Now.AddTicks(_nowOffset.value);
 
       _now.SetValue(nowDT, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
       _now.Get<long>("second").SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, _now));

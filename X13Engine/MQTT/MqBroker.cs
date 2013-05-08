@@ -208,7 +208,13 @@ namespace X13.MQTT {
       switch(msg.MsgType) {
       case MessageType.CONNECT:
         ConnInfo=msg as MqConnect;
-        if(ConnInfo.userName!=null && !MqBroker.CheckAuth(ConnInfo.userName, ConnInfo.userPassword) && (ConnInfo.userName!="local" || (this._stream.Socket.Client.RemoteEndPoint as IPEndPoint).Address.IsIPv6LinkLocal )) {
+        bool cup=false;
+        if(ConnInfo.userName=="local") {
+          cup=IPAddress.IsLoopback((this._stream.Socket.Client.RemoteEndPoint as IPEndPoint).Address);
+        } else {
+          cup=ConnInfo.userName==null || MqBroker.CheckAuth(ConnInfo.userName, ConnInfo.userPassword);
+        }
+        if(!cup){
           _stream.Send(new MqConnack(MqConnack.MqttConnectionResponse.BadUsernameOrPassword));
           Log.Warning("BadUsernameOrPassword {0}:{1}@{2}", ConnInfo.userName, ConnInfo.userPassword, ConnInfo.clientId);
           _stream.Send(new MqDisconnect());

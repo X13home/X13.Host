@@ -76,25 +76,32 @@ namespace X13.MQTT {
       _verbose=_settings.Get<bool>("verbose");
       Topic.root.Subscribe("+", Dummy);
       Topic.root.Subscribe("/etc/+", Dummy);
+      Topic.root.Subscribe("/etc/repository/#", Dummy);
       Topic.root.Subscribe("/etc/declarers/+", Dummy);
       Topic.root.Subscribe("/etc/declarers/type/#", Dummy);
+      Topic.root.Subscribe("/var/now", Dummy);
     }
 
-    private bool Reconnect() {
-      if(_connected) {
-        _connected=false;
-        _tOut.Change(_keepAliveMS*2, Timeout.Infinite);
-        if(StatusChg!=null) {
-          StatusChg(_connected);
-        }
-      }
+    private bool Reconnect(bool slow=false) {
       if(_stream!=null) {
+        _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
+        if(_connected) {
+          _connected=false;
+          if(StatusChg!=null) {
+            StatusChg(_connected);
+          }
+          _tOut.Change(_keepAliveMS*2, Timeout.Infinite);
+        } else {
+          _tOut.Change(_keepAliveMS*(slow?10:5), Timeout.Infinite);
+        }
         _stream.Close();
         _stream=null;
-        _tOut.Change(_keepAliveMS*2, Timeout.Infinite);
         return false;
       }
-
+      if(slow) {
+        _tOut.Change(_keepAliveMS*5, Timeout.Infinite);
+        return false;
+      }
       string connectionstring=_settings.Get<string>("_URL").value;
 
       if(string.IsNullOrEmpty(connectionstring)) {
@@ -209,25 +216,25 @@ namespace X13.MQTT {
       Send(msg);
     }
     public void Stop() {
-       if(_connected) {
-        _connected=false;
-        if(_stream!=null) {
+      if(_stream!=null) {
+        if(_connected) {
+          _connected=false;
+          _owner.Unsubscribe("/#", OwnerChanged);
+          _owner.Remove();
+          _tOut.Change(Timeout.Infinite, Timeout.Infinite);
+          if(StatusChg!=null) {
+            StatusChg(_connected);
+          }
           _stream.Close();
           _stream=null;
+          Log.Info("{0} Disconnected", BrokerName);
         }
-        _owner.Unsubscribe("/#", OwnerChanged);
-        _owner.Remove();
-        _tOut.Change(Timeout.Infinite, Timeout.Infinite);
-        if(StatusChg!=null) {
-          StatusChg(_connected);
-        }
-        Log.Info("{0} Disconnected", BrokerName);
       }
     }
     private void TimeOut(object o) {
       if(_stream==null) {
         Reconnect();
-      }else if(!_connected) {
+      } else if(!_connected) {
         Log.Warning("ConnAck timeout");
         Reconnect();
       } else if(_waitPingResp) {
@@ -250,13 +257,7 @@ namespace X13.MQTT {
       case MessageType.CONNACK: {
           MqConnack cm=msg as MqConnack;
           if(cm.Response!=MqConnack.MqttConnectionResponse.Accepted) {
-            _connected=false;
-            _tOut.Change(_keepAliveMS*10, Timeout.Infinite);
-            _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
-            if(_stream!=null) {
-              _stream.Close();
-              _stream=null;
-            }
+            Reconnect(true);
             Log.Error("Connection to {0}:{1} failed. error={2}", addr, port, cm.Response.ToString());
           } else {
             _connected=true;
@@ -322,9 +323,10 @@ namespace X13.MQTT {
         cur.saved=pm.Retained;
         if(cur.valueType!=null) {
           if(cur==_now) {
-            try{
-              _nowOffset.value=(long)(JsonConvert.DeserializeObject<DateTime>(pm.Payload, _jcs).ToLocalTime()-DateTime.Now).TotalMilliseconds;
-            }catch(Exception){
+            try {
+              _nowOffset.value=JsonConvert.DeserializeObject<DateTime>(pm.Payload, _jcs).ToLocalTime().Ticks-DateTime.Now.Ticks;
+            }
+            catch(Exception) {
               return;
             }
           } else if(cur.parent!=_now) {
@@ -343,7 +345,9 @@ namespace X13.MQTT {
       }
     }
     private void SendIdle() {
-      _tOut.Change(!_connected?2900:_keepAliveMS, _keepAliveMS);
+      if(_connected) {
+        _tOut.Change(_keepAliveMS, _keepAliveMS);
+      }
     }
     private void OwnerChanged(Topic sender, TopicChanged param) {
       if(!_connected || sender.parent==null || sender.path.StartsWith("/local") || sender.path.StartsWith("/var/now") || sender.path.StartsWith("/var/log") || param.Visited(_mq, false) || param.Visited(_owner, false)) {

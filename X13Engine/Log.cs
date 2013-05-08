@@ -35,7 +35,7 @@ namespace X13 {
     }
     public static void onWrite(LogLevel ll, string format, params object[] arg) {
       if (Write!=null) {
-        Write(ll, DateTime.Now .AddMilliseconds(_nowOffset.value), string.Format(format, arg));
+        Write(ll, DateTime.Now.AddTicks(_nowOffset.value), string.Format(format, arg));
       }
     }
     public static event Action<LogLevel, DateTime, string> Write;
