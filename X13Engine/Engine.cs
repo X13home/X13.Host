@@ -71,7 +71,7 @@ namespace X13 {
       var myId=Topic.root.Get<string>("/local/cfg/id");
       if(string.IsNullOrWhiteSpace(myId.value)) {
         myId.saved=true;
-        myId.value=Environment.MachineName;
+        myId.value=string.Format("{0}_{1:X4}", Environment.MachineName, DateTime.Now.Ticks&0xFFFF);
       }
 
       #region Load plugins
@@ -151,7 +151,7 @@ namespace X13 {
       Topic.ready.Reset();
       Topic.paused=false;
       ThreadPool.QueueUserWorkItem(o => {
-        CountStart(myId.value);
+        CountStart();
       });
 
       Topic.ready.WaitOne(2500);
@@ -327,7 +327,16 @@ namespace X13 {
       _log.Enqueue(new LogEntry() { ll=ll, dt=dt, msg=msg });
     }
 
-    private void CountStart(string id) {
+    public static void CountStart() {
+      var upd=Topic.root.Get<bool>("/etc/system/counted");
+      if(upd.value) {
+        return;
+      }
+      var id=Topic.root.Get<string>("/etc/system/id");
+      if(string.IsNullOrWhiteSpace(id.value)) {
+        id.saved=true;
+        id.value=System.Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+      }
       try {
         var request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create("http://s08.flagcounter.com/mini/Uatv/bg_676D8F/txt_FFFFFF/border_676D8F/flags_0/");
 
@@ -335,13 +344,18 @@ namespace X13 {
         request.Method = "GET";
 
         // request headers
-        request.Referer="mqtt://x13home.org/clients/"+id+"/";
+        request.Referer=string.Format("mqtt://x13home.org/clients/{0}?ver={1}&def={2}", id.value, Topic.root.Get<string>("/etc/repository/version").value, Topic.root.Get<string>("/etc/PLC/default").value);
         request.UserAgent="Mozilla/5.0 (compatible; MSIE 9.0; "+Environment.OSVersion.ToString()+")";
         request.ContentLength = 0;
 
-        request.Timeout = 1500;     // 5 seconds
+        request.Timeout = 1500;
         // send request and receive response
         using(var response =(System.Net.HttpWebResponse)request.GetResponse()) {
+          if(response.StatusCode==System.Net.HttpStatusCode.OK) {
+            upd.value=true;
+          } else {
+            Log.Debug("Engine.CountStart - {0}", response.StatusCode);
+          }
         }
         request=null;
       }

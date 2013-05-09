@@ -235,6 +235,10 @@ namespace X13.CC {
         if(dockManager.Documents.Count>0) {
           dockManager.Documents[0].Activate();
         }
+        ThreadPool.QueueUserWorkItem(o => {
+          Engine.CountStart();
+        });
+
       }
     }
     private void ActivateView(object sender, RoutedEventArgs e) {

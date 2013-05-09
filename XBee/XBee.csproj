@@ -57,6 +57,16 @@
   <ItemGroup>
     <EmbeddedResource Include="XBee.xst" />
   </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Images\xb_c.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\xb_r.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\xb_d.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>$(SolutionDir)vu.exe $(ProjectDir)</PreBuildEvent>

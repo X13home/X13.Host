@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root head="/etc/declarers/dev">
-  <item name="XB1921" value="/CC;component/Images/xb_c.png" saved="True" type="System.String">
+  <item name="XB1921" value="/XBee;component/Images/xb_c.png" saved="True" type="System.String">
     <item name="Add">
       <item name="bool" value="2Z" saved="True" type="System.String" />
       <item name="long" value="4I" saved="True" type="System.String" />
@@ -111,7 +111,7 @@
     </item>
     <item name="remove" value="ZD" saved="True" type="System.String" />
   </item>
-  <item name="XB1922" value="/CC;component/Images/xb_r.png" saved="True" type="System.String">
+  <item name="XB1922" value="/XBee;component/Images/xb_r.png" saved="True" type="System.String">
     <item name="Pin 20">
       <item name="Ai0" value="9gX1" saved="True" type="System.String">
         <item name="_description" value="Analog input, internal reference, Pin 20" saved="True" type="System.String" />
@@ -269,7 +269,7 @@
     </item>
     <item name="remove" value="ZD" saved="True" type="System.String" />
   </item>
-  <item name="XB1928" value="/CC;component/Images/xb_d.png" saved="True" type="System.String">
+  <item name="XB1928" value="/XBee;component/Images/xb_d.png" saved="True" type="System.String">
     <item name="Pin 20">
       <item name="Ai0" value="9gX1" saved="True" type="System.String">
         <item name="_description" value="Analog input, internal reference, Pin 20" saved="True" type="System.String" />

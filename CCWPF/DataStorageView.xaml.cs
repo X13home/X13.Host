@@ -399,13 +399,13 @@ namespace X13.CC {
           switch(typeCode) {
           case TypeCode.Object:
             if(ptr.valueType==typeof(Topic)) {
-              return "/CC;component/Images/ty_ref.png";
+              return "pack://application:,,/CC;component/Images/ty_ref.png";
             } else if(ptr.valueType==typeof(PiStatement)) {
-              return "/CC;component/Images/ty_func.png";
+              return "pack://application:,,/CC;component/Images/ty_func.png";
             }
             break;
           case TypeCode.Boolean:
-            return "/CC;component/Images/ty_bool.png";
+            return "pack://application:,,/CC;component/Images/ty_bool.png";
           case TypeCode.Byte:
           case TypeCode.Int16:
           case TypeCode.SByte:
@@ -414,20 +414,20 @@ namespace X13.CC {
           case TypeCode.Int32:
           case TypeCode.UInt64:
           case TypeCode.Int64:
-            return "/CC;component/Images/ty_i64.png";
+            return "pack://application:,,/CC;component/Images/ty_i64.png";
           case TypeCode.Single:
           case TypeCode.Double:
           case TypeCode.Decimal:
-            return "/CC;component/Images/ty_f02.png";
+            return "pack://application:,,/CC;component/Images/ty_f02.png";
           case TypeCode.String:
-            return "/CC;component/Images/ty_str.png";
+            return "pack://application:,,/CC;component/Images/ty_str.png";
           case TypeCode.Empty:
-            return "/CC;component/Images/ty_topic.png";
+            return "pack://application:,,/CC;component/Images/ty_topic.png";
           case TypeCode.DateTime:
-            return "/CC;component/Images/ty_dt.png";
+            return "pack://application:,,/CC;component/Images/ty_dt.png";
           }
         }
-        return "/CC;component/Images/ty_obj.png";
+        return "pack://application:,,/CC;component/Images/ty_obj.png";
       }
     }
     public string description {

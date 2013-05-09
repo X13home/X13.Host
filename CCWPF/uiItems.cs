@@ -663,7 +663,6 @@ namespace X13.CC {
       double width=Math.Round(Math.Max(head.WidthIncludingTrailingWhitespace*2-gs/2, wi+wo+gs)/gs, 0)*gs;
       double height=Math.Max(cntIp*gs, cntOp*gs);
       if(height==0) {
-        Log.Error("{0} has no pins", model.path);
         return;
       }
       if(chLevel==3) {
@@ -684,7 +683,7 @@ namespace X13.CC {
         dc.DrawRectangle(Brushes.White, null, new Rect(-1, 2, width+4, height+gs-2));
         dc.DrawRectangle(Brushes.AliceBlue, border, new Rect(3, gs-0.5, wo>0?width-6:width-2, height+1));
         dc.DrawText(head, new Point((width-head.WidthIncludingTrailingWhitespace)/2, 1));
-        BitmapImage ico=new BitmapImage(new Uri("pack://application:,,"+declarer.value));
+        BitmapImage ico=new BitmapImage(new Uri(declarer.value));
         dc.DrawRectangle(null, border, new Rect(wi, gs-0.5, gs+1, gs+1));
         dc.DrawImage(ico, new Rect(wi+0.5, gs, gs, gs));
         int i;

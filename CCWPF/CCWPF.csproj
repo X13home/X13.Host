@@ -248,9 +248,6 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\ty_cfg.png" />
-    <Resource Include="Images\xb_c.png" />
-    <Resource Include="Images\xb_d.png" />
-    <Resource Include="Images\xb_r.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

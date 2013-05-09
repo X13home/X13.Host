@@ -34,7 +34,7 @@ namespace X13.PLC {
     private class bNot : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/NOT");
-        m.value="/CC;component/Images/bi_not.png";
+        m.value="pack://application:,,/CC;component/Images/bi_not.png";
         m.Get<string>("_description").value="a Logical negation";
         m.Get<string>("A").value="Az";
         m.Get<string>("Q").value="az";
@@ -62,7 +62,7 @@ namespace X13.PLC {
     private class DTriger : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/DTriger");
-        m.value="/CC;component/Images/bi_triger.png";
+        m.value="pack://application:,,/CC;component/Images/bi_triger.png";
         m.Get<string>("_description").value="b RS-DC Triger";
         m.Get<string>("S").value="Az";
         m.Get<string>("D").value="Bz";
@@ -113,7 +113,7 @@ namespace X13.PLC {
     private class AndI : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/ANDI");
-        m.value="/CC;component/Images/bi_and.png";
+        m.value="pack://application:,,/CC;component/Images/bi_and.png";
         m.Get<string>("_description").value="c1Bitwise AND";
         m.Get<string>("A").value="Ai";
         m.Get<string>("B").value="Bi";
@@ -151,7 +151,7 @@ namespace X13.PLC {
     private class OrI : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/ORI");
-        m.value="/CC;component/Images/bi_or.png";
+        m.value="pack://application:,,/CC;component/Images/bi_or.png";
         m.Get<string>("_description").value="c2Bitwise OR";
         m.Get<string>("A").value="Ai";
         m.Get<string>("B").value="Bi";
@@ -189,7 +189,7 @@ namespace X13.PLC {
     private class XorI : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/XORI");
-        m.value="/CC;component/Images/bi_xor.png";
+        m.value="pack://application:,,/CC;component/Images/bi_xor.png";
         m.Get<string>("_description").value="c3Bitwise XOR";
         m.Get<string>("A").value="Ai";
         m.Get<string>("B").value="Bi";
@@ -227,7 +227,7 @@ namespace X13.PLC {
     private class Shl : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/SHL");
-        m.value="/CC;component/Images/bi_shl.png";
+        m.value="pack://application:,,/CC;component/Images/bi_shl.png";
         m.Get<string>("_description").value="c4Bitwise left shift";
         m.Get<string>("A").value="Ai";
         m.Get<string>("B").value="Bi";
@@ -255,7 +255,7 @@ namespace X13.PLC {
     private class Shr : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/SHR");
-        m.value="/CC;component/Images/bi_shr.png";
+        m.value="pack://application:,,/CC;component/Images/bi_shr.png";
         m.Get<string>("_description").value="c5Bitwise right shift";
         m.Get<string>("A").value="Ai";
         m.Get<string>("B").value="Bi";
@@ -285,7 +285,7 @@ namespace X13.PLC {
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Counter");
-        m.value="/CC;component/Images/bi_counter.png";
+        m.value="pack://application:,,/CC;component/Images/bi_counter.png";
         m.Get<string>("_description").value="d Counter";
         m.Get<string>("+1").value="Az";
         m.Get<string>("Set").value="Bz";
@@ -329,7 +329,7 @@ namespace X13.PLC {
 
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/comp_eq");
-        t1.value="/CC;component/Images/ar_eq.png";
+        t1.value="pack://application:,,/CC;component/Images/ar_eq.png";
         t1.Get<string>("A").value="Ag";
         t1.Get<string>("B").value="Bb";
         t1.Get<string>("Q").value="az";
@@ -363,7 +363,7 @@ namespace X13.PLC {
 
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/comp_gr");
-        t1.value="/CC;component/Images/ar_comp_gr.png";
+        t1.value="pack://application:,,/CC;component/Images/ar_comp_gr.png";
         t1.Get<string>("A").value="Ag";
         t1.Get<string>("B").value="Bb";
         t1.Get<string>("Q").value="az";
@@ -397,7 +397,7 @@ namespace X13.PLC {
 
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/comp_le");
-        t1.value="/CC;component/Images/ar_comp_le.png";
+        t1.value="pack://application:,,/CC;component/Images/ar_comp_le.png";
         t1.Get<string>("A").value="Ag";
         t1.Get<string>("B").value="Bb";
         t1.Get<string>("Q").value="az";
@@ -433,7 +433,7 @@ namespace X13.PLC {
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/MathExpr");
-        m.value="/CC;component/Images/ty_func.png";
+        m.value="pack://application:,,/CC;component/Images/ty_func.png";
         m.Get<string>("_description").value="f1Math expression";
         m.Get<string>("A").value="Ag";
         m.Get<string>("B").value="Bg";
@@ -588,7 +588,7 @@ namespace X13.PLC {
     private class Switch : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Switch");
-        m.value="/CC;component/Images/ar_switch.png";
+        m.value="pack://application:,,/CC;component/Images/ar_switch.png";
         m.Get<string>("_description").value="f2Multiplexer";
         m.Get<string>("Sel").value="Ai";
         m.Get<string>("0").value="Bg";
@@ -633,7 +633,7 @@ namespace X13.PLC {
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/ZBuffer");
-        m.value="/CC;component/Images/ar_zbuffer.png";
+        m.value="pack://application:,,/CC;component/Images/ar_zbuffer.png";
         m.Get<string>("_description").value="f3Buffer with output enable";
         m.Get<string>("In").value="Ag";
         m.Get<string>("Latch").value="Bz";
@@ -678,7 +678,7 @@ namespace X13.PLC {
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Average");
-        m.value="/CC;component/Images/ar_avr.png";
+        m.value="pack://application:,,/CC;component/Images/ar_avr.png";
         m.Get<string>("_description").value="g Average";
         m.Get<string>("In").value="Ag";
         m.Get<string>("Stb").value="Bz";
@@ -713,7 +713,7 @@ namespace X13.PLC {
     private class MathOpSum : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Sum");
-        m.value="/CC;component/Images/ar_sum.png";
+        m.value="pack://application:,,/CC;component/Images/ar_sum.png";
         m.Get<string>("_description").value="g1Addition";
         m.Get<string>("A").value="Ag";
         m.Get<string>("B").value="Bg";
@@ -759,7 +759,7 @@ namespace X13.PLC {
     private class MathOpSub : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Sub");
-        m.value="/CC;component/Images/ar_sub.png";
+        m.value="pack://application:,,/CC;component/Images/ar_sub.png";
         m.Get<string>("_description").value="g2Subtraction";
         m.Get<string>("A").value="Ag";
         m.Get<string>("B").value="Bg";
@@ -795,7 +795,7 @@ namespace X13.PLC {
     private class MathOpMul : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Mul");
-        m.value="/CC;component/Images/ar_mul.png";
+        m.value="pack://application:,,/CC;component/Images/ar_mul.png";
         m.Get<string>("_description").value="g3Multiplication";
         m.Get<string>("A").value="Ag";
         m.Get<string>("B").value="Bg";
@@ -831,7 +831,7 @@ namespace X13.PLC {
     private class MathOpDiv : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Div");
-        m.value="/CC;component/Images/ar_div.png";
+        m.value="pack://application:,,/CC;component/Images/ar_div.png";
         m.Get<string>("_description").value="g4Division";
         m.Get<string>("A").value="Ag";
         m.Get<string>("B").value="Bg";
@@ -869,7 +869,7 @@ namespace X13.PLC {
     private class MathOpMod : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Remainder");
-        m.value="/CC;component/Images/ar_mod.png";
+        m.value="pack://application:,,/CC;component/Images/ar_mod.png";
         m.Get<string>("_description").value="g5Modulo";
         m.Get<string>("A").value="Ag";
         m.Get<string>("B").value="Bg";
@@ -911,7 +911,7 @@ namespace X13.PLC {
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/BreakerO");
-        m.value="/CC;component/Images/ar_breaker.png";
+        m.value="pack://application:,,/CC;component/Images/ar_breaker.png";
         m.Get<string>("_description").value="o Switch";
         m.Get<string>("In").value="Ao";
         m.Get<string>("OE").value="Bz";
@@ -944,7 +944,7 @@ namespace X13.PLC {
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/StrFormat");
-        m.value="/CC;component/Images/st_fmt.png";
+        m.value="pack://application:,,/CC;component/Images/st_fmt.png";
         m.Get<string>("_description").value="s string.Format";
         m.Get<string>("0").value="Ao";
         m.Get<string>("1").value="Bo";
@@ -998,7 +998,7 @@ namespace X13.PLC {
 
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/Pulse");
-        t1.value="/CC;component/Images/bi_impulse.png";
+        t1.value="pack://application:,,/CC;component/Images/bi_impulse.png";
         t1.Get<string>("Stb").value="Az";
         t1.Get<string>("Reset").value="Bz";
         t1.Get<string>("Q").value="az";
@@ -1081,7 +1081,7 @@ namespace X13.PLC {
 
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/SqPulse");
-        t1.value="/CC;component/Images/bi_oscillator.png";
+        t1.value="pack://application:,,/CC;component/Images/bi_oscillator.png";
         t1.Get<string>("En").value="Az";
         t1.Get<string>("Q").value="az";
         t1.Get<string>("!Q").value="bz";
@@ -1153,7 +1153,7 @@ namespace X13.PLC {
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Cosm");
-        m.value="/CC;component/Images/fu_cosm.png";
+        m.value="pack://application:,,/CC;component/Images/fu_cosm.png";
         m.Get<string>("_description").value="v Export to cosm.com";
         m.Get<string>("Push").value="Az";
         m.Get<string>("A").value="Bg";
@@ -1239,7 +1239,7 @@ namespace X13.PLC {
     private class Pile : IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Pile");
-        m.value="/CC;component/Images/ar_pile.png";
+        m.value="pack://application:,,/CC;component/Images/ar_pile.png";
         m.Get<string>("_description").value="v Export to .CSV";
         m.Get<string>("Push").value="Az";
         m.Get<string>("A").value="Bg";
@@ -1333,7 +1333,7 @@ namespace X13.PLC {
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Execute");
-        m.value="/CC;component/Images/fu_exec.png";
+        m.value="pack://application:,,/CC;component/Images/fu_exec.png";
         m.Get<string>("_description").value="v Execute process";
         m.Get<string>("process").value="As";
         m.Get<string>("arguments").value="Bs";
