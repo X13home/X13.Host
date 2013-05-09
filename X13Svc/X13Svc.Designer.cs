@@ -37,7 +37,7 @@ namespace X13.Svc {
       // X13Svc
       // 
       this.AutoLog = false;
-      this.ServiceName = "X13Engine";
+      this.ServiceName = "X13.Svc";
 
     }
 

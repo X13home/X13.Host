@@ -48,14 +48,14 @@ namespace X13.Svc {
             });
 
             // Configure service recovery property.
-            ServiceRecoveryProperty.ChangeRecoveryProperty("X13Engine", FailureActions, 60 * 60 * 24, "", false, "");
+            ServiceRecoveryProperty.ChangeRecoveryProperty("X13.Svc", FailureActions, 60 * 60 * 24, "", false, "");
             Log.Info("The service recovery property is modified successfully");
           }
           catch(Exception ex) {
             Log.Error(ex.Message);
           }
           try {
-            ServiceController svc =  new ServiceController("X13Engine");
+            ServiceController svc =  new ServiceController("X13.Svc");
             svc.Start();
             svc.WaitForStatus(ServiceControllerStatus.Running, new TimeSpan(0, 0, 3));
           }

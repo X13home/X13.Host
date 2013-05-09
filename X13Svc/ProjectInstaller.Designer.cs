@@ -45,8 +45,8 @@ namespace X13.Svc {
       // serviceInstaller1
       // 
       this.serviceInstaller1.Description = "Provides network communications and Logram processing";
-      this.serviceInstaller1.DisplayName = "X13.Home Engine";
-      this.serviceInstaller1.ServiceName = "X13Engine";
+      this.serviceInstaller1.DisplayName = "X13.Home Service";
+      this.serviceInstaller1.ServiceName = "X13.Svc";
       this.serviceInstaller1.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
       // 
       // ProjectInstaller

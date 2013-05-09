@@ -335,19 +335,26 @@ namespace X13 {
       var id=Topic.root.Get<string>("/etc/system/id");
       if(string.IsNullOrWhiteSpace(id.value)) {
         id.saved=true;
-        id.value=System.Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        id.value=Guid.NewGuid().ToString();
       }
       try {
-        var request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create("http://s08.flagcounter.com/mini/Uatv/bg_676D8F/txt_FFFFFF/border_676D8F/flags_0/");
+        string url=string.Format("v=1&tid=UA-40770280-3&cid={0}&t=appview&an={1}&av={2}&cd={0}+{3}", 
+          id.value, 
+          Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location),
+          Assembly.GetExecutingAssembly().GetName().Version.ToString(4), 
+          Topic.root.Get<string>("/etc/PLC/default").value);
+        var request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create("http://www.google-analytics.com/collect");
 
         // request line
-        request.Method = "GET";
-
+        request.Method = "POST";
         // request headers
-        request.Referer=string.Format("mqtt://x13home.org/clients/{0}?ver={1}&def={2}", id.value, Topic.root.Get<string>("/etc/repository/version").value, Topic.root.Get<string>("/etc/PLC/default").value);
+        request.Referer=System.Net.Dns.GetHostName();
         request.UserAgent="Mozilla/5.0 (compatible; MSIE 9.0; "+Environment.OSVersion.ToString()+")";
-        request.ContentLength = 0;
-
+        byte[] buf=Encoding.UTF8.GetBytes(url);
+        request.ContentLength = buf.Length;
+        var os = request.GetRequestStream();
+        os.Write(buf, 0, buf.Length); //Push it out there
+        os.Close();
         request.Timeout = 1500;
         // send request and receive response
         using(var response =(System.Net.HttpWebResponse)request.GetResponse()) {
