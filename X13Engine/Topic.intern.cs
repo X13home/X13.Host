@@ -350,7 +350,7 @@ namespace X13 {
         } else if(valueType.IsEnum) {
           var jo=JObject.Parse(json);
           this.SetValue(JsonConvert.DeserializeObject(jo["v"].ToString(), valueType), param);
-        } else if(valueType==typeof(DateTime)) {
+        } else if(valueType==typeof(DateTime) || json.StartsWith("new Date(")) {
           var dtUtc=JsonConvert.DeserializeObject<DateTime>(json, _jcs);
           this.SetValue(dtUtc.ToLocalTime(), param);
           //} else if(valueType==typeof(object)) {
@@ -372,7 +372,7 @@ namespace X13 {
               }
             }
           } else {
-            this.SetValue(JsonConvert.DeserializeObject(json, valueType, _jcs), param);
+            this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
           }
         }
       }
