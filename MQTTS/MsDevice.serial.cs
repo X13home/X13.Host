@@ -307,7 +307,9 @@ namespace X13.Periphery {
           this.Send(new MsGwInfo(_gwAddr) { Addr=new byte[] { 0 } });
         } else if(msgTyp==MsMessageType.CONNECT) {
           var msg=new MsConnect(buf) { Addr=addr };
-          if(addr[0]==0xFF) {
+          if(addr[0]==0) {
+            Log.Warning("Try connect with broadcast address: {1} via {0}", _port.PortName, msg.ClientId);
+          }else if(addr[0]==0xFF) {
             PrintPacket(null, msg, buf);
             Send(new MsConnack(MsReturnCode.Accepted) { Addr=msg.Addr });
             byte[] nAddr=new byte[1];

@@ -33,6 +33,10 @@ namespace X13.CC {
     /// <summary>feel DrawingVisual</summary>
     /// <param name="chLevel">0 - locale, 1 - local & child, 2 - drag, 3- set position</param>
     public abstract void Render(int chLevel);
+    public override string ToString() {
+      return GetModel()!=null?GetModel().name:"??";
+    }
+
   }
 
   internal class uiPin : uiItem {
@@ -214,9 +218,14 @@ namespace X13.CC {
       }
 
       using(DrawingContext dc=this.RenderOpen()) {
+        int gs=LogramView.CellSize;
         Pen pn=new Pen(A.brush, 2.0);
         for(int i=0; i<_track.Count-1; i++) {
-          dc.DrawLine(_selected?Schema.SelectionPen:pn, _track[i], _track[i+1]);
+          if(_track[i].X==_track[i+1].X && _track[i].Y==_track[i+1].Y) {
+            dc.DrawEllipse(A.brush, null, _track[i], 3, 3);
+          } else {
+            dc.DrawLine(_selected?Schema.SelectionPen:pn, _track[i], _track[i+1]);
+          }
         }
       }
     }
@@ -282,7 +291,7 @@ namespace X13.CC {
           PathFinderNode newNode;
           newNode.X = parentNode.X + direction[i, 0];
           newNode.Y = parentNode.Y + direction[i, 1];
-          int newG=this.GetWeigt(newNode.X, newNode.Y, mVert!=0);
+          int newG=this.GetWeigt(newNode.X, newNode.Y, direction[i, 0]==0);
           if(newG>100)
             continue;
           newG+= parentNode.G;
@@ -294,7 +303,7 @@ namespace X13.CC {
           }
           // Дополнительная стоимиость поворотов
           if(((newNode.X - parentNode.X)!=0 && mVert!=0) || ((newNode.Y - parentNode.Y)!=0 && mVert==0)) {
-            newG += 3; // 20;
+            newG += 4; // 20;
           }
 
           int foundInOpenIndex = -1;
@@ -326,28 +335,36 @@ namespace X13.CC {
 
           mOpen.Push(newNode);
         }
-
         mClose.Add(parentNode);
-
       }
 
       if(found) {
+        uiItem pIt=null, cIt;
         track.Clear();
         PathFinderNode fNode = mClose[mClose.Count - 1];
         track.Add(new Point(gs+finishX*gs, gs+finishY*gs));
         for(int i=mClose.Count - 1; i>=0; i--) {
           if(fNode.PX == mClose[i].X && fNode.PY == mClose[i].Y || i == mClose.Count - 1) {
+            fNode = mClose[i];
             bool vert=(fNode.PY-fNode.Y)!=0;
-            if(_owner.MapGet(vert, fNode.PX, fNode.PY)==null) {
+            if((_owner.MapGet(vert, fNode.PX, fNode.PY))==null) {
               _owner.MapSet(vert, fNode.PX, fNode.PY, this);
             }
-            if(_owner.MapGet(vert, fNode.X, fNode.Y)==null) {
+            if((cIt=_owner.MapGet(vert, fNode.X, fNode.Y))==null) {
               _owner.MapSet(vert, fNode.X, fNode.Y, this);
+            } else {
+              if(cIt==this || cIt==this.A || cIt==this.B) {
+                cIt=null;
+              }
             }
-            fNode = mClose[i];
-            if(track[0].X!=gs+fNode.PX*gs && track[0].Y!=gs+fNode.PY*gs) {
+            if(i>0 && i<mClose.Count-1 && cIt!=pIt) {
+              track.Insert(0, new Point(gs+fNode.X*gs, gs+fNode.Y*gs));
+              track.Insert(0, new Point(gs+fNode.X*gs, gs+fNode.Y*gs));
+              //Log.Info("{0}: {1}; {2}, {3} - {4}; {5}, {6}", this.ToString(), pIt, fNode.X, fNode.Y, cIt, fNode.PX, fNode.PY);
+            } else if(track[0].X!=gs+fNode.PX*gs && track[0].Y!=gs+fNode.PY*gs) {
               track.Insert(0, new Point(gs+fNode.X*gs, gs+fNode.Y*gs));
             }
+            pIt=cIt;
           }
         }
         if(track[0].X!=startX*gs+gs || track[0].Y!=startY*gs+gs) {
@@ -375,10 +392,11 @@ namespace X13.CC {
       }
       var it=_owner.MapGet(vert, X, Y);
       if(it is SchemaElement) {
-        it=_owner.MapGet(!vert, X, Y);
+        vert=!vert;
+        it=_owner.MapGet(vert, X, Y);
       }
       if(it==null) {
-        return 2;
+        return 3;
       } else if(it is uiPin) {
         if(it==this.A || it==this.B) {
           return 1;
@@ -388,12 +406,14 @@ namespace X13.CC {
         var w=it as uiWire;
         if(w.A==this.A || w.A==this.B || w.B==this.A || w.B==this.B) {
           return 1;
+        } else if((w=_owner.MapGet(!vert, X, Y) as uiWire)!=null && (w.A==this.A || w.A==this.B || w.B==this.A || w.B==this.B)) {
+          return 1;
         }
         return 101;
       } else if(it is SchemaElement) {
         return 101;
       }
-      return 3;
+      return 5;
     }
 
     private class ComparePFNode : IComparer<PathFinderNode> {

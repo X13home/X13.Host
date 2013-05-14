@@ -158,11 +158,12 @@ namespace X13.CC {
       lock(_map) {
         foreach(var i in _map.Where(z => z.Value==val).ToArray()) {
           _map.Remove(i.Key);
+          //Log.Debug("MapRemove({0}, {1}, {2}) = {3}", (i.Key&1)!=0?"V":"H", (i.Key>>1) & 0xFFFF, (i.Key>>17) & 0x7FFF, i.Value);
         }
       }
     }
     public void MapSet(bool vert, int x, int y, uiItem val) {
-      uint idx=(uint)(((y&0x7FFF)<<16) | ((x&0xFFFF)<<1) | (vert?1:0));
+      uint idx=(uint)(((y&0x7FFF)<<17) | ((x&0xFFFF)<<1) | (vert?1:0));
       lock(_map) {
         if(val==null) {
           _map.Remove(idx);
@@ -170,13 +171,16 @@ namespace X13.CC {
           _map[idx]=val;
         }
       }
+      //RenderBackground();
+      //Log.Debug("MapSet({0}, {1}, {2}) = {3}", vert?"V":"H", x, y, val);
     }
     public uiItem MapGet(bool vert, int x, int y) {
-      uint idx=(uint)(((y&0x7FFF)<<16) | ((x&0xFFFF)<<1) | (vert?1:0));
+      uint idx=(uint)(((y&0x7FFF)<<17) | ((x&0xFFFF)<<1) | (vert?1:0));
       uiItem ret;
       lock(_map) {
-        return _map.TryGetValue(idx, out ret)?ret:null;
+        _map.TryGetValue(idx, out ret);
       }
+      return ret;
     }
 
     public void AddVisual(Visual item) {
@@ -212,6 +216,17 @@ namespace X13.CC {
         for(double y = gs; y < this.Height; y += gs) {
           dc.DrawLine(pen, new Point(0, y), new Point(this.Width, y));
         }
+        //foreach(var kv in _map) {
+        //  int x=gs/2+gs*((int)(kv.Key>>1) & 0xFFFF);
+        //  int y=gs/2+gs*((int)(kv.Key>>17) & 0x7FFF);
+        //  if((kv.Key&1)!=0) {
+        //    FormattedText txt=new FormattedText(kv.Value.ToString(), System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LogramView.FtFont, gs*0.3, Brushes.Violet);
+        //    dc.DrawText(txt, new Point(x, y));
+        //  } else {
+        //    FormattedText txt=new FormattedText(kv.Value.ToString(), System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LogramView.FtFont, gs*0.3, Brushes.DarkMagenta);
+        //    dc.DrawText(txt, new Point(x, y+gs/2));
+        //  }
+        //}
       }
     }
     private void ModelChanged(Topic sender, TopicChanged param) {
