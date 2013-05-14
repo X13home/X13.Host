@@ -289,20 +289,20 @@ namespace X13.CC {
         //Lets calculate each successors
         for(int i=0; i<4; i++) {
           PathFinderNode newNode;
+          newNode.PX = parentNode.X;
+          newNode.PY  = parentNode.Y;
           newNode.X = parentNode.X + direction[i, 0];
           newNode.Y = parentNode.Y + direction[i, 1];
           int newG=this.GetWeigt(newNode.X, newNode.Y, direction[i, 0]==0);
-          if(newG>100)
+          if(newG>100 || newG==0)
             continue;
           newG+= parentNode.G;
 
-
-          if(newG == parentNode.G) {
-            //Unbrekeable
-            continue;
-          }
           // Дополнительная стоимиость поворотов
-          if(((newNode.X - parentNode.X)!=0 && mVert!=0) || ((newNode.Y - parentNode.Y)!=0 && mVert==0)) {
+          if( ((newNode.Y - parentNode.Y)!=0) != (mVert!=0)) {
+            if(this.GetWeigt(parentNode.X, parentNode.Y, direction[i, 0]==0)>100) {
+              continue;   
+            }
             newG += 4; // 20;
           }
 
@@ -326,8 +326,6 @@ namespace X13.CC {
           if(foundInCloseIndex != -1 && mClose[foundInCloseIndex].G <= newG)
             continue;
 
-          newNode.PX      = parentNode.X;
-          newNode.PY      = parentNode.Y;
           newNode.G       = newG;
 
           newNode.H       = 2+Math.Sign(Math.Abs(newNode.X - finishX) + Math.Abs(newNode.Y - finishY)-Math.Abs(newNode.PX - finishX) - Math.Abs(newNode.PY - finishY));
