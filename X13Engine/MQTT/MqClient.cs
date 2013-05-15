@@ -76,6 +76,7 @@ namespace X13.MQTT {
       _verbose=_settings.Get<bool>("verbose");
       Topic.root.Subscribe("+", Dummy);
       Topic.root.Subscribe("/etc/+", Dummy);
+      Topic.root.Subscribe("/etc/system/#", Dummy);
       Topic.root.Subscribe("/etc/repository/#", Dummy);
       Topic.root.Subscribe("/etc/declarers/+", Dummy);
       Topic.root.Subscribe("/etc/declarers/type/#", Dummy);

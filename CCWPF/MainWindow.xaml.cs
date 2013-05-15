@@ -236,7 +236,7 @@ namespace X13.CC {
           dockManager.Documents[0].Activate();
         }
         ThreadPool.QueueUserWorkItem(o => {
-          Engine.CountStart();
+          Engine.SendStat(2);
         });
 
       }

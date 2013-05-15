@@ -71,7 +71,7 @@ namespace X13 {
       var myId=Topic.root.Get<string>("/local/cfg/id");
       if(string.IsNullOrWhiteSpace(myId.value)) {
         myId.saved=true;
-        myId.value=string.Format("{0}_{1:X4}", Environment.MachineName, DateTime.Now.Ticks&0xFFFF);
+        myId.value=string.Format("{0}", Environment.MachineName);
       }
 
       #region Load plugins
@@ -109,7 +109,7 @@ namespace X13 {
       }
 
       string dbVersion=Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
-      var dbVer=Topic.root.Get<string>("/etc/repository/version");
+      var dbVer=Topic.root.Get<string>("/etc/system/version");
       if(dbVer.value==null || string.Compare(dbVer.value, dbVersion)<0) {
         dbVer.saved=true;
         dbVer.value=dbVersion;
@@ -151,7 +151,7 @@ namespace X13 {
       Topic.ready.Reset();
       Topic.paused=false;
       ThreadPool.QueueUserWorkItem(o => {
-        CountStart();
+        SendStat(1);
       });
 
       Topic.ready.WaitOne(2500);
@@ -183,7 +183,7 @@ namespace X13 {
         //i.Metadata.name
         i.Value.Stop();
       }
-
+      SendStat(0);
       _log.Dispose();
       Thread.Sleep(300);
       Topic.Export("../data/engine.xst", Topic.root.Get("/local/cfg"));
@@ -288,6 +288,9 @@ namespace X13 {
                 _now.Get<long>("year").SetValue(nowDT.Year, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
               }
             }
+            ThreadPool.QueueUserWorkItem(o1 => {
+              SendStat(2);
+            });
           }
         }
       }
@@ -327,22 +330,37 @@ namespace X13 {
       _log.Enqueue(new LogEntry() { ll=ll, dt=dt, msg=msg });
     }
 
-    public static void CountStart() {
-      var upd=Topic.root.Get<bool>("/etc/system/counted");
-      if(upd.value) {
-        return;
-      }
+    public static void SendStat(int cmd) {
       var id=Topic.root.Get<string>("/etc/system/id");
-      if(string.IsNullOrWhiteSpace(id.value)) {
+      if(string.IsNullOrWhiteSpace(id.value) || id.value.Length>37) {
+        string ids=string.Empty;
         id.saved=true;
-        id.value=Guid.NewGuid().ToString();
+        foreach(System.Net.NetworkInformation.NetworkInterface adapter in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()) {
+          System.Net.NetworkInformation.PhysicalAddress address = adapter.GetPhysicalAddress();
+          ids=BitConverter.ToString(address.GetAddressBytes());
+          if(!string.IsNullOrWhiteSpace(ids)) {
+            break;
+          }
+        }
+        if(string.IsNullOrWhiteSpace(ids)) {
+          ids=Guid.NewGuid().ToString();
+        }
+        System.Security.Cryptography.MD5 md5 = System.Security.Cryptography.MD5.Create();
+        byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(ids));
+        id.value=(new Guid(hash)).ToString();
       }
+
       try {
-        string url=string.Format("v=1&tid=UA-40770280-3&cid={0}&t=appview&an={1}&av={2}&cd={0}+{3}", 
-          id.value, 
+        string url=string.Format("v=1&tid=UA-40770280-3&cid={0}&an={1}&av={2}&t=appview&cd={0}+{3}",
+          id.value,
           Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location),
-          Assembly.GetExecutingAssembly().GetName().Version.ToString(4), 
-          Topic.root.Get<string>("/etc/PLC/default").value);
+          Assembly.GetExecutingAssembly().GetName().Version.ToString(4),
+          Environment.MachineName
+          );
+        if((cmd==0 || cmd==1) && Topic.root.Get<string>("/local/cfg/id").value==Topic.root.Get<string>("/etc/PLC/default").value) {
+          url=string.Format("{0}&sc={1}", url, cmd==1?"start":"end");
+        }
+
         var request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create("http://www.google-analytics.com/collect");
 
         // request line
@@ -358,16 +376,14 @@ namespace X13 {
         request.Timeout = 1500;
         // send request and receive response
         using(var response =(System.Net.HttpWebResponse)request.GetResponse()) {
-          if(response.StatusCode==System.Net.HttpStatusCode.OK) {
-            upd.value=true;
-          } else {
-            Log.Debug("Engine.CountStart - {0}", response.StatusCode);
+          if(response.StatusCode!=System.Net.HttpStatusCode.OK) {
+            Log.Debug("Engine.SendStat - {0}", response.StatusCode);
           }
         }
         request=null;
       }
       catch(Exception ex) {
-        Log.Debug("Engine.CountStart - {0}", ex.Message);
+        Log.Debug("Engine.SendStat - {0}", ex.Message);
       }
     }
     private struct LogEntry {

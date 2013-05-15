@@ -1201,7 +1201,7 @@ namespace X13.PLC {
         try {
           byte[] buffer = Encoding.UTF8.GetBytes(sample);
 
-          var request = (HttpWebRequest)WebRequest.Create("http://api.cosm.com/v2/feeds/" + feedId + ".csv");
+          var request = (HttpWebRequest)WebRequest.Create("https://api.xively.com/v2/feeds/" + feedId + ".csv");
 
           // request line
           request.Method = "PUT";

@@ -48,12 +48,12 @@ namespace X13.CC {
       _brokerUrl.saved=true;
       userName.saved=true;
       if(EngineEmbedded.IsChecked.Value) {
-        _brokerUrl.value="#local";
         userName.value="local";
+        _brokerUrl.value="#local";
       } else if(EngineInstall.IsChecked.Value) {
         InstallService();
-        _brokerUrl.value="localhost";
         userName.value="local";
+        _brokerUrl.value="localhost";
       } else {
         _brokerUrl.value=RemoteUrl.Text;
       }
