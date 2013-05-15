@@ -317,14 +317,15 @@ namespace X13.CC {
           } else {
             BrokerState=_cl.BrokerName;
           }
-          //_cl.Subscribe("/#", QoS.AtMostOnce);
           Log.Info("Connected to {0}", _cl.BrokerName);
           _clState=2;
+
           if(!_docLoaded) {
             _docLoaded=true;
             System.Threading.Thread.Sleep(1500);
             dockManager_Loaded(null, null);
           }
+
         } else{
           BrokerState="Connecting";
           _clState=1;

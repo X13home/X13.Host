@@ -103,8 +103,6 @@ namespace X13 {
         tc.Sender.PublishSubs(tc, tc.Subscription.func);
         if(tc.Task.MoveNext()) {
           _publishQueue.Enqueue(new TopicChanged(tc));
-        } else if(tc.Subscription.func.Target!=null && tc.Subscription.func.Target.GetType()==typeof(MQTT.MqBroker)) {
-          _mq.PublishSubs(new TopicChanged(TopicChanged.ChangeArt.Value) { Source=_mq, Sender=_mq, Subscription=tc.Subscription}, tc.Subscription.func);
         }
       } else {
         while(tc.Sender!=null) {

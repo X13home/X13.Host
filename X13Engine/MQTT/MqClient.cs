@@ -44,6 +44,7 @@ namespace X13.MQTT {
     private MqConnect ConnInfo;
     private List<Topic.Subscription> _subs;
     private DVar<bool> _verbose;
+    private AutoResetEvent _eLoaded;
 
     public ushort KeepAlive {
       get { return (ushort)(_keepAliveMS>0?(_keepAliveMS+50)/1000:0); }
@@ -67,20 +68,22 @@ namespace X13.MQTT {
       _subs=new List<Topic.Subscription>();
       _now=Topic.root.Get<DateTime>("/var/now");
       _nowOffset=_settings.Get<long>("TimeOffset");
+      _eLoaded=new AutoResetEvent(false);
     }
     public void Start() {
       if(!Reconnect()) {
         _settings.Get<bool>("enable").value=false;
+        return;
       }
       Topic.SubscriptionsChg+=Topic_SubscriptionsChg;
       _verbose=_settings.Get<bool>("verbose");
-      Topic.root.Subscribe("+", Dummy);
-      Topic.root.Subscribe("/etc/+", Dummy);
-      Topic.root.Subscribe("/etc/system/#", Dummy);
-      Topic.root.Subscribe("/etc/repository/#", Dummy);
-      Topic.root.Subscribe("/etc/declarers/+", Dummy);
-      Topic.root.Subscribe("/etc/declarers/type/#", Dummy);
-      Topic.root.Subscribe("/var/now", Dummy);
+      Topic.root.Subscribe("/etc/system/#", PLC.PLCPlugin.L_dummy);
+      Topic.root.Subscribe("/etc/repository/#", PLC.PLCPlugin.L_dummy);
+      Topic.root.Subscribe("/etc/declarers/+", PLC.PLCPlugin.L_dummy);
+      Topic.root.Subscribe("/etc/declarers/type/#", PLC.PLCPlugin.L_dummy);
+      Topic.root.Subscribe("/var/now", PLC.PLCPlugin.L_dummy);
+      _eLoaded.Reset();
+      _eLoaded.WaitOne(7000);
     }
 
     private bool Reconnect(bool slow=false) {
@@ -119,7 +122,6 @@ namespace X13.MQTT {
         addr=connectionstring;
         port=1883;
       }
-      Topic.paused=true;
       TcpClient _tcp=new TcpClient();
       _tcp.SendTimeout=900;
       _tcp.ReceiveTimeout=0;
@@ -145,16 +147,17 @@ namespace X13.MQTT {
           Unsubscribe(s.path);
         }
       }
-      var sAll=Topic.root.subscriptions.ToArray();
-      foreach(var sb in sAll) {
-        if(!sb.path.StartsWith("/local") && !_subs.Exists(z => z==sb)) {
-          _subs.Add(sb);
-          Subscribe(sb.path, QoS.AtMostOnce);
-        }
+      var sAll=Topic.root.subscriptions.Where(z=>!z.path.StartsWith("/local")).ToArray();
+      if(_verbose.value) {
+        Log.Debug("SUBS={0}", string.Join("\n", sAll.Select(z => z.path)));
       }
-      foreach(var sb in _subs.ToArray().Where(z => !sAll.Any(z1 => z1.path==z.path))) {
+      foreach(var sb in _subs.Except(sAll).ToArray()) {
         _subs.Remove(sb);
         Unsubscribe(sb.path);
+      }
+      foreach(var sb in sAll.Except(_subs).ToArray()) {
+        _subs.Add(sb);
+        Subscribe(sb.path, QoS.AtMostOnce);
       }
     }
 
@@ -191,12 +194,10 @@ namespace X13.MQTT {
         this.Send(ConnInfo);
         _owner.Subscribe("/#", OwnerChanged);
         _tOut.Change(3000, _keepAliveMS);       // more often than not
-        _tLoaded.Change(6500, 0);
       }
       catch(Exception ex) {
         if(_tLoaded!=null) {
           _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
-          Topic.paused=false;
         }
         Log.Error("Connect to {0}:{1} failed, {2}", addr, port, ex.Message);
         if(StatusChg!=null) {
@@ -248,7 +249,7 @@ namespace X13.MQTT {
     }
     private void LoadedCB(object o) {
       _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
-      Topic.paused=false;
+      _eLoaded.Set();
     }
     private void Received(MqMessage msg) {
       if(_verbose.value) {
@@ -310,11 +311,8 @@ namespace X13.MQTT {
       }
     }
     private void ProccessPublishMsg(MqPublish pm) {
-      if(pm.Path.Equals(_mq.path)) {
-        LoadedCB(null);
-        //Log.Info("MQTT Loaded");
-        return;
-      }
+      _tLoaded.Change(100, 0);
+
       Topic cur;
       if(!string.IsNullOrEmpty(pm.Payload)) {         // Publish
         if(!Topic.root.Exist(pm.Path, out cur) || cur.valueType==null) {

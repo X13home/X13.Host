@@ -303,20 +303,20 @@ l1: { }
 
       IEnumerator<Subscription> IEnumerable<Subscription>.GetEnumerator() {
         if(_topic._subs!=null) {
-          foreach(var s in _topic._subs) {
+          foreach(var s in _topic._subs.ToArray()) {
             if(s.func.Method.DeclaringType!=typeof(MQTT.MqClient) && s.lvls.Length==1 && s.lvls[0]=="#") {
               yield return s;
               yield break;
             }
           }
-          foreach(var s in _topic._subs) {
+          foreach(var s in _topic._subs.ToArray()) {
             if(s.func.Method.DeclaringType!=typeof(MQTT.MqClient)) {
               yield return s;
             }
           }
         }
         if(_topic._childNodes!=null) {
-          foreach(var t in _topic._childNodes) {
+          foreach(var t in _topic._childNodes.ToArray()) {
             foreach(var s in new SubscriptionEnumerator(t.Value)) {
               yield return s;
             }

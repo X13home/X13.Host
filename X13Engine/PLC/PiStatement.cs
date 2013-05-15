@@ -75,7 +75,7 @@ namespace X13.PLC {
       }
     }
 
-    private void L_dummy(Topic sender, TopicChanged arg) {
+    public static void L_dummy(Topic sender, TopicChanged arg) {
       return;
     }
     public void Stop() {

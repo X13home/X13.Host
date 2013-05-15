@@ -132,6 +132,9 @@ namespace X13 {
           }
         }
       }
+      Topic.ready.Reset();
+      Topic.paused=false;
+
       _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 5050-DateTime.Now.Millisecond, 1000);
       {
         _now=Topic.root.Get<DateTime>("/var/now");
@@ -147,14 +150,7 @@ namespace X13 {
         _now.Get<long>("year").value=nowDT.Year;
         //_1SecTimer.Change(Timeout.Infinite, Timeout.Infinite);  // !!!!!!!!!!!!!!!!!!!!!!
       }
-
-      Topic.ready.Reset();
-      Topic.paused=false;
-      ThreadPool.QueueUserWorkItem(o => {
-        SendStat(1);
-      });
-
-      Topic.ready.WaitOne(2500);
+      Topic.ready.WaitOne(3500);
 
       foreach(var i in _modules.Where(z => z.Metadata.priority>=16).OrderBy(z => z.Metadata.priority)) {
         if(!string.IsNullOrWhiteSpace(i.Metadata.name)) {
@@ -175,6 +171,9 @@ namespace X13 {
         i.Value.Start();
         Log.Debug("plugin {0} loaded", i.Metadata.name??i.Value.GetType().FullName);
       }
+      ThreadPool.QueueUserWorkItem(o => {
+        SendStat(1);
+      });
     }
 
     public void Shutdown() {
@@ -332,7 +331,7 @@ namespace X13 {
 
     public static void SendStat(int cmd) {
       var id=Topic.root.Get<string>("/etc/system/id");
-      if(string.IsNullOrWhiteSpace(id.value) || id.value.Length>37) {
+      if(string.IsNullOrWhiteSpace(id.value)) {
         string ids=string.Empty;
         id.saved=true;
         foreach(System.Net.NetworkInformation.NetworkInterface adapter in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()) {
@@ -354,8 +353,8 @@ namespace X13 {
         string url=string.Format("v=1&tid=UA-40770280-3&cid={0}&an={1}&av={2}&t=appview&cd={0}+{3}",
           id.value,
           Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location),
-          Assembly.GetExecutingAssembly().GetName().Version.ToString(4),
-          Environment.MachineName
+          Assembly.GetExecutingAssembly().GetName().Version.ToString(3),
+          Topic.root.Get<string>("/local/cfg/id").value
           );
         if((cmd==0 || cmd==1) && Topic.root.Get<string>("/local/cfg/id").value==Topic.root.Get<string>("/etc/PLC/default").value) {
           url=string.Format("{0}&sc={1}", url, cmd==1?"start":"end");
