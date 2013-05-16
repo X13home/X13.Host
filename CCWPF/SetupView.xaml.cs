@@ -51,9 +51,11 @@ namespace X13.CC {
         userName.value="local";
         _brokerUrl.value="#local";
       } else if(EngineInstall.IsChecked.Value) {
+        biInstall.IsBusy=true;
         InstallService();
         userName.value="local";
         _brokerUrl.value="localhost";
+        biInstall.IsBusy=false;
       } else {
         _brokerUrl.value=RemoteUrl.Text;
       }
@@ -61,11 +63,13 @@ namespace X13.CC {
     }
 
     private void InstallService() {
-      ProcessStartInfo pi=new ProcessStartInfo("X13Svc.exe", "/i");
+      var p = new Process();
+      p.StartInfo.FileName = "X13Svc.exe";
+      p.StartInfo.Arguments="/i";
       if(System.Environment.OSVersion.Version.Major >= 6) {
-        pi.Verb = "runas";
+        p.StartInfo.Verb = "runas";
       }
-      Process p=Process.Start(pi);
+      p.Start();
       p.WaitForExit();
     }
   }

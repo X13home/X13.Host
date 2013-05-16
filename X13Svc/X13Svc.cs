@@ -20,6 +20,7 @@ namespace X13.Svc {
     static void Main(string[] args) {
       if(args.Length>0) {
         string name=Assembly.GetExecutingAssembly().Location;
+        Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
 
         if(args[0]=="/i") {
           try {
@@ -55,6 +56,17 @@ namespace X13.Svc {
             Log.Error(ex.Message);
           }
           try {
+            if(WindowsFirewall.IsEnabled()) {
+              WindowsFirewall.AuthorizeProgram("X13Engine", name);
+              Log.Info("Windows Firewall configuriert for {0}", name);
+            } else {
+              Log.Info("Windows Firewall disabled");
+            }
+          }
+          catch(Exception ex) {
+            Log.Error(ex.Message);
+          }
+          try {
             ServiceController svc =  new ServiceController("X13.Svc");
             svc.Start();
             svc.WaitForStatus(ServiceControllerStatus.Running, new TimeSpan(0, 0, 3));
@@ -75,15 +87,19 @@ namespace X13.Svc {
           }
           return;
         }
-      }
-
-      ServiceBase[] ServicesToRun;
-      ServicesToRun = new ServiceBase[] 
+      } else {
+        ServiceBase[] ServicesToRun;
+        ServicesToRun = new ServiceBase[] 
 			{ 
 				new X13Svc() 
 			};
-      ServiceBase.Run(ServicesToRun);
+        ServiceBase.Run(ServicesToRun);
+      }
     }
+    private static void Log_Write(LogLevel ll, DateTime dt, string msg) {
+      Console.WriteLine("{0}", msg);
+    }
+
     private X13.Engine _eng;
     public X13Svc() {
       InitializeComponent();

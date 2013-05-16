@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ad="clr-namespace:AvalonDock;assembly=AvalonDock"
         xmlns:x13="clr-namespace:X13;assembly=X13Engine"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"                    
         Title="Setup" TextOptions.TextRenderingMode="Grayscale"  FontSize="14" Height="220" Width="450">
   <Grid>
     <Grid.RowDefinitions>
@@ -11,22 +12,26 @@
     </Grid.RowDefinitions>
     <TabControl Grid.Row="0" TabStripPlacement="Left">
       <TabItem Header="*">
-      <GroupBox Header="Select Engine">
-      <StackPanel>
-        <RadioButton Name="EngineEmbedded" Content="Embedded Engine" Margin="5,10,5,5" IsChecked="True" />
-        <RadioButton Name="EngineInstall" Content="Install Engine local (need Administator rights)"  Margin="5" />
-        <RadioButton Name="EngineUrl" Margin="5">
-          <RadioButton.Content>
-            <StackPanel>
-              <TextBlock Text="Use existing engine" />
-              <TextBox Name="RemoteUrl" Text="localhost" TextWrapping="Wrap" IsEnabled="{Binding Path=IsChecked, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" GotFocus="RemoteUrl_GotFocus" LostKeyboardFocus="RemoteUrl_LostKeyboardFocus" MaxLines="1" Margin="5" />
-            </StackPanel>
-          </RadioButton.Content>
-        </RadioButton>
-      </StackPanel>
-    </GroupBox>
+        <GroupBox Header="Select Engine">
+          <StackPanel>
+            <RadioButton Name="EngineEmbedded" Content="Embedded Engine" Margin="5,10,5,5" IsChecked="True" />
+            <RadioButton Name="EngineInstall" Content="Install Engine as local service (need Administator rights)"  Margin="5" />
+            <RadioButton Name="EngineUrl" Margin="5">
+              <RadioButton.Content>
+                <StackPanel>
+                  <TextBlock Text="Use existing engine" />
+                  <TextBox Name="RemoteUrl" Text="localhost" TextWrapping="Wrap" IsEnabled="{Binding Path=IsChecked, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" GotFocus="RemoteUrl_GotFocus" LostKeyboardFocus="RemoteUrl_LostKeyboardFocus" MaxLines="1" Margin="5" />
+                </StackPanel>
+              </RadioButton.Content>
+            </RadioButton>
+          </StackPanel>
+        </GroupBox>
       </TabItem>
     </TabControl>
-    <Button Content="Ok" Grid.Row="1" HorizontalAlignment="Right" Margin="5" Padding="20,3,20,5" Click="Button_Click"></Button>
+    <xctk:BusyIndicator Name="biInstall" IsBusy="False" BusyContent="Install Service" Grid.Row="1" >
+      <Grid>
+        <Button Content="Ok" HorizontalAlignment="Right" Margin="5" Padding="20,3,20,5" Click="Button_Click"></Button>
+      </Grid>
+    </xctk:BusyIndicator>
   </Grid>
 </ad:DocumentContent>

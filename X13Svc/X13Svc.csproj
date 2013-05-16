@@ -34,6 +34,9 @@
   <PropertyGroup>
     <StartupObject>X13.Svc.X13Svc</StartupObject>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
@@ -53,6 +56,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceRecoveryProperty.cs" />
     <Compile Include="Win32.cs" />
+    <Compile Include="WindowsFirewall.cs" />
     <Compile Include="X13Svc.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -67,6 +71,22 @@
   <ItemGroup>
     <EmbeddedResource Include="ProjectInstaller.resx" />
     <EmbeddedResource Include="X13Svc.resx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="app.manifest">
+      <SubType>Designer</SubType>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="NetFwTypeLib">
+      <Guid>{58FBCF7C-E7A9-467C-80B3-FC65E8FCCA08}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
