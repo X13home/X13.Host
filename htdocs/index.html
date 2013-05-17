@@ -1,0 +1,35 @@
+<html>
+<head>
+  <title>X13.Home</title>
+</head>
+<body>
+
+  <p>Hello</p>
+  <input id="iMin" type="number" value="99" />
+  <input id="chSel" type="checkbox" />
+  <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
+  <script type="text/javascript" src="pubsub.js"></script>
+  <script type="text/javascript">
+    var timer;
+
+    function reconnect() {
+      clearTimeout(timer);
+      timer = setTimeout(function () { startStreaming(); }, 1000);
+    }
+
+    function dispatchFunc(topic, val) {
+      $("#iMin").attr('value', val);
+    }
+
+    function startStreaming() {
+      pubsub.register({ data: dispatchFunc, error: reconnect });
+      pubsub.subscribe("/var/long", { success: pubsub.read });
+    }
+
+    $(window).load(function () {
+      startStreaming();
+      $("#chSel").click(function () { pubsub.publish("/var/bool", $("#chSel").prop("checked")); });
+    });
+  </script>
+</body>
+</html>

@@ -144,7 +144,7 @@ namespace X13.MQTT {
       _tcp.Stop();
       _tcp=null;
     }
-    internal static bool CheckAuth(string user, string pass) {
+    public static bool CheckAuth(string user, string pass) {
       bool ret=false;
       Topic users=Topic.root.Get("/etc/Broker/security/users");
       Topic pt;
@@ -153,7 +153,7 @@ namespace X13.MQTT {
       }
       return ret;
     }
-    internal static bool CheckAcl(string p, Topic t, TopicAcl topicAcl) {
+    public static bool CheckAcl(string p, Topic t, TopicAcl topicAcl) {
       if(_admGroup.Exist(p)) {
         return true;              // Aministrators has all rights
       }

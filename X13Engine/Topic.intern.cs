@@ -570,7 +570,7 @@ namespace X13 {
     }
   }
   [Flags]
-  internal enum TopicAcl {
+  public enum TopicAcl {
     None=0,
     Subscribe=1,
     Change=2,

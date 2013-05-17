@@ -22,7 +22,7 @@ namespace X13 {
 
     public static void Debug(string format, params object[] arg) {
       onWrite(LogLevel.Debug, format, arg);
-      //System.Diagnostics.Debug.WriteLine(string.Format("B {0};{1}", DateTime.Now.ToString("mm:ss.fff"), string.Format(format, arg)));
+      System.Diagnostics.Debug.WriteLine(string.Format("B {0};{1}", DateTime.Now.ToString("mm:ss.fff"), string.Format(format, arg)));
     }
     public static void Info(string format, params object[] arg) {
       onWrite(LogLevel.Info, format, arg);
