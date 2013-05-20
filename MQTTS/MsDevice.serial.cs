@@ -28,7 +28,7 @@ namespace X13.Periphery {
       static MsGSerial() {
         _startScan=new AutoResetEvent(false);
         _scanBusy=0;
-        ThreadPool.RegisterWaitForSingleObject(_startScan, ScanPorts, null, 180000, false);
+        ThreadPool.RegisterWaitForSingleObject(_startScan, ScanPorts, null, 45000, false);
       }
 
       public static void Open() {
@@ -61,26 +61,28 @@ namespace X13.Periphery {
         List<string> pns=new List<string>();
         Topic dev=Topic.root.Get("/dev");
         lock(dev) {
-          var ifs=dev.children.Where(z => z.valueType==typeof(MsDevice)).Cast<DVar<MsDevice>>().Where(z => z.value!=null && z.value.state!=State.Connected).Select(z => z.value).ToArray();
+          var ifs=dev.children.Where(z => z.valueType==typeof(MsDevice)).Cast<DVar<MsDevice>>().Where(z => z.value!=null).Select(z => z.value).ToArray();
           foreach(var devSer in ifs) {
             cnt++;
-            if(string.IsNullOrWhiteSpace(devSer.via)) {
-              _scanAllPorts=true;
+            if(devSer.state==State.Connected) {
               continue;
             }
+            if(string.IsNullOrWhiteSpace(devSer.via)) {
+              _scanAllPorts=true;
+              break;
+            }
             string via=devSer.via;
-            if(via!="offline" && via.StartsWith("com", StringComparison.InvariantCultureIgnoreCase) && !pns.Exists(z => string.Equals(z, via, StringComparison.InvariantCultureIgnoreCase))) {
+            if(via!="offline" && !pns.Exists(z => string.Equals(z, via, StringComparison.InvariantCultureIgnoreCase))) {
               pns.Add(via);
             }
           }
         }
         if(_scanAllPorts || cnt==0) {
           _scanAllPorts=false;
-          foreach(var pn in SerialPort.GetPortNames()) {
-            if(!pns.Exists(z => string.Equals(z, pn))) {
-              pns.Add(pn);
-            }
-          }
+          pns.Clear();
+          pns.AddRange(SerialPort.GetPortNames());
+        } else {
+          pns=pns.Intersect(SerialPort.GetPortNames()).ToList();
         }
         for(int i=0; i<pns.Count; i++) {
           try {
