@@ -107,7 +107,9 @@ namespace X13.MQTT {
         return false;
       }
       string connectionstring=_settings.Get<string>("_URL").value;
-
+      _settings.Get<string>("_URL").saved=true;
+      _settings.Get<string>("_username").saved=true;
+      _settings.Get<string>("_password").saved=true;
       if(string.IsNullOrEmpty(connectionstring)) {
         return false;
       }
