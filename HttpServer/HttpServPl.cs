@@ -18,6 +18,7 @@ namespace X13.HttpServer {
 
     public HttpServPl() {
     }
+
     public void Start() {
       bool ad2=false;
       Topic.root.Subscribe("/etc/Broker/security/#", L_dummy);
@@ -25,9 +26,7 @@ namespace X13.HttpServer {
       _verbose=Topic.root.Get<bool>("/etc/HttpServer/_verbose");
       var urlD=Topic.root.Get<string>("/local/cfg/HttpServer/_url");
 
-      string startPath=Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-      _htPath=startPath.Substring(0, startPath.LastIndexOf('\\'))+"\\htdocs";
-
+      _htPath=Path.GetFullPath("../htdocs");
       
       if(string.IsNullOrEmpty(urlD.value)) {
         urlD.saved=true;
@@ -40,7 +39,7 @@ namespace X13.HttpServer {
         _listener.Start();
       }
       catch(HttpListenerException ex) {
-        if(ex.ErrorCode==5 && !ad2 && System.Environment.OSVersion.Version.Major >= 6) {   // Access denied
+        if(ex.ErrorCode==5 && !ad2 && Environment.OSVersion.Platform==PlatformID.Win32NT && System.Environment.OSVersion.Version.Major >= 6) {   // Access denied
           ad2=true;
           ProcessStartInfo info = new ProcessStartInfo("netsh");
           info.Arguments=string.Format("http add urlacl url={0} user={1}", urlD.value, Environment.UserName);

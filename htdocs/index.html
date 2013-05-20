@@ -1,14 +1,22 @@
 <html>
 <head>
   <title>X13.Home</title>
+  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css" />
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <script type="text/javascript" src="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>
+  <script type="text/javascript" src="pubsub.js"></script>
 </head>
 <body>
+  <select data-role="slider" data-pub="/var/bool">
+    <option value=false>Off </option>
+    <option value=true>On </option>
+  </select>
+  <select data-role="slider" data-pub="/var/bool2">
+    <option value=false>Off </option>
+    <option value=true>On </option>
+  </select>
 
-  <p>Hello</p>
   <input id="iMin" type="number" value="99" />
-  <input id="chSel" type="checkbox" />
-  <script type="text/javascript" src="jquery-1.9.1.min.js"></script>
-  <script type="text/javascript" src="pubsub.js"></script>
   <script type="text/javascript">
     var timer;
 
@@ -27,8 +35,10 @@
     }
 
     $(window).load(function () {
+      $('select[data-role="slider"]').bind("change", function (event, ui) {
+        pubsub.publish(event.target.dataset.pub, event.target.value);
+      });
       startStreaming();
-      $("#chSel").click(function () { pubsub.publish("/var/bool", $("#chSel").prop("checked")); });
     });
   </script>
 </body>

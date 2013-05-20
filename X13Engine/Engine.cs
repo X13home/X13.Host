@@ -89,23 +89,28 @@ namespace X13 {
       #endregion Load plugins
 
       foreach(var i in _modules.Where(z => z.Metadata.priority<16).OrderBy(z => z.Metadata.priority)) {
-        if(!string.IsNullOrWhiteSpace(i.Metadata.name)) {
-          string plPath="/local/cfg/"+i.Metadata.name+"/enable";
-          Topic enT;
-          DVar<bool> enD;
-          if(Topic.root.Exist(plPath, out enT)) {
-            enD=enT as DVar<bool>;
-            if(enD!=null && !enD.value) {
-              continue;                     // plugin disabled
+        try {
+          if(!string.IsNullOrWhiteSpace(i.Metadata.name)) {
+            string plPath="/local/cfg/"+i.Metadata.name+"/enable";
+            Topic enT;
+            DVar<bool> enD;
+            if(Topic.root.Exist(plPath, out enT)) {
+              enD=enT as DVar<bool>;
+              if(enD!=null && !enD.value) {
+                continue;                     // plugin disabled
+              }
+            } else {
+              enD=Topic.root.Get<bool>(plPath);
+              enD.saved=true;
+              enD.value=true;
             }
-          } else {
-            enD=Topic.root.Get<bool>(plPath);
-            enD.saved=true;
-            enD.value=true;
           }
+          i.Value.Start();
+          Log.Debug("plugin {0} loaded", i.Metadata.name??i.Value.GetType().FullName);
         }
-        i.Value.Start();
-        Log.Debug("plugin {0} loaded", i.Metadata.name??i.Value.GetType().FullName);
+        catch(Exception ex) {
+          Log.Error("Load plugin {0} failure - {1}", i.Metadata.name??i.Value.GetType().FullName, ex.ToString());
+        }
       }
 
       string dbVersion=Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
@@ -153,23 +158,28 @@ namespace X13 {
       Topic.ready.WaitOne(3500);
 
       foreach(var i in _modules.Where(z => z.Metadata.priority>=16).OrderBy(z => z.Metadata.priority)) {
-        if(!string.IsNullOrWhiteSpace(i.Metadata.name)) {
-          string plPath="/local/cfg/"+i.Metadata.name+"/enable";
-          Topic enT;
-          DVar<bool> enD;
-          if(Topic.root.Exist(plPath, out enT)) {
-            enD=enT as DVar<bool>;
-            if(enD!=null && !enD.value) {
-              continue;                     // plugin disabled
+        try {
+          if(!string.IsNullOrWhiteSpace(i.Metadata.name)) {
+            string plPath="/local/cfg/"+i.Metadata.name+"/enable";
+            Topic enT;
+            DVar<bool> enD;
+            if(Topic.root.Exist(plPath, out enT)) {
+              enD=enT as DVar<bool>;
+              if(enD!=null && !enD.value) {
+                continue;                     // plugin disabled
+              }
+            } else {
+              enD=Topic.root.Get<bool>(plPath);
+              enD.saved=true;
+              enD.value=true;
             }
-          } else {
-            enD=Topic.root.Get<bool>(plPath);
-            enD.saved=true;
-            enD.value=true;
           }
+          i.Value.Start();
+          Log.Debug("plugin {0} loaded", i.Metadata.name??i.Value.GetType().FullName);
         }
-        i.Value.Start();
-        Log.Debug("plugin {0} loaded", i.Metadata.name??i.Value.GetType().FullName);
+        catch(Exception ex) {
+          Log.Error("load plugin {0} failure - {1}", i.Metadata.name??i.Value.GetType().FullName, ex.ToString());
+        }
       }
       ThreadPool.QueueUserWorkItem(o => {
         SendStat(1);
@@ -179,8 +189,16 @@ namespace X13 {
     public void Shutdown() {
       _1SecTimer.Change(Timeout.Infinite, Timeout.Infinite);
       foreach(var i in _modules.OrderByDescending(z => z.Metadata.priority)) {
-        //i.Metadata.name
-        i.Value.Stop();
+        try {
+          string plPath="/local/cfg/"+i.Metadata.name+"/enable";
+          if(Topic.root.Get<bool>(plPath).value) {
+            //i.Metadata.name
+            i.Value.Stop();
+          }
+        }
+        catch(Exception ex) {
+          Log.Error("Stop plugin {0} failure - {1}", i.Metadata.name??i.Value.GetType().FullName, ex.ToString());
+        }
       }
       SendStat(0);
       _log.Dispose();
