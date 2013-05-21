@@ -265,6 +265,7 @@ namespace X13.Periphery {
         bool escChar=false;
         int cnt=-1;
         byte addr=0xFF;
+        MsMessage msg;
         try {
           while(_port!=null && _port.IsOpen) {
             if(GetPacket(_port, ref addr, buf, ref cnt, ref escChar)) {
@@ -275,7 +276,7 @@ namespace X13.Periphery {
               ParseInPacket(rezAddr, rezBuf);
               continue;
             } else {
-              MsMessage msg=null;
+              msg=null;
               lock(_sendQueue) {
                 if(_sendQueue.Count>0) {
                   msg=_sendQueue.Dequeue();
@@ -284,12 +285,16 @@ namespace X13.Periphery {
               SendRaw(this, msg);
             }
             Thread.Sleep(15);
-            if(_gwTopic!=null && _gwTopic.value!=null && (_gwTopic.value.state==State.Disconnected || _gwTopic.value.state==State.Lost)) {
+            if(msg==null && _gwTopic!=null && _gwTopic.value!=null && (_gwTopic.value.state==State.Disconnected || _gwTopic.value.state==State.Lost)) {
+              _gwTopic=null;
               ThreadPool.QueueUserWorkItem(obj => {
-                Thread.Sleep(3500);
+                Thread.Sleep(500);
+                if(_port!=null && _port.IsOpen) {
+                  _port.Close();
+                }
+                Thread.Sleep(1000);
                 _startScan.Set();
               });
-              break;
             }
           }
         }
@@ -298,20 +303,25 @@ namespace X13.Periphery {
         catch(Exception ex) {
           Log.Error("MsGSerial({0}).CommThread() - {1}", gwIdx, ex.ToString());
         }
+        if(_verbose.value){
+          Log.Debug("MsGSerial({0}).CommThread - exit", gwIdx);
+        }
         this.Dispose();
       }
       private void ParseInPacket(byte[] addr, byte[] buf) {
-        Topic devR=Topic.root.Get("/dev");
+        if(addr[0]==0) {
+          Log.Warning("Packet with broadcast address via {0}:{1:X2}:{3}", _port.PortName, BitConverter.ToString(addr), BitConverter.ToString(buf));
+          return;
+        }
 
+        Topic devR=Topic.root.Get("/dev");
         var msgTyp=(MsMessageType)(buf[0]>1?buf[1]:buf[3]);
         if(msgTyp==MsMessageType.SEARCHGW) {
           PrintPacket(null, new MsSearchGW(buf) { Addr=addr }, buf);
           this.Send(new MsGwInfo(_gwAddr) { Addr=new byte[] { 0 } });
         } else if(msgTyp==MsMessageType.CONNECT) {
           var msg=new MsConnect(buf) { Addr=addr };
-          if(addr[0]==0) {
-            Log.Warning("Try connect with broadcast address: {1} via {0}", _port.PortName, msg.ClientId);
-          }else if(addr[0]==0xFF) {
+          if(addr[0]==0xFF) {
             PrintPacket(null, msg, buf);
             Send(new MsConnack(MsReturnCode.Accepted) { Addr=msg.Addr });
             byte[] nAddr=new byte[1];

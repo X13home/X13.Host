@@ -650,8 +650,8 @@ namespace X13.Periphery {
               MsDevice old=(oldT as DVar<MsDevice>).value;
               if(old!=null) {
                 Addr=old.Addr;
-                old.Send(new MsPublish(null, PredefinedTopics["_sName"], QoS.AtLeastOnce) { Data=Encoding.UTF8.GetBytes(Owner.name.Substring(0, Owner.name.Length)) });
-                old.Send(new MsDisconnect());
+                old._gate.Send(new MsPublish(null, PredefinedTopics["_sName"], QoS.AtLeastOnce) { Addr=Addr, Data=Encoding.UTF8.GetBytes(Owner.name.Substring(0, Owner.name.Length)) });
+                this.state=State.Disconnected;
               }
             }
             backName=Owner.name;
