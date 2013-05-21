@@ -283,6 +283,9 @@ namespace X13.MQTT {
     }
 
     internal void PublishTopic(Topic topic, TopicChanged param) {
+      if(topic.valueType==null || topic==Owner) {
+        return;
+      }
       if(param.Art==TopicChanged.ChangeArt.Add) {
         var ti=GetTopicInfo(topic);
         return;
@@ -294,7 +297,7 @@ namespace X13.MQTT {
       if(rez==null && param.Art==TopicChanged.ChangeArt.Value) {
         rez=GetTopicInfo(topic, true);
       }
-      if(rez==null || rez.TopicId>=0xFF00 || rez.TopicId==0xFE00 || !rez.registred) {
+      if(rez==null || rez.TopicId>=0xFFC0 ||  !rez.registred) {
         return;
       }
       if(param.Art==TopicChanged.ChangeArt.Value) {
@@ -604,15 +607,15 @@ namespace X13.MQTT {
     ShortName=2
   }
   internal enum PredefinedTopics : ushort {
-    _declarer=0xFE00,
-    _DeviceAddr=0xFE01,
-    _WGroupID=0xFE02,
-    _BChannel=0xFE03,
-    _sName=0xFE04,
-    _WSleepTime=0xFE05,
-    _BRSSI=0xFE08,
-    _state=0xFF01,
-    present=0xFF02,
+    _sName=0xFF00,
+    _WSleepTime=0xFF01,
+    _DeviceAddr=0xFF10,
+    _WGroupID=0xFF11,
+    _BChannel=0xFF12,
+    _BRSSI=0xFF13,
+    _declarer=0xFFC0,
+    _state=0xFFC1,
+    present=0xFFC2,
   }
   public enum MsDeviceState {
     Disconnected=0,
