@@ -24,7 +24,7 @@ using System.Reflection;
 
 namespace X13.PLC {
   [Export(typeof(IPlugModul))]
-  [ExportMetadata("priority", 1)]
+  [ExportMetadata("priority", 2)]
   [ExportMetadata("name", "PersistentStorage")]
   public class PersistentStorage : IPlugModul {
     private SqliteConnection _connection;
@@ -32,7 +32,7 @@ namespace X13.PLC {
     private Thread _thread;
     private ManualResetEvent _close;
 
-    public void Start() {
+    public void Init() {
       string dbFilename=@"../data/persist.db3";
       bool ret;
 
@@ -88,8 +88,10 @@ namespace X13.PLC {
       _close=new ManualResetEvent(false);
       _thread=new Thread(new ThreadStart(PrThread));
       _thread.Priority=ThreadPriority.Lowest;
-      _thread.Start();
       Topic.root.Subscribe("/#", MqChanged);
+    }
+    public void Start() {
+      _thread.Start();
     }
 
     public void Stop() {
@@ -173,5 +175,6 @@ namespace X13.PLC {
       public Topic src;
       public long marker;
     }
+
   }
 }

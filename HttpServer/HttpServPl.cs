@@ -19,10 +19,12 @@ namespace X13.HttpServer {
     public HttpServPl() {
     }
 
-    public void Start() {
-      bool ad2=false;
+    public void Init() {
       Topic.root.Subscribe("/etc/Broker/security/#", L_dummy);
       Topic.root.Subscribe("/etc/HttpServer/#", L_dummy);
+    }
+    public void Start() {
+      bool ad2=false;
       _verbose=Topic.root.Get<bool>("/etc/HttpServer/_verbose");
       var urlD=Topic.root.Get<string>("/local/cfg/HttpServer/_url");
 
@@ -211,5 +213,6 @@ namespace X13.HttpServer {
       }
       return string.Empty;
     }
+
   }
 }

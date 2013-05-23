@@ -27,12 +27,18 @@ namespace X13.MQTT {
   [ExportMetadata("name", "Broker")]
   public class MqBrokerPM : IPlugModul {
 
+    public void Init() {
+      Topic.root.Subscribe("/etc/Broker/#", L_dummy);
+    }
     public void Start() {
       MqBroker.Open();
     }
 
     public void Stop() {
       MqBroker.Close();
+    }
+    private void L_dummy(Topic sender, TopicChanged arg) {
+      return;
     }
   }
   public class MqBroker {
@@ -114,7 +120,6 @@ namespace X13.MQTT {
       }
     }
   
-
     private static void Connect(IAsyncResult ar) {
       try {
         TcpClient c=_tcp.EndAcceptTcpClient(ar);

@@ -25,65 +25,73 @@ namespace X13.CC {
   /// Interaction logic for MainWindow.xaml
   /// </summary>
   public partial class MainWindow : Window {
+    private X13.Plugins _plugins;
     private X13.MQTT.MqClient _cl;
     private bool _docLoaded=false;
     private Process _engine; // for embedded mode
     private ManualResetEventSlim _engineReady;
-    private Timer _1SecTimer;
-    private DVar<DateTime> _now;
-    private DVar<long> _nowOffset;
-
-    private const string _settPath="../data/CC.xst";
+    private DVar<bool> _verbose;
 
     public MainWindow() {
       App.mainWindow=this;
       if(!Directory.Exists("../data")) {
         Directory.CreateDirectory("../data");
       }
+      Topic.Import("../data/CC.xst", "/local/cfg");
 
-      _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 5050-DateTime.Now.Millisecond, 1000);
-      {
-        _now=Topic.root.Get<DateTime>("/var/now");
-        _nowOffset=Topic.root.Get<long>("/local/cfg/Client/TimeOffset");
-        DateTime nowDT=DateTime.Now;
-        _now.value=nowDT;
-        _now.Get<long>("second").value=nowDT.Second;
-        _now.Get<long>("minute").value=nowDT.Minute;
-        _now.Get<long>("hour").value=nowDT.Hour;
-        _now.Get<long>("wDay").value=(long)nowDT.DayOfWeek;
-        _now.Get<long>("day").value=nowDT.Day;
-        _now.Get<long>("month").value=nowDT.Month;
-        _now.Get<long>("year").value=nowDT.Year;
-        //_1SecTimer.Change(Timeout.Infinite, Timeout.Infinite);  // !!!!!!!!!!!!!!!!!!!!!!
+      Topic clientSettings=Topic.root.Get("/local/cfg/Client");
+      string url=clientSettings.Get<string>("_URL").value;
+      var enable=clientSettings.Get<bool>("enable");
+      enable.saved=true;
+      enable.value=true;
+
+      if(url=="#local") {
+        if(_engine==null || _engine.HasExited) {
+          Directory.SetCurrentDirectory(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
+          _engine = new Process();
+          _engine.StartInfo.FileName = "Engine.exe";
+          _engine.StartInfo.Arguments="";
+
+          _engine.StartInfo.RedirectStandardInput=true;
+          _engine.StartInfo.RedirectStandardOutput=true;
+          _engine.StartInfo.RedirectStandardError=true;
+          _engine.EnableRaisingEvents=true;
+          _engine.StartInfo.UseShellExecute=false;
+          _engine.StartInfo.CreateNoWindow = true;
+          _engine.OutputDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
+          _engine.ErrorDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
+
+          _engineReady=new ManualResetEventSlim(false);
+          _engine.Start();
+
+          _engine.BeginErrorReadLine();
+          _engine.BeginOutputReadLine();
+          _engineReady.Wait(10000);
+        }
       }
 
-      Topic.Import(_settPath, "/local/cfg");
-      var tmpD=Topic.root.Get<bool>("/local/cfg/Broker/enable");
-      tmpD.saved=true;
-      tmpD.value=false;
-      tmpD=Topic.root.Get<bool>("/local/cfg/PLC/enable");
-      tmpD.saved=true;
-      tmpD.value=false;
 
-      Topic brokerSettings=Topic.root.Get("/local/cfg/Client");
-      brokerSettings.Subscribe("_URL", BrokerUrlChanged);
-      BrokerState="OFFLINE";
-      _clState=0;   // offline
-      _cl=new X13.MQTT.MqClient();
-      _cl.StatusChg+=MqClientStatusChanged;
-      _cl.KeepAlive=10;
+      _plugins=new Plugins();
 
-      var myId=Topic.root.Get<string>("/local/cfg/id");
-      if(string.IsNullOrWhiteSpace(myId.value)) {
-        myId.saved=true;
-        myId.value=string.Format("{0}@{1}", Environment.UserName, Environment.MachineName);
+      _verbose=Topic.root.Get<bool>("/local/cfg/repository/_verbose");
+      Topic.root.Subscribe("/#", root_changed);
+      if(!string.IsNullOrEmpty(url)) {
+        _plugins.Init(false);
+        BrokerState="OFFLINE";
+        _clState=0;   // offline
+        _cl=_plugins["Client"] as MQTT.MqClient;
+        _cl.StatusChg+=MqClientStatusChanged;
+        _cl.KeepAlive=10;
+
+        if(_cl.Connected) {
+          MqClientStatusChanged(true);
+        }
+
+        _plugins.Start();
       }
-
       InitializeComponent();
-      //Topic.root.Subscribe("/#", root_changed);
-
-      Log.Info("CC Start");
       DataContext = this;
+
       if(Settings.MainWindowWidth>0 && Settings.MainWindowHeight>0) {
         this.Width=Settings.MainWindowWidth;
         this.Height=Settings.MainWindowHeight;
@@ -105,75 +113,10 @@ namespace X13.CC {
       }
     }
 
-    private void BrokerUrlChanged(Topic arg1, TopicChanged arg2) {
-      this.Dispatcher.BeginInvoke(new Action(() => {
-        if(_clState==2) {
-          _cl.Stop();
-        }
-        Topic brokerSettings=Topic.root.Get("/local/cfg/Client");
-        string url=brokerSettings.Get<string>("_URL").value;
-        if(string.IsNullOrWhiteSpace(url)) {
-          return;
-        }else if(url=="#local") {
-          if(_engine==null || _engine.HasExited) {
-            Directory.SetCurrentDirectory(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
-            _engine = new Process();
-            _engine.StartInfo.FileName = "Engine.exe";
-            _engine.StartInfo.Arguments="";
-
-            _engine.StartInfo.RedirectStandardInput=true;
-            _engine.StartInfo.RedirectStandardOutput=true;
-            _engine.StartInfo.RedirectStandardError=true;
-            _engine.EnableRaisingEvents=true;
-            _engine.StartInfo.UseShellExecute=false;
-            _engine.StartInfo.CreateNoWindow = true;
-            _engine.OutputDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
-            _engine.ErrorDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
-
-            _engineReady=new ManualResetEventSlim(false);
-            _engine.Start();
-
-            _engine.BeginErrorReadLine();
-            _engine.BeginOutputReadLine();
-            _engineReady.Wait(5000);
-          } else {
-            Thread.Sleep(1500);
-          }
-        }
-
-        dockManager_Loaded(null, null);
-      }));
-    }
-
-    private void Tick1Sec(object o) {
-      DateTime nowDT=DateTime.Now.AddTicks(_nowOffset.value);
-      _1SecTimer.Change(1050-nowDT.Millisecond, 1000);
-      _now=Topic.root.Get<DateTime>("/var/now");
-      _now.SetValue(nowDT, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-      _now.Get<long>("second").SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-      if(nowDT.Second==0) {
-        _now.Get<long>("minute").SetValue(nowDT.Minute, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-        if(nowDT.Minute==0) {
-          _now.Get<long>("hour").SetValue(nowDT.Hour, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-          if(nowDT.Hour==0) {
-            _now.Get<long>("wDay").SetValue((long)nowDT.DayOfWeek, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-            _now.Get<long>("day").SetValue(nowDT.Day, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-            if(nowDT.Day==1) {
-              _now.Get<long>("month").SetValue(nowDT.Month, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-              if(nowDT.Month==1) {
-                _now.Get<long>("year").SetValue(nowDT.Year, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-              }
-            }
-          }
-          ThreadPool.QueueUserWorkItem(o1 => {
-            Engine.SendStat(2);
-          });
-        }
-      }
-    }
-
-
     void root_changed(Topic sender, TopicChanged param) {
+      if(!_verbose) {
+        return;
+      }
       var ir=param.Initiator;
       switch(param.Art) {
       case TopicChanged.ChangeArt.Add:
@@ -224,11 +167,7 @@ namespace X13.CC {
             DockPane.Items.Add(GetContent("SetupView"));
           }
         }
-      } else if(_clState==0) {
-        _clState=1;
-        BrokerState="Connecting";
-        _cl.Start();
-      } else if(_clState==2) {
+      } if(_clState==2) {
         dockManager.DeserializationCallback=new DockingManager.DeserializationCallbackHandler(DSPane);
         if(Settings.Layout!=null) {
           MemoryStream ms=new MemoryStream(Settings.Layout);
@@ -238,6 +177,9 @@ namespace X13.CC {
         if(dockManager.Documents.Count>0) {
           dockManager.Documents[0].Activate();
         }
+        ThreadPool.QueueUserWorkItem(o => {
+          Engine.SendStat(2);
+        });
       }
     }
     private void ActivateView(object sender, RoutedEventArgs e) {
@@ -297,14 +239,17 @@ namespace X13.CC {
         Settings.MainWindowHeight=(int)this.Height;
 
       }
-      System.Threading.Thread.Sleep(150);
-      _cl.Stop();
+      if(_cl!=null) {
+        System.Threading.Thread.Sleep(150);
+        _plugins.Stop();
+      }
       if(_engine!=null) {
         _engine.StandardInput.WriteLine(" ");
         _engine.WaitForExit(1500);
         _engine=null;
       }
-      Topic.Export(_settPath, Topic.root.Get("/local/cfg"));
+      Topic.Export("../data/CC.xst", Topic.root.Get("/local/cfg"));
+
     }
     private int _clState=0;
     private void MqClientStatusChanged(bool connected) {
@@ -324,8 +269,7 @@ namespace X13.CC {
             System.Threading.Thread.Sleep(1500);
             dockManager_Loaded(null, null);
           }
-
-        } else{
+        } else {
           BrokerState="Connecting";
           _clState=1;
         }
@@ -333,10 +277,8 @@ namespace X13.CC {
     }
 
     private void DockPanel_MouseUp(object sender, MouseButtonEventArgs e) {
-      if(_clState==0) {
-        _cl.Start();
-      } else if(_clState==2) {
-        _cl.Stop();
+      if(_cl!=null) {
+        _cl.Reconnect();
       }
     }
 

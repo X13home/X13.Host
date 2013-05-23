@@ -355,6 +355,9 @@ namespace X13.CC {
       List<Topic> originPath=new List<Topic>();
       Topic tmp=oCur;
       while(tmp!=Topic.root) {
+        if(tmp==null) {
+          return null;
+        }
         if(tmp==this.ptr) {
           cur=this;
           break;

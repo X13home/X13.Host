@@ -19,15 +19,16 @@ using System.Threading;
 
 namespace X13.Periphery {
   [Export(typeof(IPlugModul))]
-  [ExportMetadata("priority", 4)]
+  [ExportMetadata("priority", 5)]
   [ExportMetadata("name", "MQTTS")]
   public class MQTTSPlugin : IPlugModul {
     private const long  _version=3;
 
-    public void Start() {
+    public void Init() {
       Topic.root.Subscribe("/etc/MQTTS/#", Dummy);
       Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
-      Thread.Sleep(350);
+    }
+    public void Start() {
       var ver=Topic.root.Get<long>("/etc/MQTTS/version");
       if(ver.value<_version) {
         ver.saved=true;
@@ -52,7 +53,6 @@ namespace X13.Periphery {
       Topic.root.Unsubscribe("/etc/declarers/#", Dummy);
       //TODO: Close
     }
-
   }
 
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]

@@ -57,9 +57,13 @@ namespace X13.CC {
         _brokerUrl.value="localhost";
         biInstall.IsBusy=false;
       } else {
+        if(RemoteUrl.Text=="localhost") {
+          userName.value="local";
+        }
         _brokerUrl.value=RemoteUrl.Text;
       }
-      this.Close();
+      System.Windows.Forms.Application.Restart();
+      Application.Current.Shutdown();
     }
 
     private void InstallService() {

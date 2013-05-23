@@ -20,11 +20,15 @@ using System.IO;
 
 namespace X13.Periphery {
   [Export(typeof(IPlugModul))]
-  [ExportMetadata("priority", 5)]
+  [ExportMetadata("priority", 6)]
   [ExportMetadata("name", "XBee")]
   public class XBeePlugin : IPlugModul {
     private const long  _version=3;
 
+    public void Init() {
+      Topic.root.Subscribe("/etc/XBee/#", Dummy);
+      Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
+    }
     public void Start() {
       var ver=Topic.root.Get<long>("/etc/XBee/version");
       if(ver.value<_version) {
@@ -44,6 +48,9 @@ namespace X13.Periphery {
 
     public void Stop() {
     }
+    private void Dummy(Topic src, TopicChanged arg) {
+    }
+
   }
 
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]

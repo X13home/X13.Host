@@ -21,26 +21,18 @@ using System.Threading;
 namespace X13.PLC {
 
   [Export(typeof(IPlugModul))]
-  [ExportMetadata("priority", 2)]
+  [ExportMetadata("priority", 4)]
   [ExportMetadata("name", "PLC")]
   public class PLCPlugin : IPlugModul {
     [ImportMany(typeof(IStatement))]
     private IEnumerable<Lazy<IStatement, IStData>> _statement;
     private DVar<string> _id;
-    public void Start() {
-      string path=Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+    public void Init() {
       Topic.root.Subscribe("/etc/PLC/#", L_dummy);
-      System.Threading.Thread.Sleep(150);
       Topic.root.Subscribe("/etc/declarers/#", L_dummy);
-      System.Threading.Thread.Sleep(300);
-
-      _id=Topic.root.Get<string>("/etc/PLC/default");
-      if(string.IsNullOrWhiteSpace(_id.value)) {
-        _id.saved=true;
-        _id.value=Topic.root.Get<string>("/local/cfg/id").value;
-      }
+      string path=Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
       _id=Topic.root.Get<string>("/local/cfg/id");
-      
+
       #region Load statements
       var catalog = new AggregateCatalog();
       catalog.Catalogs.Add(new AssemblyCatalog(Assembly.GetExecutingAssembly()));
@@ -50,7 +42,7 @@ namespace X13.PLC {
         _container.ComposeParts(this);
       }
       catch(CompositionException ex) {
-        Log.Error("Load plugins - {0}", ex.ToString());
+        Log.Error("Load statements - {0}", ex.ToString());
         return;
       }
       #endregion Load statements
@@ -60,6 +52,14 @@ namespace X13.PLC {
         i.Value.Load();
       }
       _statement=null;
+    }
+    public void Start() {
+      var defId=Topic.root.Get<string>("/etc/PLC/default");
+      if(string.IsNullOrWhiteSpace(defId.value)) {
+        defId.saved=true;
+        defId.value=_id.value;
+      }
+
       Topic.root.Subscribe("/plc/+/_via", via_changed);
     }
 
@@ -86,6 +86,7 @@ namespace X13.PLC {
     public interface IStData {
       string declarer { get; }
     }
+
   }
 
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]

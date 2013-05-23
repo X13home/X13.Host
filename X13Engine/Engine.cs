@@ -29,10 +29,6 @@ namespace X13 {
       Console.Read();
       eng.Shutdown();
     }
-#pragma warning disable 649
-    [ImportMany(typeof(IPlugModul))]
-    private IEnumerable<Lazy<IPlugModul, IPlugModulData>> _modules;
-#pragma warning restore 649
 
     private static BlockingQueue<LogEntry> _log;
     private string _lfPath;
@@ -40,9 +36,8 @@ namespace X13 {
     private DVar<LogLevel> _lThreshold;
     private DVar<long> _lHead;
     private DVar<bool> _debug;
-    private Timer _1SecTimer;
-    private DVar<DateTime> _now;
-    private DVar<long> _nowOffset;
+
+    private Plugins _plugins;
 
     public void StartUp() {
       string path=Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -56,61 +51,20 @@ namespace X13 {
         Directory.CreateDirectory("../data");
       }
       AppDomain.CurrentDomain.UnhandledException+=new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
-      Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
-      Topic.brokerMode=true;
       var root=Topic.root;
+      Topic.Import("../data/Engine.xst", "/local/cfg");
+
       _lHead=root.Get<long>("/var/log");
       _lThreshold=root.Get<LogLevel>("/etc/log/threshold");
-      Topic.paused=true;
-      Log.Info("Starting");
-      Topic.Import("../data/engine.xst", "/local/cfg");
+
+      Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
+      Topic.brokerMode=true;
+      _plugins=new Plugins();
+      _plugins.Init(true);
+
       _debug=Topic.root.Get<bool>("/local/cfg/repository/_verbose");
       if(_debug.value) {
         root.Subscribe("/#", MQTT_Main_changed);
-      }
-      var myId=Topic.root.Get<string>("/local/cfg/id");
-      if(string.IsNullOrWhiteSpace(myId.value)) {
-        myId.saved=true;
-        myId.value=string.Format("{0}", Environment.MachineName);
-      }
-
-      #region Load plugins
-      var catalog = new AggregateCatalog();
-      catalog.Catalogs.Add(new AssemblyCatalog(Assembly.GetExecutingAssembly()));
-      catalog.Catalogs.Add(new DirectoryCatalog(path));
-      CompositionContainer _container = new CompositionContainer(catalog);
-      try {
-        _container.ComposeParts(this);
-      }
-      catch(CompositionException ex) {
-        Log.Error("Load plugins - {0}", ex.ToString());
-        throw;
-      }
-      #endregion Load plugins
-
-      foreach(var i in _modules.Where(z => z.Metadata.priority<16).OrderBy(z => z.Metadata.priority)) {
-        try {
-          if(!string.IsNullOrWhiteSpace(i.Metadata.name)) {
-            string plPath="/local/cfg/"+i.Metadata.name+"/enable";
-            Topic enT;
-            DVar<bool> enD;
-            if(Topic.root.Exist(plPath, out enT)) {
-              enD=enT as DVar<bool>;
-              if(enD!=null && !enD.value) {
-                continue;                     // plugin disabled
-              }
-            } else {
-              enD=Topic.root.Get<bool>(plPath);
-              enD.saved=true;
-              enD.value=true;
-            }
-          }
-          i.Value.Start();
-          Log.Debug("plugin {0} loaded", i.Metadata.name??i.Value.GetType().FullName);
-        }
-        catch(Exception ex) {
-          Log.Error("Load plugin {0} failure - {1}", i.Metadata.name??i.Value.GetType().FullName, ex.ToString());
-        }
       }
 
       string dbVersion=Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
@@ -137,73 +91,20 @@ namespace X13 {
           }
         }
       }
-      Topic.ready.Reset();
-      Topic.paused=false;
 
-      _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 5050-DateTime.Now.Millisecond, 1000);
-      {
-        _now=Topic.root.Get<DateTime>("/var/now");
-        _nowOffset=Topic.root.Get<long>("/local/cfg/Client/TimeOffset");
-        DateTime nowDT=DateTime.Now;
-        _now.value=nowDT;
-        _now.Get<long>("second").value=nowDT.Second;
-        _now.Get<long>("minute").value=nowDT.Minute;
-        _now.Get<long>("hour").value=nowDT.Hour;
-        _now.Get<long>("wDay").value=(long)nowDT.DayOfWeek;
-        _now.Get<long>("day").value=nowDT.Day;
-        _now.Get<long>("month").value=nowDT.Month;
-        _now.Get<long>("year").value=nowDT.Year;
-        //_1SecTimer.Change(Timeout.Infinite, Timeout.Infinite);  // !!!!!!!!!!!!!!!!!!!!!!
-      }
-      Topic.ready.WaitOne(3500);
+      _plugins.Start();
 
-      foreach(var i in _modules.Where(z => z.Metadata.priority>=16).OrderBy(z => z.Metadata.priority)) {
-        try {
-          if(!string.IsNullOrWhiteSpace(i.Metadata.name)) {
-            string plPath="/local/cfg/"+i.Metadata.name+"/enable";
-            Topic enT;
-            DVar<bool> enD;
-            if(Topic.root.Exist(plPath, out enT)) {
-              enD=enT as DVar<bool>;
-              if(enD!=null && !enD.value) {
-                continue;                     // plugin disabled
-              }
-            } else {
-              enD=Topic.root.Get<bool>(plPath);
-              enD.saved=true;
-              enD.value=true;
-            }
-          }
-          i.Value.Start();
-          Log.Debug("plugin {0} loaded", i.Metadata.name??i.Value.GetType().FullName);
-        }
-        catch(Exception ex) {
-          Log.Error("load plugin {0} failure - {1}", i.Metadata.name??i.Value.GetType().FullName, ex.ToString());
-        }
-      }
       ThreadPool.QueueUserWorkItem(o => {
         SendStat(1);
       });
     }
 
     public void Shutdown() {
-      _1SecTimer.Change(Timeout.Infinite, Timeout.Infinite);
-      foreach(var i in _modules.OrderByDescending(z => z.Metadata.priority)) {
-        try {
-          string plPath="/local/cfg/"+i.Metadata.name+"/enable";
-          if(Topic.root.Get<bool>(plPath).value) {
-            //i.Metadata.name
-            i.Value.Stop();
-          }
-        }
-        catch(Exception ex) {
-          Log.Error("Stop plugin {0} failure - {1}", i.Metadata.name??i.Value.GetType().FullName, ex.ToString());
-        }
-      }
+      _plugins.Stop();
       SendStat(0);
       _log.Dispose();
       Thread.Sleep(300);
-      Topic.Export("../data/engine.xst", Topic.root.Get("/local/cfg"));
+      Topic.Export("../data/Engine.xst", Topic.root.Get("/local/cfg"));
     }
     private void ProcessLog(LogEntry en) {
       string rez=null;
@@ -283,33 +184,6 @@ namespace X13 {
         _log.Dispose();
       }
       catch(Exception) {
-      }
-    }
-
-    private void Tick1Sec(object o) {
-      DateTime nowDT=DateTime.Now.AddTicks(_nowOffset.value);
-      var mq=(nowDT.Second!=0?Topic.root.Get("/local/MQ"):_now);
-      _1SecTimer.Change(1050-nowDT.Millisecond, 1000);
-      _now.SetValue(nowDT, new TopicChanged(TopicChanged.ChangeArt.Value, mq));
-      _now.Get<long>("second").SetValue(nowDT.Second, new TopicChanged(TopicChanged.ChangeArt.Value, mq));
-      if(nowDT.Second==0) {
-        _now.Get<long>("minute").SetValue(nowDT.Minute, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-        if(nowDT.Minute==0) {
-          _now.Get<long>("hour").SetValue(nowDT.Hour, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-          if(nowDT.Hour==0) {
-            _now.Get<long>("wDay").SetValue((long)nowDT.DayOfWeek, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-            _now.Get<long>("day").SetValue(nowDT.Day, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-            if(nowDT.Day==1) {
-              _now.Get<long>("month").SetValue(nowDT.Month, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-              if(nowDT.Month==1) {
-                _now.Get<long>("year").SetValue(nowDT.Year, new TopicChanged(TopicChanged.ChangeArt.Value, _now));
-              }
-            }
-            ThreadPool.QueueUserWorkItem(o1 => {
-              SendStat(2);
-            });
-          }
-        }
       }
     }
 

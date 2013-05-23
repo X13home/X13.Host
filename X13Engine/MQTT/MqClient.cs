@@ -22,7 +22,7 @@ using Newtonsoft.Json;
 
 namespace X13.MQTT {
   [Export(typeof(IPlugModul))]
-  [ExportMetadata("priority", 2)]
+  [ExportMetadata("priority", 3)]
   [ExportMetadata("name", "Client")]
   public class MqClient : IPlugModul {
     private static JsonConverter[] _jcs=new JsonConverter[] { new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter() };
@@ -53,6 +53,7 @@ namespace X13.MQTT {
       }
     }
     public string BrokerName { get; private set; }
+    public bool Connected { get { return _connected; } }
     public event Action<bool> StatusChg;
 
     public MqClient() {
@@ -67,21 +68,30 @@ namespace X13.MQTT {
       _now=Topic.root.Get<DateTime>("/var/now");
       _nowOffset=_settings.Get<long>("TimeOffset");
     }
-    public void Start() {
+    public void Init() {
+      _verbose=_settings.Get<bool>("verbose");
       if(!Reconnect()) {
         _settings.Get<bool>("enable").value=false;
         return;
       }
       Topic.SubscriptionsChg+=Topic_SubscriptionsChg;
-      _verbose=_settings.Get<bool>("verbose");
       Topic.root.Subscribe("/etc/system/#", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/etc/repository/#", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/etc/declarers/+", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/etc/declarers/type/#", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/var/now", PLC.PLCPlugin.L_dummy);
+      for(int i=15; i>=0; i--) {
+        Thread.Sleep(100);
+        if(_connected) {
+          break;
+        }
+      }
     }
 
-    private bool Reconnect(bool slow=false) {
+    public void Start() {
+    }
+
+    public bool Reconnect(bool slow=false) {
       if(_stream!=null) {
         if(_connected) {
           _connected=false;

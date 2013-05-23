@@ -30,7 +30,7 @@ namespace X13 {
     static Topic() {
       root=new Topic(null) { _name=string.Empty, path="/" };
       _publishQueue=new WOUM.BlockingQueue<TopicChanged>(PubAction, PqIdle);
-      _publishQueue.timeout=300;
+      _publishQueue.timeout=200;
       _mq=root.Get("/local/MQ");
       _mq._childNodes=new SortedList<string, Topic>(1);
     }

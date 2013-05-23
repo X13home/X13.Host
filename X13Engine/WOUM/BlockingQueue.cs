@@ -86,6 +86,9 @@ namespace X13.WOUM {
             if(process!=null) {
               process(val);
             }
+            if(paused) {
+              break;
+            }
           }
         } else {
           if(idle!=null) {
