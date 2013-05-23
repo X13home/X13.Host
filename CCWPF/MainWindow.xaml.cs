@@ -87,7 +87,6 @@ namespace X13.CC {
           MqClientStatusChanged(true);
         }
 
-        _plugins.Start();
       }
       InitializeComponent();
       DataContext = this;
@@ -102,6 +101,9 @@ namespace X13.CC {
         this.WindowStartupLocation=System.Windows.WindowStartupLocation.CenterScreen;
         this.Width=System.Windows.SystemParameters.PrimaryScreenWidth*0.6;
         this.Height=System.Windows.SystemParameters.PrimaryScreenHeight*0.8;
+      }
+      if(_cl!=null) {
+        _plugins.Start();
       }
       this.dockManager.ActiveDocumentChanged+=new EventHandler(dockManager_ActiveDocumentChanged);
     }

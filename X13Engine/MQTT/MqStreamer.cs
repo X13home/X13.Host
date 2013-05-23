@@ -61,6 +61,16 @@ namespace X13.MQTT {
         return Socket==null?false:Socket.Connected;
       }
     }
+    public bool isSndPaused {
+      get { return _sndPaused; }
+      set {
+        if(_sndPaused && !value) {
+          SndResume();
+        } else {
+          _sndPaused=value;
+        }
+      }
+    }
 
     /// <summary> Send Message to broker</summary>
     /// <param name="msg">MQTT message</param>
@@ -79,10 +89,6 @@ namespace X13.MQTT {
         }
         msg.MessageID=(ushort)tmp;
       }
-      //if(msg.MsgType==MessageType.SUBSCRIBE) {
-      //  _sndPaused=true;
-      //  _rcvTimer.Change(300, Timeout.Infinite);
-      //}
       if((!_sndPaused || msg.MsgType!=MessageType.PUBLISH) && Interlocked.Exchange(ref _sendProcessed, 1)==0) {
         SendIntern(msg);
       } else {
@@ -249,7 +255,7 @@ namespace X13.MQTT {
           if(_rcvState!=0) {
             _rcvTimer.Change(100, Timeout.Infinite);
           } else if(_sndPaused) {
-            _rcvTimer.Change(150, Timeout.Infinite);
+            _rcvTimer.Change(300, Timeout.Infinite);
           } else {
             _rcvTimer.Change(Timeout.Infinite, Timeout.Infinite);
           }
@@ -286,20 +292,24 @@ namespace X13.MQTT {
         _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
         _rcvState=0;
       } else if(_sndPaused) {
-        _sndPaused=false;
-        if(Interlocked.Exchange(ref _sendProcessed, 1)==0) {
-          MqMessage msg;
-          lock(_sendQ) {
-            msg=_sendQ.Count>0?_sendQ.Dequeue():null;
-            if(_sendQ.Count==32) {
-              _sendQ.TrimExcess();
-            }
+        SndResume();
+      }
+    }
+
+    private void SndResume() {
+      _sndPaused=false;
+      if(Interlocked.Exchange(ref _sendProcessed, 1)==0) {
+        MqMessage msg;
+        lock(_sendQ) {
+          msg=_sendQ.Count>0?_sendQ.Dequeue():null;
+          if(_sendQ.Count==32) {
+            _sendQ.TrimExcess();
           }
-          if(msg!=null) {
-            SendIntern(msg);
-          } else {
-            _sendProcessed=0;
-          }
+        }
+        if(msg!=null) {
+          SendIntern(msg);
+        } else {
+          _sendProcessed=0;
         }
       }
     }
