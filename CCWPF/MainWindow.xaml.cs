@@ -165,6 +165,9 @@ namespace X13.CC {
               }
             }
           }
+          ThreadPool.QueueUserWorkItem(o1 => {
+            Engine.SendStat(2);
+          });
         }
       }
     }
@@ -235,10 +238,6 @@ namespace X13.CC {
         if(dockManager.Documents.Count>0) {
           dockManager.Documents[0].Activate();
         }
-        ThreadPool.QueueUserWorkItem(o => {
-          Engine.SendStat(2);
-        });
-
       }
     }
     private void ActivateView(object sender, RoutedEventArgs e) {

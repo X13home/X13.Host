@@ -99,7 +99,7 @@ namespace X13.Periphery {
             curAddr=null;
             while(--tryCnt>0) {
               if(GetPacket(port, ref addr, buf, ref cnt, ref escChar)) {
-                if(_verbose)
+                if(_verbose.value)
                   Log.Debug("{0} r {1:X2}:{2}", pns[i], addr, BitConverter.ToString(buf, 0, cnt));
                 if(cnt==3 && buf[1]==0x02) {   // Received GWInfo
                   curAddr=new byte[] { buf[2] }; // addr
@@ -196,7 +196,7 @@ namespace X13.Periphery {
         }
         b[0]=0xC0;
         port.Write(b, 0, 1);
-        if(_verbose) {
+        if(_verbose.value) {
           Log.Debug("{0} s {1:X2}:{2}", port.PortName, addr, BitConverter.ToString(buf, 0, buf.Length));
         }
       }
@@ -229,7 +229,7 @@ namespace X13.Periphery {
         }
         b[0]=0xC0;
         g._port.Write(b, 0, 1);
-        if(_verbose) {
+        if(_verbose.value) {
           Log.Debug("s {0:X2}:{1:X2}:{2} \t{3}", g.gwIdx, msg.Addr[0], BitConverter.ToString(buf), msg.ToString());
         }
       }

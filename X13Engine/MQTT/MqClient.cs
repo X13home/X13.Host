@@ -39,12 +39,10 @@ namespace X13.MQTT {
     private bool _waitPingResp;
     private bool _connected;
     private Timer _tOut;
-    private Timer _tLoaded;
     private int _keepAliveMS=89950;  // 90 sec
     private MqConnect ConnInfo;
     private List<Topic.Subscription> _subs;
     private DVar<bool> _verbose;
-    private AutoResetEvent _eLoaded;
 
     public ushort KeepAlive {
       get { return (ushort)(_keepAliveMS>0?(_keepAliveMS+50)/1000:0); }
@@ -68,7 +66,6 @@ namespace X13.MQTT {
       _subs=new List<Topic.Subscription>();
       _now=Topic.root.Get<DateTime>("/var/now");
       _nowOffset=_settings.Get<long>("TimeOffset");
-      _eLoaded=new AutoResetEvent(false);
     }
     public void Start() {
       if(!Reconnect()) {
@@ -82,13 +79,10 @@ namespace X13.MQTT {
       Topic.root.Subscribe("/etc/declarers/+", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/etc/declarers/type/#", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/var/now", PLC.PLCPlugin.L_dummy);
-      _eLoaded.Reset();
-      _eLoaded.WaitOne(7000);
     }
 
     private bool Reconnect(bool slow=false) {
       if(_stream!=null) {
-        _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
         if(_connected) {
           _connected=false;
           if(StatusChg!=null) {
@@ -177,7 +171,6 @@ namespace X13.MQTT {
         }
         _owner=_mq.Get<MqClient>(BrokerName);
         _owner.value=this;
-        _tLoaded=new Timer(new TimerCallback(LoadedCB));
         _connected=false;
         string id=Topic.root.Get<string>("/local/cfg/id").value;
         if(string.IsNullOrEmpty(id)) {
@@ -198,9 +191,6 @@ namespace X13.MQTT {
         _tOut.Change(3000, _keepAliveMS);       // more often than not
       }
       catch(Exception ex) {
-        if(_tLoaded!=null) {
-          _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
-        }
         Log.Error("Connect to {0}:{1} failed, {2}", addr, port, ex.Message);
         if(StatusChg!=null) {
           StatusChg(false);
@@ -248,10 +238,6 @@ namespace X13.MQTT {
         _waitPingResp=true;
         _stream.Send(new MqPingReq());
       }
-    }
-    private void LoadedCB(object o) {
-      _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
-      _eLoaded.Set();
     }
     private void Received(MqMessage msg) {
       if(_verbose.value) {
@@ -313,7 +299,6 @@ namespace X13.MQTT {
       }
     }
     private void ProccessPublishMsg(MqPublish pm) {
-      _tLoaded.Change(100, 0);
 
       Topic cur;
       if(!string.IsNullOrEmpty(pm.Payload)) {         // Publish

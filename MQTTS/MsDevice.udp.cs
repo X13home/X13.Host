@@ -115,7 +115,7 @@ namespace X13.Periphery {
         byte[] buf=msg.GetBytes();
 
         _udp.Send(buf, buf.Length, new IPEndPoint(new IPAddress(msg.Addr), 1883));
-        if(_verbose) {
+        if(_verbose.value) {
           Log.Debug("s {0:X2}:{1}:{2} \t{3}", gwIdx, BitConverter.ToString(msg.Addr), BitConverter.ToString(buf), msg.ToString());
         }
 

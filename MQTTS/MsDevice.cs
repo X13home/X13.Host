@@ -71,7 +71,7 @@ namespace X13.Periphery {
       MsGSerial.Open();
     }
     private static void PrintPacket(MsDevice dev, MsMessage msg, byte[] buf) {
-      if(_verbose) {
+      if(_verbose.value) {
         Log.Debug("r {4:X2}:{0}:{1} \t{2}:{3}", BitConverter.ToString(msg.Addr??new byte[0]), BitConverter.ToString(buf??new byte[0]), (dev!=null && dev.Owner!=null)?dev.Owner.name:string.Empty, msg.ToString(), (dev!=null && dev._gate!=null)?dev._gate.gwIdx:0xFF);
       }
     }
@@ -632,6 +632,9 @@ namespace X13.Periphery {
             _subsscriptions.Clear();
           }
           _stateVar=null;
+          if(_activeTimer!=null) {
+            _activeTimer.Change(Timeout.Infinite, Timeout.Infinite);
+          }
         }
         Owner=owner;
         if(Owner!=null) {
