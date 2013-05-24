@@ -80,10 +80,11 @@ namespace X13.MQTT {
       Topic.root.Subscribe("/etc/declarers/+", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/etc/declarers/type/#", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/var/now", PLC.PLCPlugin.L_dummy);
-      for(int i=100; i>=0; i--) {
-        Thread.Sleep(100);
+      for(int i=600; i>=0; i--) {
+        Thread.Sleep(50);
         if(_connected) {
           _stream.isSndPaused=true;
+          Topic.paused=true;
           break;
         }
       }
@@ -94,6 +95,9 @@ namespace X13.MQTT {
         Thread.Sleep(100);
       }
       _stream.isSndPaused=false;
+      Topic.paused=false;
+      Topic.ready.Reset();
+      Topic.ready.WaitOne(10000);
     }
 
     public bool Reconnect(bool slow=false) {

@@ -26,7 +26,7 @@ namespace X13.CC {
   /// </summary>
   public partial class MainWindow : Window {
     private X13.Plugins _plugins;
-    private X13.MQTT.MqClient _cl;
+    internal X13.MQTT.MqClient _cl;
     private bool _docLoaded=false;
     private Process _engine; // for embedded mode
     private ManualResetEventSlim _engineReady;
@@ -40,54 +40,30 @@ namespace X13.CC {
       Topic.Import("../data/CC.xst", "/local/cfg");
 
       Topic clientSettings=Topic.root.Get("/local/cfg/Client");
-      string url=clientSettings.Get<string>("_URL").value;
+      var url=clientSettings.Get<string>("_URL");
       var enable=clientSettings.Get<bool>("enable");
       enable.saved=true;
       enable.value=true;
 
-      if(url=="#local") {
-        if(_engine==null || _engine.HasExited) {
-          Directory.SetCurrentDirectory(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
-          _engine = new Process();
-          _engine.StartInfo.FileName = "Engine.exe";
-          _engine.StartInfo.Arguments="";
-
-          _engine.StartInfo.RedirectStandardInput=true;
-          _engine.StartInfo.RedirectStandardOutput=true;
-          _engine.StartInfo.RedirectStandardError=true;
-          _engine.EnableRaisingEvents=true;
-          _engine.StartInfo.UseShellExecute=false;
-          _engine.StartInfo.CreateNoWindow = true;
-          _engine.OutputDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
-          _engine.ErrorDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
-
-          _engineReady=new ManualResetEventSlim(false);
-          _engine.Start();
-
-          _engine.BeginErrorReadLine();
-          _engine.BeginOutputReadLine();
-          _engineReady.Wait(10000);
-        }
+      if(url.value=="#local") {
+        StartEmbeddedEngine();
       }
-
 
       _plugins=new Plugins();
 
       _verbose=Topic.root.Get<bool>("/local/cfg/repository/_verbose");
       Topic.root.Subscribe("/#", root_changed);
-      if(!string.IsNullOrEmpty(url)) {
-        _plugins.Init(false);
-        BrokerState="OFFLINE";
-        _clState=0;   // offline
-        _cl=_plugins["Client"] as MQTT.MqClient;
-        _cl.StatusChg+=MqClientStatusChanged;
-        _cl.KeepAlive=10;
+      _plugins.Init(false);
+      BrokerState="OFFLINE";
+      _clState=0;   // offline
+      _cl=_plugins["Client"] as MQTT.MqClient;
+      _cl.StatusChg+=MqClientStatusChanged;
+      _cl.KeepAlive=10;
 
-        if(_cl.Connected) {
-          MqClientStatusChanged(true);
-        }
-
+      if(_cl.Connected) {
+        MqClientStatusChanged(true);
       }
+
       InitializeComponent();
       DataContext = this;
 
@@ -102,10 +78,33 @@ namespace X13.CC {
         this.Width=System.Windows.SystemParameters.PrimaryScreenWidth*0.6;
         this.Height=System.Windows.SystemParameters.PrimaryScreenHeight*0.8;
       }
-      if(_cl!=null) {
-        _plugins.Start();
-      }
+      _plugins.Start();
       this.dockManager.ActiveDocumentChanged+=new EventHandler(dockManager_ActiveDocumentChanged);
+    }
+
+    internal void StartEmbeddedEngine() {
+      if(_engine==null || _engine.HasExited) {
+        Directory.SetCurrentDirectory(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
+        _engine = new Process();
+        _engine.StartInfo.FileName = "Engine.exe";
+        _engine.StartInfo.Arguments="";
+
+        _engine.StartInfo.RedirectStandardInput=true;
+        _engine.StartInfo.RedirectStandardOutput=true;
+        _engine.StartInfo.RedirectStandardError=true;
+        _engine.EnableRaisingEvents=true;
+        _engine.StartInfo.UseShellExecute=false;
+        _engine.StartInfo.CreateNoWindow = true;
+        _engine.OutputDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
+        _engine.ErrorDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
+
+        _engineReady=new ManualResetEventSlim(false);
+        _engine.Start();
+
+        _engine.BeginErrorReadLine();
+        _engine.BeginOutputReadLine();
+        _engineReady.Wait(10000);
+      }
     }
 
     private void _engine_OutputDataReceived(object sender, DataReceivedEventArgs e) {
@@ -169,7 +168,8 @@ namespace X13.CC {
             DockPane.Items.Add(GetContent("SetupView"));
           }
         }
-      } if(_clState==2) {
+      }
+      if(_clState==2) {
         dockManager.DeserializationCallback=new DockingManager.DeserializationCallbackHandler(DSPane);
         if(Settings.Layout!=null) {
           MemoryStream ms=new MemoryStream(Settings.Layout);
@@ -241,10 +241,8 @@ namespace X13.CC {
         Settings.MainWindowHeight=(int)this.Height;
 
       }
-      if(_cl!=null) {
-        System.Threading.Thread.Sleep(150);
-        _plugins.Stop();
-      }
+      System.Threading.Thread.Sleep(150);
+      _plugins.Stop();
       if(_engine!=null) {
         _engine.StandardInput.WriteLine(" ");
         _engine.WaitForExit(1500);
@@ -279,9 +277,7 @@ namespace X13.CC {
     }
 
     private void DockPanel_MouseUp(object sender, MouseButtonEventArgs e) {
-      if(_cl!=null) {
-        _cl.Reconnect();
-      }
+      _cl.Reconnect();
     }
 
     private void Export_Click(object sender, RoutedEventArgs e) {

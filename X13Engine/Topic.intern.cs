@@ -35,7 +35,7 @@ namespace X13 {
       _mq._childNodes=new SortedList<string, Topic>(1);
     }
     internal static ManualResetEvent ready=new ManualResetEvent(false);
-    internal static bool paused { get { return _publishQueue.paused; } set { _publishQueue.paused=value; } }
+    public static bool paused { get { return _publishQueue.paused; } set { _publishQueue.paused=value; } }
     /// <summary>Find or create Topic</summary>
     /// <param name="path"></param>
     /// <param name="pt">null for Topic or Type for DVar of type pt</param>

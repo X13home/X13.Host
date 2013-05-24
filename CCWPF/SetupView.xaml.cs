@@ -13,6 +13,7 @@ using System.Windows;
 using System.Windows.Input;
 using AvalonDock;
 using X13.PLC;
+using System;
 
 namespace X13.CC {
   /// <summary>
@@ -44,37 +45,55 @@ namespace X13.CC {
     }
 
     private void Button_Click(object sender, RoutedEventArgs e) {
+      biInstall.IsBusy=true;
+      string url;
+      if(EngineEmbedded.IsChecked.Value) {
+        url="#local";
+        biInstall.BusyContent="Start Embedded engine";
+      } else if(EngineInstall.IsChecked.Value) {
+        url="$local";
+        biInstall.BusyContent="Install Service";
+      } else {
+        url=RemoteUrl.Text;
+        biInstall.BusyContent="Connecting";
+      }
+      System.Threading.ThreadPool.QueueUserWorkItem(ProcUrl, url);
+    }
+
+    private void ProcUrl(object o) {
+      string url=o as string;
       DVar<string> userName=Topic.root.Get<string>("/local/cfg/Client/_username");
       _brokerUrl.saved=true;
       userName.saved=true;
-      if(EngineEmbedded.IsChecked.Value) {
+      if(url=="#local") {
         userName.value="local";
         _brokerUrl.value="#local";
-      } else if(EngineInstall.IsChecked.Value) {
-        biInstall.IsBusy=true;
-        InstallService();
+        App.mainWindow.StartEmbeddedEngine();
+      } else if(url=="$local") {
+        var p = new Process();
+        p.StartInfo.FileName = "X13Svc.exe";
+        p.StartInfo.Arguments="/i";
+        if(System.Environment.OSVersion.Version.Major >= 6) {
+          p.StartInfo.Verb = "runas";
+        }
+        p.Start();
+        p.WaitForExit();
         userName.value="local";
         _brokerUrl.value="localhost";
-        biInstall.IsBusy=false;
       } else {
-        if(RemoteUrl.Text=="localhost") {
+        if(url=="localhost") {
           userName.value="local";
         }
-        _brokerUrl.value=RemoteUrl.Text;
+        _brokerUrl.value=url;
       }
-      System.Windows.Forms.Application.Restart();
-      Application.Current.Shutdown();
-    }
-
-    private void InstallService() {
-      var p = new Process();
-      p.StartInfo.FileName = "X13Svc.exe";
-      p.StartInfo.Arguments="/i";
-      if(System.Environment.OSVersion.Version.Major >= 6) {
-        p.StartInfo.Verb = "runas";
+      if(!string.IsNullOrEmpty(_brokerUrl.value)) {
+        App.mainWindow._cl.Init();
+        App.mainWindow._cl.Start();
       }
-      p.Start();
-      p.WaitForExit();
+      this.Dispatcher.BeginInvoke(new Action(() => {
+        biInstall.IsBusy=false;
+        this.Close();
+      }));
     }
   }
 }

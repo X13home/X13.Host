@@ -51,6 +51,7 @@ namespace X13.PLC {
       cmd.CommandText = "SELECT path, type, val FROM topics ORDER BY path";
       IDataReader reader = cmd.ExecuteReader();
       Topic mq=Topic.root.Get("/local/MQ");
+      Topic.paused=true;
       while(reader.Read()) {
         string v1 = reader.GetString(reader.GetOrdinal("path"));
         string v2 = reader.GetString(reader.GetOrdinal("type"));
@@ -84,6 +85,7 @@ namespace X13.PLC {
         cur.saved=true;
         cur.FromJson(v3, mq);
       }
+
       _actions=new List<LazyAction>();
       _close=new ManualResetEvent(false);
       _thread=new Thread(new ThreadStart(PrThread));
@@ -91,6 +93,7 @@ namespace X13.PLC {
       Topic.root.Subscribe("/#", MqChanged);
     }
     public void Start() {
+      Topic.paused=false;
       _thread.Start();
     }
 

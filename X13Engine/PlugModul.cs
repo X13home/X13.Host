@@ -43,7 +43,6 @@ namespace X13 {
       string path=Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
       string exeName=Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location);
       var root=Topic.root;
-      Topic.paused=true;
       Log.Info("Starting {0}", exeName);
 
       var myId=Topic.root.Get<string>("/local/cfg/id");
@@ -66,6 +65,20 @@ namespace X13 {
       catch(CompositionException ex) {
         Log.Error("Load plugins - {0}", ex.ToString());
         throw;
+      }
+      {
+        _now=Topic.root.Get<DateTime>("/var/now");
+        _nowOffset=Topic.root.Get<long>("/local/cfg/Client/TimeOffset");
+        DateTime nowDT=DateTime.Now;
+        _now.value=nowDT;
+        _now.Get<long>("second").value=nowDT.Second;
+        _now.Get<long>("minute").value=nowDT.Minute;
+        _now.Get<long>("hour").value=nowDT.Hour;
+        _now.Get<long>("wDay").value=(long)nowDT.DayOfWeek;
+        _now.Get<long>("day").value=nowDT.Day;
+        _now.Get<long>("month").value=nowDT.Month;
+        _now.Get<long>("year").value=nowDT.Year;
+        //_1SecTimer.Change(Timeout.Infinite, Timeout.Infinite);  // !!!!!!!!!!!!!!!!!!!!!!
       }
 
       foreach(var i in _modules.OrderBy(z => z.Metadata.priority)) {
@@ -98,25 +111,6 @@ namespace X13 {
 
     }
     public void Start() {
-      _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 5050-DateTime.Now.Millisecond, 1000);
-      {
-        _now=Topic.root.Get<DateTime>("/var/now");
-        _nowOffset=Topic.root.Get<long>("/local/cfg/Client/TimeOffset");
-        DateTime nowDT=DateTime.Now;
-        _now.value=nowDT;
-        _now.Get<long>("second").value=nowDT.Second;
-        _now.Get<long>("minute").value=nowDT.Minute;
-        _now.Get<long>("hour").value=nowDT.Hour;
-        _now.Get<long>("wDay").value=(long)nowDT.DayOfWeek;
-        _now.Get<long>("day").value=nowDT.Day;
-        _now.Get<long>("month").value=nowDT.Month;
-        _now.Get<long>("year").value=nowDT.Year;
-        //_1SecTimer.Change(Timeout.Infinite, Timeout.Infinite);  // !!!!!!!!!!!!!!!!!!!!!!
-      }
-      Topic.ready.Reset();
-      Topic.paused=false;
-      Topic.ready.WaitOne(10000);
-
       foreach(var i in _modules.OrderBy(z => z.Metadata.priority)) {
         try {
           if(!string.IsNullOrWhiteSpace(i.Metadata.name)) {
@@ -131,8 +125,11 @@ namespace X13 {
           Log.Error("Start plugin {0} failure - {1}", i.Metadata.name??i.Value.GetType().FullName, ex.ToString());
         }
       }
+      _1SecTimer=new Timer(new TimerCallback(Tick1Sec), null, 2050-DateTime.Now.Millisecond, 1000);
     }
     public void Stop() {
+      string exeName=Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location);
+      Log.Info("Shutdown {0}", exeName);
       _1SecTimer.Change(Timeout.Infinite, Timeout.Infinite);
 
       foreach(var i in _modules.OrderByDescending(z => z.Metadata.priority)) {
