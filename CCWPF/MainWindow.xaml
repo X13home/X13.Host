@@ -6,8 +6,8 @@
         TextOptions.TextRenderingMode="Grayscale" FontSize="12" FontFamily="Times New Roman">
   <Grid>
     <Grid.ColumnDefinitions>
-      <ColumnDefinition MinWidth="120" Width="9*" />
-      <ColumnDefinition MaxWidth="200" MinWidth="120" />
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition MinWidth="120" Width="auto" />
     </Grid.ColumnDefinitions>
     <Grid.RowDefinitions>
       <RowDefinition Height="24"/>
@@ -47,7 +47,7 @@
           </Style.Triggers>
         </Style>
       </DockPanel.Style>
-      <TextBlock Text="{Binding BrokerState}" HorizontalAlignment="Center" VerticalAlignment="Center" DockPanel.Dock="Top"/>
+      <TextBlock Text="{Binding BrokerState}" HorizontalAlignment="Center" VerticalAlignment="Center" DockPanel.Dock="Top" Margin="20,0"/>
     </DockPanel>
     <ad:DockingManager x:Name="dockManager" Grid.Row="2" Grid.ColumnSpan="2" Loaded="dockManager_Loaded">
       <ad:ResizingPanel>

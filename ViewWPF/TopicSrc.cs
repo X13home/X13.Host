@@ -10,6 +10,7 @@ using X13.MQTT;
 namespace X13.View {
   internal class TopicSrc : INotifyPropertyChanged {
     private static MqClient _cl;
+    private static X13.Plugins _plugins;
 
     static TopicSrc() {
       try {
@@ -18,18 +19,19 @@ namespace X13.View {
       catch(Exception ex) {
         Log.Error(ex.ToString());
       }
-      _cl=new MqClient();
+      _plugins=new Plugins();
 
-      var myId=Topic.root.Get<string>("/local/cfg/id");
-      if(string.IsNullOrWhiteSpace(myId.value)) {
-        myId.saved=true;
-        myId.value=string.Format("{0}_view@{1}", Environment.UserName, Environment.MachineName);
-      }
       var url=Topic.root.Get<string>("/local/cfg/Client/_URL");
       if(string.IsNullOrEmpty(url.value)) {
+        url.saved=true;
         url.value="localhost";
       }
-      _cl.Start();
+      _plugins.Init(false);
+      _cl=_plugins["Client"] as MQTT.MqClient;
+      _plugins.Start();
+    }
+    public static void Disconnect() {
+      _plugins.Stop();
     }
 
     private Topic _model=null;

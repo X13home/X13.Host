@@ -439,5 +439,9 @@ namespace X13.View {
         break;
       }
     }
+
+    private void Window_Closed(object sender, EventArgs e) {
+      TopicSrc.Disconnect();
+    }
   }
 }

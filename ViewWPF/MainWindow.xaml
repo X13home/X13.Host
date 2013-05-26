@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:my="clr-namespace:X13.View"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
-        Title="X13.View" Height="560" Width="800" FontFamily="Tahoma" Icon="/ViewWPF;component/logo64.ico" FontSize="10">
+        Title="X13.View" Height="560" Width="800" FontFamily="Tahoma" Icon="/ViewWPF;component/logo64.ico" FontSize="10" Closed="Window_Closed">
   <Grid>
     <Grid.ColumnDefinitions>
       <ColumnDefinition />
