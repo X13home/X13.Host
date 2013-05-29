@@ -175,7 +175,7 @@ namespace X13 {
         }
       }
     }
-    private static void Export(XElement xParent, Topic tCur) {
+    public static void Export(XElement xParent, Topic tCur) {
       if(xParent==null || tCur==null) {
         return;
       }

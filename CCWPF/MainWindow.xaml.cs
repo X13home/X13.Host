@@ -180,7 +180,7 @@ namespace X13.CC {
           dockManager.Documents[0].Activate();
         }
         ThreadPool.QueueUserWorkItem(o => {
-          Engine.SendStat(2);
+          Engine.SendStat(1);
         });
       }
     }
@@ -241,6 +241,7 @@ namespace X13.CC {
         Settings.MainWindowHeight=(int)this.Height;
 
       }
+      Engine.SendStat(0);
       System.Threading.Thread.Sleep(150);
       _plugins.Stop();
       if(_engine!=null) {

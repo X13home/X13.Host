@@ -36,6 +36,7 @@ namespace X13 {
     private DVar<LogLevel> _lThreshold;
     private DVar<long> _lHead;
     private DVar<bool> _debug;
+    private Timer _statTimer;
 
     private Plugins _plugins;
 
@@ -93,15 +94,14 @@ namespace X13 {
       }
 
       _plugins.Start();
-
-      ThreadPool.QueueUserWorkItem(o => {
-        SendStat(1);
-      });
+      _statTimer=new Timer(o => {
+        SendStat(2);
+      }, null, 1500, 7200000);
     }
 
     public void Shutdown() {
+      _statTimer.Change(Timeout.Infinite, Timeout.Infinite);
       _plugins.Stop();
-      SendStat(0);
       _log.Dispose();
       Thread.Sleep(300);
       Topic.Export("../data/Engine.xst", Topic.root.Get("/local/cfg"));

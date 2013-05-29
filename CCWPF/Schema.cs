@@ -10,12 +10,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Xml.Linq;
 using X13.PLC;
 
 namespace X13.CC {
@@ -293,6 +296,10 @@ namespace X13.CC {
           t.Remove();
         }
         PropertyView.Selected=null;
+      } else if(e.Key==Key.C && Keyboard.IsKeyDown(Key.LeftCtrl)) {
+        mi_Copy(null, null);
+      } else if(e.Key==Key.V && Keyboard.IsKeyDown(Key.LeftCtrl)) {
+        mi_Paste(null, null);
       }
       base.OnKeyUp(e);
     }
@@ -387,7 +394,15 @@ namespace X13.CC {
       if(e.ChangedButton==MouseButton.Right && e.RightButton==MouseButtonState.Released) {
         Topic cur;
         TopicView tv;
-        if(selected!=null && (cur=selected.GetModel())!=null && (tv=TopicView.root.Get(cur, true))!=null) {
+        if(_mSelected!=null) {
+          var cm=(this.Parent as Grid).ContextMenu;
+          cm.Items.Clear();
+          MenuItem mi=new MenuItem();
+          mi.Header="Copy";
+          mi.Click+=new RoutedEventHandler(mi_Copy);
+          cm.Items.Add(mi);
+          cm.IsOpen=true;
+        } else if(selected!=null && (cur=selected.GetModel())!=null && (tv=TopicView.root.Get(cur, true))!=null) {
           var cm=(this.Parent as Grid).ContextMenu;
           var actions=tv.GetActions();
           cm.Items.Clear();
@@ -427,6 +442,14 @@ namespace X13.CC {
           if(cm.Items.Count>0) {
             cm.IsOpen=true;
           }
+        } else if(Clipboard.ContainsText()) {
+          var cm=(this.Parent as Grid).ContextMenu;
+          cm.Items.Clear();
+          MenuItem mi=new MenuItem();
+          mi.Header="Paste";
+          mi.Click+=new RoutedEventHandler(mi_Paste);
+          cm.Items.Add(mi);
+          cm.IsOpen=true;
         }
         return;
       } else if(e.ChangedButton==MouseButton.Left && e.LeftButton==MouseButtonState.Released) {
@@ -592,6 +615,39 @@ namespace X13.CC {
         break;
       }
 
+    }
+    public void mi_Copy(object sender, RoutedEventArgs e) {
+      if(_mSelected==null) {
+        return;
+      }
+      XDocument doc=new XDocument(new XElement("root"));
+      var ms=_mSelected.Select(z => z.GetModel()).Where(z => z!=null);
+      foreach(var t in ms) {
+        Topic.Export(doc.Root, t);
+      }
+      var ws=this.model.children.Where(z => z.valueType==typeof(PiWire)).Cast<DVar<PiWire>>().Where(z => z!=null);
+      foreach(var w in ws.Where(z => (ms.Any(z1 => z1==z.value.A) || ms.Any(z1 => z1==z.value.A.parent)) && (ms.Any(z2 => z2==z.value.B) || ms.Any(z2 => z2==z.value.B.parent)))) {
+        Topic.Export(doc.Root, w);
+      }
+
+      string exp=doc.ToString(SaveOptions.OmitDuplicateNamespaces);
+      Clipboard.SetText(exp);
+    }
+    public void mi_Paste(object sender, RoutedEventArgs e) {
+      string inp=Clipboard.GetText();
+      if(string.IsNullOrWhiteSpace(inp)) {
+        return;
+      }
+      MemoryStream ms=new MemoryStream(Encoding.UTF8.GetBytes(inp));
+      ms.Seek(0, SeekOrigin.Begin);
+      try {
+        using(var sr=new StreamReader(ms)) {
+          Topic.Import(sr, this.model.path);
+        }
+      }
+      catch(Exception ex) {
+        Log.Error(ex.Message);
+      }
     }
   }
 }
