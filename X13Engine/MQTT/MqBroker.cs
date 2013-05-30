@@ -54,7 +54,7 @@ namespace X13.MQTT {
 
       #region Load Security
       Topic sec;
-      if(!Topic.root.Exist("/etc/Broker/security", out sec)) {
+      if(!Topic.root.Exist("/etc/Broker/security", out sec) || !sec.children.Any()) {
         sec=Topic.root.Get("/etc/Broker/security");
         byte[] randBytes=new byte[18];
         (new Random()).NextBytes(randBytes);
@@ -68,11 +68,11 @@ namespace X13.MQTT {
         SetTopic("groups/1/user", true, sec);
         SetTopic<uint>("acls/var", 0x1F000001, sec);
       }
-      sec.Subscribe("acls/#", sec_changed);
       sec.aclAll=TopicAcl.None;
       sec.aclOwner=TopicAcl.Full;
       sec.grpOwner=sec.Get("groups/0");
       SetAcl(sec.Get("acls"), Topic.root);
+      sec.Subscribe("acls/#", sec_changed);
 
       #endregion Load security
 

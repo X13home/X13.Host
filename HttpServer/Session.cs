@@ -58,7 +58,9 @@ namespace X13.HttpServer {
           _ctx.Response.Abort();
         }
         _ctx=ctx;
-        Log.Debug("{0}.Enq({1})", id, ctx.Request.RemoteEndPoint);
+        if(_verbose.value) {
+          Log.Debug("{0}.Enq({1})", id, ctx.Request.RemoteEndPoint);
+        }
         if(_SendBuf.Length>3) {
           SendResponse();
         }
@@ -99,7 +101,9 @@ namespace X13.HttpServer {
       if(snd.path.StartsWith("/local") || !MQTT.MqBroker.CheckAcl(user, snd, TopicAcl.Subscribe)) {
         return;
       }
-      Log.Debug("{0}.Chg({1})", id, snd.path);
+      if(_verbose.value) {
+        Log.Debug("{0}.Chg({1})", id, snd.path);
+      }
       lock(_SendBuf) {
         if(arg.Art==TopicChanged.ChangeArt.Remove) {
           _SendBuf.AppendFormat("{{\"{0}\": null}}\r\n", snd.path);
@@ -128,7 +132,9 @@ namespace X13.HttpServer {
         // You must close the output stream.
         output.Close();
         response.SetCookie(id);
-        Log.Debug("{0}.Send({1})", id, responseString);
+        if(_verbose.value) {
+          Log.Debug("{0}.Send({1})", id, responseString);
+        }
       }
       _ctx=null;
     }

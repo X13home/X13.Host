@@ -1,43 +1,86 @@
+<!DOCTYPE html>
 <html>
 <head>
   <title>X13.Home</title>
   <link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css" />
-  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-  <script type="text/javascript" src="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>
-  <script type="text/javascript" src="pubsub.js"></script>
 </head>
 <body>
-  <select data-role="slider" data-pub="/var/bool">
-    <option value=false>Off </option>
-    <option value=true>On </option>
-  </select>
-  <select data-role="slider" data-pub="/var/bool2">
-    <option value=false>Off </option>
-    <option value=true>On </option>
-  </select>
-
-  <input id="iMin" type="number" value="99" />
+  <div style="background-color: #F0FFFF; width: 210px; float:left">
+    <div>
+      <h3 style="text-align: center">
+        Dimable lighting</h3>
+    </div>
+    <div>
+      <input type="text" class="knob_long" data-sub="/var/demo/light" data-pub="/var/demo/lightSet" data-angleoffset="-125" data-anglearc="250" />
+    </div>
+    <div>
+      <button style="text-align: center; width: 190px; margin: 2px 4px;" data-pub="/var/demo/pir1">
+        PIR1</button>
+    </div>
+  </div>
+  <div style="background-color: #FFF0FF; width: 210px; float:left">
+    <div>
+      <h3 style="text-align: center">Outdoor temperature</h3>
+    </div>
+    <div>
+      <input type="text" class="knob_long" data-sub="/var/demo/temperatur" data-angleoffset="-180" data-anglearc="240" data-min="-30" data-max="55" data-step="0.1" />
+    </div>
+    <div style="float:none"></div>
+  </div>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <script type="text/javascript" src="jquery.knob.js"></script>
+  <script type="text/javascript" src="pubsub.js"></script>
   <script type="text/javascript">
     var timer;
 
     function reconnect() {
       clearTimeout(timer);
-      timer = setTimeout(function () { startStreaming(); }, 1000);
+      timer = setTimeout(function () { startStreaming(); }, 30);
     }
 
-    function dispatchFunc(topic, val) {
-      $("#iMin").attr('value', val);
+    function dispatchFunc(topic, v) {
+      if (v == true) {
+        v = 1;
+      } else if (v == false) {
+        v = 0;
+      }
+      $("[data-sub='" + topic + "']").val(v).trigger('change');
     }
 
     function startStreaming() {
       pubsub.register({ data: dispatchFunc, error: reconnect });
-      pubsub.subscribe("/var/long", { success: pubsub.read });
+      $("input.knob_long[data-sub]").each(function (idx, el) {
+        pubsub.subscribe(el.dataset.sub, { success: pubsub.read });
+        $.getJSON("/data" + el.dataset.sub, function (v) {
+          $(el).val(v).trigger('change');
+        });
+      });
     }
 
-    $(window).load(function () {
-      $('select[data-role="slider"]').bind("change", function (event, ui) {
-        pubsub.publish(event.target.dataset.pub, event.target.value);
+    $(function () {
+      $("input.knob_long[data-pub]").each(function (idx, el) {
+        $(el).knob({
+          'release': function (v) {
+            pubsub.publish(this.$[0].dataset.pub, v);
+          }
+        });
+        $.getJSON("/data" + el.dataset.pub, function (v) {
+          $(el).val(v).trigger('change');
+        });
       });
+
+      $("input.knob_long:not([data-pub])").knob({
+        'readOnly': true
+      });
+      $("button[data-pub]").each(function (idx, el) {
+        $(el).mousedown(function (obj) {
+          pubsub.publish(obj.target.dataset.pub, true);
+        });
+        $(el).mouseup(function (obj) {
+          pubsub.publish(obj.target.dataset.pub, false);
+        });
+      });
+
       startStreaming();
     });
   </script>
