@@ -251,7 +251,7 @@ namespace X13.Periphery {
         gwIdx=i;
         _sendQueue=new Queue<MsMessage>();
         ThreadPool.QueueUserWorkItem(CommThread);
-        Send(new MsDisconnect() { Addr=new byte[] { 0 } });
+        Send(new MsDisconnect() { Addr=new byte[] { addr } });
       }
       public void Send(MsMessage msg) {
         lock(_sendQueue) {

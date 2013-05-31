@@ -9,9 +9,11 @@ namespace X13.HttpServer {
   internal class Session {
     private static List<Session> _sList;
     private const int RespTO=120000;
+    private static DVar<bool> _verbose;
 
     static Session() {
       _sList=new List<Session>();
+      _verbose=Topic.root.Get<bool>("/etc/HttpServer/_verbose");
     }
 
     public static Session Get(Cookie cookie, string userName) {
@@ -22,7 +24,7 @@ namespace X13.HttpServer {
         }
       }
       if(s==null) {
-        s=new Session(userName);
+        s=new Session(cookie.Value, userName);
         lock(_sList) {
           _sList.Add(s);
         }
@@ -40,9 +42,13 @@ namespace X13.HttpServer {
     private StringBuilder _SendBuf;
     private Timer _to;
 
-    private Session(string user) {
+    public Session(string p, string user) {
       this.user=user;
-      id=new Cookie("session", Guid.NewGuid().ToString());
+      if(string.IsNullOrEmpty(p)) {
+        id=new Cookie("session", Guid.NewGuid().ToString());
+      } else {
+        id=new Cookie("session", p);
+      }
       _subscriptions=new List<Topic.Subscription>();
       _SendBuf=new StringBuilder();
       _SendBuf.Clear();

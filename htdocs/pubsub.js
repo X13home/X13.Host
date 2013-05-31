@@ -72,6 +72,17 @@ var pubsub = (function () {
           pollxhr.send(" ");
         },
 
+        s4 = function () {
+          return Math.floor((1 + Math.random()) * 0x10000)
+             .toString(16)
+             .substring(1);
+        },
+
+        guid = function () {
+          return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+           s4() + '-' + s4() + s4() + s4();
+        },
+
         start = function () {
           pollxhrRepeat = true;
           pollLoop();
@@ -130,6 +141,7 @@ var pubsub = (function () {
     },
 
     register: function (cbs) {
+      document.cookie = "session=" +guid()+ ";";
       if (isdefined(cbs) && isdefined(cbs.data))
         data_cb = cbs.data;
       if (isdefined(cbs) && isdefined(cbs.error))
