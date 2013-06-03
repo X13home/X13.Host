@@ -24,7 +24,7 @@ namespace X13.HttpServer {
         }
       }
       if(s==null) {
-        s=new Session(cookie.Value, userName);
+        s=new Session(cookie!=null?cookie.Value:string.Empty, userName);
         lock(_sList) {
           _sList.Add(s);
         }
@@ -68,7 +68,13 @@ namespace X13.HttpServer {
           Log.Debug("{0}.Enq({1})", id, ctx.Request.RemoteEndPoint);
         }
         if(_SendBuf.Length>3) {
-          SendResponse();
+          try {
+            SendResponse();
+          }
+          catch(Exception) {
+            Close();
+            return;
+          }
         }
         _to.Change(RespTO, RespTO);
       }
@@ -84,8 +90,12 @@ namespace X13.HttpServer {
     private void TimeOut(object o) {
       lock(_SendBuf) {
         if(_ctx!=null) {
-          SendResponse();
-          return;
+          try {
+            SendResponse();
+            return;
+          }
+          catch(Exception) {
+          }
         }
       }
       Close();
@@ -97,8 +107,8 @@ namespace X13.HttpServer {
       _to.Dispose();
       if(_ctx!=null) {
         _ctx.Response.Abort();
-        _ctx=null;
       }
+      _ctx=null;
       foreach(var s in _subscriptions) {
         Topic.root.Unsubscribe(s.path, s.func);
       }
@@ -119,7 +129,12 @@ namespace X13.HttpServer {
           return;
         }
         if(_ctx!=null) {
-          SendResponse();
+          try {
+            SendResponse();
+          }
+          catch(Exception) {
+            Close();
+          }
         }
       }
     }

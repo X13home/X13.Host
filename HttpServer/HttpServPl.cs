@@ -69,10 +69,12 @@ namespace X13.HttpServer {
       bool userPassWrong=true;
       string userName;
       Session ses;
+      HttpListenerContext ctx=null;
+      string RemoteEP=string.Empty;
 
       try {
-        var ctx = _listener.EndGetContext(ar);
-
+        ctx = _listener.EndGetContext(ar);
+        RemoteEP=ctx.Request.RemoteEndPoint.ToString();
         if(ctx.User!=null) {
           var id=ctx.User.Identity as HttpListenerBasicIdentity;
           userPassWrong=!MQTT.MqBroker.CheckAuth(id.Name, id.Password);
@@ -155,12 +157,14 @@ namespace X13.HttpServer {
             output.Close();
           }
         }
-        _listener.BeginGetContext(new AsyncCallback(ContextReady), null);
       }
       catch(ObjectDisposedException) {
       }
       catch(Exception ex) {
-        Log.Error("ContextReady Exception={0}", ex);
+        Log.Error("ContextReady[{1}] Exception={0}", ex, RemoteEP);
+      }
+      if(_listener!=null && _listener.IsListening) {
+        _listener.BeginGetContext(new AsyncCallback(ContextReady), null);
       }
     }
 
