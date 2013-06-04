@@ -29,7 +29,7 @@ namespace X13.HttpServer {
       var urlD=Topic.root.Get<string>("/local/cfg/HttpServer/_url");
 
       _htPath=Path.GetFullPath("../htdocs");
-      
+
       if(string.IsNullOrEmpty(urlD.value)) {
         urlD.saved=true;
         urlD.value=@"http://+:80/";
@@ -65,6 +65,7 @@ namespace X13.HttpServer {
     private void L_dummy(Topic sender, TopicChanged arg) {
       return;
     }
+
     private void ContextReady(IAsyncResult ar) {
       bool userPassWrong=true;
       string userName;
@@ -81,7 +82,7 @@ namespace X13.HttpServer {
           userName=id.Name;
         } else {
           userPassWrong=false;
-          userName="user";
+          userName=string.Empty;
         }
         if(_verbose.value) {
           Log.Debug("{0}({1}) [{2}] {3}", userName, userPassWrong?"fail":"pass", ctx.Request.HttpMethod, ctx.Request.RawUrl);
@@ -100,31 +101,31 @@ namespace X13.HttpServer {
                 if(ctx.Request.RawUrl==@"/") {
                   responseString=File.ReadAllText(Path.Combine(_htPath, "index.html"));
                   response.ContentType="text/html";
-                } else 
-                if(ctx.Request.RawUrl.StartsWith(@"/data/")) {
-                  string mqPath=ctx.Request.RawUrl.Substring(5);
-                  Topic cur;
-                  if(Topic.root.Exist(mqPath, out cur)) {
-                    if(MQTT.MqBroker.CheckAcl(userName, cur, TopicAcl.Subscribe)) {
-                      responseString=cur.ToJson();
-                      response.ContentType="application/json";
+                } else
+                  if(ctx.Request.RawUrl.StartsWith(@"/data/")) {
+                    string mqPath=ctx.Request.RawUrl.Substring(5);
+                    Topic cur;
+                    if(Topic.root.Exist(mqPath, out cur)) {
+                      if(MQTT.MqBroker.CheckAcl(userName, cur, TopicAcl.Subscribe)) {
+                        responseString=cur.ToJson();
+                        response.ContentType="application/json";
+                      } else {
+                        response.StatusCode=403;
+                        responseString="403 Forbidden";
+                      }
+                    } else {
+                      responseString="null";
+                    }
+                  } else {
+                    string path=Path.GetFullPath(Path.Combine(_htPath, ctx.Request.RawUrl.Substring(1)));
+                    if(path.StartsWith(_htPath) && File.Exists(path)) {
+                      responseString=File.ReadAllText(path);
+                      response.ContentType=Ext2ContentType(Path.GetExtension(path));
                     } else {
                       response.StatusCode=403;
                       responseString="403 Forbidden";
                     }
-                  } else {
-                    responseString="null";
                   }
-                } else {
-                  string path=Path.GetFullPath(Path.Combine(_htPath, ctx.Request.RawUrl.Substring(1)));
-                  if(path.StartsWith(_htPath) && File.Exists(path)) {
-                    responseString=File.ReadAllText(path);
-                    response.ContentType=Ext2ContentType(Path.GetExtension(path));
-                  } else {
-                    response.StatusCode=403;
-                    responseString="403 Forbidden";
-                  }
-                }
 
               }
               catch(Exception) {
@@ -146,15 +147,19 @@ namespace X13.HttpServer {
               }
             } else {
               response.StatusCode=405;
-              responseString="405 Method Not Allowed";
+              if(ctx.Request.HttpMethod!="HEAD") {
+                responseString="405 Method Not Allowed";
+              }
             }
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-            // Get a response stream and write the response to it.
-            response.ContentLength64 = buffer.Length;
-            System.IO.Stream output = response.OutputStream;
-            output.Write(buffer, 0, buffer.Length);
-            // You must close the output stream.
-            output.Close();
+            if(!string.IsNullOrEmpty(responseString)) {
+              byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+              // Get a response stream and write the response to it.
+              response.ContentLength64 = buffer.Length;
+              System.IO.Stream output = response.OutputStream;
+              output.Write(buffer, 0, buffer.Length);
+              // You must close the output stream.
+              output.Close();
+            }
           }
         }
       }

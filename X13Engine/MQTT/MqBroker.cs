@@ -59,19 +59,18 @@ namespace X13.MQTT {
         byte[] randBytes=new byte[18];
         (new Random()).NextBytes(randBytes);
         SetTopic("users/root", System.Convert.ToBase64String(randBytes).Substring(2, 16), sec);
-        SetTopic("users/user", " ", sec);
         SetTopic("users/local", string.Empty, sec);
         SetTopic("groups/0", "Administrators", sec);
         SetTopic("groups/0/root", true, sec);
         SetTopic("groups/0/local", true, sec);
         SetTopic("groups/1", "Users", sec);
-        SetTopic("groups/1/user", true, sec);
-        SetTopic<uint>("acls/var", 0x1F000001, sec);
+        SetTopic<long>("acls/var", 0x1F000001, sec);
+        SetTopic<long>("acls/var/demo", 0xFF000001, sec);
+        Thread.Sleep(300);
       }
       sec.aclAll=TopicAcl.None;
       sec.aclOwner=TopicAcl.Full;
       sec.grpOwner=sec.Get("groups/0");
-      SetAcl(sec.Get("acls"), Topic.root);
       sec.Subscribe("acls/#", sec_changed);
 
       #endregion Load security

@@ -91,13 +91,20 @@ namespace X13.MQTT {
     }
 
     public void Start() {
-      for(int i=35; i>=0 && _stream.isSndPaused; i--) {
+      for(int i=35; i>=0; i--) {
         Thread.Sleep(100);
+        if(_stream==null){
+          Topic.paused=false;
+          return;
+        }
+        if(!_stream.isSndPaused) {
+          break;
+        }
       }
       _stream.isSndPaused=false;
       Topic.paused=false;
-      Topic.ready.Reset();
-      Topic.ready.WaitOne(10000);
+      //Topic.ready.Reset();
+      //Topic.ready.WaitOne(10000);
     }
 
     public bool Reconnect(bool slow=false) {

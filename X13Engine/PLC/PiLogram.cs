@@ -17,12 +17,12 @@ using X13.MQTT;
 namespace X13.PLC {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public class PiLogram : ITopicOwned {
-    private static string _id;
-    private static bool _isDefault;
+    private static DVar<string> _id;
+    private static DVar<string> _defPLC;
+    internal static bool _isDefault { get { return _id.value==_defPLC.value; } }
     static PiLogram() {
-      _id=Topic.root.Get<string>("/local/cfg/id").value;
-      var plcDefault=Topic.root.Get<string>("/etc/PLC/default");
-      _isDefault=plcDefault.value==_id;
+      _id=Topic.root.Get<string>("/local/cfg/id");
+      _defPLC=Topic.root.Get<string>("/etc/PLC/default");
     }
 
     private DVar<string> _via;
@@ -32,14 +32,11 @@ namespace X13.PLC {
 
     public DVar<PiLogram> Owner { get; private set; }
 
-    public bool exec { get { return _via!=null && _via.value==_id; } }
+    public bool exec { get { return _via!=null && _via.value==_id.value; } }
 
     private void _via_changed(Topic sender, TopicChanged arg) {
       if(arg.Art!=TopicChanged.ChangeArt.Value) {
         return;
-      }
-      if(_via!=null && string.IsNullOrEmpty(_via.value) && _isDefault) {
-        _via.value=_id;
       }
       RefreshStatements();
     }
