@@ -54,7 +54,9 @@ namespace X13.HttpServer {
           return;
         }
       }
-      _listener.AuthenticationSchemes=AuthenticationSchemes.Basic | AuthenticationSchemes.Anonymous;
+      var auth=Topic.root.Get<bool>("/etc/HttpServer/Requre authorization");
+      auth.saved=true;
+      _listener.AuthenticationSchemes=auth.value?AuthenticationSchemes.Basic:AuthenticationSchemes.Anonymous;
       _listener.BeginGetContext(new AsyncCallback(ContextReady), null);
     }
     public void Stop() {
@@ -77,8 +79,10 @@ namespace X13.HttpServer {
         ctx = _listener.EndGetContext(ar);
         RemoteEP=ctx.Request.RemoteEndPoint.ToString();
         if(ctx.User!=null) {
-          var id=ctx.User.Identity as HttpListenerBasicIdentity;
-          userPassWrong=!MQTT.MqBroker.CheckAuth(id.Name, id.Password);
+          var id=(HttpListenerBasicIdentity)ctx.User.Identity;
+          if(id.Name!="local" || ctx.Request.IsLocal) {
+            userPassWrong=!MQTT.MqBroker.CheckAuth(id.Name, id.Password);
+          }
           userName=id.Name;
         } else {
           userPassWrong=false;
