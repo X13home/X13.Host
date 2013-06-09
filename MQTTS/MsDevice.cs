@@ -10,50 +10,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Threading;
 
 namespace X13.Periphery {
-  [Export(typeof(IPlugModul))]
-  [ExportMetadata("priority", 5)]
-  [ExportMetadata("name", "MQTTS")]
-  public class MQTTSPlugin : IPlugModul {
-    private const long  _version=3;
-
-    public void Init() {
-      Topic.root.Subscribe("/etc/MQTTS/#", Dummy);
-      Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
-    }
-    public void Start() {
-      var ver=Topic.root.Get<long>("/etc/MQTTS/version");
-      if(ver.value<_version) {
-        ver.saved=true;
-        ver.value=_version;
-        Log.Info("Load MQTTS declarers");
-        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTS.xst");
-        if(st!=null) {
-          using(var sr=new StreamReader(st)) {
-            Topic.Import(sr, null);
-          }
-        }
-
-      }
-      MsDevice.Open();
-    }
-
-    void Dummy(Topic src, TopicChanged arg) {
-    }
-
-    public void Stop() {
-      Topic.root.Unsubscribe("/etc/MQTTS/#", Dummy);
-      Topic.root.Unsubscribe("/etc/declarers/#", Dummy);
-      //TODO: Close
-    }
-  }
 
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public partial class MsDevice : ITopicOwned {
@@ -68,7 +29,6 @@ namespace X13.Periphery {
     }
     internal static void Open() {
       MsGUdp.Open();
-      MsGSerial.Open();
     }
     private static void PrintPacket(MsDevice dev, MsMessage msg, byte[] buf) {
       if(_verbose.value) {

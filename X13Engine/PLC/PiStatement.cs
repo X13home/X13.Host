@@ -73,6 +73,10 @@ namespace X13.PLC {
       } else {
         via.parent.Unsubscribe("#", L_dummy);
       }
+      if(string.IsNullOrEmpty(via.value) && PiLogram._isDefault) {
+        via.saved=true;
+        via.value=_id.value;
+      }
     }
 
     public static void L_dummy(Topic sender, TopicChanged arg) {

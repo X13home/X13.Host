@@ -9,14 +9,54 @@
 #endregion license
 
 using System;
+using System.ComponentModel.Composition;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Threading;
 
 namespace X13.Periphery {
+  [Export(typeof(IPlugModul))]
+  [ExportMetadata("priority", 5)]
+  [ExportMetadata("name", "MQTTS.udp")]
+  public class MQTTSUdp : IPlugModul {
+    private const long _version=3;
+
+    public void Init() {
+      Topic.root.Subscribe("/etc/MQTTS/#", Dummy);
+      Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
+    }
+    public void Start() {
+      var ver=Topic.root.Get<long>("/etc/MQTTS.udp/version");
+      if(ver.value<_version) {
+        ver.saved=true;
+        ver.value=_version;
+        Log.Info("Load MQTTS.udp declarers");
+        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTSUdp.xst");
+        if(st!=null) {
+          using(var sr=new StreamReader(st)) {
+            Topic.Import(sr, null);
+          }
+        }
+
+      }
+      MsDevice.MsGUdp.Open();
+    }
+
+    void Dummy(Topic src, TopicChanged arg) {
+    }
+
+    public void Stop() {
+      Topic.root.Unsubscribe("/etc/MQTTS/#", Dummy);
+      Topic.root.Unsubscribe("/etc/declarers/#", Dummy);
+      //TODO: Close
+    }
+  }
+
   public partial class MsDevice : ITopicOwned {
-    private class MsGUdp : IMsGate {
+    internal class MsGUdp : IMsGate {
 
       #region static
       private static IPAddress[] _myIps;
