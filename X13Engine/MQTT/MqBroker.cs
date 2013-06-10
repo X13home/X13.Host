@@ -182,9 +182,10 @@ namespace X13.MQTT {
     private List<Topic.Subscription> _subscriptions=new List<Topic.Subscription>();
     private DVar<MqBroker> _owner;
     private MqStreamer _stream;
+    private bool _syncCompleted=true;
 
     private MqBroker(TcpClient cl) {
-      _stream=new MqStreamer(cl, Received, null);
+      _stream=new MqStreamer(cl, Received, SendIdle);
       _tOut=new Timer(new TimerCallback(TimeOut), null, 900, Timeout.Infinite);
     }
 
@@ -257,6 +258,7 @@ namespace X13.MQTT {
               ackMsg.Add(s.qos);
             }
           }
+          _syncCompleted=false;
           this.Send(ackMsg);
         }
         break;
@@ -357,7 +359,12 @@ namespace X13.MQTT {
         }
       }
     }
-
+    private void SendIdle() {
+      if(!_syncCompleted) {
+        _syncCompleted=true;
+        this.Send(new MqPublish(_mq) { QualityOfService=QoS.AtMostOnce });
+      }
+    }
     private void Disconnect() {
       if(_connected && _stream!=null) {
         _connected=false;

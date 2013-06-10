@@ -125,7 +125,7 @@ namespace X13.MQTT {
         if(_waitAck.Count>0) {
           _sendTimer.Change(900, Timeout.Infinite);
         } else {
-          _sendTimer.Change(30, Timeout.Infinite);
+          _sendTimer.Change(45, Timeout.Infinite);
         }
       }
     }
@@ -256,8 +256,6 @@ namespace X13.MQTT {
           } while(_stream.DataAvailable);
           if(_rcvState!=0) {
             _rcvTimer.Change(100, Timeout.Infinite);
-          } else if(_sndPaused) {
-            _rcvTimer.Change(300, Timeout.Infinite);
           } else {
             _rcvTimer.Change(Timeout.Infinite, Timeout.Infinite);
           }
@@ -266,6 +264,8 @@ namespace X13.MQTT {
           return;
         }
         catch(Exception ex) {
+          _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
+          _rcvState=0;
           Log.Warning(ex.ToString());
         }
       } else {
@@ -293,8 +293,6 @@ namespace X13.MQTT {
       if(_rcvState!=0) {
         _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
         _rcvState=0;
-      } else if(_sndPaused) {
-        SndResume();
       }
     }
 

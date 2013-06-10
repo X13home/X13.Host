@@ -101,9 +101,12 @@ namespace X13.MQTT {
           return;
         }
       }
+      if(_stream!=null) {
+        _stream.isSndPaused=false;
+      }
       Topic.paused=false;
       Log.Warning("MqClient: loading timeout");
-      Reconnect();
+      //Reconnect();
     }
 
     public bool Reconnect(bool slow=false) {
@@ -322,7 +325,10 @@ namespace X13.MQTT {
       }
     }
     private void ProccessPublishMsg(MqPublish pm) {
-
+      if(_stream!=null && _stream.isSndPaused && pm.Path==_mq.path) {
+        _stream.isSndPaused=false;
+        return;
+      }
       Topic cur;
       if(!string.IsNullOrEmpty(pm.Payload)) {         // Publish
         if(!Topic.root.Exist(pm.Path, out cur) || cur.valueType==null) {
