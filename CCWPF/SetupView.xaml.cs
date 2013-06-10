@@ -21,20 +21,29 @@ namespace X13.CC {
   /// </summary>
   public partial class SetupView : DocumentContent  {
     private const string _enterUrlText="localhost";
-    private DVar<string> _brokerUrl;
+    private DVar<string> _clUrl;
+    private DVar<string> _clUser;
+    private DVar<string> _clPass;
     public SetupView() {
       InitializeComponent();
-      _brokerUrl=Topic.root.Get<string>("/local/cfg/Client/_URL");
-      if(string.IsNullOrWhiteSpace(_brokerUrl.value)) {
+      _clUser=Topic.root.Get<string>("/local/cfg/Client/_username");
+      _clUser.saved=true;
+      if(!string.IsNullOrEmpty(_clUser.value)) {
+        this.Username.Text=_clUser.value;
+      } else {
+        this.Username.Text="local";
+      }
+      _clPass=Topic.root.Get<string>("/local/cfg/Client/_password");
+      _clPass.saved=true;
+      if(!string.IsNullOrEmpty(_clPass.value)) {
+        this.Password.Text=_clPass.value;
+      }
+      _clUrl=Topic.root.Get<string>("/local/cfg/Client/_URL");
+      _clUrl.saved=true;
+      if(string.IsNullOrWhiteSpace(_clUrl.value)) {
         RemoteUrl.Text=_enterUrlText;
       } else {
-        RemoteUrl.Text=_brokerUrl.value;
-      }
-    }
-
-    private void RemoteUrl_GotFocus(object sender, RoutedEventArgs e) {
-      if(RemoteUrl.Text==_enterUrlText) {
-        RemoteUrl.Text=_brokerUrl.value;
+        RemoteUrl.Text=_clUrl.value;
       }
     }
 
@@ -49,12 +58,19 @@ namespace X13.CC {
       string url;
       if(EngineEmbedded.IsChecked.Value) {
         url="#local";
+        _clUrl.value=url;
+        _clUser.value="local";
         biInstall.BusyContent="Start Embedded engine";
       } else if(EngineInstall.IsChecked.Value) {
         url="$local";
+        _clUser.value="local";
+        _clUrl.value="localhost";
         biInstall.BusyContent="Install Service";
       } else {
         url=RemoteUrl.Text;
+        _clUser.value=Username.Text;
+        _clPass.value=Password.Text;
+        _clUrl.value=url;
         biInstall.BusyContent="Connecting";
       }
       System.Threading.ThreadPool.QueueUserWorkItem(ProcUrl, url);
@@ -62,12 +78,7 @@ namespace X13.CC {
 
     private void ProcUrl(object o) {
       string url=o as string;
-      DVar<string> userName=Topic.root.Get<string>("/local/cfg/Client/_username");
-      _brokerUrl.saved=true;
-      userName.saved=true;
       if(url=="#local") {
-        userName.value="local";
-        _brokerUrl.value="#local";
         App.mainWindow.StartEmbeddedEngine();
       } else if(url=="$local") {
         var p = new Process();
@@ -78,15 +89,8 @@ namespace X13.CC {
         }
         p.Start();
         p.WaitForExit();
-        userName.value="local";
-        _brokerUrl.value="localhost";
-      } else {
-        if(url=="localhost") {
-          userName.value="local";
-        }
-        _brokerUrl.value=url;
       }
-      if(!string.IsNullOrEmpty(_brokerUrl.value)) {
+      if(!string.IsNullOrEmpty(_clUrl.value)) {
         App.mainWindow._cl.Init();
         App.mainWindow._cl.Start();
       }

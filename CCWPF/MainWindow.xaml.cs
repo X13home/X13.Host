@@ -271,7 +271,7 @@ namespace X13.CC {
             dockManager_Loaded(null, null);
           }
         } else {
-          BrokerState="Connecting";
+          BrokerState="OFFLINE";
           _clState=1;
         }
       }), System.Windows.Threading.DispatcherPriority.Input);

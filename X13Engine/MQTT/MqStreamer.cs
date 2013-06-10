@@ -217,6 +217,8 @@ namespace X13.MQTT {
                 MqMessage msg=MqMessage.Parse(_rcvHeader, _rcvLengt, _rcvMemoryStream);
                 if(msg==null) {
                   Log.Warning("unrecognized message from {0}={1:X2}[{2}]", ((IPEndPoint)Socket.Client.RemoteEndPoint), _rcvHeader, _rcvLengt);
+                  _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
+                  _rcvState=0;
                 } else {
                   _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
                   _rcvState=0;
@@ -278,12 +280,12 @@ namespace X13.MQTT {
       catch(IOException ex) {
         if(_connected) {
           this.Close(true);
-          Log.Warning("MqStreamer.ReceiveProcess {0}", ex.Message);
+          Log.Warning("MqStreamer.RcvProcess {0}", ex.Message);
         }
         return;
       }
       catch(ObjectDisposedException ex) {
-        Log.Warning("MqStreamer.ReceiveProcess {0}", ex.Message);
+        Log.Warning("MqStreamer.RcvProcess {0}", ex.Message);
         return;
       }
     }

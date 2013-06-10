@@ -66,6 +66,7 @@ namespace X13.MQTT {
         SetTopic("groups/1", "Users", sec);
         SetTopic<long>("acls/var", 0x1F000001, sec);
         SetTopic<long>("acls/var/demo", 0xFF000001, sec);
+        Topic.Export("../data/security.xst", sec);
       }
       sec.aclAll=TopicAcl.None;
       sec.aclOwner=TopicAcl.Full;
@@ -184,8 +185,6 @@ namespace X13.MQTT {
 
     private MqBroker(TcpClient cl) {
       _stream=new MqStreamer(cl, Received, null);
-      //var re=((IPEndPoint)_stream.Socket.Client.RemoteEndPoint);
-      //string name=re.Address.ToString()+"_"+re.Port.ToString("X4");
       _tOut=new Timer(new TimerCallback(TimeOut), null, 900, Timeout.Infinite);
     }
 
@@ -206,6 +205,10 @@ namespace X13.MQTT {
     private void Received(MqMessage msg) {
       if(_verbose) {
         Log.Debug("R {0} {1}", _owner==null?string.Empty:_owner.name, msg);
+      }
+      if(!_connected && msg.MsgType!=MessageType.CONNECT && msg.MsgType!=MessageType.DISCONNECT) {
+        Disconnect();
+        return;
       }
       int toDelay=ConnInfo==null?600:(ConnInfo.keepAlive*1505);
       switch(msg.MsgType) {

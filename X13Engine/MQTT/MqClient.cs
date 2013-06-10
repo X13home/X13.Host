@@ -80,11 +80,10 @@ namespace X13.MQTT {
       Topic.root.Subscribe("/etc/declarers/+", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/etc/declarers/type/#", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/var/now", PLC.PLCPlugin.L_dummy);
+      Topic.paused=true;
       for(int i=600; i>=0; i--) {
         Thread.Sleep(50);
         if(_connected) {
-          _stream.isSndPaused=true;
-          Topic.paused=true;
           break;
         }
       }
@@ -94,17 +93,17 @@ namespace X13.MQTT {
       for(int i=35; i>=0; i--) {
         Thread.Sleep(100);
         if(_stream==null){
+          break;
+        }
+        if(!_stream.isSndPaused) {
+          Log.Info("MqClient: loading completed");
           Topic.paused=false;
           return;
         }
-        if(!_stream.isSndPaused) {
-          break;
-        }
       }
-      _stream.isSndPaused=false;
       Topic.paused=false;
-      //Topic.ready.Reset();
-      //Topic.ready.WaitOne(10000);
+      Log.Warning("MqClient: loading timeout");
+      Reconnect();
     }
 
     public bool Reconnect(bool slow=false) {
@@ -151,9 +150,6 @@ namespace X13.MQTT {
       return true;
     }
 
-    private void Dummy(Topic src, TopicChanged arg) {
-    }
-
     private void Topic_SubscriptionsChg(Topic.Subscription s, bool added) {
       if(_verbose.value && s!=null) {
         Log.Debug("{0} {3} {1}.{2}", s.path, s.func.Method.DeclaringType.Name, s.func.Method.Name, added?"+=":"-=");
@@ -188,6 +184,7 @@ namespace X13.MQTT {
       try {
         _tcp.EndConnect(rez);
         _stream=new MqStreamer(_tcp, Received, SendIdle);
+        _stream.isSndPaused=true;
         var re=((IPEndPoint)_stream.Socket.Client.RemoteEndPoint);
         try {
           BrokerName=Dns.GetHostEntry(re.Address).HostName;
@@ -357,9 +354,9 @@ namespace X13.MQTT {
       }
     }
     private void SendIdle() {
-      if(_connected) {
-        _tOut.Change(_keepAliveMS, _keepAliveMS);
-      }
+      //if(_connected) {
+      //  _tOut.Change(_keepAliveMS, _keepAliveMS);
+      //}
     }
     private void OwnerChanged(Topic sender, TopicChanged param) {
       if(!_connected || sender.parent==null || sender.path.StartsWith("/local") || sender.path.StartsWith("/var/now") || sender.path.StartsWith("/var/log") || param.Visited(_mq, false) || param.Visited(_owner, false)) {
