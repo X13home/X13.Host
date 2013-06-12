@@ -102,7 +102,9 @@ namespace X13 {
         tc.Source=tc.Task.Current;
         tc.Sender.PublishSubs(tc, tc.Subscription.func);
         if(tc.Task.MoveNext()) {
-          _publishQueue.Enqueue(new TopicChanged(tc));
+          var ntc=new TopicChanged(tc.Art, tc.Initiator) { Sender=tc.Sender, Subscription=tc.Subscription, Task=tc.Task, Source=tc.Task.Current };
+          _publishQueue.Enqueue(ntc);
+          //_publishQueue.Enqueue(new TopicChanged(tc));
         }
       } else {
         while(tc.Sender!=null) {

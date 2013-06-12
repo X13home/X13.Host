@@ -336,6 +336,7 @@ l1: { }
       Remove
     }
     private List<Topic> _route;
+    private Topic _initiator;
     internal IEnumerator<Topic> Task;
     public Topic Source;
     internal Topic Sender;
@@ -349,9 +350,7 @@ l1: { }
       Source=null;
       Sender=null;
       Subscription=null;
-      if(initiator!=null) {
-        _route.Add(initiator);
-      }
+      _initiator=initiator;
     }
     public TopicChanged(TopicChanged old) {
       _route=old._route.Where(t => !t.path.StartsWith("/local/MQ")).ToList();
@@ -360,15 +359,13 @@ l1: { }
       Sender=old.Sender;
       Subscription=old.Subscription;
       Task=old.Task;
-      if(Source!=null) {
-        Visited(Source, true);
-      }
+      _initiator=old._initiator;
     }
     public bool Visited(Topic it, bool save) {
       if(it==null) {
         return false;
       }
-      if(_route.Contains(it)) {
+      if(it==Initiator || _route.Contains(it)) {
         return true;
       } else {
         if(save) {
@@ -377,11 +374,7 @@ l1: { }
         return false;
       }
     }
-    public Topic Initiator {
-      get {
-        return (_route.Count>0 && _route[0]!=Source)?_route[0]:null;
-      }
-    }
+    public Topic Initiator { get { return _initiator; } }
     public override string ToString() {
       StringBuilder sb=new StringBuilder();
       sb.AppendFormat("{0} [{1}] snd={2}", Source, Art, Sender);
