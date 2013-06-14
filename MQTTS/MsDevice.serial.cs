@@ -373,8 +373,8 @@ namespace X13.Periphery {
             var pm=new MsPublish(null, PredefinedTopics[".cfg/XD_DeviceAddr"], QoS.AtLeastOnce) { Addr=msg.Addr, MessageId=1, Data=nAddr };
             Send(pm);
           } else { // msg.Addr!=0xFF
-            DVar<MsDevice> dev=devR.Get<MsDevice>(msg.ClientId);
-            if(!msg.CleanSession && (dev.value==null || dev.value.Addr!=msg.Addr || dev.value.state==State.Disconnected || dev.value.state==State.Lost)) {
+            DVar<MsDevice> dev=devR.Get<MsDevice>(msg.ClientId); // 
+            if(!msg.CleanSession && (dev.value==null || !dev.value.Addr.SequenceEqual(msg.Addr) || dev.value.state==State.Disconnected || dev.value.state==State.Lost)) {
               PrintPacket(dev, msg, buf);
               Send(new MsConnack(MsReturnCode.InvalidTopicId) { Addr=msg.Addr });
               return;
