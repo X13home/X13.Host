@@ -29,7 +29,7 @@ namespace X13.Periphery {
       Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
     }
     public void Start() {
-      var ver=Topic.root.Get<long>("/etc/MQTTS.udp/version");
+      var ver=Topic.root.Get<long>("/etc/MQTTS/udp/version");
       if(ver.value<_version) {
         ver.saved=true;
         ver.value=_version;

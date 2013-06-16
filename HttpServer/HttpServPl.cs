@@ -34,7 +34,7 @@ namespace X13.HttpServer {
         urlD.saved=true;
         urlD.value=@"http://+:80/";
       }
-    reconnect:
+reconnect:
       _listener = new HttpListener();
       _listener.Prefixes.Add(urlD.value);
       try {
@@ -97,6 +97,7 @@ namespace X13.HttpServer {
         } else {
           using(HttpListenerResponse response = ctx.Response) {
             string responseString=string.Empty;
+            byte[] responseBuf=null;
             if(userPassWrong) {
               response.StatusCode=401;
               responseString="401 Unauthorized";
@@ -123,7 +124,7 @@ namespace X13.HttpServer {
                   } else {
                     string path=Path.GetFullPath(Path.Combine(_htPath, ctx.Request.RawUrl.Substring(1)));
                     if(path.StartsWith(_htPath) && File.Exists(path)) {
-                      responseString=File.ReadAllText(path);
+                      responseBuf=File.ReadAllBytes(path);
                       response.ContentType=Ext2ContentType(Path.GetExtension(path));
                     } else {
                       response.StatusCode=403;
@@ -156,11 +157,13 @@ namespace X13.HttpServer {
               }
             }
             if(!string.IsNullOrEmpty(responseString)) {
-              byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+              responseBuf = System.Text.Encoding.UTF8.GetBytes(responseString);
+            }
+            if(responseBuf!=null) {
               // Get a response stream and write the response to it.
-              response.ContentLength64 = buffer.Length;
+              response.ContentLength64 = responseBuf.Length;
               System.IO.Stream output = response.OutputStream;
-              output.Write(buffer, 0, buffer.Length);
+              output.Write(responseBuf, 0, responseBuf.Length);
               // You must close the output stream.
               output.Close();
             }
@@ -218,13 +221,17 @@ namespace X13.HttpServer {
         return "image/jpeg";
       case ".png":
         return "image/png";
+      case ".css":
+        return "text/css";
+      case ".csv":
+        return "text/csv";
       case ".htm":
       case ".html":
         return "text/html";
       case ".js":
         return "application/javascript";
       }
-      return string.Empty;
+      return "application/octet-stream";
     }
 
   }

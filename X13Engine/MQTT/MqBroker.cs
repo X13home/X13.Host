@@ -216,6 +216,12 @@ namespace X13.MQTT {
       case MessageType.CONNECT:
         ConnInfo=msg as MqConnect;
         bool cup=false;
+        if(string.IsNullOrWhiteSpace(ConnInfo.clientId) || ConnInfo.clientId.Contains('/')) {
+          _stream.Send(new MqConnack(MqConnack.MqttConnectionResponse.IdentifierRejected));
+          Log.Warning("BadClientID {0}[{1}]", ConnInfo.userName, _stream.ToString());
+          this.Disconnect();
+          break;
+        }
         if(ConnInfo.userName=="local") {
           cup=IPAddress.IsLoopback((this._stream.Socket.Client.RemoteEndPoint as IPEndPoint).Address);
         } else {
@@ -224,7 +230,7 @@ namespace X13.MQTT {
         if(!cup){
           _stream.Send(new MqConnack(MqConnack.MqttConnectionResponse.BadUsernameOrPassword));
           Log.Warning("BadUsernameOrPassword {0}:{1}@{2}", ConnInfo.userName, ConnInfo.userPassword, ConnInfo.clientId);
-          _stream.Send(new MqDisconnect());
+          this.Disconnect();
           break;
         }
         _stream.Send(new MqConnack(MqConnack.MqttConnectionResponse.Accepted));
