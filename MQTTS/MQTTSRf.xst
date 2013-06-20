@@ -195,6 +195,12 @@
         <item name="Op26" value="8zX9" saved="True" type="System.String">
           <item name="_description" value="Digital output, P?.I" saved="True" type="System.String" />
         </item>
+        <item name="OA26" value="EzX9" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, P?.I" saved="True" type="System.String" />
+        </item>
+        <item name="Oa26" value="FzX9" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, P?.I" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="P1.A">
         <item name="Ai0" value="AiX1" saved="True" type="System.String">
@@ -215,6 +221,12 @@
         <item name="Op16" value="8zX1" saved="True" type="System.String">
           <item name="_description" value="Digital output, P1.A" saved="True" type="System.String" />
         </item>
+        <item name="OA16" value="EzX1" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, P1.A" saved="True" type="System.String" />
+        </item>
+        <item name="Oa16" value="FzX1" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, P1.A" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="P1.D">
         <item name="In28" value="7zX11" saved="True" type="System.String">
@@ -228,6 +240,12 @@
         </item>
         <item name="Op28" value="8zX11" saved="True" type="System.String">
           <item name="_description" value="Digital output, P1.D" saved="True" type="System.String" />
+        </item>
+        <item name="OA28" value="EzX11" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, P1.D" saved="True" type="System.String" />
+        </item>
+        <item name="Oa28" value="FzX11" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, P1.D" saved="True" type="System.String" />
         </item>
       </item>
       <item name="P2.A">
@@ -249,6 +267,12 @@
         <item name="Op17" value="8zX2" saved="True" type="System.String">
           <item name="_description" value="Digital output, P2.A" saved="True" type="System.String" />
         </item>
+        <item name="OA17" value="EzX2" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, P2.A" saved="True" type="System.String" />
+        </item>
+        <item name="Oa17" value="FzX2" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, P2.A" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="P2.D">
         <item name="In29" value="7zX12" saved="True" type="System.String">
@@ -268,6 +292,12 @@
         </item>
         <item name="Pp29" value="8iX12" saved="True" type="System.String">
           <item name="_description" value="PWM positive, P2.D" saved="True" type="System.String" />
+        </item>
+        <item name="OA29" value="EzX12" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, P2.D" saved="True" type="System.String" />
+        </item>
+        <item name="Oa29" value="FzX12" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, P2.D" saved="True" type="System.String" />
         </item>
       </item>
       <item name="P3.A">
@@ -289,6 +319,12 @@
         <item name="Op18" value="8zX3" saved="True" type="System.String">
           <item name="_description" value="Digital output, P3.A" saved="True" type="System.String" />
         </item>
+        <item name="OA18" value="EzX3" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, P3.A" saved="True" type="System.String" />
+        </item>
+        <item name="Oa18" value="FzX3" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, P3.A" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="P3.D">
         <item name="In30" value="7zX13" saved="True" type="System.String">
@@ -308,6 +344,12 @@
         </item>
         <item name="Pp30" value="8iX13" saved="True" type="System.String">
           <item name="_description" value="PWM positive, P3.D" saved="True" type="System.String" />
+        </item>
+        <item name="OA30" value="EzX13" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, P3.D" saved="True" type="System.String" />
+        </item>
+        <item name="Oa30" value="FzX13" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, P3.D" saved="True" type="System.String" />
         </item>
       </item>
       <item name="P4.A">
@@ -329,6 +371,12 @@
         <item name="Op19" value="8zX4" saved="True" type="System.String">
           <item name="_description" value="Digital output, P4.A" saved="True" type="System.String" />
         </item>
+        <item name="OA19" value="EzX4" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, P4.A" saved="True" type="System.String" />
+        </item>
+        <item name="Oa19" value="FzX4" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, P4.A" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="P4.D">
         <item name="In31" value="7zX14" saved="True" type="System.String">
@@ -343,9 +391,15 @@
         <item name="Op31" value="8zX14" saved="True" type="System.String">
           <item name="_description" value="Digital output, P4.D" saved="True" type="System.String" />
         </item>
+        <item name="OA31" value="EzX14" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, P4.D" saved="True" type="System.String" />
+        </item>
+        <item name="Oa31" value="FzX14" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, P4.D" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="remove" value="ZD" saved="True" type="System.String" />
-      <item name="RX">
+      <item name="TX">
         <item name="In25" value="7zX8" saved="True" type="System.String">
           <item name="_description" value="Digital Pull-Up inverted input, RX" saved="True" type="System.String" />
         </item>
@@ -373,8 +427,14 @@
         <item name="St4" value="AsX8,B20,B21,B22,B23,S24" saved="True" type="System.String">
           <item name="_description" value="TxD 38400, TX" saved="True" type="System.String" />
         </item>
+        <item name="OA25" value="EzX8" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, TX" saved="True" type="System.String" />
+        </item>
+        <item name="Oa25" value="FzX8" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, TX" saved="True" type="System.String" />
+        </item>
       </item>
-      <item name="TX">
+      <item name="RX">
         <item name="In24" value="7zX7" saved="True" type="System.String">
           <item name="_description" value="Digital Pull-Up inverted input, TX" saved="True" type="System.String" />
         </item>
@@ -401,6 +461,12 @@
         </item>
         <item name="Sr4" value="AsX7,B20,B21,B22,B23,S24" saved="True" type="System.String">
           <item name="_description" value="RxD 38400, RX" saved="True" type="System.String" />
+        </item>
+        <item name="OA24" value="EzX7" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, RX" saved="True" type="System.String" />
+        </item>
+        <item name="Oa24" value="FzX7" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, RX" saved="True" type="System.String" />
         </item>
       </item>
       <item name="Vcc">
@@ -620,6 +686,12 @@
         <item name="Op16" value="8zX1" saved="True" type="System.String">
           <item name="_description" value="Digital output, 1.04" saved="True" type="System.String" />
         </item>
+        <item name="OA16" value="EzX1" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 1.04" saved="True" type="System.String" />
+        </item>
+        <item name="Oa16" value="FzX1" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 1.04" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="1.05">
         <item name="Ai1" value="AiX2" saved="True" type="System.String">
@@ -639,6 +711,12 @@
         </item>
         <item name="Op17" value="8zX2" saved="True" type="System.String">
           <item name="_description" value="Digital output, 1.05" saved="True" type="System.String" />
+        </item>
+        <item name="OA17" value="EzX2" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 1.05" saved="True" type="System.String" />
+        </item>
+        <item name="Oa17" value="FzX2" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 1.05" saved="True" type="System.String" />
         </item>
       </item>
       <item name="1.06">
@@ -660,6 +738,12 @@
         <item name="Op18" value="8zX3" saved="True" type="System.String">
           <item name="_description" value="Digital output, 1.06" saved="True" type="System.String" />
         </item>
+        <item name="OA18" value="EzX3" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 1.06" saved="True" type="System.String" />
+        </item>
+        <item name="Oa18" value="FzX3" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 1.06" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="1.08">
         <item name="Ai3" value="AiX4" saved="True" type="System.String">
@@ -679,6 +763,12 @@
         </item>
         <item name="Op19" value="8zX4" saved="True" type="System.String">
           <item name="_description" value="Digital output, 1.08" saved="True" type="System.String" />
+        </item>
+        <item name="OA19" value="EzX4" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 1.08" saved="True" type="System.String" />
+        </item>
+        <item name="Oa19" value="FzX4" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 1.08" saved="True" type="System.String" />
         </item>
       </item>
       <item name="1.11">
@@ -710,6 +800,12 @@
         <item name="Op31" value="8zX14" saved="True" type="System.String">
           <item name="_description" value="Digital output, 2.03" saved="True" type="System.String" />
         </item>
+        <item name="OA31" value="EzX14" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 2.03" saved="True" type="System.String" />
+        </item>
+        <item name="Oa31" value="FzX14" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 2.03" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="2.04">
         <item name="In30" value="7zX13" saved="True" type="System.String">
@@ -729,6 +825,12 @@
         </item>
         <item name="Pp30" value="8iX13" saved="True" type="System.String">
           <item name="_description" value="PWM positive, 2.04" saved="True" type="System.String" />
+        </item>
+        <item name="OA30" value="EzX13" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 2.04" saved="True" type="System.String" />
+        </item>
+        <item name="Oa30" value="FzX13" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 2.04" saved="True" type="System.String" />
         </item>
       </item>
       <item name="2.05">
@@ -750,6 +852,12 @@
         <item name="Pp29" value="8iX12" saved="True" type="System.String">
           <item name="_description" value="PWM positive, 2.05" saved="True" type="System.String" />
         </item>
+        <item name="OA29" value="EzX12" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 2.05" saved="True" type="System.String" />
+        </item>
+        <item name="Oa29" value="FzX12" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 2.05" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="2.06">
         <item name="In28" value="7zX11" saved="True" type="System.String">
@@ -764,6 +872,12 @@
         <item name="Op28" value="8zX11" saved="True" type="System.String">
           <item name="_description" value="Digital output, 2.06" saved="True" type="System.String" />
         </item>
+        <item name="OA28" value="EzX11" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 2.06" saved="True" type="System.String" />
+        </item>
+        <item name="Oa28" value="FzX11" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 2.06" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="2.07">
         <item name="In27" value="7zX10" saved="True" type="System.String">
@@ -777,6 +891,12 @@
         </item>
         <item name="Op27" value="8zX10" saved="True" type="System.String">
           <item name="_description" value="Digital output, 2.07" saved="True" type="System.String" />
+        </item>
+        <item name="OA27" value="EzX10" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 2.07" saved="True" type="System.String" />
+        </item>
+        <item name="Oa27" value="FzX10" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 2.07" saved="True" type="System.String" />
         </item>
       </item>
       <item name="2.08">
@@ -806,7 +926,14 @@
         </item>
         <item name="St4" value="AsX8,B20,B21,B22,B23,S24" saved="True" type="System.String">
           <item name="_description" value="TxD 38400, TX" saved="True" type="System.String" />
-        </item>      </item>
+        </item>
+        <item name="OA25" value="EzX8" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 2.08" saved="True" type="System.String" />
+        </item>
+        <item name="Oa25" value="FzX8" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 2.08" saved="True" type="System.String" />
+        </item>
+      </item>
       <item name="2.09">
         <item name="In24" value="7zX7" saved="True" type="System.String">
           <item name="_description" value="Digital Pull-Up inverted input, 2.09" saved="True" type="System.String" />
@@ -834,6 +961,12 @@
         </item>
         <item name="Sr4" value="AsX7,B20,B21,B22,B23,S24" saved="True" type="System.String">
           <item name="_description" value="RxD 38400, RX" saved="True" type="System.String" />
+        </item>
+        <item name="OA24" value="EzX7" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 2.09" saved="True" type="System.String" />
+        </item>
+        <item name="Oa24" value="FzX7" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 2.09" saved="True" type="System.String" />
         </item>
       </item>
       <item name="Add">
@@ -1079,6 +1212,12 @@
         <item name="Op16" value="8zX1" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-03" saved="True" type="System.String" />
         </item>
+        <item name="OA29" value="EzX12" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, 2.05" saved="True" type="System.String" />
+        </item>
+        <item name="Oa29" value="FzX12" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, 2.05" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="SV1-04">
         <item name="Ai1" value="AiX2" saved="True" type="System.String">
@@ -1098,6 +1237,12 @@
         </item>
         <item name="Op17" value="8zX2" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="OA17" value="EzX2" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="Oa17" value="FzX2" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-04" saved="True" type="System.String" />
         </item>
       </item>
       <item name="SV1-05">
@@ -1119,6 +1264,12 @@
         <item name="Op18" value="8zX3" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-05" saved="True" type="System.String" />
         </item>
+        <item name="OA18" value="EzX3" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="Oa18" value="FzX3" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-05" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="SV1-06">
         <item name="Ai3" value="AiX4" saved="True" type="System.String">
@@ -1138,6 +1289,12 @@
         </item>
         <item name="Op19" value="8zX4" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="OA19" value="EzX4" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="Oa19" value="FzX4" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-06" saved="True" type="System.String" />
         </item>
       </item>
       <item name="SV1-11">
@@ -1168,6 +1325,12 @@
         <item name="Sr4" value="AsX7,B20,B21,B22,B23,S24" saved="True" type="System.String">
           <item name="_description" value="RxD 38400, RX" saved="True" type="System.String" />
         </item>
+        <item name="OA24" value="EzX7" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-11" saved="True" type="System.String" />
+        </item>
+        <item name="Oa24" value="FzX7" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-11" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="SV1-12">
         <item name="In25" value="7zX8" saved="True" type="System.String">
@@ -1196,7 +1359,14 @@
         </item>
         <item name="St4" value="AsX8,B20,B21,B22,B23,S24" saved="True" type="System.String">
           <item name="_description" value="TxD 38400, TX" saved="True" type="System.String" />
-        </item>      </item>
+        </item>
+        <item name="OA25" value="EzX8" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-12" saved="True" type="System.String" />
+        </item>
+        <item name="Oa25" value="FzX8" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-12" saved="True" type="System.String" />
+        </item>
+      </item>
       <item name="SV1-13">
         <item name="In26" value="7zX9" saved="True" type="System.String">
           <item name="_description" value="Digital Pull-Up inverted input, SV1-13" saved="True" type="System.String" />
@@ -1209,6 +1379,12 @@
         </item>
         <item name="Op26" value="8zX9" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-13" saved="True" type="System.String" />
+        </item>
+        <item name="OA26" value="EzX9" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-13" saved="True" type="System.String" />
+        </item>
+        <item name="Oa26" value="FzX9" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-13" saved="True" type="System.String" />
         </item>
       </item>
       <item name="SV1-14">
@@ -1224,6 +1400,12 @@
         <item name="Op27" value="8zX10" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-14" saved="True" type="System.String" />
         </item>
+        <item name="OA27" value="EzX10" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-14" saved="True" type="System.String" />
+        </item>
+        <item name="Oa27" value="FzX10" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-14" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="SV1-15">
         <item name="In28" value="7zX11" saved="True" type="System.String">
@@ -1237,6 +1419,12 @@
         </item>
         <item name="Op28" value="8zX11" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="OA28" value="EzX11" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Oa28" value="FzX11" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-15" saved="True" type="System.String" />
         </item>
       </item>
       <item name="SV1-16">
@@ -1258,6 +1446,12 @@
         <item name="Pp29" value="8iX12" saved="True" type="System.String">
           <item name="_description" value="PWM positive, SV1-16" saved="True" type="System.String" />
         </item>
+        <item name="OA29" value="EzX12" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Oa29" value="FzX12" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-16" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="SV1-17">
         <item name="In30" value="7zX13" saved="True" type="System.String">
@@ -1278,6 +1472,12 @@
         <item name="Pp30" value="8iX13" saved="True" type="System.String">
           <item name="_description" value="PWM positive, SV1-17" saved="True" type="System.String" />
         </item>
+        <item name="OA30" value="EzX13" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Oa30" value="FzX13" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-17" saved="True" type="System.String" />
+        </item>
       </item>
       <item name="SV1-18">
         <item name="In31" value="7zX14" saved="True" type="System.String">
@@ -1291,6 +1491,12 @@
         </item>
         <item name="Op31" value="8zX14" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="OA31" value="EzX14" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Oa31" value="FzX14" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-18" saved="True" type="System.String" />
         </item>
       </item>
       <item name="Vcc">

@@ -645,6 +645,8 @@ namespace X13.Periphery {
       new NTRecord("Ip", typeof(bool)),
       new NTRecord("Op", typeof(bool)),
       new NTRecord("On", typeof(bool)),
+      new NTRecord("OA", typeof(bool)),   // output high if active
+      new NTRecord("Oa", typeof(bool)),   // output low if active
       new NTRecord("Ai", typeof(long)),   //uint16
       new NTRecord("Av", typeof(long)),   //uint16
       new NTRecord("Ae", typeof(long)),   //uint16
