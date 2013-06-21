@@ -396,8 +396,8 @@ namespace X13 {
     }
     protected void CopyFrom(Topic old) {
       if(old.valueType!=null) {
-        Log.Error("Variable {0}[{1}] can't to type {2} convertiert", old.path, old.valueType==null?string.Empty:old.valueType.Name, this.valueType==null?string.Empty:this.valueType.Name);
-        throw new ArgumentException();
+        string msg=string.Format("Variable {0}[{1}] can't to type {2} convertiert", old.path, old.valueType==null?string.Empty:old.valueType.Name, this.valueType==null?string.Empty:this.valueType.Name);
+        throw new ArgumentException(msg);
       }
       this.parent=old.parent;
       this._childNodes=old._childNodes;

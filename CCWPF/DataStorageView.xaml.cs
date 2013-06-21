@@ -261,7 +261,12 @@ namespace X13.CC {
         TextBox_LostFocus(sender, null);
         e.Handled=true;
       } else if(e.Key==Key.Enter) {
-        tv.Create(tb.Text);
+        try {
+          tv.Create(tb.Text);
+        }
+        catch(ArgumentException ex) {
+          Log.Error(ex.Message);
+        }
         e.Handled=true;
       }
     }
