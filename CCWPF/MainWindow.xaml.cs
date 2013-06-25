@@ -110,8 +110,12 @@ namespace X13.CC {
 
     private void _engine_OutputDataReceived(object sender, DataReceivedEventArgs e) {
       if(!string.IsNullOrEmpty(e.Data)) {
-        Log.Info("Engine: {0}", e.Data);
-        _engineReady.Set();
+        if(e.Data.Contains("[E]")) {
+          Log.Error("Engine: {0}", e.Data);
+        }
+        if(e.Data.Contains("Engine running")) {
+          _engineReady.Set();
+        }
       }
     }
 

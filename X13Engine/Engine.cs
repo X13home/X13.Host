@@ -22,15 +22,22 @@ using X13.MQTT;
 
 namespace X13 {
   public class Engine {
+
     static void Main(string[] args) {
+      _logToConsole=true;
       var eng=new Engine();
-      eng.StartUp(args.Length==1?args[0]:string.Empty);
+      if(eng.StartUp(args.Length==1?args[0]:string.Empty)) {
+        Console.ForegroundColor=ConsoleColor.Green;
+      }
       Console.WriteLine("Engine running; press Enter to Exit");
       Console.Read();
       eng.Shutdown();
+      Console.ForegroundColor=ConsoleColor.White;
     }
 
+    private static Mutex _singleInstance;
     private static BlockingQueue<LogEntry> _log;
+    private static bool _logToConsole;
     private string _lfPath;
     private DateTime _firstDT;
     private DVar<LogLevel> _lThreshold;
@@ -41,7 +48,7 @@ namespace X13 {
 
     private Plugins _plugins;
 
-    public void StartUp(string cfgPath=null) {
+    public bool StartUp(string cfgPath=null) {
       string path=Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
       Directory.SetCurrentDirectory(path);
       if(!string.IsNullOrWhiteSpace(cfgPath)) {
@@ -49,6 +56,9 @@ namespace X13 {
       } else {
         _cfgPath="../data/Engine.xst";
       }
+
+      string siName=string.Format("Global\\X13.engine@{0}", Path.GetFullPath(_cfgPath).Replace('\\', '$'));
+      _singleInstance=new Mutex(true, siName);
 
       _log=new BlockingQueue<LogEntry>(ProcessLog);
       if(!Directory.Exists("../log")) {
@@ -58,6 +68,7 @@ namespace X13 {
         Directory.CreateDirectory("../data");
       }
       AppDomain.CurrentDomain.UnhandledException+=new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+
       var root=Topic.root;
       Topic.Import(_cfgPath, "/local/cfg");
 
@@ -65,6 +76,14 @@ namespace X13 {
       _lThreshold=root.Get<LogLevel>("/etc/log/threshold");
 
       Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
+
+      if(!_singleInstance.WaitOne(TimeSpan.Zero, true)) {
+        Log.Error("only one instance at a time");
+        _singleInstance=null;
+        return false;
+      }
+
+
       Topic.brokerMode=true;
       _plugins=new Plugins();
       _plugins.Init(true);
@@ -103,14 +122,22 @@ namespace X13 {
       _statTimer=new Timer(o => {
         SendStat(2);
       }, null, 1500, 7200000);
+      return true;
     }
 
     public void Shutdown() {
-      _statTimer.Change(Timeout.Infinite, Timeout.Infinite);
-      _plugins.Stop();
+      if(_statTimer!=null) {
+        _statTimer.Change(Timeout.Infinite, Timeout.Infinite);
+      }
+      if(_plugins!=null) {
+        _plugins.Stop();
+      }
       _log.Dispose();
       Thread.Sleep(300);
       Topic.Export(_cfgPath, Topic.root.Get("/local/cfg"));
+      if(_singleInstance!=null) {
+        _singleInstance.ReleaseMutex();
+      }
     }
     private void ProcessLog(LogEntry en) {
       string rez=null;
@@ -167,6 +194,24 @@ namespace X13 {
           catch(System.IO.IOException) {
             Thread.Sleep(15);
           }
+        }
+      }
+      if(_logToConsole) {
+        switch(en.ll) {
+        case LogLevel.Debug:
+          break;
+        case LogLevel.Info:
+          Console.ForegroundColor=ConsoleColor.Gray;
+          Console.WriteLine(rez);
+          break;
+        case LogLevel.Warning:
+          Console.ForegroundColor=ConsoleColor.Yellow;
+          Console.WriteLine(rez);
+          break;
+        case LogLevel.Error:
+          Console.ForegroundColor=ConsoleColor.Red;
+          Console.WriteLine(rez);
+          break;
         }
       }
     }
