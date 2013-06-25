@@ -46,5 +46,17 @@ namespace X13.CC {
 
     public App() {
     }
+    private void Application_Startup(object sender, StartupEventArgs e) {
+      string cfgPath;
+      if(e.Args.Length == 1) {
+        cfgPath=e.Args[0];
+      } else {
+        cfgPath="../data/CC.xst";
+      }
+
+      mainWindow=new MainWindow(cfgPath);
+      
+      mainWindow.Show();
+    }
   }
 }

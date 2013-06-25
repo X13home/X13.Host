@@ -31,13 +31,14 @@ namespace X13.CC {
     private Process _engine; // for embedded mode
     private ManualResetEventSlim _engineReady;
     private DVar<bool> _verbose;
+    private string _cfgPath;
 
-    public MainWindow() {
-      App.mainWindow=this;
+    public MainWindow(string cfg) {
+      _cfgPath=cfg;
       if(!Directory.Exists("../data")) {
         Directory.CreateDirectory("../data");
       }
-      Topic.Import("../data/CC.xst", "/local/cfg");
+      Topic.Import(_cfgPath, "/local/cfg");
 
       Topic clientSettings=Topic.root.Get("/local/cfg/Client");
       var url=clientSettings.Get<string>("_URL");
@@ -249,7 +250,7 @@ namespace X13.CC {
         _engine.WaitForExit(1500);
         _engine=null;
       }
-      Topic.Export("../data/CC.xst", Topic.root.Get("/local/cfg"));
+      Topic.Export(_cfgPath, Topic.root.Get("/local/cfg"));
 
     }
     private int _clState=0;

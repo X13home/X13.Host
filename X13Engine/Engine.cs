@@ -24,7 +24,7 @@ namespace X13 {
   public class Engine {
     static void Main(string[] args) {
       var eng=new Engine();
-      eng.StartUp();
+      eng.StartUp(args.Length==1?args[0]:string.Empty);
       Console.WriteLine("Engine running; press Enter to Exit");
       Console.Read();
       eng.Shutdown();
@@ -37,12 +37,18 @@ namespace X13 {
     private DVar<long> _lHead;
     private DVar<bool> _debug;
     private Timer _statTimer;
+    private string _cfgPath;
 
     private Plugins _plugins;
 
-    public void StartUp() {
+    public void StartUp(string cfgPath=null) {
       string path=Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
       Directory.SetCurrentDirectory(path);
+      if(!string.IsNullOrWhiteSpace(cfgPath)) {
+        _cfgPath=cfgPath;
+      } else {
+        _cfgPath="../data/Engine.xst";
+      }
 
       _log=new BlockingQueue<LogEntry>(ProcessLog);
       if(!Directory.Exists("../log")) {
@@ -53,7 +59,7 @@ namespace X13 {
       }
       AppDomain.CurrentDomain.UnhandledException+=new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
       var root=Topic.root;
-      Topic.Import("../data/Engine.xst", "/local/cfg");
+      Topic.Import(_cfgPath, "/local/cfg");
 
       _lHead=root.Get<long>("/var/log");
       _lThreshold=root.Get<LogLevel>("/etc/log/threshold");
@@ -104,7 +110,7 @@ namespace X13 {
       _plugins.Stop();
       _log.Dispose();
       Thread.Sleep(300);
-      Topic.Export("../data/Engine.xst", Topic.root.Get("/local/cfg"));
+      Topic.Export(_cfgPath, Topic.root.Get("/local/cfg"));
     }
     private void ProcessLog(LogEntry en) {
       string rez=null;
