@@ -16,6 +16,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
+using System.Net.NetworkInformation;
+using System.Collections.Generic;
 
 namespace X13.Periphery {
   [Export(typeof(IPlugModul))]
@@ -60,9 +62,31 @@ namespace X13.Periphery {
 
       #region static
       private static IPAddress[] _myIps;
+      private static IPAddress[] _bcIps;
 
       public static void Open() {
         _myIps=Dns.GetHostEntry(Dns.GetHostName()).AddressList.Where(z => z.AddressFamily==AddressFamily.InterNetwork).ToArray();
+        List<IPAddress> bc=new List<IPAddress>();
+        foreach(var nic in NetworkInterface.GetAllNetworkInterfaces()) {
+          var ipProps = nic.GetIPProperties();
+          var ipv4Addrs = ipProps.UnicastAddresses.Where(addr => addr.Address.AddressFamily == AddressFamily.InterNetwork);
+          foreach(var addr in ipv4Addrs) {
+            if(addr.IPv4Mask == null)
+              continue;
+            var ip = addr.Address.GetAddressBytes();
+            var mask = addr.IPv4Mask.GetAddressBytes();
+            var result = new Byte[4];
+            for(int i = 0; i < 4; ++i) {
+              result[i] = (Byte)(ip[i] | (mask[i]^255));
+            }
+            bc.Add(new IPAddress(result));
+          }
+        }
+        if(bc.Count==0) {
+          bc.Add(new IPAddress(new byte[] { 255, 255, 255, 255 }));
+        }
+        _bcIps=bc.ToArray();
+
         MsGUdp ret;
         if(_gates!=null) {
           lock(_gates) {
@@ -93,7 +117,7 @@ namespace X13.Periphery {
         Byte[] buf=null;
         try {
           buf = _udp.EndReceive(ar, ref re);
-          if(!_myIps.Any(z=>re.Address==z)){
+          if(!_myIps.Any(z => re.Address==z)) {
             ParseInPacket(buf, re.Address.GetAddressBytes());
           }
         }
@@ -110,7 +134,7 @@ namespace X13.Periphery {
         var msgTyp=(MsMessageType)(buf[0]>1?buf[1]:buf[3]);
         if(msgTyp==MsMessageType.GWINFO || msgTyp==MsMessageType.ADVERTISE) {
           return;
-        }else if(msgTyp==MsMessageType.SEARCHGW) {
+        } else if(msgTyp==MsMessageType.SEARCHGW) {
           PrintPacket(null, new MsSearchGW(buf) { Addr=addr }, buf);
           this.Send(new MsGwInfo(gwIdx) { Addr=IPAddress.Broadcast.GetAddressBytes() });
         } else if(msgTyp==MsMessageType.CONNECT) {
@@ -154,11 +178,16 @@ namespace X13.Periphery {
 
         byte[] buf=msg.GetBytes();
 
-        _udp.Send(buf, buf.Length, new IPEndPoint(new IPAddress(msg.Addr), 1883));
+        if(IPAddress.Broadcast.GetAddressBytes().SequenceEqual(msg.Addr)) {
+          foreach(var bc in _bcIps) {
+            _udp.Send(buf, buf.Length, new IPEndPoint(bc, 1883));
+          }
+        } else {
+          _udp.Send(buf, buf.Length, new IPEndPoint(new IPAddress(msg.Addr), 1883));
+        }
         if(_verbose.value) {
           Log.Debug("s {0:X2}:{1}:{2} \t{3}", gwIdx, BitConverter.ToString(msg.Addr), BitConverter.ToString(buf), msg.ToString());
         }
-
       }
       public byte gwIdx { get { return 0; } }
 
