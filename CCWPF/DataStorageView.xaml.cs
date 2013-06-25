@@ -39,9 +39,9 @@ namespace X13.CC {
       _root.Subscribe("/#", _root_changed);
       {
         var ro_ch=TopicView.root.children;
-        var tv1=TopicView.root.Get(_root.Get("/local/cfg"), true);
-        var tv1_ch=tv1.children;
-        tv1.Get(_root.Get("/local/cfg"));
+        //var tv1=TopicView.root.Get(_root.Get("/local/cfg"), true);
+        //var tv1_ch=tv1.children;
+        //tv1.Get(_root.Get("/local/cfg"));
       }
       TopicView.root.IsExpanded=true;
       TopicView.root.Get(Topic.root.Get("/plc")).IsExpanded=true;
@@ -77,6 +77,9 @@ namespace X13.CC {
       this.Dispatcher.BeginInvoke(new Action<Topic, TopicChanged.ChangeArt>(ProccessChanges), System.Windows.Threading.DispatcherPriority.Background, sender, param.Art);
     }
     private void ProccessChanges(Topic oCur, TopicChanged.ChangeArt art) {
+      if(oCur.path.StartsWith("/local")) {
+        return;
+      }
       TopicView parent=TopicView.root.Get(oCur.parent, true, art!=TopicChanged.ChangeArt.Remove);
       if(parent!=null) {
         if(oCur.name=="_declarer" && art==TopicChanged.ChangeArt.Value) {
@@ -298,8 +301,6 @@ namespace X13.CC {
 
       return null;
     }
-
-
   }
   public class TopicView : INotifyPropertyChanged {
     internal static bool _advancedView;
@@ -352,7 +353,7 @@ namespace X13.CC {
     }
 
     public TopicView Get(Topic oCur, bool createChildren=false, bool create=true) {
-      if(oCur==null || oCur==Topic.root || oCur.path.StartsWith("/local/MQ") || oCur.name==("_declarer") || oCur.name=="_location") {  // || oCur.name.StartsWith("_")
+      if(oCur==null || oCur==Topic.root || oCur.path.StartsWith("/local") || oCur.name==("_declarer") || oCur.name=="_location") {  // || oCur.name.StartsWith("_")
         return root;
       }
       TopicView cur=root;
@@ -482,7 +483,7 @@ namespace X13.CC {
         if(_children==null) {
           _children=new ObservableCollection<TopicView>();
           if(ptr!=null) {
-            foreach(Topic t in ptr.children.Where(t1 => !t1.path.StartsWith("/local/MQ") && t1.name!="_declarer")) {
+            foreach(Topic t in ptr.children.Where(t1 => !t1.path.StartsWith("/local") && t1.name!="_declarer")) {
               TopicView cur=new TopicView(t);
               cur._parent=this;
               _children.Add(cur);
