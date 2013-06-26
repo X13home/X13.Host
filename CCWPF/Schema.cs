@@ -438,7 +438,12 @@ namespace X13.CC {
               items=mi.Items;
             }
           }
-
+          if(cur.valueType==typeof(PiStatement)) {
+            MenuItem mi=new MenuItem();
+            mi.Header="Copy";
+            mi.Click+=new RoutedEventHandler(mi_Copy);
+            cm.Items.Add(mi);
+          }
           if(cm.Items.Count>0) {
             cm.IsOpen=true;
           }
@@ -617,11 +622,17 @@ namespace X13.CC {
 
     }
     public void mi_Copy(object sender, RoutedEventArgs e) {
-      if(_mSelected==null) {
+      IEnumerable<Topic> ms;
+      Topic sel;
+      if(_mSelected!=null) {
+        ms=_mSelected.Select(z => z.GetModel()).Where(z => z!=null);
+      } else if(_selected!=null && (sel=_selected.GetModel())!=null && sel.valueType==typeof(PiStatement)) {
+        ms=(new Topic[] { sel });
+      } else {
         return;
       }
       XDocument doc=new XDocument(new XElement("root"));
-      var ms=_mSelected.Select(z => z.GetModel()).Where(z => z!=null);
+      
       foreach(var t in ms) {
         Topic.Export(doc.Root, t);
       }
