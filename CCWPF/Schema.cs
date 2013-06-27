@@ -154,6 +154,9 @@ namespace X13.CC {
         foreach(var p in model.children.Where(z => z.valueType==typeof(PiWire)).Cast<DVar<PiWire>>()) {
           cur=new uiWire(p, this);
         }
+        foreach(var p in model.children.Where(z => z.valueType==typeof(PiTracer)).Cast<DVar<PiTracer>>()) {
+          cur=new uiTracer(p, this);
+        }
         model.Subscribe("+", ModelChanged);
       }
     }
@@ -272,6 +275,10 @@ namespace X13.CC {
           } else if(source.valueType==typeof(PiWire)) {
             if(!_visuals.Where(z => z is uiWire).Cast<uiWire>().Any(z => z.GetModel()==source)) {
               cur=new uiWire(source as DVar<PiWire>, this);
+            }
+          } else if(source.valueType==typeof(PiTracer)) {
+            if(!_visuals.Where(z => z is uiTracer).Cast<uiTracer>().Any(z => z.GetModel()==source)) {
+              cur=new uiTracer(source as DVar<PiTracer>, this);
             }
           }
         }
@@ -442,6 +449,11 @@ namespace X13.CC {
             MenuItem mi=new MenuItem();
             mi.Header="Copy";
             mi.Click+=new RoutedEventHandler(mi_Copy);
+            cm.Items.Add(mi);
+          } else if(selected is uiPin) {
+            MenuItem mi=new MenuItem();
+            mi.Header="Trace";
+            mi.Click+=new RoutedEventHandler(mi_Trace);
             cm.Items.Add(mi);
           }
           if(cm.Items.Count>0) {
@@ -659,6 +671,25 @@ namespace X13.CC {
       catch(Exception ex) {
         Log.Error(ex.Message);
       }
+    }
+    public void mi_Trace(object sender, RoutedEventArgs e) {
+      uiPin p=selected as uiPin;
+      if(p==null) {
+        return;
+      }
+      Topic pp;
+      string name;
+
+      if(p.owner is uiAlias) {
+        pp=(p.owner as uiAlias).GetModel();
+        name="?"+pp.name;
+      } else {
+        pp=p.GetModel();
+        name=string.Format("?{0}?{1}", pp.parent.name, pp.name);
+      }
+      var td=model.Get<PiTracer>(name);
+      td.saved=true;
+      td.value=new PiTracer(pp.path);
     }
   }
 }

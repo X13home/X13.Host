@@ -42,6 +42,7 @@ namespace X13.CC {
   internal class uiPin : uiItem {
     private Vector _ownerOffset;
     private List<uiWire> _connections;
+    private uiTracer _tracer;
     public SchemaElement owner { get; private set; }
     /// <summary>0 - bidirectional, 1 - input, 2 - output</summary>
     public byte Direction { get; set; }
@@ -69,6 +70,12 @@ namespace X13.CC {
       if(_connections.Count==0) {
         model.saved=true;
       }
+    }
+    public void SetTracer(uiTracer tr) {
+      if(_tracer!=null) {
+        _tracer.GetModel().Remove();
+      }
+      _tracer=tr;
     }
     public override void Render(int chLevel) {
       if(model==null) {
@@ -117,6 +124,9 @@ namespace X13.CC {
         foreach(uiWire w in _connections.ToArray()) {
           w.Render(chLevel);
         }
+      }
+      if(_tracer!=null) {
+        _tracer.Render(chLevel);
       }
     }
     public override Topic GetModel() {
@@ -439,9 +449,92 @@ namespace X13.CC {
     public abstract void SetLocation(Vector loc, bool save);
   }
 
-  internal class uiAlias : SchemaElement {
+  internal class uiTracer : SchemaElement {
     private Schema _owner;
     private uiPin _pin;
+    private DVar<PiTracer> _model;
+
+    public uiTracer(DVar<PiTracer> model, Schema owner) {
+      _owner=owner;
+      _model=model;
+      var o=_owner._visuals.First(z => z is uiItem && (z as uiItem).GetModel().path==model.value.path);
+      if(o is uiPin) {
+        _pin=o as uiPin;
+      } else {
+        _pin=(o as uiAlias)._pin;
+      }
+      _pin.SetTracer(this);
+
+      uint l=(uint)_model.Get<long>("_location");
+      Render(3);
+      owner.AddVisual(this);
+      _model.changed+=_model_changed;
+      _model.Subscribe("_location", LocationChanged);
+
+    }
+
+    public override void SetLocation(Vector loc, bool save) {
+      if(save) {
+        int gs=LogramView.CellSize;
+        int topCell=(int)(loc.Y-_pin.Offset.Y-gs/2)/gs;
+        int leftCell=(int)(loc.X-_pin.Offset.X)/gs;
+        var sLoc=_model.Get<long>("_location");
+        sLoc.saved=true;
+        sLoc.value=((leftCell<<16) | (ushort)topCell);
+      } else {
+        Offset=loc;
+        Render(1);
+      }
+    }
+
+    public override Topic GetModel() {
+      return _model;
+    }
+
+    public override void Render(int chLevel) {
+      double width;
+      int gs=LogramView.CellSize;
+      if(chLevel>1) {
+        uint l=(uint)_model.Get<long>("_location");
+        OriginalLocation=new Vector(_pin.Offset.X+(0.5+(short)(l>>16))*gs, _pin.Offset.Y+((short)l)*gs);
+        this.Offset=OriginalLocation;
+      }
+
+      using(DrawingContext dc=this.RenderOpen()) {
+        string text=_pin.GetModel().GetValue().ToString();
+        FormattedText ft=new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LogramView.FtFont, gs*0.6, Brushes.Black);
+        width=ft.WidthIncludingTrailingWhitespace;
+        ft.MaxTextHeight=gs-3;
+        dc.DrawText(ft, new Point(0, 1));
+        if(_pin.Offset.X>Offset.X) {
+          dc.DrawLine(new Pen(Brushes.DarkViolet, 1), new Point(_pin.Offset.X-Offset.X, _pin.Offset.Y-Offset.Y), new Point(width-1, gs-4));
+        } else {
+          dc.DrawLine(new Pen(Brushes.DarkViolet, 1), new Point(_pin.Offset.X-Offset.X, _pin.Offset.Y-Offset.Y), new Point(0, gs-4));
+        }
+        dc.DrawLine(_selected?Schema.SelectionPen:(new Pen(_pin.brush, 1)), new Point(0, gs-4), new Point(width-1, gs-4));
+      }
+    }
+
+    private void _model_changed(Topic sender, TopicChanged param) {
+      if(sender==_model && param.Art==TopicChanged.ChangeArt.Remove) {
+        _model.changed-=_model_changed;
+        _pin.SetTracer(null);
+        this.Dispatcher.BeginInvoke(new Action(() => {
+          _owner.DeleteVisual(this);
+        }));
+        _model.Remove();
+      }
+    }
+    private void LocationChanged(Topic sender, TopicChanged param) {
+      if(param.Art==TopicChanged.ChangeArt.Value) {
+        this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);
+      }
+    }
+  }
+
+  internal class uiAlias : SchemaElement {
+    private Schema _owner;
+    public uiPin _pin { get; private set; }
     private int _oldX=-1;
     private int _oldY=-1;
     private int _oldH=0;
