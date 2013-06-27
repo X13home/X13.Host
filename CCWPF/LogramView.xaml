@@ -5,10 +5,10 @@
         xmlns:my="clr-namespace:X13.CC"
         Height="244" Width="298" TextOptions.TextRenderingMode="Grayscale" FontSize="12">
   <Grid Background="{StaticResource {x:Static SystemColors.AppWorkspaceBrushKey}}" ClipToBounds="True">
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="Auto" />
-      <ColumnDefinition />
-    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition/>
+    </Grid.RowDefinitions>
     <Grid.ContextMenu>
       <ContextMenu>
         <!-- used in Schema-->
@@ -17,7 +17,11 @@
     <ItemsControl Name="statemebtsList" Panel.ZIndex="1">
       <ItemsControl.ItemsPanel>
         <ItemsPanelTemplate>
-          <WrapPanel Orientation="Vertical" ItemHeight="24" ItemWidth="24" Margin="8" PreviewMouseLeftButtonDown="WrapPanel_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="WrapPanel_PreviewMouseLeftButtonUp" PreviewMouseMove="WrapPanel_PreviewMouseMove"/>
+          <WrapPanel Orientation="Horizontal" ItemHeight="24" ItemWidth="24" Margin="8" PreviewMouseLeftButtonDown="WrapPanel_PreviewMouseLeftButtonDown" PreviewMouseLeftButtonUp="WrapPanel_PreviewMouseLeftButtonUp" PreviewMouseMove="WrapPanel_PreviewMouseMove">
+            <WrapPanel.Background>
+              <SolidColorBrush Color="#54C0C0C0"/>
+            </WrapPanel.Background>
+          </WrapPanel>
         </ItemsPanelTemplate>
       </ItemsControl.ItemsPanel>
       <ItemsControl.ItemTemplate>
@@ -26,7 +30,7 @@
         </DataTemplate>
       </ItemsControl.ItemTemplate>
     </ItemsControl>
-    <my:Schema x:Name="uiLogram" HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" Grid.Column="1" Panel.ZIndex="0" Focusable="True">
+    <my:Schema x:Name="uiLogram" HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" Grid.Row="1" Panel.ZIndex="0" Focusable="True">
     </my:Schema>
   </Grid>
 </ad:DocumentContent>
