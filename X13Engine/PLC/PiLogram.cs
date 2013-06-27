@@ -55,7 +55,7 @@ namespace X13.PLC {
       if(Owner!=owner) {
         if(Owner!=null) {
           if(_via!=null) {
-            _via.changed+=_via_changed;
+            _via.changed-=_via_changed;
             _via=null;
             RefreshStatements();
           }

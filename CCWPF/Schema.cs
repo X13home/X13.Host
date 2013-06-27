@@ -637,7 +637,7 @@ namespace X13.CC {
       IEnumerable<Topic> ms;
       Topic sel;
       if(_mSelected!=null) {
-        ms=_mSelected.Select(z => z.GetModel()).Where(z => z!=null);
+        ms=_mSelected.Select(z => z.GetModel()).Where(z => z!=null && z.valueType!=typeof(PiTracer));
       } else if(_selected!=null && (sel=_selected.GetModel())!=null && sel.valueType==typeof(PiStatement)) {
         ms=(new Topic[] { sel });
       } else {
