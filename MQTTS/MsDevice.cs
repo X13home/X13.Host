@@ -647,7 +647,8 @@ namespace X13.Periphery {
       new NTRecord("On", typeof(bool)),
       new NTRecord("OA", typeof(bool)),   // output high if active
       new NTRecord("Oa", typeof(bool)),   // output low if active
-      new NTRecord("Ai", typeof(long)),   //uint16
+      new NTRecord("Ai", typeof(long)),   //uint16 Analog ref
+      new NTRecord("AI", typeof(long)),   //uint16 Analog ref2
       new NTRecord("Av", typeof(long)),   //uint16
       new NTRecord("Ae", typeof(long)),   //uint16
       new NTRecord("Pp", typeof(long)),   //uint8 PWM positive[29, 30]
@@ -655,6 +656,7 @@ namespace X13.Periphery {
       new NTRecord("_B", typeof(long)),   //uint8
       new NTRecord("_W", typeof(long)),   //uint16
       new NTRecord("_D", typeof(long)),   //uint32
+      new NTRecord("_q", typeof(long)),   //int64
       new NTRecord("_s", typeof(string)),
       new NTRecord("St", typeof(string)),  // Serial port transmit
       new NTRecord("Sr", typeof(string)),  // Serial port recieve
@@ -665,6 +667,7 @@ namespace X13.Periphery {
       new NTRecord("TW", typeof(long)),   //uint16
       new NTRecord("Td", typeof(long)),   //int32
       new NTRecord("TD", typeof(long)),   //uint32
+      new NTRecord("Tq", typeof(long)),   //int64
       new NTRecord("Ts", typeof(string)),
       new NTRecord("Ta", typeof(byte[])),
       new NTRecord("Xz", typeof(bool)),   // user defined
@@ -674,6 +677,7 @@ namespace X13.Periphery {
       new NTRecord("XW", typeof(long)),   //uint16
       new NTRecord("Xd", typeof(long)),   //int32
       new NTRecord("XD", typeof(long)),   //uint32
+      new NTRecord("Xq", typeof(long)),   //int64
       new NTRecord("Xs", typeof(string)),
       new NTRecord("Xa", typeof(byte[])),
       new NTRecord("_declarer", typeof(string)),
@@ -688,10 +692,10 @@ namespace X13.Periphery {
       {".cfg/XD_Channel",    0xFF12},
       {".cfg/XD_RSSI",       0xFF13},
 
-      {".cfg/XD_MACAddr",    0xFF20},
+      {".cfg/Xq_MACAddr",    0xFF20},
       {".cfg/XD_IPAddr",     0xFF21},
-      {".cfg/XD_IPMask",     0xFF22},
-      {".cfg/XD_IPRouter",   0xFF23},
+      //{".cfg/XD_IPMask",     0xFF22},
+      //{".cfg/XD_IPRouter",   0xFF23},
       //{".cfg/XD_IPBroker",    0xFF24},
 
       {"_declarer",         0xFFC0},

@@ -505,14 +505,9 @@ namespace X13.CC {
         FormattedText ft=new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LogramView.FtFont, gs*0.6, Brushes.Black);
         width=ft.WidthIncludingTrailingWhitespace;
         ft.MaxTextHeight=gs-3;
-        dc.DrawLine(new Pen(Brushes.DarkViolet, 1), new Point(_pin.Offset.X-Offset.X, _pin.Offset.Y-Offset.Y), new Point(0, gs-4));
-        if(_pin.Offset.X>Offset.X) {
-          dc.DrawText(ft, new Point(-width, 1));
-          dc.DrawLine(_selected?Schema.SelectionPen:(new Pen(_pin.brush, 1)), new Point(1-width, gs-4), new Point(0, gs-4));
-        } else {
-          dc.DrawText(ft, new Point(0, 1));
-          dc.DrawLine(_selected?Schema.SelectionPen:(new Pen(_pin.brush, 1)), new Point(0, gs-4), new Point(width-1, gs-4));
-        }
+        dc.DrawLine(new Pen(Brushes.DarkViolet, 1), new Point(_pin.Offset.X-Offset.X, _pin.Offset.Y-Offset.Y), new Point((_pin.Offset.X>Offset.X?width-1:0), gs-4));
+        dc.DrawText(ft, new Point(0, 1));
+        dc.DrawLine(_selected?Schema.SelectionPen:(new Pen(_pin.brush, 1)), new Point(0, gs-4), new Point(width-1, gs-4));
       }
     }
 
