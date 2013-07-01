@@ -176,6 +176,9 @@ namespace X13.PLC {
         try {
           _st.Calculate(_owner, param.Source);
         }
+        catch(NullReferenceException ex) {
+          Log.Debug("{0}.calculate - {1}", _owner.path, ex.Message);
+        }
         catch(Exception ex) {
           Log.Warning("{0}.calculate - {1}", _owner.path, ex.Message);
         }

@@ -85,9 +85,31 @@ namespace X13 {
         }
         if(chExist) {
           if(i==pe.Length-1 && type!=typeof(Topic) && !type.IsAssignableFrom(next.GetType())) {
-            Topic tmp= (Topic)Activator.CreateInstance(type);
-            tmp.CopyFrom(next);
-            next=tmp;
+            if(next.valueType!=null) {
+              if(pt!=typeof(object)) {
+                string msg=string.Format("Variable {0}[{1}] can't to type {2} convertiert", next.path, next.valueType==null?string.Empty:next.valueType.Name, pt.Name);
+                throw new ArgumentException(msg);
+              } else {
+                Topic tmp=next;
+                next.Remove(initiator);
+                Log.Warning("{0}[{1}] removed", next.path, next.valueType==null?string.Empty:next.valueType.Name);
+                next=(Topic)Activator.CreateInstance(type);
+                next.parent=cur;
+                next._name=pe[i];
+                if(cur!=root) {
+                  next.path=cur.path+"/"+pe[i];
+                } else {
+                  next.path="/"+pe[i];
+                }
+                cur._childNodes.Add(pe[i], next);
+                next.Publish(next, TopicChanged.ChangeArt.Add, initiator);
+                next.SetValue(tmp.GetValue(), new TopicChanged(TopicChanged.ChangeArt.Value, initiator));
+              }
+            } else {
+              Topic tmp= (Topic)Activator.CreateInstance(type);
+              tmp.CopyFrom(next);
+              next=tmp;
+            }
           }
         } else {
           if(i==pe.Length-1 && initiator!=root) {
@@ -182,7 +204,7 @@ namespace X13 {
         return;
       }
       XElement xCur=new XElement("item", new XAttribute("name", tCur.name));
-      
+
       if(tCur.valueType!=null) {
         string json=tCur.ToJson();
         if(tCur.valueType==typeof(string) && json.Length>1) {
@@ -355,7 +377,7 @@ namespace X13 {
           this.SetValue(dtUtc.ToLocalTime(), param);
           //} else if(valueType==typeof(object)) {
           //  object rez=JsonConvert.DeserializeObject(json, typeof(object));
-        } else if(valueType==typeof(JObject)){
+        } else if(valueType==typeof(JObject)) {
           this.SetValue(JObject.Parse(json), param);
         } else {
           if(json[0]=='{') {
@@ -395,10 +417,6 @@ namespace X13 {
       this.Publish(this, TopicChanged.ChangeArt.Value, null);
     }
     protected void CopyFrom(Topic old) {
-      if(old.valueType!=null) {
-        string msg=string.Format("Variable {0}[{1}] can't to type {2} convertiert", old.path, old.valueType==null?string.Empty:old.valueType.Name, this.valueType==null?string.Empty:this.valueType.Name);
-        throw new ArgumentException(msg);
-      }
       this.parent=old.parent;
       this._childNodes=old._childNodes;
       lock(old._subs) {

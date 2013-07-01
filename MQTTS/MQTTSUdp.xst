@@ -153,20 +153,6 @@
         <item name="St4" value="AsX8,B20,B21,B22,B23,S24" saved="True" type="System.String">
           <item name="_description" value="TxD 38400, TX" saved="True" type="System.String" />
         </item>      </item>
-      <item name="SV1-13">
-        <item name="In26" value="7zX9" saved="True" type="System.String">
-          <item name="_description" value="Digital Pull-Up inverted input, SV1-13" saved="True" type="System.String" />
-        </item>
-        <item name="Ip26" value="6zX9" saved="True" type="System.String">
-          <item name="_description" value="Digital input, SV1-13" saved="True" type="System.String" />
-        </item>
-        <item name="On26" value="9zX9" saved="True" type="System.String">
-          <item name="_description" value="Digital inverted output, SV1-13" saved="True" type="System.String" />
-        </item>
-        <item name="Op26" value="8zX9" saved="True" type="System.String">
-          <item name="_description" value="Digital output, SV1-13" saved="True" type="System.String" />
-        </item>
-      </item>
       <item name="SV1-14">
         <item name="In27" value="7zX10" saved="True" type="System.String">
           <item name="_description" value="Digital Pull-Up inverted input, SV1-14" saved="True" type="System.String" />
