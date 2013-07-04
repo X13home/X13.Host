@@ -78,7 +78,6 @@ namespace X13.MQTT {
       _tcp=new TcpListener(IPAddress.Any, 1883);
       _connections=new List<MqBroker>();
       _tcp.Start();
-      _admGroup=Topic.root.Get<string>("/etc/Broker/security/groups/0");
       _verbose=Topic.root.Get<bool>("/etc/Broker/verbose");
       _tcp.BeginAcceptTcpClient(new AsyncCallback(Connect), null);
       Log.Info("Broker started on {0}", Environment.MachineName);
@@ -158,6 +157,9 @@ namespace X13.MQTT {
       return ret;
     }
     public static bool CheckAcl(string p, Topic t, TopicAcl topicAcl) {
+      if(_admGroup==null) {
+        _admGroup=Topic.root.Get<string>("/etc/Broker/security/groups/0");
+      }
       if(_admGroup.Exist(p)) {
         return true;              // Aministrators has all rights
       }

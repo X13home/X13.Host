@@ -19,13 +19,25 @@ namespace X13.CC {
   /// <summary>
   /// Interaction logic for SetupView.xaml
   /// </summary>
-  public partial class SetupView : DocumentContent  {
+  public partial class SetupView : DocumentContent {
     private const string _enterUrlText="localhost";
     private DVar<string> _clUrl;
     private DVar<string> _clUser;
     private DVar<string> _clPass;
     public SetupView() {
       InitializeComponent();
+      {
+        System.Drawing.Icon img = System.Drawing.SystemIcons.Shield;
+
+        System.Drawing.Bitmap bitmap = img.ToBitmap();
+        IntPtr hBitmap = bitmap.GetHbitmap();
+
+        System.Windows.Media.ImageSource wpfBitmap = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+                  hBitmap, IntPtr.Zero, Int32Rect.Empty,
+                  System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+        imUAK.Source=wpfBitmap;
+      }
+
       _clUser=Topic.root.Get<string>("/local/cfg/Client/_username");
       _clUser.saved=true;
       if(!string.IsNullOrEmpty(_clUser.value)) {
@@ -87,7 +99,13 @@ namespace X13.CC {
         if(System.Environment.OSVersion.Version.Major >= 6) {
           p.StartInfo.Verb = "runas";
         }
-        p.Start();
+        try {
+          p.Start();
+        }
+        catch(Exception ex) {
+          Log.Error(ex.Message);
+          return;
+        }
         p.WaitForExit();
       }
       if(!string.IsNullOrEmpty(_clUrl.value)) {

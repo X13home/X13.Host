@@ -4,7 +4,7 @@
         xmlns:ad="clr-namespace:AvalonDock;assembly=AvalonDock"
         xmlns:x13="clr-namespace:X13;assembly=engine"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"                    
-        Title="Setup" TextOptions.TextRenderingMode="Grayscale"  FontSize="14" Height="250" Width="450">
+        Title="Setup" TextOptions.TextRenderingMode="Grayscale"  FontSize="14" Height="250" Width="500">
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition />
@@ -15,7 +15,14 @@
         <GroupBox Header="Select Engine">
           <StackPanel>
             <RadioButton Name="EngineEmbedded" Content="Embedded Engine" Margin="5,10,5,5" IsChecked="True" />
-            <RadioButton Name="EngineInstall" Content="Install Engine as local service (need Administator rights)"  Margin="5" />
+            <RadioButton Name="EngineInstall"  Margin="5" >
+              <RadioButton.Content>
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock Text="Install Engine as local service (need Administators rights)" Margin="3" />
+                  <Image Name="imUAK" Width="24" Height="24" />
+                </StackPanel>
+              </RadioButton.Content>
+            </RadioButton>
             <RadioButton Name="EngineUrl" Margin="5">
               <RadioButton.Content>
                 <Grid IsEnabled="{Binding Path=IsChecked, RelativeSource={RelativeSource AncestorType={x:Type RadioButton}}}" >
@@ -45,7 +52,7 @@
     </TabControl>
     <xctk:BusyIndicator Name="biInstall" IsBusy="False" BusyContent="Install Service" Grid.Row="1" >
       <Grid>
-        <Button Content="Ok" HorizontalAlignment="Right" Margin="5" Padding="20,3,20,5" Click="Button_Click"></Button>
+        <Button HorizontalAlignment="Right" Margin="5" Content="Ok" Padding="20,3" Click="Button_Click" />
       </Grid>
     </xctk:BusyIndicator>
   </Grid>

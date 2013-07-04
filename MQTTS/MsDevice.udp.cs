@@ -67,20 +67,24 @@ namespace X13.Periphery {
       public static void Open() {
         _myIps=Dns.GetHostEntry(Dns.GetHostName()).AddressList.Where(z => z.AddressFamily==AddressFamily.InterNetwork).ToArray();
         List<IPAddress> bc=new List<IPAddress>();
-        foreach(var nic in NetworkInterface.GetAllNetworkInterfaces()) {
-          var ipProps = nic.GetIPProperties();
-          var ipv4Addrs = ipProps.UnicastAddresses.Where(addr => addr.Address.AddressFamily == AddressFamily.InterNetwork);
-          foreach(var addr in ipv4Addrs) {
-            if(addr.IPv4Mask == null)
-              continue;
-            var ip = addr.Address.GetAddressBytes();
-            var mask = addr.IPv4Mask.GetAddressBytes();
-            var result = new Byte[4];
-            for(int i = 0; i < 4; ++i) {
-              result[i] = (Byte)(ip[i] | (mask[i]^255));
+        try {
+          foreach(var nic in NetworkInterface.GetAllNetworkInterfaces()) {
+            var ipProps = nic.GetIPProperties();
+            var ipv4Addrs = ipProps.UnicastAddresses.Where(addr => addr.Address.AddressFamily == AddressFamily.InterNetwork);
+            foreach(var addr in ipv4Addrs) {
+              if(addr.IPv4Mask == null)
+                continue;
+              var ip = addr.Address.GetAddressBytes();
+              var mask = addr.IPv4Mask.GetAddressBytes();
+              var result = new Byte[4];
+              for(int i = 0; i < 4; ++i) {
+                result[i] = (Byte)(ip[i] | (mask[i]^255));
+              }
+              bc.Add(new IPAddress(result));
             }
-            bc.Add(new IPAddress(result));
           }
+        }
+        catch(Exception) {    // MONO: NotImplementedException
         }
         if(bc.Count==0) {
           bc.Add(new IPAddress(new byte[] { 255, 255, 255, 255 }));
