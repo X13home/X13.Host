@@ -91,7 +91,7 @@ reconnect:
         if(_verbose.value) {
           Log.Debug("{0}({1}) [{2}] {3}", userName, userPassWrong?"fail":"pass", ctx.Request.HttpMethod, ctx.Request.RawUrl);
         }
-        if(!userPassWrong && ctx.Request.HttpMethod=="GET" && ctx.Request.RawUrl==@"/data?read") {
+        if(!userPassWrong && ctx.Request.HttpMethod=="GET" && ctx.Request.RawUrl==@"/export?read") {
           ses=Session.Get(ctx.Request.Cookies["session"], userName);
           ses.Enqueue(ctx);
         } else {
@@ -107,10 +107,29 @@ reconnect:
                   responseString=File.ReadAllText(Path.Combine(_htPath, "index.html"));
                   response.ContentType="text/html";
                 } else
-                  if(ctx.Request.RawUrl.StartsWith(@"/data/")) {
-                    string mqPath=ctx.Request.RawUrl.Substring(5);
+                  if(ctx.Request.RawUrl.StartsWith(@"/export/")) {
+                    string mqPath=System.Web.HttpUtility.UrlDecode(ctx.Request.RawUrl);
                     Topic cur;
-                    if(Topic.root.Exist(mqPath, out cur)) {
+                    var ps=mqPath.Split('/');
+                    if(ps.Contains("#") || ps.Contains("+")) {
+                      bool first=true;
+                      StringBuilder resp=new StringBuilder();
+                      resp.Append("{\r\n");
+                      var list=Topic.root.Find(mqPath).ToArray();
+                      foreach(var t in list) {
+                        if(MQTT.MqBroker.CheckAcl(userName, t, TopicAcl.Subscribe)) {
+                          if(!first) {
+                            resp.Append(",\r\n");
+                          } else {
+                            first=false;
+                          }
+                          resp.AppendFormat("\"{0}\": {1}", t.path, t.ToJson());
+                        }
+                      }
+                      resp.Append("\r\n}");
+                      responseString=resp.ToString();
+                      response.ContentType="application/json";
+                    } else if(Topic.root.Exist(mqPath, out cur)) {
                       if(MQTT.MqBroker.CheckAcl(userName, cur, TopicAcl.Subscribe)) {
                         responseString=cur.ToJson();
                         response.ContentType="application/json";
@@ -137,15 +156,15 @@ reconnect:
                 response.StatusCode=404;
               }
             } else if(ctx.Request.HttpMethod=="POST" && ctx.Request.HasEntityBody) {
-              if(ctx.Request.RawUrl==@"/data?subscribe") {
+              if(ctx.Request.RawUrl==@"/export?subscribe") {
                 var sco=ctx.Request.Cookies["session"];
                 ses=Session.Get(sco, userName);
                 ctx.Response.SetCookie(ses.id);
                 string sub=(new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)).ReadToEnd();
                 ses.Subscribe(sub);
-              } else if(ctx.Request.RawUrl.StartsWith(@"/data/")) {
+              } else if(ctx.Request.RawUrl.StartsWith(@"/export/")) {
                 string json=(new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)).ReadToEnd();
-                response.StatusCode=ProcessPublish(ctx.Request.RawUrl.Substring(5), json, userName);
+                response.StatusCode=ProcessPublish(ctx.Request.RawUrl, json, userName);
               } else {
                 response.StatusCode=400;
                 responseString="400 Bad Request";
@@ -175,8 +194,13 @@ reconnect:
       catch(Exception ex) {
         Log.Error("ContextReady[{1}] Exception={0}", ex, RemoteEP);
       }
-      if(_listener!=null && _listener.IsListening) {
-        _listener.BeginGetContext(new AsyncCallback(ContextReady), null);
+      try {
+        if(_listener!=null && _listener.IsListening) {
+          _listener.BeginGetContext(new AsyncCallback(ContextReady), null);
+        }
+      }
+      catch(Exception ex) {
+        Log.Error("HttpServ.ContextReady->BeginGetContext: {0}", ex.Message);
       }
     }
 
@@ -185,9 +209,6 @@ reconnect:
       Type vt=null;
 
       string[] pt=path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-      if(pt.Length>0 && pt[0]=="local") {
-        return 400;
-      }
       int i=0;
       while(i<pt.Length && cur.Exist(pt[i])) {
         cur=cur.Get(pt[i++]);

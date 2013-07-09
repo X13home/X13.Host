@@ -64,8 +64,8 @@ namespace X13.MQTT {
         SetTopic("groups/0/root", true, sec);
         SetTopic("groups/0/local", true, sec);
         SetTopic("groups/1", "Users", sec);
-        SetTopic<long>("acls/var", 0x1F000001, sec);
-        SetTopic<long>("acls/var/demo", 0xFF000001, sec);
+        SetTopic<long>("acls/export", 0x1F000001, sec);
+        SetTopic<long>("acls/export/demo", 0xFF000001, sec);
         Topic.Export("../data/security.xst", sec);
       }
       sec.aclAll=TopicAcl.None;

@@ -126,6 +126,9 @@ namespace X13 {
     public DVar<T> Get<T>(string path, Topic initiator=null) {
       return Topic.GetP(path, typeof(T), initiator, this) as DVar<T>;
     }
+    public IEnumerable<Topic> Find(string mask) {
+      return new TopicEnumerator(mask.Split(_delmiter, StringSplitOptions.RemoveEmptyEntries), 0, this);
+    }
 
     public Subscription Subscribe(string path, Action<Topic, TopicChanged> func, QoS qos=QoS.AtMostOnce) {
       Topic cur;

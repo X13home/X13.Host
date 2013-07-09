@@ -1,118 +1,163 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>X13.Home</title>
-  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css" />
-</head>
-<body>
-
-  <div class="ui-grid-b ui-responsive">
-    <div class="ui-block-a ui-bar-c" style="height: 150px;">
-      <h3 style="text-align: center">Dimable lighting</h3>
-      <input type="range" min="0" max="100" data-highlight="true" data-pub="/var/demo/lightSet" data-sub="/var/demo/light" />
-      <button data-pub="/var/demo/pir1">PIR1</button>
-    </div>
-    <div class="ui-block-b ui-bar-d" style="height: 150px;">
-      <h3 style="text-align: center">On/Off lamp</h3>
-      <select data-role="slider" data-pub="/var/demo/lampSet" data-sub="/var/demo/lamp">
-        <option value="0">Off</option>
-        <option value="1">On</option>
-      </select>
-    </div>
-    <div class="ui-block-c ui-bar-c" style="height: 150px;">
-      <span>Temperature <label data-sub="/var/demo/OutTa"></label> °C</span>
-    </div>
-  </div>
-
-
-  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-  <script type="text/javascript" src="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>
-  <script type="text/javascript" src="pubsub.js"></script>
+  <title>Template test</title>
+  <!--CSS -->
+  <link rel="stylesheet" type="text/css" href="css/style.css" />
+  <link rel="stylesheet" type="text/css" href="css/rs-carousel-min.css" />
+  <!-- lib -->
+  <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+  <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
+  <script type="text/javascript" src="js/jquery.event.drag.js"></script>
+  <script type="text/javascript" src="js/jquery.translate3d.js"></script>
+  <script type="text/javascript" src="js/jsrender.min.js"></script>
+  <script type="text/javascript" src="js/stringformat.js"></script>
+  <script type="text/javascript" src="js/modernizr.3dtransforms.touch.js"></script>
+  <!-- carousel -->
+  <script type="text/javascript" src="js/jquery.rs.carousel-min.js"></script>
+  <script type="text/javascript" src="js/jquery.rs.carousel-touch-min.js"></script>
+  <!-- X13.Home -->
+  <script type="text/javascript" src="js/pubsub.js"></script>
   <script type="text/javascript">
-    var timer;
 
-    function reconnect() {
-      clearTimeout(timer);
-      timer = setTimeout(function () { startStreaming(); }, 30);
-    }
+    $(document).ready(function () {
+      Tiles = [];
+      HeaderTemplate = $.templates("#HeaderTmpl");
 
-    function dispatchFunc(topic, v) {
-      $("input[type='number'][data-sub='" + topic + "']").each(function (idx, el) {
-        $(el).val(v);
-        $(el).slider("refresh");
-      });
-      $("select[data-role='slider'][data-sub='" + topic + "']").each(function (idx, el) {
-        el.selectedIndex = v;
-        $(el).slider("refresh");
-      });
-      $("label[data-sub='" + topic + "']").text(v);
-    }
-
-    function startStreaming() {
-      pubsub.register({ data: dispatchFunc, error: reconnect });
-      $("input[type='number'][data-sub]").each(function (idx, el) {
-        pubsub.subscribe(el.dataset.sub, { success: pubsub.read });
-        $.getJSON("/data" + el.dataset.sub, function (v) {
-          $(el).val(v);
-          $(el).slider("refresh");
-        });
-      });
-      $("select[data-role='slider'][data-sub]").each(function (idx, el) {
-        pubsub.subscribe(el.dataset.sub, { success: pubsub.read });
-        $.getJSON("/data" + el.dataset.sub, function (v) {
-          el.selectedIndex = v;
-          $(el).slider("refresh");
-        });
-      });
-      $("label[data-sub]").each(function (idx, el) {
-        pubsub.subscribe(el.dataset.sub, { success: pubsub.read });
-        $.getJSON("/data" + el.dataset.sub, function (v) {
-          el.innerHTML = v;
-        });
-      });
-
-    }
-
-    $(function () {
-
-      $("input[type='number'][data-pub]").each(function (idx, el) {
-        $(el).slider({
-          stop: function (event, ui) {
-            pubsub.publish(event.target.dataset.pub, event.target.value);
+      $.getJSON('/export/%2B/header/%23', function (obj) {
+        $.each(obj, function (k, v) {
+          var tile = null;
+          try {
+            var pt = k.split('/');
+            if (pt.length > 2) {
+              for (var i = Tiles.length - 1; i >= 0; i--) {
+                if (Tiles[i]["id"] == pt[2]) {
+                  tile = Tiles[i];
+                  break;
+                }
+              }
+              if (tile == null) {
+                tile = {};
+                tile["id"] = pt[2];
+                tile["path"] = "/" + pt[1] + "/" + pt[2] + "/";
+                tile["header"] = [];
+                tile["body"] = [];
+                Tiles.push(tile);
+              }
+              if (pt.length == 4 && typeof (v) === 'string') {
+                tile.path = v;
+              } else if (pt.length > 4) {
+                var ui = null;
+                for (var i = tile.header.length - 1; i >= 0; i--) {
+                  if (tile.header[i]["id"] == pt[4]) {
+                    ui = tile.header[i];
+                    break;
+                  }
+                }
+                if (ui == null) {
+                  ui = {};
+                  ui["id"] = pt[4];
+                  ui["path"] = "/" + pt[1] + "/" + pt[2] + "/" + pt[3] + "/" + pt[4];
+                  ui["_ui"] = "var";
+                  tile.header.push(ui);
+                }
+                if (pt.length == 6) {
+                  ui[pt[5]] = v;
+                }
+              }
+            }
+          } catch (e) {
+            console.log(e);
           }
         });
-        $.getJSON("/data" + el.dataset.pub, function (v) {
-          $(el).val(v);
-          $(el).slider("refresh");
-        });
-      });
-      $("input[type='number']:not([data-pub])").slider("disable");
+        var html = HeaderTemplate.render(Tiles);
+        $("div#rs-carousel ul").html(html);
 
-      $("select[data-role='slider'][data-pub]").each(function (idx, el) {
-        $(el).slider({
-          stop: function (event, ui) {
-            pubsub.publish(event.target.dataset.pub, event.target.selectedIndex);
+        $('#rs-carousel').carousel({
+          'pagination': false,
+          'nextPrevActions': false,
+          'touch': true,
+        });
+        $("#rs-carousel ul li").click(function (e, n) {
+          var p = $(this).data("page");
+          if (p != null && typeof (p) === "string") {
+            if (p.substring(0, 8) == "/export/") {
+              $.getJSON(p + '%23', function (obj) {
+                $.each(obj, function (k, v) {
+                  var tile = null;
+                  try {
+                    var pt = k.split('/');
+                    if (pt.length > 2) {
+                      for (var i = Tiles.length - 1; i >= 0; i--) {
+                        if (Tiles[i]["id"] == pt[2]) {
+                          tile = Tiles[i];
+                          break;
+                        }
+                      }
+                      if (tile == null) {
+                        return;
+                      }
+                    
+                      if (pt.length > 3) {
+                        if (pt[3] == "header") {
+                          return;
+                        }
+                      var ui = null;
+                      for (var i = tile.body.length - 1; i >= 0; i--) {
+                        if (tile.body[i]["id"] == pt[3]) {
+                          ui = tile.body[i];
+                          break;
+                        }
+                      }
+                      if (ui == null) {
+                        ui = {};
+                        ui["id"] = pt[3];
+                        ui["path"] = "/" + pt[1] + "/" + pt[2] + "/" + pt[3];
+                        ui["_ui"] = "var";
+                        tile.body.push(ui);
+                      }
+                      if (pt.length == 5) {
+                        ui[pt[4]] = v;
+                      }
+                    }
+                    }
+                  } catch (e) {
+                    console.log(e);
+                  }
+                });
+              });
           }
+          //    document.getElementById("content").src = p;
+              $("#rs-carousel ul li.active").removeClass("active");
+              $(this).addClass("active");
+        }
         });
-        $.getJSON("/data" + el.dataset.pub, function (v) {
-          el.selectedIndex = v;
-          $(el).slider("refresh");
-        });
+      $("#rs-carousel ul li").each(function (idx, el) {
+        $(el).addClass("bg_nav_" + (1 + (idx % 5)));
       });
-      $("select[data-role='slider']:not([data-pub])").slider("disable");
-
-      $("button[data-pub]").each(function (idx, el) {
-        $(el).mousedown(function (obj) {
-          pubsub.publish(obj.target.dataset.pub, true);
-        });
-        $(el).mouseup(function (obj) {
-          pubsub.publish(obj.target.dataset.pub, false);
-        });
-      });
-
-      startStreaming();
+      pubsub.init();
+    });
     });
   </script>
+</head>
+<body style="height: 95%; width: 95%;">
+
+  <script id="HeaderTmpl" type="text/x-jsrender">
+    <li data-page="{{:path}}">
+      <span class="nav_head">{{:id}}</span>
+      {{for header}}
+          {{if _ui=='var'}}
+            <var class="nav_var" {{if path}}data-sub="{{:path}}"{{/if}}{{if _format}}data-format="{{:_format}}"{{/if}}></var>
+          {{/if}}
+        {{/for}}
+    </li>
+  </script>
+
+  <div id="rs-carousel" class="module" style="width: 89%; float: left;">
+    <ul>
+    </ul>
+  </div>
 </body>
+
 </html>
