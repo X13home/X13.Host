@@ -6,6 +6,12 @@
   <!--CSS -->
   <link rel="stylesheet" type="text/css" href="css/style.css" />
   <link rel="stylesheet" type="text/css" href="css/rs-carousel-min.css" />
+  <link rel="stylesheet" type="text/css" href="css/checkbox.css" />
+  <style>
+    .bg_red {
+      background-color: red;
+    }
+  </style>
   <!-- lib -->
   <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
   <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
@@ -24,13 +30,14 @@
     $(document).ready(function () {
       Tiles = [];
       HeaderTemplate = $.templates("#HeaderTmpl");
+      ContentTemplate = $.templates('#ContentTmpl');
 
       $.getJSON('/export/%2B/header/%23', function (obj) {
         $.each(obj, function (k, v) {
           var tile = null;
           try {
             var pt = k.split('/');
-            if (pt.length > 2) {
+            if (pt.length > 2 && pt[2].substring(0, 1) != '_') {
               for (var i = Tiles.length - 1; i >= 0; i--) {
                 if (Tiles[i]["id"] == pt[2]) {
                   tile = Tiles[i];
@@ -43,27 +50,33 @@
                 tile["path"] = "/" + pt[1] + "/" + pt[2] + "/";
                 tile["header"] = [];
                 tile["body"] = [];
+                tile["_idx"] = 9999;
                 Tiles.push(tile);
               }
-              if (pt.length == 4 && typeof (v) === 'string') {
-                tile.path = v;
-              } else if (pt.length > 4) {
-                var ui = null;
-                for (var i = tile.header.length - 1; i >= 0; i--) {
-                  if (tile.header[i]["id"] == pt[4]) {
-                    ui = tile.header[i];
-                    break;
+              if (pt.length > 4) {
+                if (pt.length == 5 && pt[4].substring(0, 1) == '_') {
+                  tile[pt[4]] = v;
+                } else {
+                  var ui = null;
+                  for (var i = tile.header.length - 1; i >= 0; i--) {
+                    if (tile.header[i]["id"] == pt[4]) {
+                      ui = tile.header[i];
+                      break;
+                    }
                   }
-                }
-                if (ui == null) {
-                  ui = {};
-                  ui["id"] = pt[4];
-                  ui["path"] = "/" + pt[1] + "/" + pt[2] + "/" + pt[3] + "/" + pt[4];
-                  ui["_ui"] = "var";
-                  tile.header.push(ui);
-                }
-                if (pt.length == 6) {
-                  ui[pt[5]] = v;
+                  if (ui == null) {
+                    ui = {};
+                    ui["id"] = pt[4];
+                    ui["path"] = "/" + pt[1] + "/" + pt[2] + "/" + pt[3] + "/" + pt[4];
+                    ui["_ui"] = "var";
+                    ui["_idx"] = 9999;
+                    ui["_class"] = "";
+                    ui["_style"] = "";
+                    tile.header.push(ui);
+                  }
+                  if (pt.length == 6) {
+                    ui[pt[5]] = v;
+                  }
                 }
               }
             }
@@ -71,6 +84,14 @@
             console.log(e);
           }
         });
+        Tiles = Tiles.sort(function (a, b) {
+          return a._idx - b._idx;
+        });
+        for (i = Tiles.length - 1; i >= 0; i--) {
+          Tiles[i].header = Tiles[i].header.sort(function (a, b) {
+            return a._idx - b._idx;
+          });
+        }
         var html = HeaderTemplate.render(Tiles);
         $("div#rs-carousel ul").html(html);
 
@@ -83,81 +104,120 @@
           var p = $(this).data("page");
           if (p != null && typeof (p) === "string") {
             if (p.substring(0, 8) == "/export/") {
+              var tile = null;
+              var pt = p.split('/');
+              if (pt.length > 2) {
+                for (var i = Tiles.length - 1; i >= 0; i--) {
+                  if (Tiles[i]["id"] == pt[2]) {
+                    tile = Tiles[i];
+                    break;
+                  }
+                }
+              }
+              if (tile == null) {
+                return;
+              }
+
               $.getJSON(p + '%23', function (obj) {
                 $.each(obj, function (k, v) {
-                  var tile = null;
                   try {
                     var pt = k.split('/');
-                    if (pt.length > 2) {
-                      for (var i = Tiles.length - 1; i >= 0; i--) {
-                        if (Tiles[i]["id"] == pt[2]) {
-                          tile = Tiles[i];
-                          break;
+                    if (pt.length > 3 && pt[3] != "header") {
+                      if (pt.length == 4 && pt[3].substring(0, 1) == '_') {
+                        if (pt[3] != "_idx") {
+                          tile[pt[3]] = v;
+                        }
+                      } else {
+                        var ui = null;
+                        for (var i = tile.body.length - 1; i >= 0; i--) {
+                          if (tile.body[i]["id"] == pt[3]) {
+                            ui = tile.body[i];
+                            break;
+                          }
+                        }
+                        if (ui == null) {
+                          ui = {};
+                          ui["id"] = pt[3];
+                          ui["path"] = "/" + pt[1] + "/" + pt[2] + "/" + pt[3];
+                          ui["_ui"] = "var";
+                          ui["_idx"] = 9999;
+                          ui["_class"] = "";
+                          ui["_style"] = "";
+                          tile.body.push(ui);
+                        }
+                        if (pt.length == 5) {
+                          ui[pt[4]] = v;
                         }
                       }
-                      if (tile == null) {
-                        return;
-                      }
-                    
-                      if (pt.length > 3) {
-                        if (pt[3] == "header") {
-                          return;
-                        }
-                      var ui = null;
-                      for (var i = tile.body.length - 1; i >= 0; i--) {
-                        if (tile.body[i]["id"] == pt[3]) {
-                          ui = tile.body[i];
-                          break;
-                        }
-                      }
-                      if (ui == null) {
-                        ui = {};
-                        ui["id"] = pt[3];
-                        ui["path"] = "/" + pt[1] + "/" + pt[2] + "/" + pt[3];
-                        ui["_ui"] = "var";
-                        tile.body.push(ui);
-                      }
-                      if (pt.length == 5) {
-                        ui[pt[4]] = v;
-                      }
-                    }
                     }
                   } catch (e) {
                     console.log(e);
                   }
                 });
+                tile.body = tile.body.sort(function (a, b) {
+                  return a._idx - b._idx;
+                });
+                var html = ContentTemplate.render(tile.body)
+                $("div#content").html(html);
+                pubsub.refresh($("div#content"));
+                pubsub.subscribeEx(p + "+");
               });
+            }
+            //    document.getElementById("content").src = p;
+            $("#rs-carousel ul li.active").each(function (idx, el) {
+              // TODO: unsubscribe
+              $(el).removeClass("active");
+            });
+
+            $(this).addClass("active");
           }
-          //    document.getElementById("content").src = p;
-              $("#rs-carousel ul li.active").removeClass("active");
-              $(this).addClass("active");
-        }
         });
-      $("#rs-carousel ul li").each(function (idx, el) {
-        $(el).addClass("bg_nav_" + (1 + (idx % 5)));
+        $("#rs-carousel ul li").each(function (idx, el) {
+          $(el).addClass("bg_nav_" + (1 + (idx % 5)));
+        });
+        pubsub.init();
       });
-      pubsub.init();
-    });
     });
   </script>
 </head>
 <body style="height: 95%; width: 95%;">
-
-  <script id="HeaderTmpl" type="text/x-jsrender">
-    <li data-page="{{:path}}">
-      <span class="nav_head">{{:id}}</span>
-      {{for header}}
-          {{if _ui=='var'}}
-            <var class="nav_var" {{if path}}data-sub="{{:path}}"{{/if}}{{if _format}}data-format="{{:_format}}"{{/if}}></var>
-          {{/if}}
-        {{/for}}
-    </li>
-  </script>
-
-  <div id="rs-carousel" class="module" style="width: 89%; float: left;">
+  <div id="rs-carousel" class="module" style="width: 100%;">
     <ul>
     </ul>
   </div>
+  <div id="content" style="margin: 15px;">
+  </div>
+
+  <script id="HeaderTmpl" type="text/x-jsrender">
+    <li data-page="{{>path}}">
+      <span class="nav_head">{{>id}}</span>
+      {{for header}}
+        <div style="{{:_style}}" class="{{:_class}}">
+          {{if _ui=='var'}}
+            <var class="nav_var" {{if path}}data-sub="{{>path}}"{{/if}}{{if _format}}data-format="{{>_format}}"{{/if}}></var>
+          {{else _ui=='checkbox'}}
+            <input type="checkbox" id="{{>id}}" data-sub="{{>path}}" />
+            <label for="{{>id}}"></label>
+          {{/if}}
+        </div>
+      {{/for}}
+    </li>
+  </script>
+  <script id="ContentTmpl" type="text/x-jsrender">
+    <div style="{{:_style}}" class="{{:_class}}">
+      {{if _ui=='var'}}
+        <var class="nav_var" {{if path}}data-sub="{{>path}}"{{/if}}{{if _format}}data-format="{{>_format}}"{{/if}}></var>
+      {{else _ui=='button'}}
+        <button data-pub="{{>path}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</button>
+      {{else _ui=='checkbox'}}
+        <input type="checkbox" id="{{>id}}" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
+        <label for="{{>id}}"></label>
+      {{else _ui=='range'}}
+        <input type="range" {{if _min}}min="{{>_min}}"{{/if}} {{if _max}}max="{{>_max}}"{{/if}} data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
+      {{/if}}
+    </div>
+  </script>
+
 </body>
 
 </html>

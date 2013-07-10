@@ -166,6 +166,10 @@ var pubsub = (function () {
       }
     },
 
+    subscribeEx: function (topic) {
+      sendSubscribe(topic);
+    },
+
     subscribe: function (topic, cbs) {
       if (topic.substring(0, 8) == "/export/") {
         return;
@@ -238,7 +242,7 @@ var pubsub = (function () {
       pubsub.add({              // checkbox
         init: function (w) {
           w.find("input[type='checkbox'][data-pub]").each(function (idx, el) {
-            $(el.parentElement).addClass('checkbox-rw');
+            $(el.parentElement).addClass('checkbox');
             $(el).click(function () {
               pubsub.publish($(this).data("pub"), $(this).prop("checked"));
             });
@@ -252,7 +256,7 @@ var pubsub = (function () {
           });
 
           w.find("input[type='checkbox']:not([data-pub])").each(function (idx, el) {
-            $(el.parentElement).addClass('checkbox-ro');
+            $(el.parentElement).addClass('checkbox').addClass("readonly");
             $(el).attr("disabled", true);
           });
         },

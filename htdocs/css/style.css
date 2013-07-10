@@ -14,5 +14,4 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
 .nav-arrow { float: left; height: auto; width: 4%; font-size: 3em; font-weight: 900; cursor: pointer; }
 var { font-style: normal;}
 .nav_head { display: block; text-align: center; font-weight: bolder; margin-bottom: 0.7em; }
-#rs-carousel ul li var.nav_var_main { display: block; text-align: right; font-size: larger; font-weight: bolder; }
-#rs-carousel ul li var.nav_var { display: block; text-align: right; }
+#rs-carousel ul li div {  text-align: right; }
