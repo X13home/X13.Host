@@ -301,6 +301,22 @@ var pubsub = (function () {
         }
       });
 
+      pubsub.add({    // img
+        init: function (w) {
+          //readonly
+        },
+        sub: function (w) {
+          w.find("img[data-sub]").each(function (idx, el) {
+            pubsub.subscribe($(el).data("sub"));
+          });
+        },
+        pub: function (w, topic, v) {
+          w.find("img[data-sub='" + topic + "']").each(function (idx, el) {
+            el.src = v;
+          });
+        }
+      });
+
 
       //      pubsub.add({ 
       //        init: function(w){
@@ -316,9 +332,6 @@ var pubsub = (function () {
       for (var i in components) {
         if (!components.hasOwnProperty(i)) continue;
         components[i].init(mw);
-        if (child != null) {
-          components[i].init(child);
-        }
       }
 
       document.cookie = "session=" + guid() + ";";

@@ -6,12 +6,8 @@
   <!--CSS -->
   <link rel="stylesheet" type="text/css" href="css/style.css" />
   <link rel="stylesheet" type="text/css" href="css/rs-carousel-min.css" />
-  <link rel="stylesheet" type="text/css" href="css/checkbox.css" />
-  <style>
-    .bg_red {
-      background-color: red;
-    }
-  </style>
+  <link rel="stylesheet" type="text/css" href="css/jquery.minicolors.css" />
+
   <!-- lib -->
   <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
   <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
@@ -20,6 +16,9 @@
   <script type="text/javascript" src="js/jsrender.min.js"></script>
   <script type="text/javascript" src="js/stringformat.js"></script>
   <script type="text/javascript" src="js/modernizr.3dtransforms.touch.js"></script>
+  <script type="text/javascript" src="js/jquery.minicolors.js"></script>
+  <script type="text/javascript" src="js/html5slider.js"></script>
+  <script type="text/javascript" src="js/dygraph-combined.js"></script>
   <!-- carousel -->
   <script type="text/javascript" src="js/jquery.rs.carousel-min.js"></script>
   <script type="text/javascript" src="js/jquery.rs.carousel-touch-min.js"></script>
@@ -130,6 +129,7 @@
                       } else {
                         var ui = null;
                         for (var i = tile.body.length - 1; i >= 0; i--) {
+                          tile.body.f
                           if (tile.body[i]["id"] == pt[3]) {
                             ui = tile.body[i];
                             break;
@@ -145,7 +145,9 @@
                           ui["_style"] = "";
                           tile.body.push(ui);
                         }
-                        if (pt.length == 5) {
+                        if (pt.length == 4) {
+                          ui["value"] = v;
+                        } else if (pt.length == 5) {
                           ui[pt[4]] = v;
                         }
                       }
@@ -161,9 +163,12 @@
                 $("div#content").html(html);
                 pubsub.refresh($("div#content"));
                 pubsub.subscribeEx(p + "+");
+                $(".dygraph").each(function (idx, el) {
+                  new Dygraph(el, $(el).data("src"));
+                });
+
               });
             }
-            //    document.getElementById("content").src = p;
             $("#rs-carousel ul li.active").each(function (idx, el) {
               // TODO: unsubscribe
               $(el).removeClass("active");
@@ -175,19 +180,21 @@
         $("#rs-carousel ul li").each(function (idx, el) {
           $(el).addClass("bg_nav_" + (1 + (idx % 5)));
         });
+        pubsub.add(minicolorsWidget());
         pubsub.init();
+        $("#rs-carousel ul li").first().trigger("click");
       });
     });
   </script>
 </head>
-<body style="height: 95%; width: 95%;">
-  <div id="rs-carousel" class="module" style="width: 100%;">
+<body>
+  <div id="rs-carousel">
     <ul>
     </ul>
   </div>
-  <div id="content" style="margin: 15px;">
+  <div id="content">
   </div>
-
+  
   <script id="HeaderTmpl" type="text/x-jsrender">
     <li data-page="{{>path}}">
       <span class="nav_head">{{>id}}</span>
@@ -204,20 +211,30 @@
     </li>
   </script>
   <script id="ContentTmpl" type="text/x-jsrender">
-    <div style="{{:_style}}" class="{{:_class}}">
-      {{if _ui=='var'}}
-        <var class="nav_var" {{if path}}data-sub="{{>path}}"{{/if}}{{if _format}}data-format="{{>_format}}"{{/if}}></var>
-      {{else _ui=='button'}}
-        <button data-pub="{{>path}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</button>
-      {{else _ui=='checkbox'}}
-        <input type="checkbox" id="{{>id}}" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
-        <label for="{{>id}}"></label>
-      {{else _ui=='range'}}
-        <input type="range" {{if _min}}min="{{>_min}}"{{/if}} {{if _max}}max="{{>_max}}"{{/if}} data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
+    {{if _ui=='dygraph'}}
+      <div style="{{:_style}}" class="dygraph" data-src="{{:value}}">
+    {{else }}
+      <div style="{{:_style}}" class="{{:_class}}">
+        {{if _ui=='var'}}
+          <var class="nav_var" data-sub="{{>path}}" {{if _format}}data-format="{{>_format}}"{{/if}}></var>
+        {{else _ui=='button'}}
+          <button data-pub="{{>path}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</button>
+        {{else _ui=='checkbox'}}
+          <input type="checkbox" id="{{>id}}" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
+          <label for="{{>id}}"></label>
+        {{else _ui=='range'}}
+          <input type="range" {{if _min}}min="{{>_min}}"{{/if}} {{if _max}}max="{{>_max}}"{{/if}} data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
+        {{else _ui=='link'}}
+          <a href="{{:value}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</a>
+        {{else _ui=='img'}}
+          <img src="{{:value}}" data-sub="{{:path}}" />
+        {{else _ui=='colorpicker' }}
+          <input class="colorpicker" type="text" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} ">
+        {{/if}}
       {{/if}}
-    </div>
+      </div>
   </script>
-
+  
 </body>
 
 </html>
