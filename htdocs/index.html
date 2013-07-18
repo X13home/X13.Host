@@ -192,9 +192,7 @@
     <ul>
     </ul>
   </div>
-  <div id="content">
-  </div>
-  
+  <div id="content"></div>
   <script id="HeaderTmpl" type="text/x-jsrender">
     <li data-page="{{>path}}">
       <span class="nav_head">{{>id}}</span>
@@ -220,7 +218,7 @@
         {{else _ui=='button'}}
           <button data-pub="{{>path}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</button>
         {{else _ui=='checkbox'}}
-          <input type="checkbox" id="{{>id}}" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
+          <input type="checkbox" id="Checkbox1" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
           <label for="{{>id}}"></label>
         {{else _ui=='range'}}
           <input type="range" {{if _min}}min="{{>_min}}"{{/if}} {{if _max}}max="{{>_max}}"{{/if}} data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
@@ -234,7 +232,6 @@
       {{/if}}
       </div>
   </script>
-  
 </body>
 
 </html>

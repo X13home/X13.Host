@@ -1104,6 +1104,7 @@ namespace X13.PLC {
         Calculate(model, _enable);
       }
       private void SwitchOn(object o) {
+        _timerOff.Change(_offDelay, _period.value);
         _output.value=true;
         _iOutput.value=false;
       }

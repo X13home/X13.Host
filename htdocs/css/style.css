@@ -22,20 +22,20 @@ body {
 #rs-carousel ul li.active    {  border: 5px inset orange;}
 .nav-arrow { float: left; height: auto; width: 4%; font-size: 3em; font-weight: 900; cursor: pointer; }
 .nav_head { display: block; text-align: center; font-weight: bolder; margin-bottom: 0.7em; }
-#rs-carousel ul li div {  text-align: right; }
+#rs-carousel ul li div {  text-align: right;}
 
 #content {
-  margin: 10px;
+  margin: 1em;
   border: 5px outset #E8E8E8;
 }
 
-#content div:not(.fleft) {
-  float:none;
-  clear:both;
+#content>div:not(.newline) {
+  float:left;
 }
 
-.fleft {
-  float:left;
+.newline {
+  float:none;
+  clear:both;
 }
 
 /* var */
@@ -151,7 +151,7 @@ var { font-style: normal;}
 	opacity: 1;
 }
 
-.checkbox.bg_green label:after
+.checkbox.fg_green label:after
 {
 	background: #00bf00;
 
@@ -161,7 +161,7 @@ var { font-style: normal;}
 	background: -ms-linear-gradient(top, #00bf00 0%, #009400 100%);
 	background: linear-gradient(top, #00bf00 0%, #009400 100%);
 }
-.checkbox.bg_red label:after
+.checkbox.fg_red label:after
 {
 	background: #bf0000;
 
@@ -171,7 +171,7 @@ var { font-style: normal;}
 	background: -ms-linear-gradient(top, #bf0000 0%, #940000 100%);
 	background: linear-gradient(top, #bf0000 0%, #940000 100%);
 }
-.checkbox.bg_blue label:after
+.checkbox.fg_blue label:after
 {
 	background: #0000ef;
 
