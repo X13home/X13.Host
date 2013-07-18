@@ -51,8 +51,7 @@ var pubsub = (function () {
                 }
                 if (pollxhrRepeat)
                   pollTimer = setTimeout(function () { pollLoop(); }, RETRY_DELAY);
-              }
-              else {
+              } else {
                 if (!timedout && pollxhrRepeat) {
                   reset();
                   if (null != error_cb)

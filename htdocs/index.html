@@ -67,7 +67,7 @@
                     ui = {};
                     ui["id"] = pt[4];
                     ui["path"] = "/" + pt[1] + "/" + pt[2] + "/" + pt[3] + "/" + pt[4];
-                    ui["_ui"] = "var";
+                    ui["_declarer"] = "ui_var";
                     ui["_idx"] = 9999;
                     ui["_class"] = "";
                     ui["_style"] = "";
@@ -139,7 +139,7 @@
                           ui = {};
                           ui["id"] = pt[3];
                           ui["path"] = "/" + pt[1] + "/" + pt[2] + "/" + pt[3];
-                          ui["_ui"] = "var";
+                          ui["_declarer"] = "ui_var";
                           ui["_idx"] = 9999;
                           ui["_class"] = "";
                           ui["_style"] = "";
@@ -198,9 +198,9 @@
       <span class="nav_head">{{>id}}</span>
       {{for header}}
         <div style="{{:_style}}" class="{{:_class}}">
-          {{if _ui=='var'}}
+          {{if _declarer=='ui_var'}}
             <var class="nav_var" {{if path}}data-sub="{{>path}}"{{/if}}{{if _format}}data-format="{{>_format}}"{{/if}}></var>
-          {{else _ui=='checkbox'}}
+          {{else _declarer=='ui_checkbox'}}
             <input type="checkbox" id="{{>id}}" data-sub="{{>path}}" />
             <label for="{{>id}}"></label>
           {{/if}}
@@ -209,29 +209,28 @@
     </li>
   </script>
   <script id="ContentTmpl" type="text/x-jsrender">
-    {{if _ui=='dygraph'}}
+    {{if _declarer=='ui_dygraph'}}
       <div style="{{:_style}}" class="dygraph" data-src="{{:value}}">
     {{else }}
       <div style="{{:_style}}" class="{{:_class}}">
-        {{if _ui=='var'}}
+        {{if _declarer=='ui_var'}}
           <var class="nav_var" data-sub="{{>path}}" {{if _format}}data-format="{{>_format}}"{{/if}}></var>
-        {{else _ui=='button'}}
+        {{else _declarer=='ui_button'}}
           <button data-pub="{{>path}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</button>
-        {{else _ui=='checkbox'}}
-          <input type="checkbox" id="Checkbox1" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
+        {{else _declarer=='ui_checkbox'}}
+          <input type="checkbox" id="{{>id}}" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
           <label for="{{>id}}"></label>
-        {{else _ui=='range'}}
+        {{else _declarer=='ui_range'}}
           <input type="range" {{if _min}}min="{{>_min}}"{{/if}} {{if _max}}max="{{>_max}}"{{/if}} data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
-        {{else _ui=='link'}}
+        {{else _declarer=='ui_link'}}
           <a href="{{:value}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</a>
-        {{else _ui=='img'}}
+        {{else _declarer=='ui_img'}}
           <img src="{{:value}}" data-sub="{{:path}}" />
-        {{else _ui=='colorpicker' }}
+        {{else _declarer=='ui_colorpicker' }}
           <input class="colorpicker" type="text" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} ">
         {{/if}}
       {{/if}}
       </div>
   </script>
 </body>
-
 </html>

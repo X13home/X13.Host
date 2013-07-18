@@ -15,6 +15,7 @@ namespace X13.HttpServer {
     private HttpListener _listener;
     private DVar<bool> _verbose;
     private string _htPath;
+    private const long _version=100;
 
     public HttpServPl() {
     }
@@ -22,8 +23,26 @@ namespace X13.HttpServer {
     public void Init() {
       Topic.root.Subscribe("/etc/Broker/security/#", L_dummy);
       Topic.root.Subscribe("/etc/HttpServer/#", L_dummy);
+      Topic.root.Subscribe("/etc/declarers/ui/#", L_dummy);
+      Topic.root.Subscribe("/export/#", L_dummy);
     }
     public void Start() {
+      var ver=Topic.root.Get<long>("/etc/HttpServer/version");
+      if(ver.value<_version) {
+        ver.saved=true;
+        ver.value=_version;
+        Log.Info("Load HttpServer declarers");
+        var st=System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.HttpServer.ui.xst");
+        if(st!=null) {
+          using(var sr=new StreamReader(st)) {
+            Topic.Import(sr, null);
+          }
+        }
+        var exp=Topic.root.Get("/export");
+        exp.Get<string>("_declarer").value="ui_root";
+        exp.Get<string>("demo/_declarer").value="ui_page";
+      }
+
       bool ad2=false;
       _verbose=Topic.root.Get<bool>("/etc/HttpServer/_verbose");
       var urlD=Topic.root.Get<string>("/local/cfg/HttpServer/_url");
@@ -54,7 +73,7 @@ reconnect:
           return;
         }
       }
-      var auth=Topic.root.Get<bool>("/etc/HttpServer/Requre authorization");
+      var auth=Topic.root.Get<bool>("/etc/HttpServer/_secure");
       auth.saved=true;
       _listener.AuthenticationSchemes=auth.value?AuthenticationSchemes.Basic:AuthenticationSchemes.Anonymous;
       _listener.BeginGetContext(new AsyncCallback(ContextReady), null);
@@ -189,10 +208,13 @@ reconnect:
           }
         }
       }
+      catch(HttpListenerException ex) {
+        Log.Debug("ContextReady[{1}, {2}] Exception={0}", ex, RemoteEP, ctx.Request.RawUrl);
+      }
       catch(ObjectDisposedException) {
       }
       catch(Exception ex) {
-        Log.Error("ContextReady[{1}] Exception={0}", ex, RemoteEP);
+        Log.Error("ContextReady[{1}, {2}] Exception={0}", ex, RemoteEP, ctx.Request.RawUrl);
       }
       try {
         if(_listener!=null && _listener.IsListening) {
