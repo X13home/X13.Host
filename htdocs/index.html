@@ -28,6 +28,7 @@
 
     $(document).ready(function () {
       Tiles = [];
+      blockRedraw = false;
       HeaderTemplate = $.templates("#HeaderTmpl");
       ContentTemplate = $.templates('#ContentTmpl');
 
@@ -163,8 +164,20 @@
                 $("div#content").html(html);
                 pubsub.refresh($("div#content"));
                 pubsub.subscribeEx(p + "+");
+                gs = [];
                 $(".dygraph").each(function (idx, el) {
-                  new Dygraph(el, $(el).data("src"));
+                  gs.push(new Dygraph(el, $(el).data("src"), {
+                    drawCallback: function(me, initial) {
+                    if (blockRedraw || initial) return;
+                      blockRedraw = true;
+                      var range = me.xAxisRange();
+                      for (var j = 0; j < gs.length; j++) {
+                        if (gs[j] == me) continue;
+                          gs[j].updateOptions( { dateWindow: range } );
+                      }
+                      blockRedraw = false;
+                    }
+                  }));
                 });
 
               });
@@ -210,7 +223,7 @@
   </script>
   <script id="ContentTmpl" type="text/x-jsrender">
     {{if _declarer=='ui_dygraph'}}
-      <div style="{{:_style}}" class="dygraph" data-src="{{:value}}">
+      <div {{if _style}}style="{{:_style}}"{{/if}} class="dygraph" data-src="{{:value}}">
     {{else }}
       <div style="{{:_style}}" class="{{:_class}}">
         {{if _declarer=='ui_var'}}
