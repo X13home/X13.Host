@@ -18,7 +18,7 @@
             <RadioButton Name="EngineInstall"  Margin="5" >
               <RadioButton.Content>
                 <StackPanel Orientation="Horizontal">
-                  <TextBlock Text="Install Engine as local service (need Administators rights)" Margin="3" />
+                  <TextBlock Text="Install Engine as service (need Administators rights)" Margin="3" />
                   <Image Name="imUAK" Width="24" Height="24" />
                 </StackPanel>
               </RadioButton.Content>

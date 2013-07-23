@@ -66,6 +66,22 @@
   <ItemGroup>
     <EmbeddedResource Include="ui.xst" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\page.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\root.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\titel.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\var.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\image.png" />
+    <Resource Include="Images\link.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>$(SolutionDir)vu.exe $(ProjectDir)</PreBuildEvent>

@@ -1,13 +1,19 @@
-﻿<!doctype html>
+<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Template test</title>
+  <title>X13.Home</title>
   <!--CSS -->
   <link rel="stylesheet" type="text/css" href="css/style.css" />
   <link rel="stylesheet" type="text/css" href="css/rs-carousel-min.css" />
   <link rel="stylesheet" type="text/css" href="css/jquery.minicolors.css" />
-
+</head>
+<body>
+  <div id="rs-carousel">
+    <ul>
+    </ul>
+  </div>
+  <div id="content"></div>
   <!-- lib -->
   <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
   <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
@@ -25,7 +31,6 @@
   <!-- X13.Home -->
   <script type="text/javascript" src="js/pubsub.js"></script>
   <script type="text/javascript">
-
     $(document).ready(function () {
       Tiles = [];
       blockRedraw = false;
@@ -130,7 +135,6 @@
                       } else {
                         var ui = null;
                         for (var i = tile.body.length - 1; i >= 0; i--) {
-                          tile.body.f
                           if (tile.body[i]["id"] == pt[3]) {
                             ui = tile.body[i];
                             break;
@@ -166,18 +170,31 @@
                 pubsub.subscribeEx(p + "+");
                 gs = [];
                 $(".dygraph").each(function (idx, el) {
-                  gs.push(new Dygraph(el, $(el).data("src"), {
-                    drawCallback: function(me, initial) {
-                    if (blockRedraw || initial) return;
-                      blockRedraw = true;
-                      var range = me.xAxisRange();
-                      for (var j = 0; j < gs.length; j++) {
-                        if (gs[j] == me) continue;
-                          gs[j].updateOptions( { dateWindow: range } );
+                  var opt = {};
+                  var op_s = "";
+                  for (var i = tile.body.length - 1; i >= 0; i--) {
+                    if (tile.body[i]["id"] == el.id) {
+                      op_s = tile.body[i]["_options"];
+                      try {
+                        opt = JSON.parse(op_s);
+                      } catch (ex2) {
+                        opt = {};
                       }
-                      blockRedraw = false;
+                      break;
                     }
-                  }));
+                  }
+
+                  opt["drawCallback"] = function (me, initial) {
+                    if (blockRedraw || initial) return;
+                    blockRedraw = true;
+                    var range = me.xAxisRange();
+                    for (var j = 0; j < gs.length; j++) {
+                      if (gs[j] == me) continue;
+                      gs[j].updateOptions({ dateWindow: range });
+                    }
+                    blockRedraw = false;
+                  };
+                  gs.push(new Dygraph(el, $(el).data("src"), opt));
                 });
 
               });
@@ -198,14 +215,7 @@
         $("#rs-carousel ul li").first().trigger("click");
       });
     });
-  </script>
-</head>
-<body>
-  <div id="rs-carousel">
-    <ul>
-    </ul>
-  </div>
-  <div id="content"></div>
+  </script>  
   <script id="HeaderTmpl" type="text/x-jsrender">
     <li data-page="{{>path}}">
       <span class="nav_head">{{>id}}</span>
@@ -223,7 +233,7 @@
   </script>
   <script id="ContentTmpl" type="text/x-jsrender">
     {{if _declarer=='ui_dygraph'}}
-      <div {{if _style}}style="{{:_style}}"{{/if}} class="dygraph" data-src="{{:value}}">
+      <div id="{{>id}}" {{if _style}}style="{{:_style}}"{{/if}} class="dygraph" data-src="{{:value}}">
     {{else }}
       <div style="{{:_style}}" class="{{:_class}}">
         {{if _declarer=='ui_var'}}

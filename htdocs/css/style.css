@@ -26,7 +26,6 @@ body {
 
 #content {
   margin: 1em;
-  border: 5px outset #E8E8E8;
 }
 
 #content>div:not(.newline) {
@@ -173,13 +172,12 @@ var { font-style: normal;}
 }
 .checkbox.fg_blue label:after
 {
-	background: #0000ef;
-
-	background: -webkit-linear-gradient(top, #0000ef 0%, #0000b4 100%);
-	background: -moz-linear-gradient(top, #0000ef 0%, #0000b4 100%);
-	background: -o-linear-gradient(top, #0000ef 0%, #0000b4 100%);
-	background: -ms-linear-gradient(top, #0000ef 0%, #0000b4 100%);
-	background: linear-gradient(top, #0000ef 0%, #0000b4 100%);
+  background: #0091FF;
+  background: -webkit-linear-gradient(top, #0091FF 0%, #006BBD 100%);
+  background: -moz-linear-gradient(top, #0091FF 0%, #006BBD 100%);
+  background: -o-linear-gradient(top, #0091FF 0%, #006BBD 100%);
+  background: -ms-linear-gradient(top, #0091FF 0%, #006BBD 100%);
+  background: linear-gradient(top, #0091FF 0%, #006BBD 100%);
 }
 /* button */
 button 

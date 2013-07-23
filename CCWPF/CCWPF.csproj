@@ -257,6 +257,9 @@
   <ItemGroup>
     <Resource Include="Images\ty_cfg.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\ty_etc.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>$(SolutionDir)vu.exe $(ProjectDir)</PreBuildEvent>
