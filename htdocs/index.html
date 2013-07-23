@@ -1,118 +1,249 @@
-﻿<!DOCTYPE html>
+﻿<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>X13.Home</title>
-  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.css" />
+  <title>Template test</title>
+  <!--CSS -->
+  <link rel="stylesheet" type="text/css" href="css/style.css" />
+  <link rel="stylesheet" type="text/css" href="css/rs-carousel-min.css" />
+  <link rel="stylesheet" type="text/css" href="css/jquery.minicolors.css" />
+
+  <!-- lib -->
+  <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+  <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
+  <script type="text/javascript" src="js/jquery.event.drag.js"></script>
+  <script type="text/javascript" src="js/jquery.translate3d.js"></script>
+  <script type="text/javascript" src="js/jsrender.min.js"></script>
+  <script type="text/javascript" src="js/stringformat.js"></script>
+  <script type="text/javascript" src="js/modernizr.3dtransforms.touch.js"></script>
+  <script type="text/javascript" src="js/jquery.minicolors.js"></script>
+  <script type="text/javascript" src="js/html5slider.js"></script>
+  <script type="text/javascript" src="js/dygraph-combined.js"></script>
+  <!-- carousel -->
+  <script type="text/javascript" src="js/jquery.rs.carousel-min.js"></script>
+  <script type="text/javascript" src="js/jquery.rs.carousel-touch-min.js"></script>
+  <!-- X13.Home -->
+  <script type="text/javascript" src="js/pubsub.js"></script>
+  <script type="text/javascript">
+
+    $(document).ready(function () {
+      Tiles = [];
+      blockRedraw = false;
+      HeaderTemplate = $.templates("#HeaderTmpl");
+      ContentTemplate = $.templates('#ContentTmpl');
+
+      $.getJSON('/export/%2B/header/%23', function (obj) {
+        $.each(obj, function (k, v) {
+          var tile = null;
+          try {
+            var pt = k.split('/');
+            if (pt.length > 2 && pt[2].substring(0, 1) != '_') {
+              for (var i = Tiles.length - 1; i >= 0; i--) {
+                if (Tiles[i]["id"] == pt[2]) {
+                  tile = Tiles[i];
+                  break;
+                }
+              }
+              if (tile == null) {
+                tile = {};
+                tile["id"] = pt[2];
+                tile["path"] = "/" + pt[1] + "/" + pt[2] + "/";
+                tile["header"] = [];
+                tile["body"] = [];
+                tile["_idx"] = 9999;
+                Tiles.push(tile);
+              }
+              if (pt.length > 4) {
+                if (pt.length == 5 && pt[4].substring(0, 1) == '_') {
+                  tile[pt[4]] = v;
+                } else {
+                  var ui = null;
+                  for (var i = tile.header.length - 1; i >= 0; i--) {
+                    if (tile.header[i]["id"] == pt[4]) {
+                      ui = tile.header[i];
+                      break;
+                    }
+                  }
+                  if (ui == null) {
+                    ui = {};
+                    ui["id"] = pt[4];
+                    ui["path"] = "/" + pt[1] + "/" + pt[2] + "/" + pt[3] + "/" + pt[4];
+                    ui["_declarer"] = "ui_var";
+                    ui["_idx"] = 9999;
+                    ui["_class"] = "";
+                    ui["_style"] = "";
+                    tile.header.push(ui);
+                  }
+                  if (pt.length == 6) {
+                    ui[pt[5]] = v;
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            console.log(e);
+          }
+        });
+        Tiles = Tiles.sort(function (a, b) {
+          return a._idx - b._idx;
+        });
+        for (i = Tiles.length - 1; i >= 0; i--) {
+          Tiles[i].header = Tiles[i].header.sort(function (a, b) {
+            return a._idx - b._idx;
+          });
+        }
+        var html = HeaderTemplate.render(Tiles);
+        $("div#rs-carousel ul").html(html);
+
+        $('#rs-carousel').carousel({
+          'pagination': false,
+          'nextPrevActions': false,
+          'touch': true,
+        });
+        $("#rs-carousel ul li").click(function (e, n) {
+          var p = $(this).data("page");
+          if (p != null && typeof (p) === "string") {
+            if (p.substring(0, 8) == "/export/") {
+              var tile = null;
+              var pt = p.split('/');
+              if (pt.length > 2) {
+                for (var i = Tiles.length - 1; i >= 0; i--) {
+                  if (Tiles[i]["id"] == pt[2]) {
+                    tile = Tiles[i];
+                    break;
+                  }
+                }
+              }
+              if (tile == null) {
+                return;
+              }
+
+              $.getJSON(p + '%23', function (obj) {
+                $.each(obj, function (k, v) {
+                  try {
+                    var pt = k.split('/');
+                    if (pt.length > 3 && pt[3] != "header") {
+                      if (pt.length == 4 && pt[3].substring(0, 1) == '_') {
+                        if (pt[3] != "_idx") {
+                          tile[pt[3]] = v;
+                        }
+                      } else {
+                        var ui = null;
+                        for (var i = tile.body.length - 1; i >= 0; i--) {
+                          tile.body.f
+                          if (tile.body[i]["id"] == pt[3]) {
+                            ui = tile.body[i];
+                            break;
+                          }
+                        }
+                        if (ui == null) {
+                          ui = {};
+                          ui["id"] = pt[3];
+                          ui["path"] = "/" + pt[1] + "/" + pt[2] + "/" + pt[3];
+                          ui["_declarer"] = "ui_var";
+                          ui["_idx"] = 9999;
+                          ui["_class"] = "";
+                          ui["_style"] = "";
+                          tile.body.push(ui);
+                        }
+                        if (pt.length == 4) {
+                          ui["value"] = v;
+                        } else if (pt.length == 5) {
+                          ui[pt[4]] = v;
+                        }
+                      }
+                    }
+                  } catch (e) {
+                    console.log(e);
+                  }
+                });
+                tile.body = tile.body.sort(function (a, b) {
+                  return a._idx - b._idx;
+                });
+                var html = ContentTemplate.render(tile.body)
+                $("div#content").html(html);
+                pubsub.refresh($("div#content"));
+                pubsub.subscribeEx(p + "+");
+                gs = [];
+                $(".dygraph").each(function (idx, el) {
+                  gs.push(new Dygraph(el, $(el).data("src"), {
+                    drawCallback: function(me, initial) {
+                    if (blockRedraw || initial) return;
+                      blockRedraw = true;
+                      var range = me.xAxisRange();
+                      for (var j = 0; j < gs.length; j++) {
+                        if (gs[j] == me) continue;
+                          gs[j].updateOptions( { dateWindow: range } );
+                      }
+                      blockRedraw = false;
+                    }
+                  }));
+                });
+
+              });
+            }
+            $("#rs-carousel ul li.active").each(function (idx, el) {
+              // TODO: unsubscribe
+              $(el).removeClass("active");
+            });
+
+            $(this).addClass("active");
+          }
+        });
+        $("#rs-carousel ul li").each(function (idx, el) {
+          $(el).addClass("bg_nav_" + (1 + (idx % 5)));
+        });
+        pubsub.add(minicolorsWidget());
+        pubsub.init();
+        $("#rs-carousel ul li").first().trigger("click");
+      });
+    });
+  </script>
 </head>
 <body>
-
-  <div class="ui-grid-b ui-responsive">
-    <div class="ui-block-a ui-bar-c" style="height: 150px;">
-      <h3 style="text-align: center">Dimable lighting</h3>
-      <input type="range" min="0" max="100" data-highlight="true" data-pub="/var/demo/lightSet" data-sub="/var/demo/light" />
-      <button data-pub="/var/demo/pir1">PIR1</button>
-    </div>
-    <div class="ui-block-b ui-bar-d" style="height: 150px;">
-      <h3 style="text-align: center">On/Off lamp</h3>
-      <select data-role="slider" data-pub="/var/demo/lampSet" data-sub="/var/demo/lamp">
-        <option value="0">Off</option>
-        <option value="1">On</option>
-      </select>
-    </div>
-    <div class="ui-block-c ui-bar-c" style="height: 150px;">
-      <span>Temperature <label data-sub="/var/demo/OutTa"></label> °C</span>
-    </div>
+  <div id="rs-carousel">
+    <ul>
+    </ul>
   </div>
-
-
-  <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-  <script type="text/javascript" src="http://code.jquery.com/mobile/1.3.1/jquery.mobile-1.3.1.min.js"></script>
-  <script type="text/javascript" src="pubsub.js"></script>
-  <script type="text/javascript">
-    var timer;
-
-    function reconnect() {
-      clearTimeout(timer);
-      timer = setTimeout(function () { startStreaming(); }, 30);
-    }
-
-    function dispatchFunc(topic, v) {
-      $("input[type='number'][data-sub='" + topic + "']").each(function (idx, el) {
-        $(el).val(v);
-        $(el).slider("refresh");
-      });
-      $("select[data-role='slider'][data-sub='" + topic + "']").each(function (idx, el) {
-        el.selectedIndex = v;
-        $(el).slider("refresh");
-      });
-      $("label[data-sub='" + topic + "']").text(v);
-    }
-
-    function startStreaming() {
-      pubsub.register({ data: dispatchFunc, error: reconnect });
-      $("input[type='number'][data-sub]").each(function (idx, el) {
-        pubsub.subscribe(el.dataset.sub, { success: pubsub.read });
-        $.getJSON("/data" + el.dataset.sub, function (v) {
-          $(el).val(v);
-          $(el).slider("refresh");
-        });
-      });
-      $("select[data-role='slider'][data-sub]").each(function (idx, el) {
-        pubsub.subscribe(el.dataset.sub, { success: pubsub.read });
-        $.getJSON("/data" + el.dataset.sub, function (v) {
-          el.selectedIndex = v;
-          $(el).slider("refresh");
-        });
-      });
-      $("label[data-sub]").each(function (idx, el) {
-        pubsub.subscribe(el.dataset.sub, { success: pubsub.read });
-        $.getJSON("/data" + el.dataset.sub, function (v) {
-          el.innerHTML = v;
-        });
-      });
-
-    }
-
-    $(function () {
-
-      $("input[type='number'][data-pub]").each(function (idx, el) {
-        $(el).slider({
-          stop: function (event, ui) {
-            pubsub.publish(event.target.dataset.pub, event.target.value);
-          }
-        });
-        $.getJSON("/data" + el.dataset.pub, function (v) {
-          $(el).val(v);
-          $(el).slider("refresh");
-        });
-      });
-      $("input[type='number']:not([data-pub])").slider("disable");
-
-      $("select[data-role='slider'][data-pub]").each(function (idx, el) {
-        $(el).slider({
-          stop: function (event, ui) {
-            pubsub.publish(event.target.dataset.pub, event.target.selectedIndex);
-          }
-        });
-        $.getJSON("/data" + el.dataset.pub, function (v) {
-          el.selectedIndex = v;
-          $(el).slider("refresh");
-        });
-      });
-      $("select[data-role='slider']:not([data-pub])").slider("disable");
-
-      $("button[data-pub]").each(function (idx, el) {
-        $(el).mousedown(function (obj) {
-          pubsub.publish(obj.target.dataset.pub, true);
-        });
-        $(el).mouseup(function (obj) {
-          pubsub.publish(obj.target.dataset.pub, false);
-        });
-      });
-
-      startStreaming();
-    });
+  <div id="content"></div>
+  <script id="HeaderTmpl" type="text/x-jsrender">
+    <li data-page="{{>path}}">
+      <span class="nav_head">{{>id}}</span>
+      {{for header}}
+        <div style="{{:_style}}" class="{{:_class}}">
+          {{if _declarer=='ui_var'}}
+            <var class="nav_var" {{if path}}data-sub="{{>path}}"{{/if}}{{if _format}}data-format="{{>_format}}"{{/if}}></var>
+          {{else _declarer=='ui_checkbox'}}
+            <input type="checkbox" id="{{>id}}" data-sub="{{>path}}" />
+            <label for="{{>id}}"></label>
+          {{/if}}
+        </div>
+      {{/for}}
+    </li>
+  </script>
+  <script id="ContentTmpl" type="text/x-jsrender">
+    {{if _declarer=='ui_dygraph'}}
+      <div {{if _style}}style="{{:_style}}"{{/if}} class="dygraph" data-src="{{:value}}">
+    {{else }}
+      <div style="{{:_style}}" class="{{:_class}}">
+        {{if _declarer=='ui_var'}}
+          <var class="nav_var" data-sub="{{>path}}" {{if _format}}data-format="{{>_format}}"{{/if}}></var>
+        {{else _declarer=='ui_button'}}
+          <button data-pub="{{>path}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</button>
+        {{else _declarer=='ui_checkbox'}}
+          <input type="checkbox" id="{{>id}}" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
+          <label for="{{>id}}"></label>
+        {{else _declarer=='ui_range'}}
+          <input type="range" {{if _min}}min="{{>_min}}"{{/if}} {{if _max}}max="{{>_max}}"{{/if}} data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
+        {{else _declarer=='ui_link'}}
+          <a href="{{:value}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</a>
+        {{else _declarer=='ui_img'}}
+          <img src="{{:value}}" data-sub="{{:path}}" />
+        {{else _declarer=='ui_colorpicker' }}
+          <input class="colorpicker" type="text" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} ">
+        {{/if}}
+      {{/if}}
+      </div>
   </script>
 </body>
 </html>

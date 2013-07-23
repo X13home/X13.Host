@@ -238,6 +238,7 @@ namespace X13 {
 
     protected Topic(Type t) {
       valueType=t;
+      saved=true;
     }
 
     public string ToJson() {
@@ -560,8 +561,13 @@ namespace X13 {
             if(_cur._childNodes!=null) {
               foreach(Topic ts in _cur._childNodes.Values.ToArray()) {
                 if(_lvl<_levels.Length-1) {
+                  bool found=false;
                   foreach(Topic t2 in new TopicEnumerator(_levels, _lvl+1, ts)) {
+                    found=true;
                     yield return t2;
+                  }
+                  if(!found) {
+                    continue;
                   }
                 } else {
                   yield return ts;

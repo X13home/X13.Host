@@ -158,28 +158,32 @@ namespace X13.CC {
         return;
       }
       Topic cur=((ci.DataContext as StackPanel).DataContext as TopicView).ptr;
+      Topic next=null;
       switch(((TopicView.ItemActionStr)ci.Tag).action) {
       case ItemAction.createNodeMask:
       case ItemAction.createBoolMask:
       case ItemAction.createLongMask:
       case ItemAction.createDoubleMask:
       case ItemAction.createStringMask:
-        AddItem(ci.DataContext as StackPanel, ((TopicView.ItemActionStr)ci.Tag).action);
+        AddItem(ci.DataContext as StackPanel, ((TopicView.ItemActionStr)ci.Tag));
+        break;
+      case ItemAction.createNodeDef:
+        next=cur.Get(ci.Header as string);
         break;
       case ItemAction.createBoolDef:
-        cur.Get<bool>(ci.Header as string);
+        next=cur.Get<bool>(ci.Header as string);
         break;
       case ItemAction.createLongDef:
-        cur.Get<long>(ci.Header as string);
+        next=cur.Get<long>(ci.Header as string);
         break;
       case ItemAction.createDoubleDef:
-        cur.Get<double>(ci.Header as string);
+        next=cur.Get<double>(ci.Header as string);
         break;
       case ItemAction.createStringDef:
-        cur.Get<string>(ci.Header as string);
+        next=cur.Get<string>(ci.Header as string);
         break;
       case ItemAction.createObjectDef:
-        cur.Get<object>(ci.Header as string);
+        next=cur.Get<object>(ci.Header as string);
         break;
       case ItemAction.open:
         if(cur!=null && cur.valueType==typeof(PiLogram)) {
@@ -197,6 +201,9 @@ namespace X13.CC {
           cur.Remove();
         }
         break;
+      }
+      if(next!=null && !string.IsNullOrEmpty(((TopicView.ItemActionStr)ci.Tag).declarer)) {
+        next.Get<string>("_declarer").value=((TopicView.ItemActionStr)ci.Tag).declarer;
       }
     }
     private void tvDataStorage_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
@@ -232,7 +239,7 @@ namespace X13.CC {
         it.value=cur;
       }
     }
-    private void AddItem(StackPanel sp, ItemAction act) {
+    private void AddItem(StackPanel sp, TopicView.ItemActionStr act) {
       TopicView vo=sp.DataContext as TopicView;
       TreeViewItem to=FindAncestorOrSelf<TreeViewItem>(sp);
 
@@ -311,7 +318,7 @@ namespace X13.CC {
     }
 
     private ObservableCollection<TopicView> _children;
-    private ItemAction _action;
+    private ItemActionStr _action;
     private TopicView _parent;
     private DVar<string> _declarer;
     private ICollectionView _childrenView;
@@ -344,7 +351,7 @@ namespace X13.CC {
         }
       }
     }
-    public TopicView(ItemAction act, TopicView parent) {
+    internal TopicView(ItemActionStr act, TopicView parent) {
       _parent=parent;
       _action=act;
       ptr=null;
@@ -519,12 +526,17 @@ namespace X13.CC {
 
       if(_declarer!=null) {
         List<RcUse> resource=new List<RcUse>();
-        var ar=_declarer.all.Where(z => z!=null && z.valueType==typeof(string) && !z.name.StartsWith("_")).Cast<DVar<string>>().Where(z => z.value!=null && z.value.Length>=2).OrderBy(z => z.name).OrderBy(z => (ushort)z.value[0]).ToList();
+        var ar=_declarer.all.Where(z => z!=null && z.valueType==typeof(string)).Cast<DVar<string>>().Where(z => z.value!=null && z.value.Length>=2).OrderBy(z => z.name).OrderBy(z => (ushort)z.value[0]).ToList();
 
         foreach(var ch in ptr.children) {   // check used resources
           var dec=ar.FirstOrDefault(z => z.name==ch.name);
           if(dec!=null) {
-            foreach(string curRC in dec.value.Substring(2).Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
+            string rcInfo=dec.value.Substring(2);
+            int tPos=rcInfo.IndexOf('⌂');
+            if(tPos>=0) {
+              rcInfo=rcInfo.Substring(0, tPos);
+            }
+            foreach(string curRC in rcInfo.Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
               int pos;
               if(!int.TryParse(curRC.Substring(1), out pos)) {
                 continue;
@@ -544,7 +556,14 @@ namespace X13.CC {
           if(busy) {      // don't show already exist variable
             continue;
           }
-          foreach(string curRC in tpI.value.Substring(2).Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
+          string decl=null;
+          string rcInfo=tpI.value.Substring(2);
+          int tPos=rcInfo.IndexOf('⌂');
+          if(tPos>=0) {
+            decl=rcInfo.Substring(tPos+1);
+            rcInfo=rcInfo.Substring(0, tPos);
+          }
+          foreach(string curRC in rcInfo.Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
             int pos;
             if(!int.TryParse(curRC.Substring(1), out pos)) {
               continue;
@@ -561,7 +580,7 @@ namespace X13.CC {
             Topic dt;
             string ptc=tpI.path.Substring(_declarer.path.Length);
             string desc=tpI.Exist("_description", out dt)?(dt as DVar<string>).value:string.Empty;
-            actions.Add(new ItemActionStr(ptc, (ItemAction)tpI.value[1], desc));
+            actions.Add(new ItemActionStr(ptc, (ItemAction)tpI.value[1], desc, decl));
           }
         }
       } else {
@@ -600,34 +619,40 @@ namespace X13.CC {
       }
     }
     public void Create(string name) {
-      if(_parent!=null && _action!=ItemAction.empty) {
+      if(_parent!=null && _action.action !=ItemAction.empty) {
         this.Remove();
-        switch(_action) {
+        Topic cur=null;
+        switch(_action.action) {
         case ItemAction.createNodeMask:
-          _parent.ptr.Get(name);
+          cur=_parent.ptr.Get(name);
           break;
         case ItemAction.createBoolMask:
-          _parent.ptr.Get<bool>(name);
+          cur=_parent.ptr.Get<bool>(name);
           break;
         case ItemAction.createLongMask:
-          _parent.ptr.Get<long>(name);
+          cur=_parent.ptr.Get<long>(name);
           break;
         case ItemAction.createDoubleMask:
-          _parent.ptr.Get<double>(name);
+          cur=_parent.ptr.Get<double>(name);
           break;
         case ItemAction.createStringMask:
-          _parent.ptr.Get<string>(name);
+          cur=_parent.ptr.Get<string>(name);
           break;
+        }
+        if(cur!=null && !string.IsNullOrEmpty(_action.declarer)) {
+          cur.Get<string>("_declarer").value=_action.declarer;
         }
       }
     }
 
     internal struct ItemActionStr {
-      public ItemActionStr(string menuItem, ItemAction action, string desc) {
+      public ItemActionStr(string menuItem, ItemAction action, string desc, string decl=null) {
         this.menuItem=menuItem;
         this.action=action;
         this.description=desc;
+        this.declarer=decl;
       }
+      public readonly string declarer;
       public readonly string menuItem;
       public readonly ItemAction action;
       public readonly string description;
@@ -655,6 +680,7 @@ namespace X13.CC {
     createDoubleMask='G',
     createStringMask='S',
 
+    createNodeDef='n',
     createBoolDef='z',
     createLongDef='i',
     createDoubleDef='g',
