@@ -84,11 +84,22 @@ namespace X13.MQTT {
     }
 
     private static void sec_changed(Topic sender, TopicChanged arg) {
-      if(arg.Art!=TopicChanged.ChangeArt.Value || sender.valueType!=typeof(long)) {
+      if(arg.Art==TopicChanged.ChangeArt.Add || sender.valueType!=typeof(long)) {
         return;
       }
       string path=sender.path.Substring("/etc/Broker/security/acls".Length);
-      SetAcl(sender, Topic.root.Get(path));
+      if(arg.Art==TopicChanged.ChangeArt.Value) {
+        Topic dst=Topic.root.Get(path);
+        SetAcl(sender, dst);
+        if(arg.Initiator!=null && arg.Initiator!=_mq) {
+          Log.Info("SetAcl({0}, {1}={2}, All={3}), initiator={4}", path, dst.grpOwner.GetValue(), dst.aclOwner, dst.aclAll, arg.Initiator.name);
+        }
+      } else {
+        Topic.root.Get(path).grpOwner=null;
+        if(arg.Initiator!=null && arg.Initiator!=_mq) {
+          Log.Info("ClearAcl({0}), initiator={1}", path, arg.Initiator.name);
+        }
+      }
     }
 
     private static void SetTopic<T>(string path, T value, Topic mp) {
@@ -113,9 +124,9 @@ namespace X13.MQTT {
           Log.Warning("unknown ACL group in {0}={1}", aCur.path, aCur.value);
         }
       }
-      foreach(Topic nAcl in acl.children) {
-        SetAcl(nAcl, cur.Get(nAcl.name));
-      }
+      //foreach(Topic nAcl in acl.children) {
+      //  SetAcl(nAcl, cur.Get(nAcl.name));
+      //}
     }
   
     private static void Connect(IAsyncResult ar) {

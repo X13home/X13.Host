@@ -216,6 +216,8 @@ namespace X13.CC {
         rez=dockManager.DockableContents.FirstOrDefault(p => p is DataStorageView)??new DataStorageView();
       } else if(name=="SetupView") {
         rez=dockManager.Documents.FirstOrDefault(p => p is SetupView)??new SetupView();
+      } else if(name=="SecurityPanel"){
+        rez=dockManager.DockableContents.FirstOrDefault(p => p is SecurityView)??new SecurityView();
       } else if(name=="Logram") {
         string baseDocTitle = "Logram_New_1Logram_1";
         int i = 1;

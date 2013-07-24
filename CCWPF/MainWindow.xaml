@@ -28,6 +28,7 @@
         <MenuItem Header="Output" Click="ActivateView"  Tag="LogPanel"/>
         <MenuItem Header="Properties" Click="ActivateView"  Tag="PropertyPanel"/>
         <MenuItem Header="Data storage" Click="ActivateView"  Tag="DataStoragePanel"/>
+        <MenuItem Header="Security" Click="ActivateView"  Tag="SecurityPanel"/>
       </MenuItem>
     </Menu>
     <DockPanel Grid.Column="1" MouseUp="DockPanel_MouseUp">
@@ -61,8 +62,9 @@
           <ad:DockablePane ad:ResizingPanel.ResizeHeight="1*">
             <my:DataStorageView />
           </ad:DockablePane>
-          <ad:DockablePane ad:ResizingPanel.ResizeHeight="1*">
+          <ad:DockablePane ad:ResizingPanel.ResizeHeight="1*" SelectedIndex="0">
             <my:PropertyView></my:PropertyView>
+            <my:SecurityView></my:SecurityView>
           </ad:DockablePane>
         </ad:ResizingPanel>
       </ad:ResizingPanel>
