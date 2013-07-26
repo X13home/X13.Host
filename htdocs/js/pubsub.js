@@ -112,7 +112,7 @@ var pubsub = (function () {
           }
           pubsub.read();
           sendSubscribe("/export/+/header/+");
-          sendSubscribe("/export/+/+");
+          //sendSubscribe("/export/+/+");
         },
 
         sendSubscribe = function (topic, cbs) {
@@ -133,7 +133,7 @@ var pubsub = (function () {
             }
           };
           req.open('POST', '/export?subscribe', true);
-          req.send(topic);
+          req.send(encodeURIComponent(topic));
         },
 
         start = function () {

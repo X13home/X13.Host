@@ -180,7 +180,9 @@ reconnect:
                 ses=Session.Get(sco, userName);
                 ctx.Response.SetCookie(ses.id);
                 string sub=(new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)).ReadToEnd();
+                sub=System.Web.HttpUtility.UrlDecode(sub);
                 ses.Subscribe(sub);
+                Log.Debug("Http.Subscribe({0}, {1})", ses.id, sub);
               } else if(ctx.Request.RawUrl.StartsWith(@"/export/")) {
                 string json=(new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)).ReadToEnd();
                 response.StatusCode=ProcessPublish(ctx.Request.RawUrl, json, userName);
