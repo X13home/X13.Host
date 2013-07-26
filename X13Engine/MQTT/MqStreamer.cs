@@ -221,6 +221,7 @@ namespace X13.MQTT {
                   _rcvState=0;
                 } else {
                   _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
+                  _rcvMemoryStream.SetLength(0);
                   _rcvState=0;
 
                   if(msg.MessageID!=0) {

@@ -159,7 +159,7 @@ namespace X13.MQTT {
       int read = 0;
       while(read < buffer.Length) {
         int res = str.Read(buffer, read, buffer.Length - read);
-        if(res == -1) {
+        if(res <1) {
           throw new Exception("End of stream reached whilst filling buffer");
         }
         read += res;
@@ -442,7 +442,7 @@ namespace X13.MQTT {
       }
       byte[] payloadBuf=Encoding.UTF8.GetBytes(pys);
       base.variableHeaderLength =(uint)(
-        2 + Path.Length    // Topic + length
+        2 + pathBuf.Length    // Topic + length
           +(base.QualityOfService  == QoS.AtMostOnce ? 0 : 2)  // Message ID for QoS > 0
           +((payloadBuf==null)?0:payloadBuf.Length));                     // Message Payload
       base.Serialise(str);
