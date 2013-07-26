@@ -93,10 +93,12 @@ reconnect:
       Session ses;
       HttpListenerContext ctx=null;
       string RemoteEP=string.Empty;
+      string reqUrl=string.Empty;
 
       try {
         ctx = _listener.EndGetContext(ar);
         RemoteEP=ctx.Request.RemoteEndPoint.ToString();
+        reqUrl=System.Web.HttpUtility.UrlDecode(ctx.Request.RawUrl);
         if(ctx.User!=null) {
           var id=(HttpListenerBasicIdentity)ctx.User.Identity;
           if(id.Name!="local" || ctx.Request.IsLocal) {
@@ -110,7 +112,7 @@ reconnect:
         if(_verbose.value) {
           Log.Debug("{0}({1}) [{2}] {3}", userName, userPassWrong?"fail":"pass", ctx.Request.HttpMethod, ctx.Request.RawUrl);
         }
-        if(!userPassWrong && ctx.Request.HttpMethod=="GET" && ctx.Request.RawUrl==@"/export?read") {
+        if(!userPassWrong && ctx.Request.HttpMethod=="GET" && reqUrl==@"/export?read") {
           ses=Session.Get(ctx.Request.Cookies["session"], userName);
           ses.Enqueue(ctx);
         } else {
@@ -122,12 +124,12 @@ reconnect:
               responseString="401 Unauthorized";
             } else if(ctx.Request.HttpMethod=="GET") {
               try {
-                if(ctx.Request.RawUrl==@"/") {
+                if(reqUrl==@"/") {
                   responseString=File.ReadAllText(Path.Combine(_htPath, "index.html"));
                   response.ContentType="text/html";
                 } else
-                  if(ctx.Request.RawUrl.StartsWith(@"/export/")) {
-                    string mqPath=System.Web.HttpUtility.UrlDecode(ctx.Request.RawUrl);
+                  if(reqUrl.StartsWith(@"/export/")) {
+                    string mqPath=reqUrl;
                     Topic cur;
                     var ps=mqPath.Split('/');
                     if(ps.Contains("#") || ps.Contains("+")) {
@@ -160,7 +162,7 @@ reconnect:
                       responseString="null";
                     }
                   } else {
-                    string path=Path.GetFullPath(Path.Combine(_htPath, ctx.Request.RawUrl.Substring(1)));
+                    string path=Path.GetFullPath(Path.Combine(_htPath, reqUrl.Substring(1)));
                     if(path.StartsWith(_htPath) && File.Exists(path)) {
                       responseBuf=File.ReadAllBytes(path);
                       response.ContentType=Ext2ContentType(Path.GetExtension(path));
@@ -175,7 +177,7 @@ reconnect:
                 response.StatusCode=404;
               }
             } else if(ctx.Request.HttpMethod=="POST" && ctx.Request.HasEntityBody) {
-              if(ctx.Request.RawUrl==@"/export?subscribe") {
+              if(reqUrl==@"/export?subscribe") {
                 var sco=ctx.Request.Cookies["session"];
                 ses=Session.Get(sco, userName);
                 ctx.Response.SetCookie(ses.id);
@@ -183,9 +185,9 @@ reconnect:
                 sub=System.Web.HttpUtility.UrlDecode(sub);
                 ses.Subscribe(sub);
                 Log.Debug("Http.Subscribe({0}, {1})", ses.id, sub);
-              } else if(ctx.Request.RawUrl.StartsWith(@"/export/")) {
+              } else if(reqUrl.StartsWith(@"/export/")) {
                 string json=(new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)).ReadToEnd();
-                response.StatusCode=ProcessPublish(ctx.Request.RawUrl, json, userName);
+                response.StatusCode=ProcessPublish(reqUrl, json, userName);
               } else {
                 response.StatusCode=400;
                 responseString="400 Bad Request";
@@ -211,12 +213,12 @@ reconnect:
         }
       }
       catch(HttpListenerException ex) {
-        Log.Debug("ContextReady[{1}, {2}] Exception={0}", ex, RemoteEP, ctx.Request.RawUrl);
+        Log.Debug("ContextReady[{1}, {2}] Exception={0}", ex, RemoteEP, reqUrl);
       }
       catch(ObjectDisposedException) {
       }
       catch(Exception ex) {
-        Log.Error("ContextReady[{1}, {2}] Exception={0}", ex, RemoteEP, ctx.Request.RawUrl);
+        Log.Error("ContextReady[{1}, {2}] Exception={0}", ex, RemoteEP, reqUrl);
       }
       try {
         if(_listener!=null && _listener.IsListening) {
