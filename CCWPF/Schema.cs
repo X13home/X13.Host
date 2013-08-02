@@ -146,16 +146,36 @@ namespace X13.CC {
         _map.Clear();
         DrawingVisual cur;
         foreach(var p in model.children.Where(z => z.valueType==typeof(Topic)).Cast<DVar<Topic>>()) {
-          cur=new uiAlias(p, this);
+          try {
+            cur=new uiAlias(p, this);
+          }
+          catch(Exception ex) {
+            Log.Error("create uiAlias({0}) - {1}", p.path, ex.ToString());
+          }
         }
         foreach(var p in model.children.Where(z => z.valueType==typeof(PiStatement)).Cast<DVar<PiStatement>>()) {
+          try {
           cur=new uiStatement(p, this);
+          }
+          catch(Exception ex) {
+            Log.Error("create uiStatement({0}) - {1}", p.path, ex.ToString());
+          }
         }
         foreach(var p in model.children.Where(z => z.valueType==typeof(PiWire)).Cast<DVar<PiWire>>()) {
+          try {
           cur=new uiWire(p, this);
+          }
+          catch(Exception ex) {
+            Log.Error("create uiWire({0}) - {1}", p.path, ex.ToString());
+          }
         }
         foreach(var p in model.children.Where(z => z.valueType==typeof(PiTracer)).Cast<DVar<PiTracer>>()) {
+          try {
           cur=new uiTracer(p, this);
+          }
+          catch(Exception ex) {
+            Log.Error("create uiTracer({0}) - {1}", p.path, ex.ToString());
+          }
         }
         model.Subscribe("+", ModelChanged);
       }

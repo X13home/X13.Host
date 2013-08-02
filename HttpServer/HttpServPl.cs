@@ -15,7 +15,7 @@ namespace X13.HttpServer {
     private HttpListener _listener;
     private DVar<bool> _verbose;
     private string _htPath;
-    private const long _version=100;
+    private const long _version=101;
 
     public HttpServPl() {
     }
@@ -184,7 +184,9 @@ reconnect:
                 string sub=(new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)).ReadToEnd();
                 sub=System.Web.HttpUtility.UrlDecode(sub);
                 ses.Subscribe(sub);
-                Log.Debug("Http.Subscribe({0}, {1})", ses.id, sub);
+                if(_verbose.value) {
+                  Log.Debug("Http.Subscribe({0}, {1})", ses.id, sub);
+                }
               } else if(reqUrl.StartsWith(@"/export/")) {
                 string json=(new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)).ReadToEnd();
                 response.StatusCode=ProcessPublish(reqUrl, json, userName);

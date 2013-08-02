@@ -13,9 +13,9 @@
     <item name="long">
       <item name="var" value="5I⌂ui_var" saved="True" type="System.String" />
       <item name="color picker" value="6I⌂ui_colorpicker" saved="True" type="System.String" />
+      <item name="range" value="7I⌂ui_range" saved="True" type="System.String" />
     </item>
     <item name="double">
-      <item name="range" value="7G⌂ui_range" saved="True" type="System.String" />
       <item name="var" value="8G⌂ui_var" saved="True" type="System.String" />
     </item>
     <item name="string" value="9S⌂ui_var" saved="True" type="System.String" />
@@ -67,8 +67,8 @@
     <item name="remove" value="ZD" saved="True" type="System.String" />
   </item>
   <item name="ui_range" value="pack://application:,,/CC;component/Images/ty_f02.png" saved="True" type="System.String">
-    <item name="_min" value="1z" saved="True" type="System.String" />
-    <item name="_max" value="2z" saved="True" type="System.String" />
+    <item name="_min" value="1i" saved="True" type="System.String" />
+    <item name="_max" value="2i" saved="True" type="System.String" />
     <item name="_readonly" value="9z" saved="True" type="System.String" />
     <item name="_class" value="As" saved="True" type="System.String" />
     <item name="_style" value="Bs" saved="True" type="System.String" />

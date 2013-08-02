@@ -526,7 +526,7 @@ namespace X13.CC {
 
       if(_declarer!=null) {
         List<RcUse> resource=new List<RcUse>();
-        var ar=_declarer.all.Where(z => z!=null && z.valueType==typeof(string)).Cast<DVar<string>>().Where(z => z.value!=null && z.value.Length>=2).OrderBy(z => z.name).OrderBy(z => (ushort)z.value[0]).ToList();
+        var ar=_declarer.all.Where(z => z!=null && z.valueType==typeof(string)).Cast<DVar<string>>().Where(z => z.value!=null && z.value.Length>=2 && z.value!="_description").OrderBy(z => z.name).OrderBy(z => (ushort)z.value[0]).ToList();
 
         foreach(var ch in ptr.children) {   // check used resources
           var dec=ar.FirstOrDefault(z => z.name==ch.name);

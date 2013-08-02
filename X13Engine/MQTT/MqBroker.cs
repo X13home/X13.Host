@@ -373,7 +373,7 @@ namespace X13.MQTT {
         _stream.Send(msg);
         if(_verbose && msg!=null && (msg.MsgType!=MessageType.PUBLISH 
             || !((msg as MqPublish).Path.StartsWith("/var/log")
-              || (msg as MqPublish).Path.StartsWith("/var/now")))) {
+            || !(msg as MqPublish).Path.StartsWith("/var/now")))) {
           Log.Debug("S {0} {1}", _owner==null?string.Empty:_owner.name, msg);
         }
       }
