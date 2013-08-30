@@ -120,20 +120,10 @@ namespace X13 {
       return cur;
     }
     private static void PubAction(TopicChanged tc) {
-      if(tc.Task!=null) {
-        tc.Source=tc.Task.Current;
-        tc.Sender.PublishSubs(tc, tc.Subscription.func);
-        if(tc.Task.MoveNext()) {
-          var ntc=new TopicChanged(tc.Art, tc.Initiator) { Sender=tc.Sender, Subscription=tc.Subscription, Task=tc.Task, Source=tc.Task.Current };
-          _publishQueue.Enqueue(ntc);
-          //_publishQueue.Enqueue(new TopicChanged(tc));
-        }
-      } else {
         while(tc.Sender!=null) {
           tc.Sender.onChange(tc.Sender, tc);
           tc.Sender=tc.Sender.parent;
         }
-      }
     }
     private static void PqIdle() {
       ready.Set();

@@ -174,9 +174,8 @@ l1: { }
       }
       // publish
       if(func.Method.DeclaringType!=typeof(MQTT.MqClient)) {
-        var ts=(new TopicEnumerator(s.lvls, 0, cur)).GetEnumerator();
-        if(ts.MoveNext()) {
-          _publishQueue.Enqueue(new TopicChanged(TopicChanged.ChangeArt.Value) { Sender=cur, Subscription=s, Task=ts });
+        foreach(var t in new TopicEnumerator(s.lvls, 0, cur)) {
+          t.PublishSubs(new TopicChanged(TopicChanged.ChangeArt.Value) {Source=t, Sender=t, Subscription=s }, func);
         }
       }
       return s;
@@ -340,7 +339,6 @@ l1: { }
     }
     private List<Topic> _route;
     private Topic _initiator;
-    internal IEnumerator<Topic> Task;
     public Topic Source;
     internal Topic Sender;
     public Topic.Subscription Subscription;
@@ -349,7 +347,6 @@ l1: { }
     public TopicChanged(ChangeArt art, Topic initiator=null) {
       _route=new List<Topic>();
       Art=art;
-      Task=null;
       Source=null;
       Sender=null;
       Subscription=null;
@@ -361,7 +358,6 @@ l1: { }
       Source=old.Source;
       Sender=old.Sender;
       Subscription=old.Subscription;
-      Task=old.Task;
       _initiator=old._initiator;
     }
     public bool Visited(Topic it, bool save) {

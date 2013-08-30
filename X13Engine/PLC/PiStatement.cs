@@ -62,7 +62,12 @@ namespace X13.PLC {
 
       Topic.root.Subscribe("/plc/+/_via", via_changed);
     }
+    public void Stop() {
+    }
 
+    public static void L_dummy(Topic sender, TopicChanged arg) {
+      return;
+    }
     private void via_changed(Topic sender, TopicChanged arg) {
       DVar<string> via;
       if(arg.Art!=TopicChanged.ChangeArt.Value || sender.name!="_via" || (via=sender as DVar<string>)==null || via.parent==null) {
@@ -79,18 +84,9 @@ namespace X13.PLC {
       }
     }
 
-    public static void L_dummy(Topic sender, TopicChanged arg) {
-      return;
-    }
-    public void Stop() {
-    }
-
-
-
     public interface IStData {
       string declarer { get; }
     }
-
   }
 
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
@@ -120,7 +116,6 @@ namespace X13.PLC {
     public PiStatement(string declarer) {
       this._declarer=declarer;
     }
-
     public void RefreshExec() {
       if(_owner==null) {
         return;
