@@ -66,7 +66,7 @@ namespace X13.MQTT {
         SetTopic("groups/1", "Users", sec);
         SetTopic<long>("acls/export", 0x1F000001, sec);
         SetTopic<long>("acls/export/demo", 0xFF000001, sec);
-        Topic.Export("../data/security.xst", sec);
+        Topic.Export("../data/security.xst", sec.Get("users"));
       }
       sec.aclAll=TopicAcl.None;
       sec.aclOwner=TopicAcl.Full;

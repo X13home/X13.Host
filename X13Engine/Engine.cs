@@ -32,7 +32,7 @@ namespace X13 {
       Console.WriteLine("Engine running; press Enter to Exit");
       Console.Read();
       eng.Shutdown();
-      Console.ForegroundColor=ConsoleColor.White;
+      Console.ForegroundColor=ConsoleColor.Gray;
     }
 
     private static Mutex _singleInstance;
@@ -82,7 +82,6 @@ namespace X13 {
         _singleInstance=null;
         return false;
       }
-
 
       Topic.brokerMode=true;
       _plugins=new Plugins();
@@ -201,7 +200,7 @@ namespace X13 {
         case LogLevel.Debug:
           break;
         case LogLevel.Info:
-          Console.ForegroundColor=ConsoleColor.Gray;
+          Console.ForegroundColor=ConsoleColor.White;
           Console.WriteLine(rez);
           break;
         case LogLevel.Warning:
@@ -236,6 +235,7 @@ namespace X13 {
       }
       catch(Exception) {
       }
+      Console.ForegroundColor=ConsoleColor.Gray;
     }
 
     private void MQTT_Main_changed(Topic sender, TopicChanged param) {

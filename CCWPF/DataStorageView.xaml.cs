@@ -165,6 +165,7 @@ namespace X13.CC {
       case ItemAction.createLongMask:
       case ItemAction.createDoubleMask:
       case ItemAction.createStringMask:
+      case ItemAction.createLogramMask:
         AddItem(ci.DataContext as StackPanel, ((TopicView.ItemActionStr)ci.Tag));
         break;
       case ItemAction.createNodeDef:
@@ -638,6 +639,16 @@ namespace X13.CC {
         case ItemAction.createStringMask:
           cur=_parent.ptr.Get<string>(name);
           break;
+        case ItemAction.createLogramMask:
+          cur=_parent.ptr.Get<PiLogram>(name);
+          if(cur.GetValue()==null) {
+            (cur as DVar<PiLogram>).value=new PiLogram();
+            var via=cur.Get<string>("_via");
+            via.saved=true;
+            via.value=Topic.root.Get<string>("/etc/PLC/default").value;
+          }
+          App.OpenLogram(cur as DVar<PiLogram>);
+          break;
         }
         if(cur!=null && !string.IsNullOrEmpty(_action.declarer)) {
           cur.Get<string>("_declarer").value=_action.declarer;
@@ -679,6 +690,7 @@ namespace X13.CC {
     createLongMask='I',
     createDoubleMask='G',
     createStringMask='S',
+    createLogramMask='L',
 
     createNodeDef='n',
     createBoolDef='z',

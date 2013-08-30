@@ -16,8 +16,6 @@
     </Grid.RowDefinitions>
     <Menu Grid.Row="0">
       <MenuItem Header="File">
-        <MenuItem Header="New Logram" Click="ActivateView" Tag="Logram"/>
-        <Separator />
         <MenuItem Header="Import" Click="Import_Click" />
         <MenuItem Header="Import To" Click="ImportTo_Click" />
         <MenuItem Header="Export" Click="Export_Click" />

@@ -218,16 +218,6 @@ namespace X13.CC {
         rez=dockManager.Documents.FirstOrDefault(p => p is SetupView)??new SetupView();
       } else if(name=="SecurityPanel"){
         rez=dockManager.DockableContents.FirstOrDefault(p => p is SecurityView)??new SecurityView();
-      } else if(name=="Logram") {
-        string baseDocTitle = "Logram_New_1Logram_1";
-        int i = 1;
-        string lName = baseDocTitle + i.ToString();
-
-        while(dockManager.Documents.Any(d => d.Name == lName)) {
-          i++;
-          lName = baseDocTitle + i.ToString();
-        }
-        rez=new LogramView(lName);
       } else if(name.StartsWith("Logram_")) {
         rez=dockManager.Documents.FirstOrDefault(p => p is DocumentContent && p.Name==name)??new LogramView(name);
       }

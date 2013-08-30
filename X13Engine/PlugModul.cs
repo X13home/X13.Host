@@ -43,7 +43,7 @@ namespace X13 {
       string path=Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
       string exeName=Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location);
       var root=Topic.root;
-      Log.Info("Starting {0}", exeName);
+      Log.Info("Starting {0}, ersion {1}", exeName, Assembly.GetExecutingAssembly().GetName().Version.ToString(4));
 
       var myId=Topic.root.Get<string>("/local/cfg/id");
       if(string.IsNullOrWhiteSpace(myId.value)) {

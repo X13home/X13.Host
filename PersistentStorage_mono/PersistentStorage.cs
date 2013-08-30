@@ -37,7 +37,7 @@ namespace X13.PLC {
 
       _connection = new SqliteConnection();
       ret=File.Exists(dbFilename);
-      _connection.ConnectionString = string.Format("Version=3,uri=file:{0}", dbFilename);
+      _connection.ConnectionString = string.Format("Version=3,uri=file:{0}", Path.GetFullPath(dbFilename));
       _connection.Open();
       IDbCommand cmd = _connection.CreateCommand();
       if(!ret) {
@@ -52,8 +52,13 @@ namespace X13.PLC {
       Topic mq=Topic.root.Get("/local/MQ");
       Topic.paused=true;
       while(reader.Read()) {
+        string v2=string.Empty;
         string v1 = reader.GetString(reader.GetOrdinal("path"));
-        string v2 = reader.GetString(reader.GetOrdinal("type"));
+        try {
+          v2 = reader.GetString(reader.GetOrdinal("type"));
+        }
+        catch(Exception) {
+        }
         string v3 = reader.GetString(reader.GetOrdinal("val"));
         Topic cur;
         if(!Topic.root.Exist(v1, out cur) || (cur.valueType==null && !string.IsNullOrEmpty(v2))) {
@@ -153,7 +158,7 @@ namespace X13.PLC {
       cmd.Parameters.Add(new SqliteParameter { ParameterName = "@path", Value = act.src.path });
       if(act.art==TopicChanged.ChangeArt.Value) {
         cmd.CommandText="INSERT OR REPLACE INTO topics VALUES (@path, @type, @val);";
-        string st=act.src.valueType==null?null:act.src.valueType.FullName;
+        string st=act.src.valueType==null?string.Empty:act.src.valueType.FullName;
         string sv=act.src.ToJson();
         if(act.src.valueType==typeof(JObject)) {
           var jo=JObject.Parse(sv);
