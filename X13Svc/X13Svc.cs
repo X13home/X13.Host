@@ -94,9 +94,9 @@ namespace X13.Svc {
 				new X13Svc() 
 			};
         ServiceBase.Run(ServicesToRun);
-#if MONO
-        System.Threading.Thread.Sleep(5000);
-#endif
+        if(Engine.IsLinux) {
+          System.Threading.Thread.Sleep(5000);   // for mono-service 
+        }
       }
     }
     private static void Log_Write(LogLevel ll, DateTime dt, string msg) {

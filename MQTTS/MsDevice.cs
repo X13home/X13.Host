@@ -67,6 +67,7 @@ namespace X13.Periphery {
       protected set {
         if(_stateVar!=null) {
           try {
+            _stateVar.saved=false;
             _stateVar.value=value;
           }
           catch(ObjectDisposedException) {

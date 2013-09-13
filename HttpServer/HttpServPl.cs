@@ -51,7 +51,7 @@ namespace X13.HttpServer {
 
       if(string.IsNullOrEmpty(urlD.value)) {
         urlD.saved=true;
-        urlD.value=@"http://+:80/";
+        urlD.value=Engine.IsLinux? @"http://+:8080/":@"http://+:80/";
       }
 reconnect:
       _listener = new HttpListener();

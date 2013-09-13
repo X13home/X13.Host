@@ -34,7 +34,12 @@ namespace X13 {
       eng.Shutdown();
       Console.ForegroundColor=ConsoleColor.Gray;
     }
-
+    public static bool IsLinux {
+      get {
+        int p = (int)Environment.OSVersion.Platform;
+        return (p == 4) || (p == 6) || (p == 128);
+      }
+    }
     private static Mutex _singleInstance;
     private static BlockingQueue<LogEntry> _log;
     private static bool _logToConsole;

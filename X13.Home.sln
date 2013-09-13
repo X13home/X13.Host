@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2010
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine", "X13Engine\Engine.csproj", "{95861A56-393C-4779-A84C-3840EC0A9304}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersistentStorage", "PersistentStorage\PersistentStorage.csproj", "{C1FA9660-9931-4627-84BA-92D759769806}"
@@ -65,8 +65,9 @@ Global
 		{B57A47E1-8602-4A85-A160-E84FF9622420}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B57A47E1-8602-4A85-A160-E84FF9622420}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3E13824A-1078-46B7-AB02-5AC8DF311562}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3E13824A-1078-46B7-AB02-5AC8DF311562}.Mono|Any CPU.ActiveCfg = Mono|Any CPU
-		{3E13824A-1078-46B7-AB02-5AC8DF311562}.Mono|Any CPU.Build.0 = Mono|Any CPU
+		{3E13824A-1078-46B7-AB02-5AC8DF311562}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E13824A-1078-46B7-AB02-5AC8DF311562}.Mono|Any CPU.ActiveCfg = Release|Any CPU
+		{3E13824A-1078-46B7-AB02-5AC8DF311562}.Mono|Any CPU.Build.0 = Release|Any CPU
 		{3E13824A-1078-46B7-AB02-5AC8DF311562}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3E13824A-1078-46B7-AB02-5AC8DF311562}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D085BC7C-2010-4276-B2F6-B0C6CD2C0B82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

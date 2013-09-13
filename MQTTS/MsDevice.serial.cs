@@ -369,7 +369,7 @@ namespace X13.Periphery {
             do {
               nAddr[0]=(byte)(8+r.Next(0xF6));  //0x08 .. 0xFE
             } while(devR.children.Select(z => z.GetValue() as MsDevice).Any(z => z!=null && nAddr.SequenceEqual(z.Addr)));
-            Log.Info("{0} new addr={1}", msg.ClientId, nAddr);
+            Log.Info("{0} new addr={1}", msg.ClientId, BitConverter.ToString(nAddr));
             var pm=new MsPublish(null, PredefinedTopics[".cfg/XD_DeviceAddr"], QoS.AtLeastOnce) { Addr=msg.Addr, MessageId=1, Data=nAddr };
             Send(pm);
           } else { // msg.Addr!=0xFF
@@ -411,8 +411,11 @@ namespace X13.Periphery {
         }
       }
       private void Dispose() {
-        if(_port!=null && _port.IsOpen) {
-          _port.Close();
+        try {
+          if(_port!=null && _port.IsOpen) {
+            _port.Close();
+          }
+        }catch(Exception){
         }
         _port=null;
         _gates.Remove(this);
