@@ -63,6 +63,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\X13Engine\Properties\VersionInfo.cs">
+      <Link>VersionInfo.cs</Link>
+    </Compile>
     <Compile Include="PersistentStorage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SQLite\SqliteClientFactory.cs" />
@@ -100,7 +103,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)vu.exe $(ProjectDir)</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

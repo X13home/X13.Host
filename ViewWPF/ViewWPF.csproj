@@ -75,6 +75,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="..\X13Engine\Properties\VersionInfo.cs">
+      <Link>VersionInfo.cs</Link>
+    </Compile>
     <Compile Include="CubicSpline.cs" />
     <Compile Include="Holiday.cs" />
     <Compile Include="SayTimeRu.cs" />
@@ -176,7 +179,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)vu.exe $(ProjectDir)</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

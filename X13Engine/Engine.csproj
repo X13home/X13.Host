@@ -104,6 +104,7 @@
     <Compile Include="PLC\PiWire.cs" />
     <Compile Include="PLC\TextParser.cs" />
     <Compile Include="PlugModul.cs" />
+    <Compile Include="Properties\VersionInfo.cs" />
     <Compile Include="Topic.cs" />
     <Compile Include="Topic.intern.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -137,7 +138,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)vu.exe $(ProjectDir)</PreBuildEvent>
+    <PreBuildEvent>$(SolutionDir)vu.exe $(ProjectDir) $(ConfigurationName)</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

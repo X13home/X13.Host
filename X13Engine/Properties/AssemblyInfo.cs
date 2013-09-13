@@ -18,10 +18,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("X13Engine")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("X13")]
-[assembly: AssemblyProduct("X13.Home")]
-[assembly: AssemblyCopyright("Copyright ©X13 2013")]
-[assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -31,16 +27,3 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("b67a80ba-e3fe-4c95-9018-8bbc0a4e1181")]
-
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version 
-//      Build Number
-//      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-// [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.3.1337.3")]
-[assembly: AssemblyFileVersion("0.3.1337.3")]
