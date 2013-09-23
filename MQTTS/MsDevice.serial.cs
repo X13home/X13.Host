@@ -158,7 +158,10 @@ namespace X13.Periphery {
               _gates.Add(gw);
             }
           }
-          catch(Exception) {
+          catch(Exception ex) {
+            if(_verbose.value) {
+              Log.Debug("MQTTS.Serial search on {0} - {1}", pns[i], ex.Message);
+            }
             if(port!=null && port.IsOpen) {
               port.Close();
             }

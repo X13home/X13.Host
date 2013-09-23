@@ -233,10 +233,10 @@
           <item name="_description" value="Digital output, SV1-03" saved="True" type="System.String" />
         </item>
         <item name="OA29" value="EzX12" saved="True" type="System.String">
-          <item name="_description" value="High if active, low if sleep, 2.05" saved="True" type="System.String" />
+          <item name="_description" value="High if active, low if sleep, SV1-03" saved="True" type="System.String" />
         </item>
         <item name="Oa29" value="FzX12" saved="True" type="System.String">
-          <item name="_description" value="Low if active, low if sleep, 2.05" saved="True" type="System.String" />
+          <item name="_description" value="Low if active, low if sleep, SV1-03" saved="True" type="System.String" />
         </item>
       </item>
       <item name="SV1-04">
