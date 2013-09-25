@@ -99,7 +99,13 @@ namespace X13.CC {
       while(idx>0 && LogCollection[idx-1].dt>en.dt) {
         idx--;
       }
-      LogCollection.Insert(idx, en);
+      if(idx>1 
+        && LogCollection[idx-1].ll==en.ll && LogCollection[idx-1].message==en.message 
+        && LogCollection[idx-2].ll==en.ll && LogCollection[idx-2].message==en.message) {
+          LogCollection[idx-1].cnt++;
+      } else {
+        LogCollection.Insert(idx, en);
+      }
 
       if((_showDebug || en.ll!=LogLevel.Debug) && lvLog.Items.Count>1 && !LogPanel.IsFocused) {
         if(lvLog.SelectedItem==null) {
@@ -111,6 +117,7 @@ namespace X13.CC {
     }
 
     public class LogEntry {
+      private string _msg;
       public LogEntry(string p) {
         int idx=p.IndexOf('[');
         try {
@@ -157,8 +164,9 @@ namespace X13.CC {
 
       public DateTime dt { get; private set; }
       public LogLevel ll { get; private set; }
-      public string message { get; private set; }
+      public string message { get{ return cnt==0?_msg: string.Format("{0} [{1}]",_msg, cnt);} private set{ _msg=value;} }
       public bool local { get; private set; }
+      public int cnt;
     }
 
     private void DockableContent_MouseLeave(object sender, MouseEventArgs e) {
