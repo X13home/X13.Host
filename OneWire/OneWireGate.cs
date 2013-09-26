@@ -20,6 +20,7 @@ namespace X13.Periphery {
   public class OneWireGate : OneWireBase {
     private PortAdapter _adapter;
     private List<OneWireBase> _devs=new List<OneWireBase>();
+    private List<OneWireBase> _queue=new List<OneWireBase>();
 
     public OneWireGate()
       : base(null) {
@@ -42,8 +43,23 @@ namespace X13.Periphery {
     }
 
     internal override void Proccess() {
-      foreach(var dev in _devs) {
-        if(dev.GetFlag(Flags.NeedConvert)) {
+      OneWireBase dev;
+      if(_queue.Count==0) {
+        _adapter.SetSearchOnlyAlarmingDevices();
+        byte[] rom=new byte[8];
+        if(_adapter.GetFirstDevice(rom, 0)) {
+          do {
+            dev=base._owner.parent.children.Select(z => z.GetValue() as OneWireBase).FirstOrDefault(z => z.rom==rom);
+            if(dev!=null) {
+              _queue.Add(dev);
+            }
+          } while(_adapter.GetNextDevice(rom, 0));
+        }
+        _queue.AddRange(_devs.Except(_queue));
+      } else {
+        dev=_queue[0];
+        _queue.RemoveAt(0);
+        if(dev!=this) {
           dev.Proccess();
         }
       }

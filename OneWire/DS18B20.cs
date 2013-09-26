@@ -27,7 +27,6 @@ namespace X13.Periphery {
     }
     internal override bool GetFlag(Flags fl) {
       switch(fl) {
-      case Flags.NeedConvert:
       case Flags.DoRequest:
         return true;
       }

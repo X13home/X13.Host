@@ -52,6 +52,7 @@
     <Compile Include="..\X13Engine\Properties\VersionInfo.cs">
       <Link>VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="DS2406.cs" />
     <Compile Include="OneWireBase.cs" />
     <Compile Include="DS18B20.cs" />
     <Compile Include="OneWireGate.cs" />

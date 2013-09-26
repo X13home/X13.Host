@@ -46,6 +46,7 @@ namespace X13.Periphery {
         adapter=AccessProvider.GetAdapter(an, pn);
         adapter.BeginExclusive(true);
         adapter.Speed = OWSpeed.SPEED_REGULAR;
+        adapter.StartPowerDelivery(OWPowerStart.CONDITION_AFTER_BYTE);
         adapter.TargetAllFamilies();
         byte[] id = new byte[8];
         DVar<OneWireGate> tGate=null;
@@ -91,12 +92,20 @@ namespace X13.Periphery {
                   dev=_dev1w.Get<DS18B20>(string.Format("DS18B20_{0:X2}{1:X2}{2:X2}{3:X2}", did[4], did[3], did[2], did[1]));
                   (dev as DVar<DS18B20>).value=new DS18B20(tGate.value, did);
                   break;
+                case 0x12:
+                  dev=_dev1w.Get<DS2406>(string.Format("DS2406_{0:X2}{1:X2}{2:X2}{3:X2}", did[4], did[3], did[2], did[1]));
+                  (dev as DVar<DS2406>).value=new DS2406(tGate.value, did);
+                  break;
+                default:
+                  Log.Warning("unknown device {0} on {1}:{2}", BitConverter.ToString(did), an, pn);
+                  break;
                 }
               } else {
                 (dev.GetValue() as OneWireBase).gate=tGate.value;
               }
-              (dev.GetValue() as OneWireBase).present=true;
-
+              if(dev!=null) {
+                (dev.GetValue() as OneWireBase).present=true;
+              }
             }
           }
         }
