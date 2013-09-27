@@ -20,7 +20,7 @@ namespace X13.Periphery {
   public class OneWireGate : OneWireBase {
     private PortAdapter _adapter;
     private List<OneWireBase> _devs=new List<OneWireBase>();
-    private List<OneWireBase> _queue=new List<OneWireBase>();
+    private bool _run;
 
     public OneWireGate()
       : base(null) {
@@ -41,27 +41,40 @@ namespace X13.Periphery {
         _devs.Remove(dev);
       }
     }
-
-    internal override void Proccess() {
-      OneWireBase dev;
-      if(_queue.Count==0) {
-        _adapter.SetSearchOnlyAlarmingDevices();
-        byte[] rom=new byte[8];
-        if(_adapter.GetFirstDevice(rom, 0)) {
-          do {
-            dev=base._owner.parent.children.Select(z => z.GetValue() as OneWireBase).FirstOrDefault(z => z.rom==rom);
-            if(dev!=null) {
-              _queue.Add(dev);
+    internal void Start() {
+      _run=true;
+      System.Threading.ThreadPool.QueueUserWorkItem(Pool);
+    }
+    private void Pool(object o) {
+      try {
+        while(_run) {
+          OneWireBase dev=_devs.Where(z => z.prio>0).OrderByDescending(z => z.prio).FirstOrDefault();
+          if(dev==null && _devs.Any(z=>z.GetFlag(Flags.NeedAlarm))) {
+            _adapter.SetSearchOnlyAlarmingDevices();
+            byte[] rom=new byte[8];
+            if(_adapter.GetFirstDevice(rom, 0)) {
+              do {
+                dev=_devs.FirstOrDefault(z => z.rom.SequenceEqual(rom));
+                if(dev!=null) {
+                  dev.GetFlag(Flags.Alarm);
+                }
+              } while(_adapter.GetNextDevice(rom, 0));
             }
-          } while(_adapter.GetNextDevice(rom, 0));
+          }
+          if(dev!=null) {
+            try {
+              dev.Proccess();
+            }
+            catch(Exception ex) {
+              Log.Warning("{0}.Process - {1}", dev._owner.path, ex.Message);
+            }
+          } else {
+            Thread.Sleep(15);
+          }
         }
-        _queue.AddRange(_devs.Except(_queue));
-      } else {
-        dev=_queue[0];
-        _queue.RemoveAt(0);
-        if(dev!=this) {
-          dev.Proccess();
-        }
+      }
+      catch(Exception ex) {
+        Log.Error("{0}.Pool() - {1}", _owner!=null?_owner.path:this.ToString(), ex);
       }
     }
     internal PortAdapter adapter {
@@ -72,9 +85,6 @@ namespace X13.Periphery {
         _adapter=value;
         PSetOwner();
       }
-    }
-    public override string ToString() {
-      return base.ToString();
     }
     protected override void PSetOwner() {
       if(_owner!=null) {

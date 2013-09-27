@@ -353,7 +353,7 @@ namespace X13.Periphery {
       }
       private void ParseInPacket(byte[] addr, byte[] buf) {
         if(addr[0]==0) {
-          Log.Warning("Packet with broadcast address via {0}:{1:X2}:{3}", _port.PortName, BitConverter.ToString(addr), BitConverter.ToString(buf));
+          Log.Warning("Packet with broadcast address via {0}:{1:X2}:{2}", _port.PortName, BitConverter.ToString(addr), BitConverter.ToString(buf));
           return;
         }
 

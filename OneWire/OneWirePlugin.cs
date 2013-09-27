@@ -36,7 +36,9 @@ namespace X13.Periphery {
       foreach(var pnn in new string[] { "USB0", "USB1", "USB2", "USB3", "USB4", "USB5", "USB6", "USB7" }) {
         ConnectAdapter("{DS9490}", pnn);
       }
-      System.Threading.ThreadPool.QueueUserWorkItem(Process);
+      foreach(var g in _gates) {
+        g.Start();
+      }
     }
 
     private void ConnectAdapter(string an, string pn) {
@@ -114,14 +116,6 @@ namespace X13.Periphery {
       }
       catch(Exception ex) {
         Log.Debug("1Wire.Start [{0}, {1}] - {2}", an, pn, ex.Message);
-      }
-    }
-    private void Process(object o){
-      while(true) {
-        foreach(var g in _gates) {
-          g.Proccess();
-        }
-        Thread.Sleep(15);
       }
     }
     public void Stop() {

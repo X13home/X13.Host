@@ -100,9 +100,10 @@ namespace X13.CC {
         idx--;
       }
       if(idx>1 
-        && LogCollection[idx-1].ll==en.ll && LogCollection[idx-1].message==en.message 
-        && LogCollection[idx-2].ll==en.ll && LogCollection[idx-2].message==en.message) {
-          LogCollection[idx-1].cnt++;
+        && LogCollection[idx-1].ll==en.ll && LogCollection[idx-1]._msg==en._msg 
+        && LogCollection[idx-2].ll==en.ll && LogCollection[idx-2]._msg==en._msg) {
+          en.cnt=LogCollection[idx-1].cnt+1;
+          LogCollection[idx-1]=en;
       } else {
         LogCollection.Insert(idx, en);
       }
@@ -117,7 +118,7 @@ namespace X13.CC {
     }
 
     public class LogEntry {
-      private string _msg;
+      internal string _msg;
       public LogEntry(string p) {
         int idx=p.IndexOf('[');
         try {

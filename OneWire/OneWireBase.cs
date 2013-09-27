@@ -16,10 +16,11 @@ using System.Text;
 namespace X13.Periphery {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public abstract class OneWireBase : ITopicOwned {
-    protected Topic _owner;
+    internal protected Topic _owner;
     private DVar<bool> _tPresent;
     private string _decl;
     protected OneWireGate _gate;
+    protected int _prio;
 
     protected OneWireBase(string declarer) {
       this._decl=declarer;
@@ -63,6 +64,7 @@ namespace X13.Periphery {
     internal virtual bool GetFlag(Flags fl) {
       return false;
     }
+    internal virtual int prio { get { return 0; } }
     public void SetOwner(Topic owner) {
       if(!object.ReferenceEquals(owner, _owner)) {
         if(_owner!=null) {
@@ -90,11 +92,14 @@ namespace X13.Periphery {
       if(src==null) {
         return;
       }
+      _prio+=10;
     }
 
     internal enum Flags {
       DoRequest,
       HasData,
+      NeedAlarm,
+      Alarm,
     }
   }
 }
