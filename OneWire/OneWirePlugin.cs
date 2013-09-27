@@ -119,6 +119,9 @@ namespace X13.Periphery {
       }
     }
     public void Stop() {
+      foreach(var g in _gates) {
+        g.Stop();
+      }
     }
     private void Dummy(Topic src, TopicChanged arg) {
     }

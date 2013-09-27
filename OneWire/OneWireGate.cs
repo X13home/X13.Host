@@ -45,6 +45,9 @@ namespace X13.Periphery {
       _run=true;
       System.Threading.ThreadPool.QueueUserWorkItem(Pool);
     }
+    internal void Stop() {
+      _run=false;
+    }
     private void Pool(object o) {
       try {
         while(_run) {
@@ -75,6 +78,15 @@ namespace X13.Periphery {
       }
       catch(Exception ex) {
         Log.Error("{0}.Pool() - {1}", _owner!=null?_owner.path:this.ToString(), ex);
+      }
+      if(_adapter!=null) {
+        try {
+          _adapter.EndExclusive();
+          _adapter.Dispose();
+        }
+        catch(Exception) {
+        }
+        _adapter=null;
       }
     }
     internal PortAdapter adapter {
