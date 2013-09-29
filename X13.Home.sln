@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine", "X13Engine\Engine.csproj", "{95861A56-393C-4779-A84C-3840EC0A9304}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersistentStorage", "PersistentStorage\PersistentStorage.csproj", "{C1FA9660-9931-4627-84BA-92D759769806}"
@@ -83,11 +83,9 @@ Global
 		{956793FB-3CC7-45DE-8851-489E0FF084BC}.Mono|Any CPU.Build.0 = Release|Any CPU
 		{956793FB-3CC7-45DE-8851-489E0FF084BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9686660-E95F-491C-A456-27A1BCA7954B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F9686660-E95F-491C-A456-27A1BCA7954B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9686660-E95F-491C-A456-27A1BCA7954B}.Mono|Any CPU.ActiveCfg = Release|Any CPU
 		{F9686660-E95F-491C-A456-27A1BCA7954B}.Mono|Any CPU.Build.0 = Release|Any CPU
 		{F9686660-E95F-491C-A456-27A1BCA7954B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F9686660-E95F-491C-A456-27A1BCA7954B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1069,6 +1069,95 @@ namespace X13.PLC {
     }
 
     [Export(typeof(IStatement))]
+    [ExportMetadata("declarer", "OnOffDelay")]
+    private class OnOffDelay : IStatement {
+      private DVar<bool> _input;
+      private DVar<bool> _output;
+      private DVar<bool> _iOutput;
+      private DVar<long> _onDelay;
+      private DVar<long> _offDelay;
+      private int _state;
+      private Timer _timer;
+
+      public void Load() {
+        var t1=Topic.root.Get<string>("/etc/declarers/func/OnOffDelay");
+        t1.value="pack://application:,,/CC;component/Images/bi_delay.png";
+        t1.Get<string>("In").value="Az";
+        t1.Get<string>("Q").value="az";
+        t1.Get<string>("!Q").value="bz";
+
+        t1.Get<string>("_description").value="t1OnOffDelay";
+
+        t1.Get<string>("rename").value="|R";
+        t1.Get<string>("remove").value="}D";
+      }
+
+      public void Init(DVar<PiStatement> model) {
+        _input=AddPin<bool>(model, "In");
+        _output=AddPin<bool>(model, "Q");
+        _iOutput=AddPin<bool>(model, "!Q");
+        _onDelay=AddPin<long>(model, "_onDelay");
+        _offDelay=AddPin<long>(model, "_offDelay");
+        model.Get<bool>("!Q").value=!model.Get<bool>("Q").value;
+        _state=0;
+        _timer=new Timer((o) => {
+          if(_state==1 || _state==3) {
+            _state++;
+          }
+          process();
+        }, null, Timeout.Infinite, Timeout.Infinite);
+      }
+      public void Calculate(DVar<PiStatement> model, Topic source) {
+        if(_input==source) {
+          if(_input.value) {
+            if(_onDelay.value>0) {
+              _state=1;
+            } else {
+              _state=2;
+            }
+          } else {
+            if(_state==2 && _offDelay.value>0) {
+              _state=3;
+            } else {
+              _state=0;
+            }
+          }
+          process();
+        }
+      }
+      public void DeInit() {
+        if(_timer!=null) {
+          _timer.Change(Timeout.Infinite, Timeout.Infinite);
+          _timer=null;
+        }
+      }
+      private void process() {
+        bool rez=_output.value;
+        switch(_state) {
+        case 1:
+          rez=false;
+          _timer.Change(_onDelay.value, Timeout.Infinite);
+          break;
+        case 2:
+          rez=true;
+          _timer.Change(Timeout.Infinite, Timeout.Infinite);
+          break;
+        case 3:
+          rez=true;
+          _timer.Change(_offDelay.value==0?1:_offDelay.value, Timeout.Infinite);
+          break;
+        default:
+          _state=0;
+          rez=false;
+          _timer.Change(Timeout.Infinite, Timeout.Infinite);
+          break;
+        }
+        _output.value=rez;
+        _iOutput.value=!rez;
+      }
+    }
+
+    [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "SqPulse")]
     private class PulseGenerator : IStatement {
       private DVar<bool> _enable;
