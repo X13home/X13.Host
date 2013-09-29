@@ -607,6 +607,7 @@ namespace X13.Periphery {
             dc.saved=true;
             dc.value=_declarer;
             _present=Owner.Get<bool>("present", Owner);
+            _present.saved=false;
             _present.value=(state==State.Connected || state==State.ASleep || state==State.AWake);
 
             Topic oldT;

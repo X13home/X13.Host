@@ -24,7 +24,7 @@ namespace X13.Periphery {
   [ExportMetadata("priority", 5)]
   [ExportMetadata("name", "MQTTS.udp")]
   public class MQTTSUdp : IPlugModul {
-    private const long _version=3;
+    private const long _version=300;
 
     public void Init() {
       Topic.root.Subscribe("/etc/MQTTS/#", Dummy);

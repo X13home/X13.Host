@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root head="/etc/declarers">
   <item name="dev">
-    <item name="NDLN00" value="pack://application:,,/CC;component/Images/ty_jnode.png" saved="True" type="System.String">
+    <item name="NDLN00" value="pack://application:,,/CC;component/Images/ty_unode.png" saved="True" type="System.String">
       <item name="Add">
         <item name="bool" value="2Z" saved="True" type="System.String" />
         <item name="long" value="4I" saved="True" type="System.String" />

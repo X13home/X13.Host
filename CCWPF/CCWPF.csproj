@@ -277,6 +277,11 @@
   <ItemGroup>
     <Resource Include="Images\ty_etc.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\bi_delay.png" />
+    <Resource Include="Images\ty_ugate.png" />
+    <Resource Include="Images\ty_unode.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

@@ -90,7 +90,7 @@ namespace X13.PLC {
   }
 
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
-  public class PiStatement : ITopicOwned  {
+  public class PiStatement : ITopicOwned {
     private static SortedList<string, Type> _statements;
     static PiStatement() {
       _statements=new SortedList<string, Type>();
@@ -168,14 +168,16 @@ namespace X13.PLC {
       if(_initDelay!=null) {
         _initDelay.Change(100, Timeout.Infinite);
       } else if(param.Art==TopicChanged.ChangeArt.Value && _st!=null) {
-        try {
-          _st.Calculate(_owner, param.Source);
-        }
-        catch(NullReferenceException ex) {
-          Log.Debug("{0}.calculate - {1}", _owner.path, ex.Message);
-        }
-        catch(Exception ex) {
-          Log.Warning("{0}.calculate - {1}", _owner.path, ex.Message);
+        if(_st!=null) {
+          try {
+            _st.Calculate(_owner, param.Source);
+          }
+          catch(NullReferenceException ex) {
+            Log.Debug("{0}.calculate - {1}", _owner.path, ex.Message);
+          }
+          catch(Exception ex) {
+            Log.Warning("{0}.calculate - {1}", _owner.path, ex.Message);
+          }
         }
       }
     }
