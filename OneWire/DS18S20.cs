@@ -16,14 +16,14 @@ using System.Threading;
 
 namespace X13.Periphery {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
-  public class DS18B20 : OneWireBase {
+  public class DS18S20 : OneWireBase {
     private DateTime _to;
     private int _st=0;
-    public DS18B20()
-      : base("DS18B20") {
+    public DS18S20()
+      : base("DS18S20") {
     }
-    public DS18B20(OneWireGate gate, byte[] rom)
-      : base(gate, rom, "DS18B20") {
+    public DS18S20(OneWireGate gate, byte[] rom)
+      : base(gate, rom, "DS18S20") {
     }
     internal override bool GetFlag(Flags fl) {
       switch(fl) {
@@ -53,9 +53,9 @@ namespace X13.Periphery {
             _gate.adapter.DataBlock(buf, 0, buf.Length);
             if(DalSemi.Utils.CRC8.Compute(buf, 1, 9)==0) {
               short t1=(short)((buf[2]<<8) | buf[1]);
-              _owner.Get<double>("T").value=Math.Round(t1/16.0, 1);
+              _owner.Get<double>("T").value=Math.Round(t1/2.0-0.25+(buf[8]-buf[7])*1.0/buf[8], 1);
               if(buf[3]!=0x7F || buf[4]!=0x80 || buf[5]!=0x7F) {
-                buf=new byte[] { 0x4E, 0x7F, 0x80, 0x7F };  // WRITE SCRATCHPAD, THi, TLo, cfg
+                buf=new byte[] { 0x4E, 0x7F, 0x80 };  // WRITE SCRATCHPAD, THi, TLo
                 _gate.adapter.SelectDevice(rom, 0);
                 _gate.adapter.DataBlock(buf, 0, buf.Length);
                 buf=new byte[] { 0x48 };    // COPY SCRATCHPAD

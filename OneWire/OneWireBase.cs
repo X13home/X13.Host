@@ -57,6 +57,9 @@ namespace X13.Periphery {
         if(_tPresent!=null) {
           _tPresent.value=value;
         }
+        if(_owner!=null) {
+          Log.Info("{0} is {1}", _owner.path, value?"connected":"disconnected");
+        }
       }
     }
     internal virtual void Proccess() {

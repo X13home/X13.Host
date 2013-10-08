@@ -465,6 +465,9 @@ namespace X13.PLC {
           _dOut.SetValue(eval.Execute(_dFunc.value), new TopicChanged(TopicChanged.ChangeArt.Value, model));
 
         }
+        catch(NullReferenceException ex) {
+          Log.Debug("{0}.calculate - {1}", model.path, ex.Message);
+        }
         catch(Exception ex) {
           Log.Warning("{0}.calculate - {1}", model.path, ex.Message);
         }
