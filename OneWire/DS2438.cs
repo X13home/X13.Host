@@ -111,11 +111,9 @@ namespace X13.Periphery {
       byte[] result = null;
       uint crc8;   // this device uses a crc 8
       // Perform the read scratchpad by using a combined write and read buffer
-      //_gate.adapter.Reset();
       _gate.adapter.SelectDevice(rom, 0);
       _gate.adapter.DataBlock(new byte[] { 0xB8, 0 }, 0, 2);  // Recall Memory
 
-      //_gate.adapter.Reset();
       _gate.adapter.SelectDevice(rom, 0);
 
       buffer[0] = 0xBE;    // READ_SCRATCHPAD_COMMAND
@@ -131,6 +129,7 @@ namespace X13.Periphery {
       crc8 = CRC8.Compute(buffer, 2, 9);
 
       if(crc8 != 0x0) {
+        ReportError();
         Log.Warning("{0} bad crc", _owner.path);
       } else {
         // copy the data into the result

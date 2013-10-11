@@ -63,6 +63,7 @@ namespace X13.Periphery {
                 _gate.adapter.DataBlock(buf, 0, buf.Length);
               }
             } else {
+              ReportError();
               Log.Warning("{0} bad crc", _owner.path);
             }
           }

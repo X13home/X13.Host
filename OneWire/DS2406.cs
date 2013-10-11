@@ -21,7 +21,7 @@ namespace X13.Periphery {
     private DVar<bool> _InA, _OnA, _InB, _OnB;
     private byte _st1;
     private DateTime _to;
-
+    private bool _refreshOut;
     public DS2406()
       : base("DS2406") {
     }
@@ -49,7 +49,7 @@ namespace X13.Periphery {
     internal override void Proccess() {
       _prio=0;
       byte[] buf;
-      if((_OnA!=null && _OnA.value==((_st1&0x01)!=0)) || (_OnB!=null && _OnB.value==((_st1&0x02)!=0))) {
+      if(_refreshOut || (_OnA!=null && _OnA.value==((_st1&0x01)!=0)) || (_OnB!=null && _OnB.value==((_st1&0x02)!=0))) {
         _gate.adapter.SelectDevice(rom, 0);
         buf= new byte[] { 0x55, 0x07, 0x00, 0x00, 0xFF, 0xFF }; // write status command
         buf[3]=0x0B;    // Activity Latch = 1 , ch A
@@ -64,8 +64,10 @@ namespace X13.Periphery {
         }
         _gate.adapter.DataBlock(buf, 0, buf.Length);
         if(CRC16.Compute(buf, 0, buf.Length, 0)!=0xB001) {
+          ReportError();
           Log.Warning("{0} crc error out", _owner.path);
         }
+        _refreshOut=false;
       }
       _gate.adapter.SelectDevice(rom, 0);
       buf=new byte[] { 0xF5, 0x7D, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
@@ -76,6 +78,9 @@ namespace X13.Periphery {
       _gate.adapter.DataBlock(buf, 0, buf.Length);
       if(CRC16.Compute(buf, 0, buf.Length, 0)==0xB001) {
         if(_st1!=buf[3]) {
+          if(((_st1 ^ buf[3]) & 0xC0)!=0) {
+            _refreshOut=true;
+          }
           if((buf[3]&0x40)==0) {  // channel A only
             if(_InB!=null) {
               _InB.Remove();
@@ -110,6 +115,7 @@ namespace X13.Periphery {
         }
         _st1=buf[3];
       } else {
+        ReportError();
         Log.Warning("{0} crc error in", _owner.path);
       }
       _to=DateTime.Now;

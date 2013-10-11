@@ -21,6 +21,7 @@ namespace X13.Periphery {
     private string _decl;
     protected OneWireGate _gate;
     protected int _prio;
+    protected int _errCnt;
 
     protected OneWireBase(string declarer) {
       this._decl=declarer;
@@ -55,7 +56,14 @@ namespace X13.Periphery {
       }
       set {
         if(_tPresent!=null) {
+          if(_tPresent.value==value) {
+            return;
+          }
           _tPresent.value=value;
+        }
+        if(value) {
+          _prio=20;
+          _errCnt=0;
         }
         if(_owner!=null) {
           Log.Info("{0} is {1}", _owner.path, value?"connected":"disconnected");
@@ -68,6 +76,16 @@ namespace X13.Periphery {
       return false;
     }
     internal virtual int prio { get { return 0; } }
+    internal void ReportError() {
+      _errCnt++;
+      if(_errCnt>2) {
+        if(_gate==null || _gate.adapter==null || !_gate.adapter.IsPresent(rom, 0)) {
+          this.present=false;
+        } else {
+          _errCnt=0;
+        }
+      }
+    }
     public void SetOwner(Topic owner) {
       if(!object.ReferenceEquals(owner, _owner)) {
         if(_owner!=null) {

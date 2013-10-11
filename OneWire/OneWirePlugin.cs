@@ -50,6 +50,7 @@ namespace X13.Periphery {
         adapter.Speed = OWSpeed.SPEED_REGULAR;
         adapter.StartPowerDelivery(OWPowerStart.CONDITION_AFTER_BYTE);
         adapter.TargetAllFamilies();
+        adapter.TargetFamily(0x81);
         byte[] id = new byte[8];
         DVar<OneWireGate> tGate=null;
         if(adapter.GetFirstDevice(id, 0)) {
@@ -82,40 +83,6 @@ namespace X13.Periphery {
             }
             tGate.value.present=true;
             _gates.Add(tGate.value);
-            foreach(var did in ids.Where(z => z!=null && !gId.SequenceEqual(z))) {
-              var dev=_dev1w.children.FirstOrDefault(z => {
-                var d=z.GetValue() as OneWireBase;
-                return d!=null && d.rom.SequenceEqual(did);
-              });
-              if(dev==null) {
-                switch(did[0]) {
-                case 0x10:    // DS18S20
-                  dev=_dev1w.Get<DS18S20>(string.Format("DS18S20_{0:X2}{1:X2}{2:X2}{3:X2}", did[4], did[3], did[2], did[1]));
-                  (dev as DVar<DS18S20>).value=new DS18S20(tGate.value, did);
-                  break;
-                case 0x12:    // DS2406
-                  dev=_dev1w.Get<DS2406>(string.Format("DS2406_{0:X2}{1:X2}{2:X2}{3:X2}", did[4], did[3], did[2], did[1]));
-                  (dev as DVar<DS2406>).value=new DS2406(tGate.value, did);
-                  break;
-                case 0x26:    // DS2438
-                  dev=_dev1w.Get<DS2438>(string.Format("DS2438_{0:X2}{1:X2}{2:X2}{3:X2}", did[4], did[3], did[2], did[1]));
-                  (dev as DVar<DS2438>).value=new DS2438(tGate.value, did);
-                  break;
-                case 0x28:    // DS18B20
-                  dev=_dev1w.Get<DS18B20>(string.Format("DS18B20_{0:X2}{1:X2}{2:X2}{3:X2}", did[4], did[3], did[2], did[1]));
-                  (dev as DVar<DS18B20>).value=new DS18B20(tGate.value, did);
-                  break;
-                default:
-                  Log.Warning("unknown device {0} on {1}:{2}", BitConverter.ToString(did), an, pn);
-                  break;
-                }
-              } else {
-                (dev.GetValue() as OneWireBase).gate=tGate.value;
-              }
-              if(dev!=null) {
-                (dev.GetValue() as OneWireBase).present=true;
-              }
-            }
           }
         }
       }
