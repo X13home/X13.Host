@@ -37,7 +37,7 @@ namespace X13.Periphery {
     internal override int prio {
       get {
         var ms=(DateTime.Now-_to).TotalMilliseconds;
-        ms=ms>0?(ms<2000?ms/50:40):0;
+        ms=ms>0?(ms<2000?ms/10:20):0;
         return _prio+(int)(ms);
       }
     }
@@ -47,10 +47,20 @@ namespace X13.Periphery {
         return;
       }
       byte[] buf;
-      if(_st<0 || _st>POOL_CNT) {
-        _st=0;
+      if(_st<0) {
+        buf=ReadPage(0);
+        if(buf==null) {
+          return;
+        }
+        _gate.adapter.Reset();
+        buf[0]=(byte)((buf[0] & 0xF0) | 0x01);
+        WritePage(0, buf);
         _gate.adapter.SelectDevice(rom, 0);
-        _gate.adapter.DataBlock(new byte[] { 0xB8, 0 }, 0, 2);
+        _gate.adapter.DataBlock(new byte[] { 0x48, 0 }, 0, 2);  // Copy Scratchpad
+        _st=0;
+      }
+      if(_st>POOL_CNT) {
+        _st=0;
       }
       buf=ReadPage(0);
       if(buf==null) {
@@ -62,37 +72,36 @@ namespace X13.Periphery {
         dV2.value=Math.Round(((short)((buf[6]<<8) | buf[5]))/4096.0, 4);
       }
       if((_st & 1)!=0) {
-        if(_st<POOL_CNT-1) {
-          if((buf[0] & 0x40)==0) {   // A/D conversion complete
-            DVar<double> dV=_owner.Get<double>("VAD");
-            dV.saved=false;
-            dV.value=((ushort)((buf[4]<<8) | buf[3]))/100.0;
-            _st++;
+        if((buf[0] & 0x40)==0) {   // A/D conversion complete
+          DVar<double> dV;
+          if(_st==1) {
+            dV=_owner.Get<double>("VDD");
+          } else {
+            dV=_owner.Get<double>("VAD");
           }
-        } else {
-          if((buf[0] & 0x10)==0) { // = temperature conversion complete
-            var dT=_owner.Get<double>("T");
-            dT.saved=false;
-            dT.value=Math.Round(((short)((buf[2]<<8) | buf[1]))/256.0, 2);
-            _st++;
-          }
+          dV.saved=false;
+          dV.value=((ushort)((buf[4]<<8) | buf[3]))/100.0;
+          _st++;
+        }
+        if((buf[0] & 0x10)==0) { // = temperature conversion complete
+          var dT=_owner.Get<double>("T");
+          dT.saved=false;
+          dT.value=Math.Round(((short)((buf[2]<<8) | buf[1]))/256.0, 2);
         }
       }
       if((_st & 1)==0) {
-        if(_st<POOL_CNT) {
-          buf[0]=(byte)((buf[0] & 0xF0) | 0x01);
-          _gate.adapter.Reset();
+        if(_st==0) {
+          buf[0]=(byte)((buf[0] & 0xF0) | 0x09);
           WritePage(0, buf);
-          _gate.adapter.SelectDevice(rom, 0);
-          _gate.adapter.PutByte(0xB4);
-        } else if(_st>=POOL_CNT) {
           _gate.adapter.SelectDevice(rom, 0);
           _gate.adapter.PutByte(0x44);
         }
+        _gate.adapter.SelectDevice(rom, 0);
+        _gate.adapter.PutByte(0xB4);
         _st++;
       }
       _prio=0;
-      _to=DateTime.Now;
+      _to=DateTime.Now.AddMilliseconds(1200);
     }
     /// <summary>Reads the specified 8 byte page and returns the data in an array.</summary>
     /// <param name="page">The page number to read</param>
@@ -102,7 +111,11 @@ namespace X13.Periphery {
       byte[] result = null;
       uint crc8;   // this device uses a crc 8
       // Perform the read scratchpad by using a combined write and read buffer
-      _gate.adapter.Reset();
+      //_gate.adapter.Reset();
+      _gate.adapter.SelectDevice(rom, 0);
+      _gate.adapter.DataBlock(new byte[] { 0xB8, 0 }, 0, 2);  // Recall Memory
+
+      //_gate.adapter.Reset();
       _gate.adapter.SelectDevice(rom, 0);
 
       buffer[0] = 0xBE;    // READ_SCRATCHPAD_COMMAND
