@@ -32,7 +32,7 @@ namespace X13.Periphery {
     }
 
     internal void AddDevice(OneWireBase dev) {
-      if(dev!=null && dev!=this) {
+      if(dev!=null && dev!=this && _devs.All(z=>z!=dev)) {
         _devs.Add(dev);
       }
     }
@@ -99,7 +99,8 @@ namespace X13.Periphery {
                       break;
                     }
                   } else{
-                    (td.GetValue() as OneWireBase).gate=this;
+                    dev=td.GetValue() as OneWireBase;
+                    dev.gate=this;
                   }
                   if(td!=null) {
                     dev=td.GetValue() as OneWireBase;

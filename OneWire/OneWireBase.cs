@@ -42,12 +42,14 @@ namespace X13.Periphery {
         return _gate;
       }
       set {
-        if(value!=null) {
-          value.AddDevice(this);
-        } else if(_gate!=null) {
-          _gate.DelDevice(this);
+        if(value!=_gate) {
+          if(value!=null) {
+            value.AddDevice(this);
+          } else if(_gate!=null) {
+            _gate.DelDevice(this);
+          }
+          _gate=value;
         }
-        _gate=value;
       }
     }
     internal bool present {
@@ -100,6 +102,11 @@ namespace X13.Periphery {
           _owner.Subscribe("#", ChildChaged);
         } else if(_gate!=null) {
           _gate.DelDevice(this);
+          var dev=Topic.root.Get("/dev/1Wire").children.Select(z => z.GetValue() as OneWireBase).FirstOrDefault(z => z!=null && z!=this && this.rom.SequenceEqual(z.rom));
+          if(dev!=null) {
+            dev.gate=_gate;
+          }
+          _gate=null;
         }
       }
     }
