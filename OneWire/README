@@ -2,6 +2,7 @@
 
 supported:
 DS9490R - 1Wire adapter
+DS9097U - 1Wire adapter (not tested)
 DS18B20 - Digital Thermometer
 DS18S20 - Digital Thermometer
 DS2406  - Dual Addressable Switch

@@ -36,13 +36,16 @@ namespace X13.Periphery {
       foreach(var pnn in new string[] { "USB0", "USB1", "USB2", "USB3", "USB4", "USB5", "USB6", "USB7" }) {
         ConnectAdapter("{DS9490}", pnn);
       }
+      foreach(var pnn in System.IO.Ports.SerialPort.GetPortNames()) {
+        ConnectAdapter("DS9097U", pnn);
+      }
       foreach(var g in _gates) {
         g.Start();
       }
     }
 
     private void ConnectAdapter(string an, string pn) {
-      List<byte[]> ids=new List<byte[]>();
+      byte[] gId=null;
       PortAdapter adapter;
       try {
         adapter=AccessProvider.GetAdapter(an, pn);
@@ -55,36 +58,33 @@ namespace X13.Periphery {
         DVar<OneWireGate> tGate=null;
         if(adapter.GetFirstDevice(id, 0)) {
           do {
-            ids.Add(id);
-            id = new byte[8];
+            if(id[0]==0x81) {
+              gId=id;
+              break;
+            }
           } while(adapter.GetNextDevice(id, 0));
-          if(ids.Any()) {
-            var gId=ids.FirstOrDefault(z => z[0]==0x81);
-            if(gId==null) {
-              Log.Warning("1Wire adapter({0}, {1}) - id not found", an, pn);
-              adapter.EndExclusive();
-              adapter.Dispose();
-              return;
-            }
-            tGate=_dev1w.children.FirstOrDefault(z => {
-              var g=z as DVar<OneWireGate>;
-              return g!=null && g.value!=null && id.SequenceEqual(g.value.rom);
-            }) as DVar<OneWireGate>;
-            if(tGate==null) {
-              tGate=_dev1w.Get<OneWireGate>(string.Format("{0}_{1:X2}{2:X2}{3:X2}{4:X2}", adapter.AdapterName, gId[4], gId[3], gId[2], gId[1]));
-              tGate.value=new OneWireGate(adapter, gId);
-            } else if(tGate.value.present) {
-              //Log.Debug("Adapter with ID already exist. [{0}, {1}], id={2}", an, pn, tGate.name);
-              adapter.EndExclusive();
-              adapter.Dispose();
-              return;
-            } else {
-              tGate.value.adapter=adapter;
-            }
-            tGate.value.present=true;
-            _gates.Add(tGate.value);
-          }
         }
+        if(gId==null) {
+          gId=new byte[] { 0x81, 0, 0, 0, 0, 0, 0, 0 };
+          BitConverter.GetBytes((an+pn).GetHashCode()).CopyTo(gId, 1);
+        }
+        tGate=_dev1w.children.FirstOrDefault(z => {
+          var g=z as DVar<OneWireGate>;
+          return g!=null && g.value!=null && gId.SequenceEqual(g.value.rom);
+        }) as DVar<OneWireGate>;
+        if(tGate==null) {
+          tGate=_dev1w.Get<OneWireGate>(string.Format("{0}_{1:X2}{2:X2}{3:X2}{4:X2}", adapter.AdapterName, gId[4], gId[3], gId[2], gId[1]));
+          tGate.value=new OneWireGate(adapter, gId);
+        } else if(tGate.value.present) {
+          //Log.Debug("Adapter with ID already exist. [{0}, {1}], id={2}", an, pn, tGate.name);
+          adapter.EndExclusive();
+          adapter.Dispose();
+          return;
+        } else {
+          tGate.value.adapter=adapter;
+        }
+        tGate.value.present=true;
+        _gates.Add(tGate.value);
       }
       catch(DalSemi.OneWire.Adapter.AdapterException) {
       }
