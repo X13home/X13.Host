@@ -37,6 +37,7 @@ namespace X13.Periphery {
     }
 
     private int _duration=3000;
+    private int _reconnectCnt=0;
     private DVar<State> _stateVar;
 
     private string _willPath;
@@ -219,8 +220,15 @@ namespace X13.Periphery {
           PrintPacket(this, msg, buf);
           if(state==State.ASleep) {
             if(string.IsNullOrEmpty(msg.ClientId) || msg.ClientId==Owner.name) {
-              state=State.AWake;
-              ProccessAcknoledge(msg);    // resume send proccess
+              if(++_reconnectCnt>30000) {
+                _reconnectCnt=0;
+                Send(new MsDisconnect());
+                state=State.Disconnected;
+                Log.Info("{0} refresh connection", Owner.path);
+              } else {
+                state=State.AWake;
+                ProccessAcknoledge(msg);    // resume send proccess
+              }
             } else {
               Send(new MsDisconnect());
               state=State.Lost;
