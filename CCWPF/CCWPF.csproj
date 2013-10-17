@@ -282,6 +282,9 @@
     <Resource Include="Images\ty_ugate.png" />
     <Resource Include="Images\ty_unode.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\ar_pid.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

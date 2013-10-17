@@ -722,7 +722,7 @@ namespace X13.PLC {
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/PID");
-        m.value="pack://application:,,/CC;component/Images/ar_avr.png";
+        m.value="pack://application:,,/CC;component/Images/ar_pid.png";
         m.Get<string>("_description").value="g PID controller";
         m.Get<string>("PV").value="Ag";
         m.Get<string>("SP").value="Bg";
@@ -1315,7 +1315,7 @@ namespace X13.PLC {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Cosm");
         m.value="pack://application:,,/CC;component/Images/fu_cosm.png";
-        m.Get<string>("_description").value="v Export to cosm.com";
+        m.Get<string>("_description").value="v Export to xively.com";
         m.Get<string>("Push").value="Az";
         m.Get<string>("A").value="Bg";
         m.Get<string>("B").value="Cg";
