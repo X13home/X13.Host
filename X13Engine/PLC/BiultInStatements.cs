@@ -712,6 +712,74 @@ namespace X13.PLC {
     }
 
     [Export(typeof(IStatement))]
+    [ExportMetadata("declarer", "PID")]
+    private class PID : IStatement {
+      private DVar<double> _pv, _sp, _kp, _ki, _kd, _u;
+      private DVar<long> _t;
+      private double _sum, _prev;
+      private Timer _ct;
+      private DateTime _pt;
+
+      public void Load() {
+        var m=Topic.root.Get<string>("/etc/declarers/func/PID");
+        m.value="pack://application:,,/CC;component/Images/ar_avr.png";
+        m.Get<string>("_description").value="g PID controller";
+        m.Get<string>("PV").value="Ag";
+        m.Get<string>("SP").value="Bg";
+        m.Get<string>("U").value="ag";
+        m.Get<string>("rename").value="|R";
+        m.Get<string>("remove").value="}D";
+      }
+
+      public void Init(DVar<PiStatement> model) {
+        _pv=AddPin<double>(model, "PV");
+        _sp=AddPin<double>(model, "SP");
+        _u=AddPin<double>(model, "U");
+        _u.saved=false;
+        _kp=AddPin<double>(model, "_Kp");
+        _ki=AddPin<double>(model, "_Ki");
+        _kd=AddPin<double>(model, "_Kd");
+        bool t_p=model.Exist("_t");
+        _t=AddPin<long>(model, "_t");
+        if(!t_p){
+          _t.value=100;
+        }
+        _ct=new Timer(Pool);
+        if(_t.value>0) {
+          _ct.Change(_t.value*2, _t.value);
+        }
+        _pt=DateTime.Now;
+        _sum=0;
+        _prev=_sp.value;
+      }
+
+      public void Calculate(DVar<PiStatement> model, Topic source) {
+        if(source==_t) {
+          if(_t.value>0) {
+            _ct.Change(_t.value*2, _t.value);
+          } else {
+            _ct.Change(Timeout.Infinite, Timeout.Infinite);
+          }
+        }
+      }
+      public void DeInit() {
+        _ct.Change(Timeout.Infinite, Timeout.Infinite);
+      }
+      private void Pool(object o) {
+        var now=DateTime.Now;
+        var dt=(now-_pt).TotalSeconds;
+        if(dt>0) {
+          var e=_sp.value-_pv.value;
+          _sum+=e*dt;
+          double rez=_kp.value*e+_ki.value*_sum+_kd.value*(e-_prev);
+          _prev=e;
+          _u.value=rez;
+        }
+        _pt=now;
+      }
+    }
+
+    [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Sum")]
     private class MathOpSum : IStatement {
       public void Load() {
