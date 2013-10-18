@@ -770,9 +770,17 @@ namespace X13.PLC {
         var dt=(now-_pt).TotalSeconds;
         if(dt>0) {
           var e=_sp.value-_pv.value;
-          _sum+=e*dt;
-          double rez=_kp.value*e+_ki.value*_sum+_kd.value*(e-_prev);
-          _prev=e;
+          if(_ki.value!=0) {
+            _sum+=e*dt;
+          } else {
+            _sum=0;
+          }
+          double rez=_kp.value*e+_ki.value*_sum+_kd.value*(e-_prev)/dt;
+          if(_kd.value!=0) {
+            _prev=(_prev+e)/2;
+          } else {
+            _prev=0;
+          }
           _u.value=rez;
         }
         _pt=now;
