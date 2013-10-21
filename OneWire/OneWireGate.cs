@@ -94,6 +94,10 @@ namespace X13.Periphery {
                       td=_dev1w.Get<DS18B20>(string.Format("DS18B20_{0:X2}{1:X2}{2:X2}{3:X2}", did[4], did[3], did[2], did[1]));
                       (td as DVar<DS18B20>).value=new DS18B20(this, did);
                       break;
+                    case 0x3A:  // DS2438
+                      td=_dev1w.Get<DS2438>(string.Format("DS2438_{0:X2}{1:X2}{2:X2}{3:X2}", did[4], did[3], did[2], did[1]));
+                      (td as DVar<DS2438>).value=new DS2438(this, did);
+                      break;
                     default:
                       Log.Warning("unknown device {0} on {1}:{2}", BitConverter.ToString(did), _adapter.AdapterName, _adapter.PortName);
                       break;

@@ -15,6 +15,9 @@
   <item name="DS2406" value="/OneWire;component/Images/1w_slave.png" saved="True" type="System.String">
     <item name="remove" value="ZD" saved="True" type="System.String" />
   </item>
+  <item name="DS2413" value="/OneWire;component/Images/1w_slave.png" saved="True" type="System.String">
+    <item name="remove" value="ZD" saved="True" type="System.String" />
+  </item>
   <item name="DS2438" value="/OneWire;component/Images/1w_slave.png" saved="True" type="System.String">
     <item name="remove" value="ZD" saved="True" type="System.String" />
   </item>

@@ -6,6 +6,7 @@ DS9097U - 1Wire adapter (not tested)
 DS18B20 - Digital Thermometer
 DS18S20 - Digital Thermometer
 DS2406  - Dual Addressable Switch
+DS2413  - Dual Channel Addressable Switch(without alarm)
 DS2438  - Smart Battery Monitor (2 ADC + Thermometer)
 
 use:

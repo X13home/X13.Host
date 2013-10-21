@@ -220,7 +220,7 @@ namespace X13.Periphery {
           PrintPacket(this, msg, buf);
           if(state==State.ASleep) {
             if(string.IsNullOrEmpty(msg.ClientId) || msg.ClientId==Owner.name) {
-              if(++_reconnectCnt>30000) {
+              if(++_reconnectCnt>1024) {
                 _reconnectCnt=0;
                 Send(new MsDisconnect());
                 state=State.Disconnected;

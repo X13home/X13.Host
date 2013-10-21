@@ -54,6 +54,7 @@
     </Compile>
     <Compile Include="DS18S20.cs" />
     <Compile Include="DS2406.cs" />
+    <Compile Include="DS2413.cs" />
     <Compile Include="DS2438.cs" />
     <Compile Include="OneWireBase.cs" />
     <Compile Include="DS18B20.cs" />
@@ -72,7 +73,9 @@
     <Resource Include="Images\1w_slave.png" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="OneWire.xst" />
+    <EmbeddedResource Include="OneWire.xst">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
