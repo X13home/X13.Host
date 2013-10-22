@@ -400,7 +400,7 @@ namespace X13.CC {
             w.Update(cp);
           }
         } else if(_mSelected!=null) {
-          foreach(var el in _mSelected) {
+          foreach(var el in _mSelected.Where(z=>!(z is uiTracer))) {
             el.SetLocation(new Vector(el.OriginalLocation.X+(cp.X-ScreenStartPoint.X), el.OriginalLocation.Y+(cp.Y-ScreenStartPoint.Y)), false);
           }
         } else {
@@ -493,7 +493,7 @@ namespace X13.CC {
         if(_mSelected!=null && _mSelected.Length>0) {
           var cp=e.GetPosition(this);
           double r=0, d=0;
-          foreach(var el in _mSelected) {
+          foreach(var el in _mSelected.Where(z => !(z is uiTracer))) {
             if(move) {
               el.SetLocation(new Vector(el.OriginalLocation.X+(cp.X-ScreenStartPoint.X), el.OriginalLocation.Y+(cp.Y-ScreenStartPoint.Y)), true);
               d=Math.Max(d, el.Offset.Y+el.ContentBounds.Bottom);
