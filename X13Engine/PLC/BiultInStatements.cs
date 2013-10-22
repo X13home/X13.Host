@@ -124,6 +124,7 @@ namespace X13.PLC {
         m.Get<string>("G").value="Gi";
         m.Get<string>("H").value="Hi";
         m.Get<string>("Q").value="ai";
+        m.Get<string>("N").value="bz";
         m.Get<string>("rename").value="|R";
         m.Get<string>("remove").value="}D";
       }
@@ -132,6 +133,7 @@ namespace X13.PLC {
         AddPin<long>(model, "A");
         AddPin<long>(model, "B");
         AddPin<long>(model, "Q");
+        AddPin<bool>(model, "N");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
@@ -140,6 +142,7 @@ namespace X13.PLC {
           ret&=pin.value;
         }
         model.Get<long>("Q").value=ret;
+        model.Get<bool>("N").value=(ret & 1)==0;
       }
 
       public void DeInit() {
@@ -162,6 +165,7 @@ namespace X13.PLC {
         m.Get<string>("G").value="Gi";
         m.Get<string>("H").value="Hi";
         m.Get<string>("Q").value="ai";
+        m.Get<string>("N").value="bz";
         m.Get<string>("rename").value="|R";
         m.Get<string>("remove").value="}D";
       }
@@ -170,6 +174,7 @@ namespace X13.PLC {
         AddPin<long>(model, "A");
         AddPin<long>(model, "B");
         AddPin<long>(model, "Q");
+        AddPin<bool>(model, "N");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
@@ -178,6 +183,7 @@ namespace X13.PLC {
           ret|=pin;
         }
         model.Get<long>("Q").value=ret;
+        model.Get<bool>("N").value=(ret & 1)==0;
       }
 
       public void DeInit() {
@@ -200,6 +206,7 @@ namespace X13.PLC {
         m.Get<string>("G").value="Gi";
         m.Get<string>("H").value="Hi";
         m.Get<string>("Q").value="ai";
+        m.Get<string>("N").value="bz";
         m.Get<string>("rename").value="|R";
         m.Get<string>("remove").value="}D";
       }
@@ -208,6 +215,7 @@ namespace X13.PLC {
         AddPin<long>(model, "A");
         AddPin<long>(model, "B");
         AddPin<long>(model, "Q");
+        AddPin<bool>(model, "N");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
@@ -216,6 +224,7 @@ namespace X13.PLC {
           ret^=pin;
         }
         model.Get<long>("Q").value=ret;
+        model.Get<bool>("N").value=(ret & 1)==0;
       }
 
       public void DeInit() {
