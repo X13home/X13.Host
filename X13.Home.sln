@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersistentStorage_mono", "P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneWire", "OneWire\OneWire.csproj", "{F9686660-E95F-491C-A456-27A1BCA7954B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpSync", "HttpSync\HttpSync.csproj", "{8E739CBC-8A8E-45F1-93E6-A160D9EFC6DA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,10 +87,15 @@ Global
 		{956793FB-3CC7-45DE-8851-489E0FF084BC}.Mono|Any CPU.Build.0 = Release|Any CPU
 		{956793FB-3CC7-45DE-8851-489E0FF084BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9686660-E95F-491C-A456-27A1BCA7954B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F9686660-E95F-491C-A456-27A1BCA7954B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9686660-E95F-491C-A456-27A1BCA7954B}.Mono|Any CPU.ActiveCfg = Release|Any CPU
 		{F9686660-E95F-491C-A456-27A1BCA7954B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9686660-E95F-491C-A456-27A1BCA7954B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E739CBC-8A8E-45F1-93E6-A160D9EFC6DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E739CBC-8A8E-45F1-93E6-A160D9EFC6DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E739CBC-8A8E-45F1-93E6-A160D9EFC6DA}.Mono|Any CPU.ActiveCfg = Release|Any CPU
+		{8E739CBC-8A8E-45F1-93E6-A160D9EFC6DA}.Mono|Any CPU.Build.0 = Release|Any CPU
+		{8E739CBC-8A8E-45F1-93E6-A160D9EFC6DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E739CBC-8A8E-45F1-93E6-A160D9EFC6DA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

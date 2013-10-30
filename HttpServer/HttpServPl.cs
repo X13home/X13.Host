@@ -1,4 +1,14 @@
-﻿using System;
+﻿#region license
+//Copyright (c) 2011-2013 <comparator@gmx.de>; Wassili Hense
+
+//This file is part of the X13.Home project.
+//https://github.com/X13home
+
+//BSD License
+//See LICENSE.txt file for license details.
+#endregion license
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
@@ -39,8 +49,8 @@ namespace X13.HttpServer {
           }
         }
         var exp=Topic.root.Get("/export");
+        Topic.root.Get<long>("/etc/Broker/security/acls/export").value=0x1F000001;
         exp.Get<string>("_declarer").value="ui_root";
-        exp.Get<string>("demo/_declarer").value="ui_page";
       }
 
       bool ad2=false;
