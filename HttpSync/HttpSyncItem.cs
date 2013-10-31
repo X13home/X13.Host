@@ -79,7 +79,7 @@ namespace X13.HttpSync {
       } else {
         _host=string.Concat(_uri.Scheme, "://", _uri.DnsSafeHost, ":", _uri.Port.ToString());
       }
-      _remotePath=_uri.AbsolutePath;
+      _remotePath=_uri.AbsolutePath+_uri.Fragment;
       {
         int i;
         i=_remotePath.IndexOf("/#");
@@ -105,24 +105,24 @@ namespace X13.HttpSync {
       _cookie=new Cookie("session", Guid.NewGuid().ToString());
 
       HttpWebResponse resp=null;
+      HttpWebRequest req;
       try {
-        _req=(HttpWebRequest)WebRequest.Create(string.Concat(_host, "/export?subscribe"));
-        _req.CookieContainer=new CookieContainer(1);
-        _req.CookieContainer.Add(new Uri(_host), _cookie);
-        _req.Method="POST";
-        _req.UserAgent="HttpSync v."+System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(4);
+        req=(HttpWebRequest)WebRequest.Create(string.Concat(_host, "/export?subscribe"));
+        req.CookieContainer=new CookieContainer(1);
+        req.CookieContainer.Add(new Uri(_host), _cookie);
+        req.Method="POST";
+        req.UserAgent="HttpSync v."+System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(4);
         if(_cred!=null) {
-          _req.UseDefaultCredentials=false;
+          req.UseDefaultCredentials=false;
         }
-        _req.Credentials=_cred;
+        req.Credentials=_cred;
 
         byte[] buf=Encoding.UTF8.GetBytes(Uri.EscapeDataString(_remotePath));
-        _req.ContentLength=buf.Length;
-        using(Stream s=_req.GetRequestStream()) {
+        req.ContentLength=buf.Length;
+        using(Stream s=req.GetRequestStream()) {
           s.Write(buf, 0, buf.Length);
         }
-        using(resp=_req.GetResponse() as HttpWebResponse) {
-          resp.Close();
+        using(resp=req.GetResponse() as HttpWebResponse) {
           if(resp.StatusCode!=HttpStatusCode.OK) {
             if(_status!=resp.StatusCode) {
               Log.Warning("subscribe {1} as /var/HttpSync/{0} - {2}", name, _uri.OriginalString, resp.StatusDescription);
@@ -130,10 +130,13 @@ namespace X13.HttpSync {
               _statusStr.value=_status.ToString();
             }
             _timeout.Change(180000, 150000);
-            _req=null;
+            req=null;
             return;
           }
         }
+      }
+      catch(NullReferenceException) {
+        return;
       }
       catch(WebException ex) {
         HttpStatusCode st=resp==null?HttpStatusCode.RequestTimeout:resp.StatusCode;
@@ -147,7 +150,7 @@ namespace X13.HttpSync {
           }
         }
         _timeout.Change(180000, 150000);
-        _req=null;
+        req=null;
         return;
       }
       try {
@@ -204,7 +207,7 @@ namespace X13.HttpSync {
                     Parse(relPath, json);
                   }
                   if(_verbose.value) {
-                    Log.Info("/var/HttpSync/{0} <<< {1}", name, content);
+                    Log.Debug("/var/HttpSync/{0} <<< {1}", name, content);
                   }
                 }
               }
@@ -235,13 +238,14 @@ namespace X13.HttpSync {
     }
     private void Parse(string rp, string json) {
       Topic cur;
-      if(!string.IsNullOrEmpty(json)) {         // Publish
+      if(!string.IsNullOrEmpty(json) && json!="null") {         // Publish
         if(!_hsVal.Exist(rp, out cur) || cur.valueType==null) {
           Type vt=X13.WOUM.ExConverter.Json2Type(json);
           cur=Topic.GetP(_hsVal.path+"/"+rp, vt, _hsVal);
         }
         if(_local==null) {
           _local=_hsVal.Get(name);
+          _local.Subscribe("#", _local_changed);
         }
         cur.saved=false;
         if(cur.valueType!=null) {
@@ -252,7 +256,58 @@ namespace X13.HttpSync {
       }
     }
     private void _local_changed(Topic sender, TopicChanged p) {
+      if(sender==null || sender==_statusStr || _local==null || p.Initiator==_local || !sender.path.StartsWith(_local.path) || p.Art==TopicChanged.ChangeArt.Add) {
+        return;
+      }
+      string path;
+      if(sender==_local) {
+        path=_remoteBase;
+      } else {
+        path=_remoteBase+sender.path.Substring(_local.path.Length);
+      }
+      string content;
+      if(p.Art==TopicChanged.ChangeArt.Value) {
+        content=sender.ToJson();
+      } else {
+        content="null";
+      }
+      ThreadPool.QueueUserWorkItem((o) => SendPub(path, content));
     }
+    private void SendPub(string path, string content) {
+
+      HttpWebRequest req=null;
+
+      try {
+        req=(HttpWebRequest)WebRequest.Create(string.Concat(_host, path));
+        req.CookieContainer=new CookieContainer(1);
+        req.CookieContainer.Add(new Uri(_host), _cookie);
+        req.Method="POST";
+        req.UserAgent="HttpSync v."+System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(4);
+        if(_cred!=null) {
+          req.UseDefaultCredentials=false;
+        }
+        req.Credentials=_cred;
+        byte[] buf=Encoding.UTF8.GetBytes(Uri.EscapeDataString(content));
+        req.ContentLength=buf.Length;
+        using(Stream s=req.GetRequestStream()) {
+          s.Write(buf, 0, buf.Length);
+        }
+        HttpWebResponse resp;
+        using(resp=req.GetResponse() as HttpWebResponse) {
+          if(resp.StatusCode!=HttpStatusCode.OK) {
+            Log.Warning("{0}.publish - {1}", req.RequestUri.OriginalString, resp.StatusDescription);
+          }
+        }
+      }
+      catch(WebException ex) {
+        if(req!=null) {
+          Log.Warning("{0}.publish - {1}", req.RequestUri.OriginalString, ex.Message);
+        } else if(_verbose.value) {
+          Log.Debug("publish({0})={1}", req.RequestUri.OriginalString, content);
+        }
+      }
+    }
+
     private void TRefresh(object o) {
       if(_req!=null) {
         _req.Abort();
