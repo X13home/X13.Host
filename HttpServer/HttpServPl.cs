@@ -193,9 +193,20 @@ reconnect:
                 ctx.Response.SetCookie(ses.id);
                 string sub=(new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)).ReadToEnd();
                 sub=System.Web.HttpUtility.UrlDecode(sub);
-                ses.Subscribe(sub);
+                response.StatusCode=ses.Subscribe(sub);
+                switch(response.StatusCode) {
+                case 200:
+                  responseString="Ok";
+                  break;
+                case 400:
+                  responseString="400 Bad Request";
+                  break;
+                case 403:
+                  responseString="403 Forbidden";
+                  break;
+                }
                 if(_verbose.value) {
-                  Log.Debug("Http.Subscribe({0}, {1})", ses.id, sub);
+                  Log.Debug("Http.Subscribe({0}, {1}) - {2}", ses.id, sub, response.StatusCode);
                 }
               } else if(reqUrl.StartsWith(@"/export/")) {
                 string json=(new StreamReader(ctx.Request.InputStream, ctx.Request.ContentEncoding)).ReadToEnd();

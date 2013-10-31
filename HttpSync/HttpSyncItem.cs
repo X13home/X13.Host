@@ -56,6 +56,7 @@ namespace X13.HttpSync {
         _req=null;
       }
       _uri=uri;
+      _status=HttpStatusCode.NoContent;
       System.Threading.ThreadPool.QueueUserWorkItem(Connect);
     }
     public void Dispose() {

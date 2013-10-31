@@ -79,12 +79,33 @@ namespace X13.HttpServer {
         _to.Change(RespTO, RespTO);
       }
     }
-    public void Subscribe(string sub) {
-      if(string.IsNullOrEmpty(sub) || sub.StartsWith("/local")) {
-        return;
+    public int Subscribe(string sub) {
+      if(string.IsNullOrEmpty(sub) || !sub.StartsWith("/export")) {
+        return 400;
       }
-      var s=Topic.root.Subscribe(sub, OwnerChanged);
+
+      Topic cur=Topic.root, next;
+      string[] lvls=sub.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+      int i=0;
+      for(; i<lvls.Length; i++) {
+        if(lvls[i]=="+" || lvls[i]=="#") {
+          break;
+        }
+        if(!cur.Exist(lvls[i], out next)) {
+          if(!MQTT.MqBroker.CheckAcl(user, cur, TopicAcl.Create)) {
+            return 403;
+          }
+          next=cur.Get(lvls[i]);
+        }
+        if(next==null) {
+          return 500;
+        }
+        cur=next;
+      }
+
+      var s=cur.Subscribe(string.Join("/", lvls.Skip(i)), OwnerChanged);
       _subscriptions.Add(s);
+      return 200;
     }
 
     private void TimeOut(object o) {
