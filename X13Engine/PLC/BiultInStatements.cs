@@ -1346,6 +1346,12 @@ namespace X13.PLC {
       }
 
       public void Init(DVar<PiStatement> model) {
+#pragma warning disable 0618
+        if(Engine.IsLinux && ServicePointManager.CertificatePolicy==null) { // mono doesn't ship with any trusted root
+          ServicePointManager.CertificatePolicy=new AllowApi();
+        }
+#pragma warning restore 0618
+
         AddPin<double>(model, "A");
         _push=AddPin<bool>(model, "Push");
         _feed=AddPin<string>(model, "_feed");
@@ -1380,7 +1386,6 @@ namespace X13.PLC {
           byte[] buffer = Encoding.UTF8.GetBytes(sample);
 
           var request = (HttpWebRequest)WebRequest.Create("https://api.xively.com/v2/feeds/" + feedId + ".csv");
-
           // request line
           request.Method = "PUT";
 
@@ -1409,6 +1414,19 @@ namespace X13.PLC {
       }
 
       public void DeInit() {
+      }
+      private class AllowApi : ICertificatePolicy {
+        public bool CheckValidationResult(ServicePoint srvPoint, System.Security.Cryptography.X509Certificates.X509Certificate certificate, WebRequest request, int error) {
+          if(error == 0)
+            return true;
+          // only ask for trust failure (you may want to handle more cases)
+          if(error != -2146762486)
+            return false;
+          if(request!=null && request.RequestUri.Host=="api.xively.com") {
+            return true;
+          }
+          return false;
+        }
       }
     }
 
