@@ -36,7 +36,7 @@ namespace X13.HttpSync {
     private Cookie _cookie;
     private CredentialCache _cred;
     private Timer _timeout;
-    private DVar<string> _statusStr;
+    private DVar<bool> _present;
     private HttpStatusCode _status;
 
     public readonly string name;
@@ -46,8 +46,8 @@ namespace X13.HttpSync {
       _uri=uri;
       _timeout=new Timer(TRefresh);
       System.Threading.ThreadPool.QueueUserWorkItem(Connect);
-      _statusStr=_hsVal.Get<string>(name+"/_status");
-      _statusStr.saved=false;
+      _present=_hsVal.Get<bool>(name+"/present");
+      _present.saved=false;
       _status=HttpStatusCode.NoContent;
     }
     public void ChangeUri(Uri uri) {
@@ -124,10 +124,10 @@ namespace X13.HttpSync {
         }
         using(resp=req.GetResponse() as HttpWebResponse) {
           if(resp.StatusCode!=HttpStatusCode.OK) {
+            _present.value=false;
             if(_status!=resp.StatusCode) {
               Log.Warning("subscribe {1} as /var/HttpSync/{0} - {2}", name, _uri.OriginalString, resp.StatusDescription);
               _status=resp.StatusCode;
-              _statusStr.value=_status.ToString();
             }
             _timeout.Change(180000, 150000);
             req=null;
@@ -143,14 +143,10 @@ namespace X13.HttpSync {
         if(_status!=st) {
           Log.Warning("subscribe {1} as /var/HttpSync/{0} - {2}", name, _uri.OriginalString, ex.Message);
           _status=st;
-          if(resp!=null) {
-            _statusStr.value=_status.ToString();
-          } else {
-            _statusStr.value=ex.Status.ToString();
-          }
         }
         _timeout.Change(180000, 150000);
         req=null;
+        _present.value=false;
         return;
       }
       try {
@@ -177,12 +173,11 @@ namespace X13.HttpSync {
           if(resp.StatusCode!=HttpStatusCode.OK) {
             if(_status!=resp.StatusCode) {
               _status=resp.StatusCode;
-              _statusStr.value=_status.ToString();
               Log.Warning("Pool({1}) as /var/HttpSync/{0} - {2}", name, _uri.OriginalString, resp.StatusDescription);
             }
+            _present.value=false;
           } else {
             _status=resp.StatusCode;
-            _statusStr.value=_status.ToString();
             using(var s=resp.GetResponseStream()) {
               if(s.CanRead) {
                 using(var sr=new StreamReader(s, Encoding.UTF8)) {
@@ -212,6 +207,7 @@ namespace X13.HttpSync {
                 }
               }
             }
+            _present.value=true;
           }
         }
 
@@ -228,9 +224,11 @@ namespace X13.HttpSync {
         _timeout.Change(180000, 150000);
       }
       catch(NullReferenceException) {
+        _present.value=false;
         return;
       }
       catch(WebException ex) {
+        _present.value=false;
         if(ex.Status!=WebExceptionStatus.RequestCanceled) {
           Log.Warning("Pool {1} as /var/HttpSync/{0} - {2}", name, _uri.OriginalString, ex.Message);
         }
@@ -256,7 +254,7 @@ namespace X13.HttpSync {
       }
     }
     private void _local_changed(Topic sender, TopicChanged p) {
-      if(sender==null || sender==_statusStr || _local==null || p.Initiator==_local || !sender.path.StartsWith(_local.path) || p.Art==TopicChanged.ChangeArt.Add) {
+      if(sender==null || sender==_present || _local==null || p.Initiator==_local || !sender.path.StartsWith(_local.path) || p.Art==TopicChanged.ChangeArt.Add) {
         return;
       }
       string path;

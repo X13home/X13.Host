@@ -60,6 +60,9 @@ namespace X13.HttpSync {
           Log.Warning("{0}=\"{1}\" - {2}", dv.path, dv.value, ex.Message);
           return;
         }
+        if(string.IsNullOrEmpty(u.AbsolutePath) || !u.AbsolutePath.StartsWith("/export")) {
+          return;
+        }
         HttpSyncItem it=_items.FirstOrDefault(z => z.name==dv.name);
         if(it==null) {
           it=new HttpSyncItem(dv.name, u);
