@@ -14,6 +14,8 @@ using System.Linq;
 using System.Text;
 using Community.CsharpSqlite;
 using Community.CsharpSqlite.SQLiteClient;
+using sqlite3 = Community.CsharpSqlite.Sqlite3.sqlite3;
+using sqlite3_backup = Community.CsharpSqlite.Sqlite3.sqlite3_backup;
 using System.IO;
 using System.Data;
 using Newtonsoft.Json;
@@ -31,6 +33,7 @@ namespace X13.PLC {
     private List<LazyAction> _actions;
     private Thread _thread;
     private ManualResetEvent _close;
+    private DateTime _lastBackup;
 
     public void Init() {
       string dbFilename=@"../data/persist.db3";
@@ -41,11 +44,14 @@ namespace X13.PLC {
       _connection.ConnectionString = string.Format("Version=3,uri=file:{0}", dbFilename);
       _connection.Open();
       IDbCommand cmd = _connection.CreateCommand();
+      _lastBackup=DateTime.Now;
       if(!ret) {
         cmd.CommandText = "CREATE TABLE topics ( path TEXT, type TEXT, val TEXT )";
         cmd.ExecuteNonQuery();
         cmd.CommandText = "CREATE UNIQUE INDEX topic_idx ON topics(path)";
         cmd.ExecuteNonQuery();
+      }else{
+        Backup();
       }
 
       cmd.CommandText = "SELECT path, type, val FROM topics ORDER BY path";
@@ -92,11 +98,47 @@ namespace X13.PLC {
       _thread.Priority=ThreadPriority.Lowest;
       Topic.root.Subscribe("/#", MqChanged);
     }
+
+    private void Backup() {
+      string zDestFile="../data/"+_lastBackup.ToString("yyMMddHHmm")+".bak";
+      sqlite3 pDest = null;
+      sqlite3_backup pBackup;
+
+      int rc;
+      rc = Sqlite3.sqlite3_open(zDestFile, out pDest);
+      if(rc != Sqlite3.SQLITE_OK) {
+        Log.Warning("PersistenStorage.Backup: cannot open {0}", zDestFile);
+        Sqlite3.sqlite3_close(pDest);
+        return;
+      }
+      pBackup = Sqlite3.sqlite3_backup_init(pDest, "main", _connection.Handle2, "main");
+      if(pBackup == null) {
+        Log.Warning("PersistenStorage.Backup: {0}", Sqlite3.sqlite3_errmsg(pDest));
+        Sqlite3.sqlite3_close(pDest);
+        return;
+      }
+      while((rc = Sqlite3.sqlite3_backup_step(pBackup, 100)) == Sqlite3.SQLITE_OK) {
+      }
+      Sqlite3.sqlite3_backup_finish(pBackup);
+      if(rc!=Sqlite3.SQLITE_DONE) {
+        Log.Warning("PersistenStorage.Backup: {0}", Sqlite3.sqlite3_errmsg(pDest));
+      }
+      Sqlite3.sqlite3_close(pDest);
+
+      try {
+        foreach(string f in Directory.GetFiles("../fata/", "*.bak", SearchOption.TopDirectoryOnly)) {
+          if(File.GetLastWriteTime(f).AddDays(15)<_lastBackup)
+            File.Delete(f);
+        }
+      }
+      catch(System.IO.IOException) {
+      }
+
+    }
     public void Start() {
       Topic.paused=false;
       _thread.Start();
     }
-
     public void Stop() {
       if(_connection!=null) {
         Topic.root.Unsubscribe("/#", MqChanged);
@@ -134,6 +176,10 @@ namespace X13.PLC {
               }
             }
             Process(cur);
+          }
+          if(_lastBackup.AddDays(1)<DateTime.Now) {
+            _lastBackup=DateTime.Now;
+            Backup();
           }
         }
         lock(_actions) {
