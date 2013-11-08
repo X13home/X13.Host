@@ -723,7 +723,7 @@ namespace X13.PLC {
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "PID")]
     private class PID : IStatement {
-      private DVar<double> _pv, _sp, _kp, _ki, _kd, _u;
+      private DVar<double> _pv, _sp, _kp, _ki, _kd, _u, _uMax, _uMin;
       private DVar<long> _t;
       private double _sum, _prev;
       private Timer _ct;
@@ -753,6 +753,16 @@ namespace X13.PLC {
         if(!t_p){
           _t.value=100;
         }
+        t_p=model.Exist("_uMax");
+        _uMax=AddPin<double>(model, "_uMax");
+        if(!t_p) {
+          _uMax.value=255.0;
+        }
+        t_p=model.Exist("_uMin");
+        _uMin=AddPin<double>(model, "_uMin");
+        if(!t_p) {
+          _uMin.value=-255.0;
+        }
         _ct=new Timer(Pool);
         if(_t.value>0) {
           _ct.Change(_t.value*2, _t.value);
@@ -765,10 +775,12 @@ namespace X13.PLC {
       public void Calculate(DVar<PiStatement> model, Topic source) {
         if(source==_t) {
           if(_t.value>0) {
-            _ct.Change(_t.value*2, _t.value);
+            _ct.Change(_t.value, _t.value);
           } else {
             _ct.Change(Timeout.Infinite, Timeout.Infinite);
           }
+        } else if(source!=_u && _t.value>0) {
+          _ct.Change(1, _t.value);
         }
       }
       public void DeInit() {
@@ -777,22 +789,34 @@ namespace X13.PLC {
       private void Pool(object o) {
         var now=DateTime.Now;
         var dt=(now-_pt).TotalSeconds;
-        if(dt>0) {
+        if(dt>_t.value/4000.0) {
           var e=_sp.value-_pv.value;
           if(_ki.value!=0) {
             _sum+=e*dt;
+            //unchecked {
+              if(_sum>_uMax.value/_ki.value) {
+                _sum=_uMax.value/_ki.value;
+              } else if(_sum<_uMin.value/_ki.value) {
+                _sum=_uMin.value/_ki.value;
+              }
+            //}
           } else {
             _sum=0;
           }
           double rez=_kp.value*e+_ki.value*_sum+_kd.value*(e-_prev)/dt;
+          if(rez>_uMax.value) {
+            rez=_uMax.value;
+          } else if(rez<_uMin.value) {
+            rez=_uMin.value;
+          }
           if(_kd.value!=0) {
             _prev=(_prev+e)/2;
           } else {
             _prev=0;
           }
           _u.value=rez;
+          _pt=now;
         }
-        _pt=now;
       }
     }
 

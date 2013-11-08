@@ -98,6 +98,19 @@ namespace X13.PLC {
       _thread.Priority=ThreadPriority.Lowest;
       Topic.root.Subscribe("/#", MqChanged);
     }
+    public void Start() {
+      Topic.paused=false;
+      _thread.Start();
+    }
+    public void Stop() {
+      if(_connection!=null) {
+        Topic.root.Unsubscribe("/#", MqChanged);
+        _close.Set();
+        _thread.Join(3500);
+        _connection.Close();
+        _connection = null;
+      }
+    }
 
     private void Backup() {
       string zDestFile="../data/"+_lastBackup.ToString("yyMMddHHmm")+".bak";
@@ -126,30 +139,14 @@ namespace X13.PLC {
       Sqlite3.sqlite3_close(pDest);
 
       try {
-        foreach(string f in Directory.GetFiles("../fata/", "*.bak", SearchOption.TopDirectoryOnly)) {
+        foreach(string f in Directory.GetFiles("../data/", "*.bak", SearchOption.TopDirectoryOnly)) {
           if(File.GetLastWriteTime(f).AddDays(15)<_lastBackup)
             File.Delete(f);
         }
       }
       catch(System.IO.IOException) {
       }
-
     }
-    public void Start() {
-      Topic.paused=false;
-      _thread.Start();
-    }
-    public void Stop() {
-      if(_connection!=null) {
-        Topic.root.Unsubscribe("/#", MqChanged);
-        _close.Set();
-        _thread.Join(3500);
-        _connection.Close();
-        _connection = null;
-      }
-    }
-
-
     private void MqChanged(Topic sender, TopicChanged param) {
       if(param.Source!=null && !param.Source.path.StartsWith("/local") && (param.Art==TopicChanged.ChangeArt.Remove || (param.Art==TopicChanged.ChangeArt.Value && param.Source.saved))) {
         lock(_actions) {
