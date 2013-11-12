@@ -1,4 +1,4 @@
-﻿#region license
+#region license
 //Copyright (c) 2011-2013 <comparator@gmx.de>; Wassili Hense
 
 //This file is part of the X13.Home project.
@@ -20,10 +20,6 @@ using System.Windows;
 [assembly: AssemblyTitle("CCWPF")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("X13")]
-[assembly: AssemblyProduct("CCWPF")]
-[assembly: AssemblyCopyright("Copyright © X13 2013")]
-[assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
@@ -49,17 +45,3 @@ using System.Windows;
   //(used if a resource is not found in the page, 
   // app, or any theme specific resource dictionaries)
 )]
-
-
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version 
-//      Build Number
-//      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-// [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.2.3.*")]
-[assembly: AssemblyFileVersion("0.2.3.0")]

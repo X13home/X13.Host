@@ -13,27 +13,49 @@ using System.Windows;
 using System.Windows.Input;
 using AvalonDock;
 using X13.PLC;
+using System;
 
 namespace X13.CC {
   /// <summary>
   /// Interaction logic for SetupView.xaml
   /// </summary>
-  public partial class SetupView : DocumentContent  {
+  public partial class SetupView : DocumentContent {
     private const string _enterUrlText="localhost";
-    private DVar<string> _brokerUrl;
+    private DVar<string> _clUrl;
+    private DVar<string> _clUser;
+    private DVar<string> _clPass;
     public SetupView() {
       InitializeComponent();
-      _brokerUrl=Topic.root.Get<string>("/local/settings/Broker/_URL");
-      if(string.IsNullOrWhiteSpace(_brokerUrl.value)) {
+      {
+        System.Drawing.Icon img = System.Drawing.SystemIcons.Shield;
+
+        System.Drawing.Bitmap bitmap = img.ToBitmap();
+        IntPtr hBitmap = bitmap.GetHbitmap();
+
+        System.Windows.Media.ImageSource wpfBitmap = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
+                  hBitmap, IntPtr.Zero, Int32Rect.Empty,
+                  System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
+        imUAK.Source=wpfBitmap;
+      }
+
+      _clUser=Topic.root.Get<string>("/local/cfg/Client/_username");
+      _clUser.saved=true;
+      if(!string.IsNullOrEmpty(_clUser.value)) {
+        this.Username.Text=_clUser.value;
+      } else {
+        this.Username.Text="local";
+      }
+      _clPass=Topic.root.Get<string>("/local/cfg/Client/_password");
+      _clPass.saved=true;
+      if(!string.IsNullOrEmpty(_clPass.value)) {
+        this.Password.Text=_clPass.value;
+      }
+      _clUrl=Topic.root.Get<string>("/local/cfg/Client/_URL");
+      _clUrl.saved=true;
+      if(string.IsNullOrWhiteSpace(_clUrl.value)) {
         RemoteUrl.Text=_enterUrlText;
       } else {
-        RemoteUrl.Text=_brokerUrl.value;
-      }
-    }
-
-    private void RemoteUrl_GotFocus(object sender, RoutedEventArgs e) {
-      if(RemoteUrl.Text==_enterUrlText) {
-        RemoteUrl.Text=_brokerUrl.value;
+        RemoteUrl.Text=_clUrl.value;
       }
     }
 
@@ -44,25 +66,56 @@ namespace X13.CC {
     }
 
     private void Button_Click(object sender, RoutedEventArgs e) {
-      _brokerUrl.saved=true;
+      biInstall.IsBusy=true;
+      string url;
       if(EngineEmbedded.IsChecked.Value) {
-        _brokerUrl.value="#local";
+        url="#local";
+        _clUrl.value=url;
+        _clUser.value="local";
+        biInstall.BusyContent="Start Embedded engine";
       } else if(EngineInstall.IsChecked.Value) {
-        InstallService();
-        _brokerUrl.value="localhost";
+        url="$local";
+        _clUser.value="local";
+        _clUrl.value="localhost";
+        biInstall.BusyContent="Install Service";
       } else {
-        _brokerUrl.value=RemoteUrl.Text;
+        url=RemoteUrl.Text;
+        _clUser.value=Username.Text;
+        _clPass.value=Password.Text;
+        _clUrl.value=url;
+        biInstall.BusyContent="Connecting";
       }
-      this.Close();
+      System.Threading.ThreadPool.QueueUserWorkItem(ProcUrl, url);
     }
 
-    private void InstallService() {
-      ProcessStartInfo pi=new ProcessStartInfo("X13Engine.exe", "/i");
-      if(System.Environment.OSVersion.Version.Major >= 6) {
-        pi.Verb = "runas";
+    private void ProcUrl(object o) {
+      string url=o as string;
+      if(url=="#local") {
+        App.mainWindow.StartEmbeddedEngine();
+      } else if(url=="$local") {
+        var p = new Process();
+        p.StartInfo.FileName = "X13Svc.exe";
+        p.StartInfo.Arguments="/i";
+        if(System.Environment.OSVersion.Version.Major >= 6) {
+          p.StartInfo.Verb = "runas";
+        }
+        try {
+          p.Start();
+        }
+        catch(Exception ex) {
+          Log.Error(ex.Message);
+          return;
+        }
+        p.WaitForExit();
       }
-      Process p=Process.Start(pi);
-      p.WaitForExit();
+      if(!string.IsNullOrEmpty(_clUrl.value)) {
+        App.mainWindow._cl.Init();
+        App.mainWindow._cl.Start();
+      }
+      this.Dispatcher.BeginInvoke(new Action(() => {
+        biInstall.IsBusy=false;
+        this.Close();
+      }));
     }
   }
 }

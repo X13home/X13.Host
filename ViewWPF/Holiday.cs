@@ -11,7 +11,7 @@ namespace X13.View {
     private static IFormatProvider ciEn=new CultureInfo("en-US");
     static Holiday() {
       _list=new List<Holiday>();
-      foreach(DVar<string> h in Topic.root.Get("/local/settings/Holidays").children.Where(z => z.valueType==typeof(string)).Cast<DVar<string>>()) {
+      foreach(DVar<string> h in Topic.root.Get("/local/cfg/Holidays").children.Where(z => z.valueType==typeof(string)).Cast<DVar<string>>()) {
         try {
           Holiday hd=new Holiday(h.name, h.value);
           _list.Add(hd);

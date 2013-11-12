@@ -28,6 +28,7 @@ namespace X13.CC {
       set {
         _sel=value;
         _instance.Dispatcher.BeginInvoke(new Action(_instance.SelectionChanged), System.Windows.Threading.DispatcherPriority.Input);
+        SecurityView.SetSelected(value as Topic);
       }
     }
 
@@ -77,7 +78,7 @@ namespace X13.CC {
           }
         }
         foreach(Topic tp in obj.children) {
-          if(tp.name=="_declarer" || tp.name=="_location") {
+          if(tp.name=="_declarer" || tp.name=="_location" || tp.valueType==null) {
             continue;
           }
           PropertyDescriptor np=new DVarPropertyDescriptor(tp);

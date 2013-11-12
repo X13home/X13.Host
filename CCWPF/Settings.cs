@@ -21,14 +21,14 @@ namespace X13.CC {
     private static Topic _settings;
 
     static Settings() {
-      _settings=Topic.root.Get("/local/settings");
+      _settings=Topic.root.Get("/local/cfg");
     }
 
     public static bool LogShowDebug {
-      get { return Topic.root.Get<bool>("/system/CC/Log/_ShowDebug").value; }
+      get { return Topic.root.Get<bool>("/etc/CC/Log/_ShowDebug").value; }
       set {
-        Topic.root.Get<bool>("/system/CC/Log/_ShowDebug").saved=true;
-        Topic.root.Get<bool>("/system/CC/Log/_ShowDebug").value=value;
+        Topic.root.Get<bool>("/etc/CC/Log/_ShowDebug").saved=true;
+        Topic.root.Get<bool>("/etc/CC/Log/_ShowDebug").value=value;
       }
     }
 
@@ -73,10 +73,10 @@ namespace X13.CC {
     }
     public static byte[] Layout {
       get {
-        var dv=Topic.root.Get<string>("/system/CC/MainWindow/_layout");
+        var dv=Topic.root.Get<string>("/etc/CC/MainWindow/_layout");
         return string.IsNullOrEmpty(dv.value)?null:Convert.FromBase64String(dv.value); }
       set {
-        var dv=Topic.root.Get<string>("/system/CC/MainWindow/_layout");
+        var dv=Topic.root.Get<string>("/etc/CC/MainWindow/_layout");
         dv.saved=true;
         dv.value=Convert.ToBase64String(value);
       }

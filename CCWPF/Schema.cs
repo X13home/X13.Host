@@ -10,12 +10,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Xml.Linq;
 using X13.PLC;
 
 namespace X13.CC {
@@ -112,12 +115,16 @@ namespace X13.CC {
           name=string.Format("A{0:D02}", i);
           i++;
         } while(model.Exist(name));
-        var it=model.Get<PiStatement>(name);
-        var sLoc=it.Get<long>("_location");
-        sLoc.saved=true;
-        sLoc.value=loc;
-        it.saved=true;
-        it.value=st;
+        try {
+          var it=model.Get<PiStatement>(name);
+          var sLoc=it.Get<long>("_location");
+          sLoc.saved=true;
+          sLoc.value=loc;
+          it.saved=true;
+          it.value=st;
+        }
+        catch(ObjectDisposedException) {
+        }
       }
     }
 
@@ -139,13 +146,36 @@ namespace X13.CC {
         _map.Clear();
         DrawingVisual cur;
         foreach(var p in model.children.Where(z => z.valueType==typeof(Topic)).Cast<DVar<Topic>>()) {
-          cur=new uiAlias(p, this);
+          try {
+            cur=new uiAlias(p, this);
+          }
+          catch(Exception ex) {
+            Log.Error("create uiAlias({0}) - {1}", p.path, ex.ToString());
+          }
         }
         foreach(var p in model.children.Where(z => z.valueType==typeof(PiStatement)).Cast<DVar<PiStatement>>()) {
+          try {
           cur=new uiStatement(p, this);
+          }
+          catch(Exception ex) {
+            Log.Error("create uiStatement({0}) - {1}", p.path, ex.ToString());
+          }
         }
         foreach(var p in model.children.Where(z => z.valueType==typeof(PiWire)).Cast<DVar<PiWire>>()) {
+          try {
           cur=new uiWire(p, this);
+          }
+          catch(Exception ex) {
+            Log.Error("create uiWire({0}) - {1}", p.path, ex.ToString());
+          }
+        }
+        foreach(var p in model.children.Where(z => z.valueType==typeof(PiTracer)).Cast<DVar<PiTracer>>()) {
+          try {
+          cur=new uiTracer(p, this);
+          }
+          catch(Exception ex) {
+            Log.Error("create uiTracer({0}) - {1}", p.path, ex.ToString());
+          }
         }
         model.Subscribe("+", ModelChanged);
       }
@@ -154,11 +184,12 @@ namespace X13.CC {
       lock(_map) {
         foreach(var i in _map.Where(z => z.Value==val).ToArray()) {
           _map.Remove(i.Key);
+          //Log.Debug("MapRemove({0}, {1}, {2}) = {3}", (i.Key&1)!=0?"V":"H", (i.Key>>1) & 0xFFFF, (i.Key>>17) & 0x7FFF, i.Value);
         }
       }
     }
     public void MapSet(bool vert, int x, int y, uiItem val) {
-      uint idx=(uint)(((y&0x7FFF)<<16) | ((x&0xFFFF)<<1) | (vert?1:0));
+      uint idx=(uint)(((y&0x7FFF)<<17) | ((x&0xFFFF)<<1) | (vert?1:0));
       lock(_map) {
         if(val==null) {
           _map.Remove(idx);
@@ -166,13 +197,16 @@ namespace X13.CC {
           _map[idx]=val;
         }
       }
+      //RenderBackground();
+      //Log.Debug("MapSet({0}, {1}, {2}) = {3}", vert?"V":"H", x, y, val);
     }
     public uiItem MapGet(bool vert, int x, int y) {
-      uint idx=(uint)(((y&0x7FFF)<<16) | ((x&0xFFFF)<<1) | (vert?1:0));
+      uint idx=(uint)(((y&0x7FFF)<<17) | ((x&0xFFFF)<<1) | (vert?1:0));
       uiItem ret;
       lock(_map) {
-        return _map.TryGetValue(idx, out ret)?ret:null;
+        _map.TryGetValue(idx, out ret);
       }
+      return ret;
     }
 
     public void AddVisual(Visual item) {
@@ -208,6 +242,17 @@ namespace X13.CC {
         for(double y = gs; y < this.Height; y += gs) {
           dc.DrawLine(pen, new Point(0, y), new Point(this.Width, y));
         }
+        //foreach(var kv in _map) {
+        //  int x=gs/2+gs*((int)(kv.Key>>1) & 0xFFFF);
+        //  int y=gs/2+gs*((int)(kv.Key>>17) & 0x7FFF);
+        //  if((kv.Key&1)!=0) {
+        //    FormattedText txt=new FormattedText(kv.Value.ToString(), System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LogramView.FtFont, gs*0.3, Brushes.Violet);
+        //    dc.DrawText(txt, new Point(x, y));
+        //  } else {
+        //    FormattedText txt=new FormattedText(kv.Value.ToString(), System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LogramView.FtFont, gs*0.3, Brushes.DarkMagenta);
+        //    dc.DrawText(txt, new Point(x, y+gs/2));
+        //  }
+        //}
       }
     }
     private void ModelChanged(Topic sender, TopicChanged param) {
@@ -251,6 +296,10 @@ namespace X13.CC {
             if(!_visuals.Where(z => z is uiWire).Cast<uiWire>().Any(z => z.GetModel()==source)) {
               cur=new uiWire(source as DVar<PiWire>, this);
             }
+          } else if(source.valueType==typeof(PiTracer)) {
+            if(!_visuals.Where(z => z is uiTracer).Cast<uiTracer>().Any(z => z.GetModel()==source)) {
+              cur=new uiTracer(source as DVar<PiTracer>, this);
+            }
           }
         }
       }
@@ -274,6 +323,10 @@ namespace X13.CC {
           t.Remove();
         }
         PropertyView.Selected=null;
+      } else if(e.Key==Key.C && Keyboard.IsKeyDown(Key.LeftCtrl)) {
+        mi_Copy(null, null);
+      } else if(e.Key==Key.V && Keyboard.IsKeyDown(Key.LeftCtrl)) {
+        mi_Paste(null, null);
       }
       base.OnKeyUp(e);
     }
@@ -347,7 +400,7 @@ namespace X13.CC {
             w.Update(cp);
           }
         } else if(_mSelected!=null) {
-          foreach(var el in _mSelected) {
+          foreach(var el in _mSelected.Where(z=>!(z is uiTracer))) {
             el.SetLocation(new Vector(el.OriginalLocation.X+(cp.X-ScreenStartPoint.X), el.OriginalLocation.Y+(cp.Y-ScreenStartPoint.Y)), false);
           }
         } else {
@@ -368,7 +421,15 @@ namespace X13.CC {
       if(e.ChangedButton==MouseButton.Right && e.RightButton==MouseButtonState.Released) {
         Topic cur;
         TopicView tv;
-        if(selected!=null && (cur=selected.GetModel())!=null && (tv=TopicView.root.Get(cur, true))!=null) {
+        if(_mSelected!=null) {
+          var cm=(this.Parent as Grid).ContextMenu;
+          cm.Items.Clear();
+          MenuItem mi=new MenuItem();
+          mi.Header="Copy";
+          mi.Click+=new RoutedEventHandler(mi_Copy);
+          cm.Items.Add(mi);
+          cm.IsOpen=true;
+        } else if(selected!=null && (cur=selected.GetModel())!=null && (tv=TopicView.root.Get(cur, true))!=null) {
           var cm=(this.Parent as Grid).ContextMenu;
           var actions=tv.GetActions();
           cm.Items.Clear();
@@ -404,17 +465,35 @@ namespace X13.CC {
               items=mi.Items;
             }
           }
-
+          if(cur.valueType==typeof(PiStatement)) {
+            MenuItem mi=new MenuItem();
+            mi.Header="Copy";
+            mi.Click+=new RoutedEventHandler(mi_Copy);
+            cm.Items.Add(mi);
+          } else if(selected is uiPin) {
+            MenuItem mi=new MenuItem();
+            mi.Header="Trace";
+            mi.Click+=new RoutedEventHandler(mi_Trace);
+            cm.Items.Add(mi);
+          }
           if(cm.Items.Count>0) {
             cm.IsOpen=true;
           }
+        } else if(Clipboard.ContainsText()) {
+          var cm=(this.Parent as Grid).ContextMenu;
+          cm.Items.Clear();
+          MenuItem mi=new MenuItem();
+          mi.Header="Paste";
+          mi.Click+=new RoutedEventHandler(mi_Paste);
+          cm.Items.Add(mi);
+          cm.IsOpen=true;
         }
         return;
       } else if(e.ChangedButton==MouseButton.Left && e.LeftButton==MouseButtonState.Released) {
         if(_mSelected!=null && _mSelected.Length>0) {
           var cp=e.GetPosition(this);
           double r=0, d=0;
-          foreach(var el in _mSelected) {
+          foreach(var el in _mSelected.Where(z => !(z is uiTracer))) {
             if(move) {
               el.SetLocation(new Vector(el.OriginalLocation.X+(cp.X-ScreenStartPoint.X), el.OriginalLocation.Y+(cp.Y-ScreenStartPoint.Y)), true);
               d=Math.Max(d, el.Offset.Y+el.ContentBounds.Bottom);
@@ -573,6 +652,64 @@ namespace X13.CC {
         break;
       }
 
+    }
+    public void mi_Copy(object sender, RoutedEventArgs e) {
+      IEnumerable<Topic> ms;
+      Topic sel;
+      if(_mSelected!=null) {
+        ms=_mSelected.Select(z => z.GetModel()).Where(z => z!=null && z.valueType!=typeof(PiTracer));
+      } else if(_selected!=null && (sel=_selected.GetModel())!=null && sel.valueType==typeof(PiStatement)) {
+        ms=(new Topic[] { sel });
+      } else {
+        return;
+      }
+      XDocument doc=new XDocument(new XElement("root"));
+      
+      foreach(var t in ms) {
+        Topic.Export(doc.Root, t);
+      }
+      var ws=this.model.children.Where(z => z.valueType==typeof(PiWire)).Cast<DVar<PiWire>>().Where(z => z!=null);
+      foreach(var w in ws.Where(z => (ms.Any(z1 => z1==z.value.A) || ms.Any(z1 => z1==z.value.A.parent)) && (ms.Any(z2 => z2==z.value.B) || ms.Any(z2 => z2==z.value.B.parent)))) {
+        Topic.Export(doc.Root, w);
+      }
+
+      string exp=doc.ToString(SaveOptions.OmitDuplicateNamespaces);
+      Clipboard.SetText(exp);
+    }
+    public void mi_Paste(object sender, RoutedEventArgs e) {
+      string inp=Clipboard.GetText();
+      if(string.IsNullOrWhiteSpace(inp)) {
+        return;
+      }
+      MemoryStream ms=new MemoryStream(Encoding.UTF8.GetBytes(inp));
+      ms.Seek(0, SeekOrigin.Begin);
+      try {
+        using(var sr=new StreamReader(ms)) {
+          Topic.Import(sr, this.model.path);
+        }
+      }
+      catch(Exception ex) {
+        Log.Error(ex.Message);
+      }
+    }
+    public void mi_Trace(object sender, RoutedEventArgs e) {
+      uiPin p=selected as uiPin;
+      if(p==null) {
+        return;
+      }
+      Topic pp;
+      string name;
+
+      if(p.owner is uiAlias) {
+        pp=(p.owner as uiAlias).GetModel();
+        name="?"+pp.name;
+      } else {
+        pp=p.GetModel();
+        name=string.Format("?{0}?{1}", pp.parent.name, pp.name);
+      }
+      var td=model.Get<PiTracer>(name);
+      td.saved=true;
+      td.value=new PiTracer(pp.path);
     }
   }
 }

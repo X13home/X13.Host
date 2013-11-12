@@ -40,9 +40,9 @@ namespace X13.CC {
     #endregion Settings
 
     static LogramView() {
-      _settings=Topic.root.Get("/system/CC/Logram");
+      _settings=Topic.root.Get("/etc/CC/Logram");
       _statements=new List<StatementDescription>();
-      Topic decls=Topic.root.Get("/system/declarers/func");
+      Topic decls=Topic.root.Get("/etc/declarers/func");
       //decls.Subscribe("+", DeclarerChanged);
       TopicChanged p=new TopicChanged(TopicChanged.ChangeArt.Add);
       foreach(Topic d in decls.children) {
@@ -96,6 +96,9 @@ namespace X13.CC {
       if(m.value==null) {
         m.saved=true;
         m.value=new PiLogram();
+        var via=m.Get<string>("_via");
+        via.saved=true;
+        via.value=Topic.root.Get<string>("/etc/PLC/default").value;
       }
       this.Title=m.name;
       InitializeComponent();

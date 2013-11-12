@@ -16,78 +16,126 @@ using System.Net.Sockets;
 using System.Net;
 using System.IO;
 using System.Threading;
-using X13.PLC;
 using System.Diagnostics;
+using System.ComponentModel.Composition;
+using Newtonsoft.Json;
 
 namespace X13.MQTT {
-  public class MqClient {
+  [Export(typeof(IPlugModul))]
+  [ExportMetadata("priority", 3)]
+  [ExportMetadata("name", "Client")]
+  public class MqClient : IPlugModul {
+    private static JsonConverter[] _jcs=new JsonConverter[] { new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter() };
+
     private string addr;
     private int port;
     private DVar<MqClient> _owner;
     private MqStreamer _stream;
     private static Topic _mq;
+    private Topic _settings;
+    private DVar<DateTime> _now;
+    private DVar<long> _nowOffset;
 
     private bool _waitPingResp;
     private bool _connected;
     private Timer _tOut;
-    private Timer _tLoaded;
     private int _keepAliveMS=89950;  // 90 sec
-    private Action<bool> _statusDelegate;
-    private Process _engine; // for embedded mode
-    private ManualResetEventSlim _engineReady;
+    private MqConnect ConnInfo;
+    private List<Topic.Subscription> _subs;
+    private DVar<bool> _verbose;
 
     public ushort KeepAlive {
       get { return (ushort)(_keepAliveMS>0?(_keepAliveMS+50)/1000:0); }
       set {
-        if(!_connected) {             // can not inform the broker about the changing
+        if(!_connected) {             // can not inform the broker only befor connect
           _keepAliveMS=value>0?value*1000-50:Timeout.Infinite;
         }
       }
     }
-    private MqConnect ConnInfo;
     public string BrokerName { get; private set; }
-    public string UserName { get { return ConnInfo.userName; } set { ConnInfo.userName=value; } }
-    public string UserPass { get { return ConnInfo.userPassword; } set { ConnInfo.userPassword=value; } }
+    public bool Connected { get { return _connected; } }
+    public event Action<bool> StatusChg;
 
-    public MqClient(Action<bool> statusDelegate) {
+    public MqClient() {
       _waitPingResp=false;
       _mq=Topic.root.Get("/local/MQ");
-      _statusDelegate=statusDelegate;
       ConnInfo=new MqConnect();
       ConnInfo.cleanSession=true;
       ConnInfo.keepAlive=this.KeepAlive;
-
+      _tOut=new Timer(new TimerCallback(TimeOut));
+      _settings=Topic.root.Get("/local/cfg/Client");
+      _subs=new List<Topic.Subscription>();
+      _now=Topic.root.Get<DateTime>("/var/now");
+      _nowOffset=_settings.Get<long>("TimeOffset");
     }
-    public void Connect(string connectionstring) {
+    public void Init() {
+      _verbose=_settings.Get<bool>("verbose");
+      if(!Reconnect()) {
+        _settings.Get<bool>("enable").value=false;
+        return;
+      }
+      Topic.SubscriptionsChg+=Topic_SubscriptionsChg;
+      Topic.root.Subscribe("/etc/system/#", PLC.PLCPlugin.L_dummy);
+      Topic.root.Subscribe("/etc/repository/#", PLC.PLCPlugin.L_dummy);
+      Topic.root.Subscribe("/etc/declarers/+", PLC.PLCPlugin.L_dummy);
+      Topic.root.Subscribe("/etc/declarers/type/#", PLC.PLCPlugin.L_dummy);
+      Topic.root.Subscribe("/var/now", PLC.PLCPlugin.L_dummy);
+      Topic.paused=true;
+      for(int i=600; i>=0; i--) {
+        Thread.Sleep(50);
+        if(_connected) {
+          break;
+        }
+      }
+    }
+
+    public void Start() {
+      for(int i=35; i>=0; i--) {
+        Thread.Sleep(100);
+        if(_stream==null){
+          break;
+        }
+        if(!_stream.isSndPaused) {
+          Log.Info("MqClient: loading completed");
+          Topic.paused=false;
+          return;
+        }
+      }
+      if(_stream!=null) {
+        _stream.isSndPaused=false;
+      }
+      Topic.paused=false;
+      Log.Warning("MqClient: loading timeout");
+      //Reconnect();
+    }
+
+    public bool Reconnect(bool slow=false) {
+      if(_stream!=null) {
+        if(_connected) {
+          _connected=false;
+          if(StatusChg!=null) {
+            StatusChg(_connected);
+          }
+          _tOut.Change(_keepAliveMS*2, Timeout.Infinite);
+        } else {
+          _tOut.Change(_keepAliveMS*(slow?10:5), Timeout.Infinite);
+        }
+        _stream.Close();
+        _stream=null;
+        return false;
+      }
+      if(slow) {
+        _tOut.Change(_keepAliveMS*5, Timeout.Infinite);
+        return false;
+      }
+      string connectionstring=_settings.Get<string>("_URL").value;
+      _settings.Get<string>("_URL").saved=true;
+      _settings.Get<string>("_username").saved=true;
+      _settings.Get<string>("_password").saved=true;
       if(string.IsNullOrEmpty(connectionstring)) {
-        connectionstring="localhost";
+        return false;
       }
       if(connectionstring=="#local") {
-        Directory.SetCurrentDirectory(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
-        if(_engine==null || _engine.HasExited) {
-          _engine = new Process();
-          _engine.StartInfo.FileName = "X13Engine.exe";
-          _engine.StartInfo.Arguments="/C";
-
-          _engine.StartInfo.RedirectStandardInput=true;
-          _engine.StartInfo.RedirectStandardOutput=true;
-          _engine.StartInfo.RedirectStandardError=true;
-          _engine.EnableRaisingEvents=true;
-          _engine.StartInfo.UseShellExecute=false;
-          _engine.StartInfo.CreateNoWindow = true;
-          _engine.OutputDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
-          _engine.ErrorDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
-
-          _engineReady=new ManualResetEventSlim(false);
-          _engine.Start();
-
-          _engine.BeginErrorReadLine();
-          _engine.BeginOutputReadLine();
-          _engineReady.Wait(5000);
-        } else {
-          Thread.Sleep(1000);
-        }
-
         connectionstring="localhost";
       }
 
@@ -98,25 +146,48 @@ namespace X13.MQTT {
         addr=connectionstring;
         port=1883;
       }
-      Topic.paused=true;
       TcpClient _tcp=new TcpClient();
       _tcp.SendTimeout=900;
       _tcp.ReceiveTimeout=0;
       _tcp.BeginConnect(addr, port, new AsyncCallback(ConnectCB), _tcp);
-
+      return true;
     }
 
-    void _engine_OutputDataReceived(object sender, DataReceivedEventArgs e) {
-      if(!string.IsNullOrEmpty(e.Data)) {
-        Log.Info("Engine: {0}", e.Data);
-        _engineReady.Set();
+    private void Topic_SubscriptionsChg(Topic.Subscription s, bool added) {
+      if(_verbose.value && s!=null) {
+        Log.Debug("{0} {3} {1}.{2}", s.path, s.func.Method.DeclaringType.Name, s.func.Method.Name, added?"+=":"-=");
+      }
+      if((s!=null && s.path.StartsWith("/local")) || !_connected) {
+        return;
+      }
+      if(!added) {
+        if(!_subs.Exists(z => z==s)) {
+          return;
+        } else {
+          _subs.Remove(s);
+          Unsubscribe(s.path);
+        }
+      }
+      var sAll=Topic.root.subscriptions.Where(z=>!z.path.StartsWith("/local")).ToArray();
+      if(_verbose.value) {
+        Log.Debug("SUBS={0}", string.Join("\n", sAll.Select(z => z.path)));
+      }
+      foreach(var sb in _subs.Except(sAll).ToArray()) {
+        _subs.Remove(sb);
+        Unsubscribe(sb.path);
+      }
+      foreach(var sb in sAll.Except(_subs).ToArray()) {
+        _subs.Add(sb);
+        Subscribe(sb.path, QoS.AtMostOnce);
       }
     }
+
     private void ConnectCB(IAsyncResult rez) {
       var _tcp=rez.AsyncState as TcpClient;
       try {
         _tcp.EndConnect(rez);
         _stream=new MqStreamer(_tcp, Received, SendIdle);
+        _stream.isSndPaused=true;
         var re=((IPEndPoint)_stream.Socket.Client.RemoteEndPoint);
         try {
           BrokerName=Dns.GetHostEntry(re.Address).HostName;
@@ -126,24 +197,34 @@ namespace X13.MQTT {
         }
         _owner=_mq.Get<MqClient>(BrokerName);
         _owner.value=this;
-        _tOut=new Timer(new TimerCallback(TimeOut));
-        _tLoaded=new Timer(new TimerCallback(LoadedCB));
         _connected=false;
-        ConnInfo.clientId=string.Format("{0}@{1}_{2:X4}", Environment.UserName, Environment.MachineName, System.Diagnostics.Process.GetCurrentProcess().Id);
+        string id=Topic.root.Get<string>("/local/cfg/id").value;
+        if(string.IsNullOrEmpty(id)) {
+          id=string.Format("{0}@{1}_{2:X4}", Environment.UserName, Environment.MachineName, System.Diagnostics.Process.GetCurrentProcess().Id);
+        }
+        ConnInfo.clientId=id;
+        ConnInfo.userName=_settings.Get<string>("_username");
+        _settings.Get<string>("_username").saved=true;
+        ConnInfo.userPassword=_settings.Get<string>("_password");
+        _settings.Get<string>("_password").saved=true;
+        if(string.IsNullOrEmpty(ConnInfo.userName) && addr=="localhost") {
+          ConnInfo.userName="local";
+          ConnInfo.userPassword=string.Empty;
+        }
+
         this.Send(ConnInfo);
         _owner.Subscribe("/#", OwnerChanged);
         _tOut.Change(3000, _keepAliveMS);       // more often than not
-        _tLoaded.Change(6500, 0);
       }
       catch(Exception ex) {
-        _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
-        Topic.paused=false;
         Log.Error("Connect to {0}:{1} failed, {2}", addr, port, ex.Message);
-        if(_statusDelegate!=null) {
-          _statusDelegate(false);
+        if(StatusChg!=null) {
+          StatusChg(false);
         }
+        _tOut.Change(_keepAliveMS*5, Timeout.Infinite);
       }
     }
+
     public void Subscribe(string topic, QoS sQoS) {
       MqSubscribe msg=new MqSubscribe();
       msg.Add(topic, sQoS);
@@ -154,68 +235,58 @@ namespace X13.MQTT {
       msg.Add(path);
       Send(msg);
     }
-    public void Disconnect() {
-       if(_connected) {
-        _connected=false;
-        if(_stream!=null) {
+    public void Stop() {
+      if(_stream!=null) {
+        if(_connected) {
+          _connected=false;
+          _owner.Unsubscribe("/#", OwnerChanged);
+          _owner.Remove();
+          _tOut.Change(Timeout.Infinite, Timeout.Infinite);
+          if(StatusChg!=null) {
+            StatusChg(_connected);
+          }
           _stream.Close();
           _stream=null;
+          Log.Info("{0} Disconnected", BrokerName);
         }
-        _owner.Unsubscribe("/#", OwnerChanged);
-        _owner.Remove();
-        _tOut.Change(Timeout.Infinite, Timeout.Infinite);
-        if(_statusDelegate!=null) {
-          _statusDelegate(_connected);
-        }
-        Log.Info("{0} Disconnected", BrokerName);
       }
-       if(_engine!=null) {
-         _engine.StandardInput.WriteLine(" ");
-         _engine.WaitForExit(1500);
-         _engine=null;
-       }
     }
     private void TimeOut(object o) {
-      if(!_connected) {
+      if(_stream==null) {
+        Reconnect();
+      } else if(!_connected) {
         Log.Warning("ConnAck timeout");
-        this.Disconnect();                  //TODO: reconnect
+        Reconnect();
       } else if(_waitPingResp) {
         Log.Warning("PingResponse timeout");
-        this.Disconnect();                  //TODO: reconnect
+        Reconnect();
       } else {
         _waitPingResp=true;
         _stream.Send(new MqPingReq());
       }
     }
-    private void LoadedCB(object o) {
-      _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
-      Topic.paused=false;
-    }
     private void Received(MqMessage msg) {
-      //Log.Debug("R {0}", msg);
-
+      if(_verbose.value) {
+        Log.Debug("R {0}", msg);
+      }
       switch(msg.MsgType) {
       case MessageType.CONNACK: {
           MqConnack cm=msg as MqConnack;
           if(cm.Response!=MqConnack.MqttConnectionResponse.Accepted) {
-            _connected=false;
-            _tOut.Change(Timeout.Infinite, Timeout.Infinite);
-            _tLoaded.Change(Timeout.Infinite, Timeout.Infinite);
-            if(_stream!=null) {
-              _stream.Close();
-              _stream=null;
-            }
+            Reconnect(true);
             Log.Error("Connection to {0}:{1} failed. error={2}", addr, port, cm.Response.ToString());
           } else {
             _connected=true;
+            _subs.Clear();
+            Topic_SubscriptionsChg(null, true);
           }
-          if(_statusDelegate!=null) {
-            _statusDelegate(_connected);
+          if(StatusChg!=null) {
+            StatusChg(_connected);
           }
         }
         break;
       case MessageType.DISCONNECT:
-        this.Disconnect();
+        Reconnect();
         break;
       case MessageType.PINGRESP:
         _waitPingResp=false;
@@ -254,20 +325,28 @@ namespace X13.MQTT {
       }
     }
     private void ProccessPublishMsg(MqPublish pm) {
-      if(pm.Path.Equals(_mq.path)) {
-        LoadedCB(null);
-        Log.Info("MQTT Loaded");
+      if(_stream!=null && _stream.isSndPaused && pm.Path==_mq.path) {
+        _stream.isSndPaused=false;
         return;
       }
       Topic cur;
       if(!string.IsNullOrEmpty(pm.Payload)) {         // Publish
-        if(!Topic.root.Exist(pm.Path, out cur)) {
+        if(!Topic.root.Exist(pm.Path, out cur) || cur.valueType==null) {
           Type vt=X13.WOUM.ExConverter.Json2Type(pm.Payload);
           cur=Topic.GetP(pm.Path, vt, _owner);
         }
         cur.saved=pm.Retained;
         if(cur.valueType!=null) {
-          cur.FromJson(pm.Payload, _owner);
+          if(cur==_now) {
+            try {
+              _nowOffset.value=JsonConvert.DeserializeObject<DateTime>(pm.Payload, _jcs).ToLocalTime().Ticks-DateTime.Now.Ticks;
+            }
+            catch(Exception) {
+              return;
+            }
+          } else if(cur.parent!=_now) {
+            cur.FromJson(pm.Payload, _owner);
+          }
         }
       } else if(Topic.root.Exist(pm.Path, out cur)) {                      // Remove
         cur.Remove(_owner);
@@ -276,12 +355,17 @@ namespace X13.MQTT {
 
     private void Send(MqMessage msg) {
       _stream.Send(msg);
+      if(_verbose.value) {
+        Log.Debug("S {0}", msg);
+      }
     }
     private void SendIdle() {
-      _tOut.Change(!_connected?2900:_keepAliveMS, _keepAliveMS);
+      //if(_connected) {
+      //  _tOut.Change(_keepAliveMS, _keepAliveMS);
+      //}
     }
     private void OwnerChanged(Topic sender, TopicChanged param) {
-      if(sender.parent==null || sender.path.StartsWith("/local") || param.Visited(_mq, false) || param.Visited(_owner, false)) {
+      if(!_connected || sender.parent==null || sender.path.StartsWith("/local") || sender.path.StartsWith("/var/now") || sender.path.StartsWith("/var/log") || param.Visited(_mq, false) || param.Visited(_owner, false)) {
         return;
       }
       switch(param.Art) {

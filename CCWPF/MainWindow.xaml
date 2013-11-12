@@ -6,8 +6,8 @@
         TextOptions.TextRenderingMode="Grayscale" FontSize="12" FontFamily="Times New Roman">
   <Grid>
     <Grid.ColumnDefinitions>
-      <ColumnDefinition MinWidth="120" Width="9*" />
-      <ColumnDefinition MaxWidth="200" MinWidth="120" />
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition MinWidth="120" Width="auto" />
     </Grid.ColumnDefinitions>
     <Grid.RowDefinitions>
       <RowDefinition Height="24"/>
@@ -16,8 +16,6 @@
     </Grid.RowDefinitions>
     <Menu Grid.Row="0">
       <MenuItem Header="File">
-        <MenuItem Header="New Logram" Click="ActivateView" Tag="Logram"/>
-        <Separator />
         <MenuItem Header="Import" Click="Import_Click" />
         <MenuItem Header="Import To" Click="ImportTo_Click" />
         <MenuItem Header="Export" Click="Export_Click" />
@@ -28,6 +26,7 @@
         <MenuItem Header="Output" Click="ActivateView"  Tag="LogPanel"/>
         <MenuItem Header="Properties" Click="ActivateView"  Tag="PropertyPanel"/>
         <MenuItem Header="Data storage" Click="ActivateView"  Tag="DataStoragePanel"/>
+        <MenuItem Header="Security" Click="ActivateView"  Tag="SecurityPanel"/>
       </MenuItem>
     </Menu>
     <DockPanel Grid.Column="1" MouseUp="DockPanel_MouseUp">
@@ -47,7 +46,7 @@
           </Style.Triggers>
         </Style>
       </DockPanel.Style>
-      <TextBlock Text="{Binding BrokerState}" HorizontalAlignment="Center" VerticalAlignment="Center" DockPanel.Dock="Top"/>
+      <TextBlock Text="{Binding BrokerState}" HorizontalAlignment="Center" VerticalAlignment="Center" DockPanel.Dock="Top" Margin="20,0"/>
     </DockPanel>
     <ad:DockingManager x:Name="dockManager" Grid.Row="2" Grid.ColumnSpan="2" Loaded="dockManager_Loaded">
       <ad:ResizingPanel>
@@ -61,8 +60,9 @@
           <ad:DockablePane ad:ResizingPanel.ResizeHeight="1*">
             <my:DataStorageView />
           </ad:DockablePane>
-          <ad:DockablePane ad:ResizingPanel.ResizeHeight="1*">
+          <ad:DockablePane ad:ResizingPanel.ResizeHeight="1*" SelectedIndex="0">
             <my:PropertyView></my:PropertyView>
+            <my:SecurityView></my:SecurityView>
           </ad:DockablePane>
         </ad:ResizingPanel>
       </ad:ResizingPanel>

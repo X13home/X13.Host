@@ -12,10 +12,12 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
-using X13.WOUM;
 using X13.PLC;
+using X13.WOUM;
 
 namespace X13.CC {
   /// <summary>
@@ -42,5 +44,19 @@ namespace X13.CC {
     //Application.ThreadException += new ThreadExceptionEventHandler(Application_ThreadException);
     //AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
+    public App() {
+    }
+    private void Application_Startup(object sender, StartupEventArgs e) {
+      string cfgPath;
+      if(e.Args.Length == 1) {
+        cfgPath=e.Args[0];
+      } else {
+        cfgPath="../data/CC.xst";
+      }
+
+      mainWindow=new MainWindow(cfgPath);
+      
+      mainWindow.Show();
+    }
   }
 }

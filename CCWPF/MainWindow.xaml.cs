@@ -17,54 +17,57 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using AvalonDock;
 using X13.PLC;
+using System.Diagnostics;
+using System.Threading;
 
 namespace X13.CC {
   /// <summary>
   /// Interaction logic for MainWindow.xaml
   /// </summary>
   public partial class MainWindow : Window {
-    private X13.MQTT.MqClient _cl;
-    private int _tryCounter;
+    private X13.Plugins _plugins;
+    internal X13.MQTT.MqClient _cl;
     private bool _docLoaded=false;
+    private Process _engine; // for embedded mode
+    private ManualResetEventSlim _engineReady;
+    private DVar<bool> _verbose;
+    private string _cfgPath;
 
-    private const string _settPath="ccwpf.cfg";
+    public MainWindow(string cfg) {
+      _cfgPath=cfg;
+      if(!Directory.Exists("../data")) {
+        Directory.CreateDirectory("../data");
+      }
+      Topic.Import(_cfgPath, "/local/cfg");
 
-    public MainWindow() {
-      App.mainWindow=this;
-      _tryCounter=3;
-      Topic.Import(_settPath, "/local/settings");
-      Topic brokerSettings=Topic.root.Get("/local/settings/Broker");
-      //Topic.root.Subscribe("/#", root_changed);
-      brokerSettings.Subscribe("_URL", BrokerUrlChanged);
+      Topic clientSettings=Topic.root.Get("/local/cfg/Client");
+      var url=clientSettings.Get<string>("_URL");
+      var enable=clientSettings.Get<bool>("enable");
+      enable.saved=true;
+      enable.value=true;
+
+      if(url.value=="#local") {
+        StartEmbeddedEngine();
+      }
+
+      _plugins=new Plugins();
+
+      _verbose=Topic.root.Get<bool>("/local/cfg/repository/_verbose");
+      Topic.root.Subscribe("/#", root_changed);
+      _plugins.Init(false);
       BrokerState="OFFLINE";
       _clState=0;   // offline
-      _cl=new X13.MQTT.MqClient(MqClientStatusChanged);
+      _cl=_plugins["Client"] as MQTT.MqClient;
+      _cl.StatusChg+=MqClientStatusChanged;
+      _cl.KeepAlive=10;
 
-      #region Load Security
-      string securPath=brokerSettings.Get<string>("_path");
-      if(string.IsNullOrEmpty(securPath)) {
-        securPath=@"..\data\security.dat";
-      } else {
-        securPath=System.IO.Path.Combine(securPath, @"..\data\security.dat");
+      if(_cl.Connected) {
+        MqClientStatusChanged(true);
       }
-      Topic.Import(securPath, "/local/security");
 
-      _cl.UserName=brokerSettings.Get<string>("_username");
-      brokerSettings.Get<string>("_username").saved=true;
-      _cl.UserPass=brokerSettings.Get<string>("_password");
-      brokerSettings.Get<string>("_password").saved=true;
-      if(string.IsNullOrEmpty(_cl.UserName)) {
-        Topic tp;
-        if(Topic.root.Exist("/local/security/users/root", out tp)) {
-          _cl.UserName="root";
-          _cl.UserPass=(tp as DVar<string>).value;
-        }
-      }
-      #endregion Load security
       InitializeComponent();
-
-      Log.Info("CC Start");
       DataContext = this;
+
       if(Settings.MainWindowWidth>0 && Settings.MainWindowHeight>0) {
         this.Width=Settings.MainWindowWidth;
         this.Height=Settings.MainWindowHeight;
@@ -73,41 +76,72 @@ namespace X13.CC {
         this.WindowState=Settings.MainWindowState;
       } else {
         this.WindowStartupLocation=System.Windows.WindowStartupLocation.CenterScreen;
-        this.Width=1000;
-        this.Height=700;
+        this.Width=System.Windows.SystemParameters.PrimaryScreenWidth*0.6;
+        this.Height=System.Windows.SystemParameters.PrimaryScreenHeight*0.8;
       }
+      _plugins.Start();
       this.dockManager.ActiveDocumentChanged+=new EventHandler(dockManager_ActiveDocumentChanged);
     }
 
-    private void BrokerUrlChanged(Topic arg1, TopicChanged arg2) {
-      this.Dispatcher.BeginInvoke(new Action(() => {
-        if(_clState==2) {
-          _cl.Disconnect();
-        }
-        dockManager_Loaded(null, null);
-      }));
+    internal void StartEmbeddedEngine() {
+      if(_engine==null || _engine.HasExited) {
+        Directory.SetCurrentDirectory(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
+        _engine = new Process();
+        _engine.StartInfo.FileName = "Engine.exe";
+        _engine.StartInfo.Arguments="";
+
+        _engine.StartInfo.RedirectStandardInput=true;
+        _engine.StartInfo.RedirectStandardOutput=true;
+        _engine.StartInfo.RedirectStandardError=true;
+        _engine.EnableRaisingEvents=true;
+        _engine.StartInfo.UseShellExecute=false;
+        _engine.StartInfo.CreateNoWindow = true;
+        _engine.OutputDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
+        _engine.ErrorDataReceived+=new DataReceivedEventHandler(_engine_OutputDataReceived);
+
+        _engineReady=new ManualResetEventSlim(false);
+        _engine.Start();
+
+        _engine.BeginErrorReadLine();
+        _engine.BeginOutputReadLine();
+        _engineReady.Wait(10000);
+      }
     }
 
-    void root_changed(PLC.Topic sender, PLC.TopicChanged param) {
+    private void _engine_OutputDataReceived(object sender, DataReceivedEventArgs e) {
+      if(!string.IsNullOrEmpty(e.Data)) {
+        if(e.Data.Contains("[E]")) {
+          Log.Error("Engine: {0}", e.Data);
+        }
+        if(e.Data.Contains("Engine running")) {
+          _engineReady.Set();
+        }
+      }
+    }
+
+    void root_changed(Topic sender, TopicChanged param) {
+      if(!_verbose) {
+        return;
+      }
       var ir=param.Initiator;
       switch(param.Art) {
-      case X13.PLC.TopicChanged.ChangeArt.Add:
+      case TopicChanged.ChangeArt.Add:
         if(ir==null) {
           Log.Debug("+ {0}[{1}]", sender.path, sender.valueType);
         } else {
           Log.Debug("+ {0}[{1}] : {2}", sender.path, sender.valueType, ir.name);
         }
         break;
-      case X13.PLC.TopicChanged.ChangeArt.Value:
+      case TopicChanged.ChangeArt.Value:
         if(ir==null) {
-          if(!sender.path.StartsWith("/system/now/")) {
+          if(!sender.path.StartsWith("/dev/.clock/")) {
             Log.Debug("! {0}={1}", sender.path, sender.GetValue());
           }
-        } else if(!ir.path.StartsWith("/system/now/")) {
+        } else if(!ir.path.StartsWith("/dev/.clock/")) {
           Log.Debug("! {0}={1} : {2}", sender.path, sender.GetValue(), ir.name);
         }
         break;
-      case X13.PLC.TopicChanged.ChangeArt.Remove:
+      case TopicChanged.ChangeArt.Remove:
         if(ir==null) {
           Log.Debug("- {0}", sender.path, param.Initiator);
         } else {
@@ -132,18 +166,15 @@ namespace X13.CC {
             DependencyProperty.Register("BrokerState", typeof(string), typeof(MainWindow), new UIPropertyMetadata(null));
 
     private void dockManager_Loaded(object sender, RoutedEventArgs e) {
-      DVar<string> brokerUrl=Topic.root.Get<string>("/local/settings/Broker/_URL");
+      DVar<string> brokerUrl=Topic.root.Get<string>("/local/cfg/Client/_URL");
       if(string.IsNullOrEmpty(brokerUrl.value)) {
         lock(this) {
           if(!dockManager.Documents.Any(z => z is SetupView)) {
             DockPane.Items.Add(GetContent("SetupView"));
           }
         }
-      } else if(_clState==0) {
-        _clState=1;
-        BrokerState="Connecting";
-        _cl.Connect(brokerUrl.value);
-      } else if(_clState==2) {
+      }
+      if(_clState==2) {
         dockManager.DeserializationCallback=new DockingManager.DeserializationCallbackHandler(DSPane);
         if(Settings.Layout!=null) {
           MemoryStream ms=new MemoryStream(Settings.Layout);
@@ -153,6 +184,9 @@ namespace X13.CC {
         if(dockManager.Documents.Count>0) {
           dockManager.Documents[0].Activate();
         }
+        ThreadPool.QueueUserWorkItem(o => {
+          Engine.SendStat(1);
+        });
       }
     }
     private void ActivateView(object sender, RoutedEventArgs e) {
@@ -180,18 +214,10 @@ namespace X13.CC {
         rez=dockManager.DockableContents.FirstOrDefault(p => p is LogView)??new LogView();
       } else if(name=="DataStoragePanel") {
         rez=dockManager.DockableContents.FirstOrDefault(p => p is DataStorageView)??new DataStorageView();
-      } else if(name=="SetupView"){
+      } else if(name=="SetupView") {
         rez=dockManager.Documents.FirstOrDefault(p => p is SetupView)??new SetupView();
-      } else if(name=="Logram") {
-        string baseDocTitle = "Logram_New_1Logram_1";
-        int i = 1;
-        string lName = baseDocTitle + i.ToString();
-
-        while(dockManager.Documents.Any(d => d.Name == lName)) {
-          i++;
-          lName = baseDocTitle + i.ToString();
-        }
-        rez=new LogramView(lName);
+      } else if(name=="SecurityPanel"){
+        rez=dockManager.DockableContents.FirstOrDefault(p => p is SecurityView)??new SecurityView();
       } else if(name.StartsWith("Logram_")) {
         rez=dockManager.Documents.FirstOrDefault(p => p is DocumentContent && p.Name==name)??new LogramView(name);
       }
@@ -212,49 +238,44 @@ namespace X13.CC {
         Settings.MainWindowHeight=(int)this.Height;
 
       }
+      Engine.SendStat(0);
       System.Threading.Thread.Sleep(150);
-      _cl.Disconnect();
-      Topic.Export(_settPath, Topic.root.Get("/local/settings"));
+      _plugins.Stop();
+      if(_engine!=null) {
+        _engine.StandardInput.WriteLine(" ");
+        _engine.WaitForExit(1500);
+        _engine=null;
+      }
+      Topic.Export(_cfgPath, Topic.root.Get("/local/cfg"));
+
     }
     private int _clState=0;
     private void MqClientStatusChanged(bool connected) {
       Dispatcher.BeginInvoke(new Action(delegate {
         if(connected) {
-          if(_cl.UserName!=null) {
-            BrokerState=string.Format("{0}@{1}", _cl.UserName, _cl.BrokerName);
+          string userName=Topic.root.Get<string>("/local/cfg/Client/_username").value;
+          if(userName!=null) {
+            BrokerState=string.Format("{0}@{1}", userName, _cl.BrokerName);
           } else {
             BrokerState=_cl.BrokerName;
           }
-          _cl.Subscribe("/#", QoS.AtMostOnce);
           Log.Info("Connected to {0}", _cl.BrokerName);
-          _tryCounter=3;
           _clState=2;
+
           if(!_docLoaded) {
             _docLoaded=true;
             System.Threading.Thread.Sleep(1500);
             dockManager_Loaded(null, null);
           }
-        } else if(--_tryCounter>0) {
-          BrokerState="Connecting";
-          _clState=1;
-          System.Threading.ThreadPool.QueueUserWorkItem((o) => {
-            System.Threading.Thread.Sleep(1200);
-            _cl.Connect(Topic.root.Get<string>("/local/settings/Broker/_URL"));
-          }
-        );
         } else {
-          _clState=0;
           BrokerState="OFFLINE";
+          _clState=1;
         }
       }), System.Windows.Threading.DispatcherPriority.Input);
     }
 
     private void DockPanel_MouseUp(object sender, MouseButtonEventArgs e) {
-      if(_clState==0) {
-        _cl.Connect(Topic.root.Get<string>("/local/settings/Broker/_URL").value);
-      } else if(_clState==2) {
-        _cl.Disconnect();
-      }
+      _cl.Reconnect();
     }
 
     private void Export_Click(object sender, RoutedEventArgs e) {

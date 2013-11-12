@@ -29,6 +29,7 @@ namespace X13.PLC {
     private DVar<Topic> _aAlias;
     private DVar<Topic> _bAlias;
     private DVar<long> _direction;
+    private PiLogram _parent;
 
     public PiWire() {
       _dummy=1000;
@@ -95,6 +96,7 @@ namespace X13.PLC {
           if(_b!=null) {
             _b.changed-=_b_changed;
           }
+          _parent=null;
         }
         _owner=owner as DVar<PiWire>;
         if(_owner!=null) {
@@ -104,6 +106,9 @@ namespace X13.PLC {
           var dc=_owner.Get<string>("_declarer");
           dc.saved=true;
           dc.value="Wire";
+          if(_owner.parent!=null && _owner.parent.valueType==typeof(PiLogram)) {
+            _parent=(_owner.parent as DVar<PiLogram>).value;
+          }
 
           foreach(Topic tp in _owner.children.Where(t => t.valueType==typeof(Topic))) {
             var p=tp as DVar<Topic>;
@@ -116,12 +121,18 @@ namespace X13.PLC {
     }
     #endregion ITopicOwned Members
 
+    private bool exec {
+      get {
+        return _parent!=null && _parent.exec;
+      }
+    }
+
     private void _owner_changed(Topic sender, TopicChanged param) {
       DVar<Topic> p=param.Source as DVar<Topic>;
       if(p!=null && p.parent==_owner && (p.name=="A" || p.name=="B")) {
         if(param.Art==TopicChanged.ChangeArt.Value) {
           ChangedPin(p);
-        } else if(Topic.brokerMode && param.Art==TopicChanged.ChangeArt.Remove) {          // Remove
+        } else if(exec && param.Art==TopicChanged.ChangeArt.Remove) {          // Remove
           if(_a!=null) {
             _a.changed-=_a_changed;
           }
@@ -145,27 +156,27 @@ namespace X13.PLC {
       }
       if(p.value==null || p.value.valueType==typeof(Topic)) {
         if(p.name=="A" && p.value!=_aAlias) {
-          if(Topic.brokerMode && _aAlias!=null) {
+          if(exec && _aAlias!=null) {
             _aAlias.changed-=_aAlias_changed;
           }
           _aAlias=p.value as DVar<Topic>;
-          if(Topic.brokerMode && _aAlias!=null) {
+          if(exec && _aAlias!=null) {
             _aAlias.changed+=_aAlias_changed;
           }
           Change_A(_aAlias);
         } else if(p.name=="B" && p.value!=_bAlias) {
-          if(Topic.brokerMode && _bAlias!=null) {
+          if(exec && _bAlias!=null) {
             _bAlias.changed-=_bAlias_changed;
           }
           _bAlias=p.value as DVar<Topic>;
-          if(Topic.brokerMode && _bAlias!=null) {
+          if(exec && _bAlias!=null) {
             _bAlias.changed+=_bAlias_changed;
           }
           Change_B(_bAlias);
         }
 
       }
-      if(Topic.brokerMode && _a!=null && _b!=null) {
+      if(exec && _a!=null && _b!=null) {
         if(Direction!=2) {
           _b.SetValue(_a.GetValue(), new TopicChanged(TopicChanged.ChangeArt.Value, _a));
         } else {
@@ -175,21 +186,21 @@ namespace X13.PLC {
     }
 
     private void Change_A(DVar<Topic> p) {
-      if(Topic.brokerMode && _a!=null) {
+      if(exec && _a!=null) {
         _a.changed-=_a_changed;
       }
       _a=p.value;
-      if(Topic.brokerMode && _a!=null) {
+      if(exec && _a!=null) {
         _a.changed+=_a_changed;
       }
     }
 
     private void Change_B(DVar<Topic> p) {
-      if(Topic.brokerMode && _b!=null) {
+      if(exec && _b!=null) {
         _b.changed-=_b_changed;
       }
       _b=p.value;
-      if(Topic.brokerMode && _b!=null) {
+      if(exec && _b!=null) {
         _b.changed+=_b_changed;
       }
     }
@@ -207,7 +218,7 @@ namespace X13.PLC {
     }
 
     private void _a_changed(Topic sender, TopicChanged param) {
-      if(param.Art==TopicChanged.ChangeArt.Value && _b!=null && !param.Visited(_b, true)) {
+      if(exec && param.Art==TopicChanged.ChangeArt.Value && _b!=null && !param.Visited(_b, true)) {
         if(Direction==0 || Direction==1) {
           _b.SetValue(_a.GetValue(), new TopicChanged(param));
         } else {
@@ -216,7 +227,7 @@ namespace X13.PLC {
       }
     }
     private void _b_changed(Topic sender, TopicChanged param) {
-      if(param.Art==TopicChanged.ChangeArt.Value && _a!=null && !param.Visited(_a, true)) {
+      if(exec && param.Art==TopicChanged.ChangeArt.Value && _a!=null && !param.Visited(_a, true)) {
         if(Direction==0 || Direction==2) {
           _a.SetValue(_b.GetValue(), new TopicChanged(param));
         } else {

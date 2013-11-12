@@ -36,6 +36,9 @@ namespace X13.CC {
     private ObservableCollection<LogEntry> LogCollection;
     private bool _showDebug;
     private Action<LogEntry> AddLogEntryDelegate;
+    private DVar<long> _lHead;
+    private DVar<string> _lDebug;
+    private long _oldHead;
 
     public LogView() {
       _instance=this;
@@ -54,35 +57,26 @@ namespace X13.CC {
       } else {
         (lvLog.ItemsSource as System.ComponentModel.ICollectionView).Filter=(o) => (o as LogEntry).ll!=LogLevel.Debug;
       }
-      if(Topic.root.Get<string>("/local/settings/Broker/_URL").value!="#local") {
-        #region init filewatcher
-        string brPath=Topic.root.Get<string>("/local/settings/Broker/_path");
-        if(!string.IsNullOrEmpty(brPath)) {
-          brPath=System.IO.Path.Combine(brPath, "..\\Log\\");
-        } else {
-          brPath="..\\Log\\";
-        }
-        if(Directory.Exists(brPath)) {
-          _endPosition=0;
-          var files=Directory.GetFiles(brPath, "*.log", SearchOption.TopDirectoryOnly).ToList();
-          DateTime td=DateTime.Today;
-          foreach(string f in files) {
-            if(File.GetLastWriteTime(f)>td) {
-              _brokerCurLog=f;
-              break;
-            }
-          }
-          if(!string.IsNullOrEmpty(_brokerCurLog)) {
-            _fsWatcher=new FileSystemWatcher(System.IO.Path.GetDirectoryName(_brokerCurLog), "*.log");
-            _fsWatcher.NotifyFilter=NotifyFilters.LastWrite;
-            _fsWatcher.Changed+=new FileSystemEventHandler(_fsWatcher_Changed);
-            _fsWatcher.Created+=new FileSystemEventHandler(_fsWatcher_Created);
-            _fsWatcher.EnableRaisingEvents=true;
-            _fsWatcher_Changed(null, new FileSystemEventArgs(WatcherChangeTypes.Changed, System.IO.Path.GetDirectoryName(_brokerCurLog), System.IO.Path.GetFileName(_brokerCurLog)));
-          }
-        }
+      _lHead=Topic.root.Get<long>("/var/log");
+      _oldHead=(_lHead.value+1)%100;
+      _lHead.changed+=_lHead_changed;
+      _lDebug=_lHead.Get<string>("A0");
+      _lDebug.changed+=_lDebug_changed;
+    }
 
-        #endregion init filewatcher
+    private void _lDebug_changed(Topic sender, TopicChanged args) {
+      if(_lDebug.value!=null) {
+        Log_Write(new LogEntry(_lDebug.value));
+      }
+    }
+
+    private void _lHead_changed(Topic sender, TopicChanged args) {
+      Topic lEntry;
+      while(_oldHead!=_lHead.value) {
+        if(_lHead.Exist(_oldHead.ToString("D2"), out lEntry)) {
+          Log_Write(new LogEntry((lEntry as DVar<string>).value));
+        }
+        _oldHead=(_oldHead+1)%100;
       }
     }
 
@@ -91,7 +85,7 @@ namespace X13.CC {
     }
 
     private void Log_Write(LogEntry le) {
-      Dispatcher.BeginInvoke(AddLogEntryDelegate, System.Windows.Threading.DispatcherPriority.ApplicationIdle, le);
+      Dispatcher.BeginInvoke(AddLogEntryDelegate, System.Windows.Threading.DispatcherPriority.Input, le);
     }
     private void AddLogEntry(LogEntry en) {
       int hCnt=LogCollection.Count-_halfLength;
@@ -105,7 +99,14 @@ namespace X13.CC {
       while(idx>0 && LogCollection[idx-1].dt>en.dt) {
         idx--;
       }
-      LogCollection.Insert(idx, en);
+      if(idx>1 
+        && LogCollection[idx-1].ll==en.ll && LogCollection[idx-1]._msg==en._msg 
+        && LogCollection[idx-2].ll==en.ll && LogCollection[idx-2]._msg==en._msg) {
+          en.cnt=LogCollection[idx-1].cnt+1;
+          LogCollection[idx-1]=en;
+      } else {
+        LogCollection.Insert(idx, en);
+      }
 
       if((_showDebug || en.ll!=LogLevel.Debug) && lvLog.Items.Count>1 && !LogPanel.IsFocused) {
         if(lvLog.SelectedItem==null) {
@@ -117,13 +118,23 @@ namespace X13.CC {
     }
 
     public class LogEntry {
+      internal string _msg;
       public LogEntry(string p) {
         int idx=p.IndexOf('[');
         try {
-          if(idx<7) {
+          if(idx<10) {
             return;
           }
-          dt=DateTime.Parse(p.Substring(0, idx));
+          dt=DateTime.Parse(p.Substring(3, idx-3));
+          int day;
+          if(int.TryParse(p.Substring(0, 2), out day)){
+            day-=dt.Day;
+            if(day>0) {
+              dt=dt.AddMonths(-1).AddDays(day);
+            } else {
+              dt=dt.AddDays(day);
+            }
+          }
           switch(p[idx+1]) {
           case 'D':
             ll=LogLevel.Debug;
@@ -154,64 +165,10 @@ namespace X13.CC {
 
       public DateTime dt { get; private set; }
       public LogLevel ll { get; private set; }
-      public string message { get; private set; }
+      public string message { get{ return cnt==0?_msg: string.Format("{0} [{1}]",_msg, cnt);} private set{ _msg=value;} }
       public bool local { get; private set; }
+      public int cnt;
     }
-
-    #region FileWatcher
-    private FileSystemWatcher _fsWatcher;
-    private string _brokerCurLog;
-    private long _endPosition;
-    private int _ln_state=0;
-
-    private void _fsWatcher_Changed(object sender, FileSystemEventArgs e) {
-      if(e.Name!= System.IO.Path.GetFileName(_brokerCurLog)) {
-        return;
-      }
-      try {
-        using(FileStream fs=File.Open(_brokerCurLog, FileMode.Open, FileAccess.Read, FileShare.Read)) {
-          fs.Seek(_endPosition, SeekOrigin.Begin);
-          List<byte> arr=new List<byte>(128);
-          int b;
-          while((b=fs.ReadByte())>0) {
-            if((b==0x0D || b==0x0A) && (_ln_state==0 || _ln_state==1)) {
-              _ln_state++;
-              if(_ln_state==2) {
-                _ln_state=0;
-                b=fs.ReadByte();
-                if(b==' ' || b=='\t') {
-                  arr.Add(0x0D);
-                  arr.Add(0x0A);
-                } else {
-                  Log_Write(new LogEntry(Encoding.UTF8.GetString(arr.ToArray())));
-                  arr.Clear();
-                  if(b==-1) {
-                    continue;
-                  }
-                }
-              } else {
-                continue;
-              }
-            }
-            arr.Add((byte)b);
-          }
-          _endPosition=fs.Position;
-        }
-      }
-      catch(IOException) {
-      }
-      catch(Exception ex) {
-        Log.Error("LogWatcher.ctor file={1} \nException :{0}", ex.Message, _brokerCurLog);
-      }
-    }
-    private void _fsWatcher_Created(object sender, FileSystemEventArgs e) {
-      DateTime td=DateTime.Today;
-      if(System.IO.Path.GetFileName(_brokerCurLog)!=e.Name && File.GetLastWriteTime(e.FullPath)>td) {
-        _brokerCurLog=e.FullPath;
-      }
-      _endPosition=0;
-    }
-    #endregion
 
     private void DockableContent_MouseLeave(object sender, MouseEventArgs e) {
       lvLog.SelectedItem=null;

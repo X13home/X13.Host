@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using X13.PLC;
 
 namespace X13.MQTT {
   /// <summary>The different types of messages defined in the MQTT protocol</summary>
@@ -160,7 +159,7 @@ namespace X13.MQTT {
       int read = 0;
       while(read < buffer.Length) {
         int res = str.Read(buffer, read, buffer.Length - read);
-        if(res == -1) {
+        if(res <1) {
           throw new Exception("End of stream reached whilst filling buffer");
         }
         read += res;
@@ -215,6 +214,9 @@ namespace X13.MQTT {
       }
       if((connectFlags & 0x40)!=0) {
         userPassword=ReadStringFromStream(str);
+      }
+      if(userPassword==null) {
+        userPassword=string.Empty;
       }
     }
     public override void Serialise(Stream str) {
@@ -420,9 +422,6 @@ namespace X13.MQTT {
       byte[] tmp= new byte[payloadLen];
       ReadCompleteBuffer(str, tmp);
       Payload=Encoding.UTF8.GetString(tmp);
-      //if(!Path.StartsWith("/system")){
-      //  Log.Debug("<{0}{1}={2}", this.Retained?"*":".", Path, Payload??"null");
-      //}
     }
     public Topic DataSource { get; private set; }
     public string Path { get { return (DataSource!=null?DataSource.path:_path); } set { _path=value; } }
@@ -443,7 +442,7 @@ namespace X13.MQTT {
       }
       byte[] payloadBuf=Encoding.UTF8.GetBytes(pys);
       base.variableHeaderLength =(uint)(
-        2 + Path.Length    // Topic + length
+        2 + pathBuf.Length    // Topic + length
           +(base.QualityOfService  == QoS.AtMostOnce ? 0 : 2)  // Message ID for QoS > 0
           +((payloadBuf==null)?0:payloadBuf.Length));                     // Message Payload
       base.Serialise(str);
@@ -457,7 +456,7 @@ namespace X13.MQTT {
       if(payloadBuf!=null && payloadBuf.Length>0) {
         str.Write(payloadBuf, 0, payloadBuf.Length);
       }
-      //if(!Path.StartsWith("/system")) {
+      //if(!Path.StartsWith("/etc")) {
       //  Log.Debug(">{0}{1}={2}", this.Retained?"*":".", Path, pys??"null");
       //}
     }

@@ -1,0 +1,18 @@
+1-Wire plugin for X13.Home
+
+supported:
+DS9490R - 1Wire adapter
+DS9097U - 1Wire adapter (not tested)
+DS18B20 - Digital Thermometer
+DS18S20 - Digital Thermometer
+DS2406  - Dual Addressable Switch
+DS2413  - Dual Channel Addressable Switch(without alarm)
+DS2438  - Smart Battery Monitor (2 ADC + Thermometer)
+
+use:
+1. Install driver from http://www.maximintegrated.com/products/ibutton/software/tmex/index.cfm
+2. Copy OneWire.dll & OneWireLinkLayer.dll to X13.Home\bin directory
+3. Plug in 1Wire adapter
+4. Restart Engine
+5. Check conected devices in /dev/1Wire
+6. Enjoy!

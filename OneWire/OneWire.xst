@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root head="/etc/declarers/1Wire">
+  <item name="{DS9490}" value="/OneWire;component/Images/1w_adapter.png" saved="True" type="System.String">
+    <item name="remove" value="ZD" saved="True" type="System.String" />
+  </item>
+  <item name="DS9097U" value="/OneWire;component/Images/1w_adapter.png" saved="True" type="System.String">
+    <item name="remove" value="ZD" saved="True" type="System.String" />
+  </item>
+  <item name="DS18B20" value="/OneWire;component/Images/1w_slave.png" saved="True" type="System.String">
+    <item name="remove" value="ZD" saved="True" type="System.String" />
+  </item>
+  <item name="DS18S20" value="/OneWire;component/Images/1w_slave.png" saved="True" type="System.String">
+    <item name="remove" value="ZD" saved="True" type="System.String" />
+  </item>
+  <item name="DS2406" value="/OneWire;component/Images/1w_slave.png" saved="True" type="System.String">
+    <item name="remove" value="ZD" saved="True" type="System.String" />
+  </item>
+  <item name="DS2413" value="/OneWire;component/Images/1w_slave.png" saved="True" type="System.String">
+    <item name="remove" value="ZD" saved="True" type="System.String" />
+  </item>
+  <item name="DS2438" value="/OneWire;component/Images/1w_slave.png" saved="True" type="System.String">
+    <item name="remove" value="ZD" saved="True" type="System.String" />
+  </item>
+</root>

@@ -17,7 +17,7 @@ namespace X13.View {
 
     public static bool Update() {
       bool ret=false;
-      DateTime now=DateTime.Now;
+      DateTime now=Topic.root.Get<DateTime>("/var/now").value;
       if(_list.Count<7) {
         Load(DateTime.Today.AddDays(1).AddSeconds(1));
         _list.Sort();
@@ -70,7 +70,7 @@ namespace X13.View {
       }
 
 
-      Topic trp=Topic.root.Get("/local/settings/Transport");
+      Topic trp=Topic.root.Get("/local/cfg/Transport");
       foreach(var route in trp.children.Where(z => z.valueType==typeof(long)).Cast<DVar<long>>()) {
         DateTime now=DateTime.Now.AddMinutes(route.value);
         foreach(var i in route.children.Where(z => z.valueType==typeof(long)).Cast<DVar<long>>()) {

@@ -33,11 +33,16 @@ namespace X13.CC {
     /// <summary>feel DrawingVisual</summary>
     /// <param name="chLevel">0 - locale, 1 - local & child, 2 - drag, 3- set position</param>
     public abstract void Render(int chLevel);
+    public override string ToString() {
+      return GetModel()!=null?GetModel().name:"??";
+    }
+
   }
 
   internal class uiPin : uiItem {
     private Vector _ownerOffset;
     private List<uiWire> _connections;
+    private uiTracer _tracer;
     public SchemaElement owner { get; private set; }
     /// <summary>0 - bidirectional, 1 - input, 2 - output</summary>
     public byte Direction { get; set; }
@@ -65,6 +70,12 @@ namespace X13.CC {
       if(_connections.Count==0) {
         model.saved=true;
       }
+    }
+    public void SetTracer(uiTracer tr) {
+      if(_tracer!=null) {
+        _tracer.GetModel().Remove();
+      }
+      _tracer=tr;
     }
     public override void Render(int chLevel) {
       if(model==null) {
@@ -113,6 +124,9 @@ namespace X13.CC {
         foreach(uiWire w in _connections.ToArray()) {
           w.Render(chLevel);
         }
+      }
+      if(_tracer!=null) {
+        _tracer.Render(chLevel);
       }
     }
     public override Topic GetModel() {
@@ -214,9 +228,14 @@ namespace X13.CC {
       }
 
       using(DrawingContext dc=this.RenderOpen()) {
+        int gs=LogramView.CellSize;
         Pen pn=new Pen(A.brush, 2.0);
         for(int i=0; i<_track.Count-1; i++) {
-          dc.DrawLine(_selected?Schema.SelectionPen:pn, _track[i], _track[i+1]);
+          if(_track[i].X==_track[i+1].X && _track[i].Y==_track[i+1].Y) {
+            dc.DrawEllipse(A.brush, null, _track[i], 3, 3);
+          } else {
+            dc.DrawLine(_selected?Schema.SelectionPen:pn, _track[i], _track[i+1]);
+          }
         }
       }
     }
@@ -280,21 +299,21 @@ namespace X13.CC {
         //Lets calculate each successors
         for(int i=0; i<4; i++) {
           PathFinderNode newNode;
+          newNode.PX = parentNode.X;
+          newNode.PY  = parentNode.Y;
           newNode.X = parentNode.X + direction[i, 0];
           newNode.Y = parentNode.Y + direction[i, 1];
-          int newG=this.GetWeigt(newNode.X, newNode.Y, mVert!=0);
-          if(newG>100)
+          int newG=this.GetWeigt(newNode.X, newNode.Y, direction[i, 0]==0);
+          if(newG>100 || newG==0)
             continue;
           newG+= parentNode.G;
 
-
-          if(newG == parentNode.G) {
-            //Unbrekeable
-            continue;
-          }
           // Дополнительная стоимиость поворотов
-          if(((newNode.X - parentNode.X)!=0 && mVert!=0) || ((newNode.Y - parentNode.Y)!=0 && mVert==0)) {
-            newG += 3; // 20;
+          if( ((newNode.Y - parentNode.Y)!=0) != (mVert!=0)) {
+            if(this.GetWeigt(parentNode.X, parentNode.Y, direction[i, 0]==0)>100) {
+              continue;   
+            }
+            newG += 4; // 20;
           }
 
           int foundInOpenIndex = -1;
@@ -317,8 +336,6 @@ namespace X13.CC {
           if(foundInCloseIndex != -1 && mClose[foundInCloseIndex].G <= newG)
             continue;
 
-          newNode.PX      = parentNode.X;
-          newNode.PY      = parentNode.Y;
           newNode.G       = newG;
 
           newNode.H       = 2+Math.Sign(Math.Abs(newNode.X - finishX) + Math.Abs(newNode.Y - finishY)-Math.Abs(newNode.PX - finishX) - Math.Abs(newNode.PY - finishY));
@@ -326,28 +343,36 @@ namespace X13.CC {
 
           mOpen.Push(newNode);
         }
-
         mClose.Add(parentNode);
-
       }
 
       if(found) {
+        uiItem pIt=null, cIt;
         track.Clear();
         PathFinderNode fNode = mClose[mClose.Count - 1];
         track.Add(new Point(gs+finishX*gs, gs+finishY*gs));
         for(int i=mClose.Count - 1; i>=0; i--) {
           if(fNode.PX == mClose[i].X && fNode.PY == mClose[i].Y || i == mClose.Count - 1) {
+            fNode = mClose[i];
             bool vert=(fNode.PY-fNode.Y)!=0;
-            if(_owner.MapGet(vert, fNode.PX, fNode.PY)==null) {
+            if((_owner.MapGet(vert, fNode.PX, fNode.PY))==null) {
               _owner.MapSet(vert, fNode.PX, fNode.PY, this);
             }
-            if(_owner.MapGet(vert, fNode.X, fNode.Y)==null) {
+            if((cIt=_owner.MapGet(vert, fNode.X, fNode.Y))==null) {
               _owner.MapSet(vert, fNode.X, fNode.Y, this);
+            } else {
+              if(cIt==this || cIt==this.A || cIt==this.B) {
+                cIt=null;
+              }
             }
-            fNode = mClose[i];
-            if(track[0].X!=gs+fNode.PX*gs && track[0].Y!=gs+fNode.PY*gs) {
+            if(i>0 && i<mClose.Count-1 && cIt!=pIt) {
+              track.Insert(0, new Point(gs+fNode.X*gs, gs+fNode.Y*gs));
+              track.Insert(0, new Point(gs+fNode.X*gs, gs+fNode.Y*gs));
+              //Log.Info("{0}: {1}; {2}, {3} - {4}; {5}, {6}", this.ToString(), pIt, fNode.X, fNode.Y, cIt, fNode.PX, fNode.PY);
+            } else if(track[0].X!=gs+fNode.PX*gs && track[0].Y!=gs+fNode.PY*gs) {
               track.Insert(0, new Point(gs+fNode.X*gs, gs+fNode.Y*gs));
             }
+            pIt=cIt;
           }
         }
         if(track[0].X!=startX*gs+gs || track[0].Y!=startY*gs+gs) {
@@ -375,10 +400,11 @@ namespace X13.CC {
       }
       var it=_owner.MapGet(vert, X, Y);
       if(it is SchemaElement) {
-        it=_owner.MapGet(!vert, X, Y);
+        vert=!vert;
+        it=_owner.MapGet(vert, X, Y);
       }
       if(it==null) {
-        return 2;
+        return 3;
       } else if(it is uiPin) {
         if(it==this.A || it==this.B) {
           return 1;
@@ -388,12 +414,14 @@ namespace X13.CC {
         var w=it as uiWire;
         if(w.A==this.A || w.A==this.B || w.B==this.A || w.B==this.B) {
           return 1;
+        } else if((w=_owner.MapGet(!vert, X, Y) as uiWire)!=null && (w.A==this.A || w.A==this.B || w.B==this.A || w.B==this.B)) {
+          return 1;
         }
         return 101;
       } else if(it is SchemaElement) {
         return 101;
       }
-      return 3;
+      return 5;
     }
 
     private class ComparePFNode : IComparer<PathFinderNode> {
@@ -421,9 +449,88 @@ namespace X13.CC {
     public abstract void SetLocation(Vector loc, bool save);
   }
 
-  internal class uiAlias : SchemaElement {
+  internal class uiTracer : SchemaElement {
     private Schema _owner;
     private uiPin _pin;
+    private DVar<PiTracer> _model;
+
+    public uiTracer(DVar<PiTracer> model, Schema owner) {
+      _owner=owner;
+      _model=model;
+      var o=_owner._visuals.First(z => z is uiItem && (z as uiItem).GetModel().path==model.value.path);
+      if(o is uiPin) {
+        _pin=o as uiPin;
+      } else {
+        _pin=(o as uiAlias)._pin;
+      }
+      _pin.SetTracer(this);
+
+      uint l=(uint)_model.Get<long>("_location");
+      Render(3);
+      owner.AddVisual(this);
+      _model.changed+=_model_changed;
+      _model.Subscribe("_location", LocationChanged);
+
+    }
+
+    public override void SetLocation(Vector loc, bool save) {
+      if(save) {
+        int gs=LogramView.CellSize;
+        int topCell=(int)(loc.Y-_pin.Offset.Y-gs/2)/gs;
+        int leftCell=(int)(loc.X-_pin.Offset.X)/gs;
+        var sLoc=_model.Get<long>("_location");
+        sLoc.saved=true;
+        sLoc.value=((leftCell<<16) | (ushort)topCell);
+      } else {
+        Offset=loc;
+        Render(1);
+      }
+    }
+
+    public override Topic GetModel() {
+      return _model;
+    }
+
+    public override void Render(int chLevel) {
+      double width;
+      int gs=LogramView.CellSize;
+      if(chLevel>1) {
+        uint l=(uint)_model.Get<long>("_location");
+        OriginalLocation=new Vector(_pin.Offset.X+(0.5+(short)(l>>16))*gs, _pin.Offset.Y+((short)l)*gs);
+        this.Offset=OriginalLocation;
+      }
+
+      using(DrawingContext dc=this.RenderOpen()) {
+        string text=_pin.GetModel().GetValue().ToString();
+        FormattedText ft=new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LogramView.FtFont, gs*0.6, Brushes.Black);
+        width=ft.WidthIncludingTrailingWhitespace;
+        ft.MaxTextHeight=gs-3;
+        dc.DrawLine(new Pen(Brushes.DarkViolet, 1), new Point(_pin.Offset.X-Offset.X, _pin.Offset.Y-Offset.Y), new Point((_pin.Offset.X>Offset.X?width-1:0), gs-4));
+        dc.DrawText(ft, new Point(0, 1));
+        dc.DrawLine(_selected?Schema.SelectionPen:(new Pen(_pin.brush, 1)), new Point(0, gs-4), new Point(width-1, gs-4));
+      }
+    }
+
+    private void _model_changed(Topic sender, TopicChanged param) {
+      if(sender==_model && param.Art==TopicChanged.ChangeArt.Remove) {
+        _model.changed-=_model_changed;
+        _pin.SetTracer(null);
+        this.Dispatcher.BeginInvoke(new Action(() => {
+          _owner.DeleteVisual(this);
+        }));
+        _model.Remove();
+      }
+    }
+    private void LocationChanged(Topic sender, TopicChanged param) {
+      if(param.Art==TopicChanged.ChangeArt.Value) {
+        this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);
+      }
+    }
+  }
+
+  internal class uiAlias : SchemaElement {
+    private Schema _owner;
+    public uiPin _pin { get; private set; }
     private int _oldX=-1;
     private int _oldY=-1;
     private int _oldH=0;
@@ -602,7 +709,7 @@ namespace X13.CC {
       int gs=LogramView.CellSize;
 
       DVar<string> declarer;
-      Topic fd=Topic.root.Get("/system/declarers/func/");
+      Topic fd=Topic.root.Get("/etc/declarers/func/");
       Topic dt;
       Topic tmp;
       if(!model.Exist("_declarer", out dt) || !fd.Exist((dt as DVar<string>).value, out tmp ) || ((declarer=tmp as DVar<string>)==null)) {
@@ -663,7 +770,6 @@ namespace X13.CC {
       double width=Math.Round(Math.Max(head.WidthIncludingTrailingWhitespace*2-gs/2, wi+wo+gs)/gs, 0)*gs;
       double height=Math.Max(cntIp*gs, cntOp*gs);
       if(height==0) {
-        Log.Error("{0} has no pins", model.path);
         return;
       }
       if(chLevel==3) {
@@ -684,7 +790,7 @@ namespace X13.CC {
         dc.DrawRectangle(Brushes.White, null, new Rect(-1, 2, width+4, height+gs-2));
         dc.DrawRectangle(Brushes.AliceBlue, border, new Rect(3, gs-0.5, wo>0?width-6:width-2, height+1));
         dc.DrawText(head, new Point((width-head.WidthIncludingTrailingWhitespace)/2, 1));
-        BitmapImage ico=new BitmapImage(new Uri("pack://application:,,"+declarer.value));
+        BitmapImage ico=new BitmapImage(new Uri(declarer.value));
         dc.DrawRectangle(null, border, new Rect(wi, gs-0.5, gs+1, gs+1));
         dc.DrawImage(ico, new Rect(wi+0.5, gs, gs, gs));
         int i;

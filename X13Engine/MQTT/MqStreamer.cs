@@ -16,7 +16,6 @@ using System.Net.Sockets;
 using System.IO;
 using System.Net;
 using System.Threading;
-using X13.PLC;
 
 namespace X13.MQTT {
   internal class MqStreamer {
@@ -30,6 +29,7 @@ namespace X13.MQTT {
     private byte[] _rcvBuf=new byte[1];
     private Action<MqMessage> _rcvCallback;
     private Timer _rcvTimer;
+    private bool _sndPaused;
 
     private Queue<MqMessage> _sendQ=new Queue<MqMessage>(32);
     private List<wMessage> _waitAck=new List<wMessage>();
@@ -52,15 +52,31 @@ namespace X13.MQTT {
       this._sendCB=new AsyncCallback(SendProcess);
       this._rcvCallback=recv;
       this._idleCB=idle;
-      this._stream.BeginRead(_rcvBuf, 0, 1, ReceiveProcess, _stream);
-      this._rcvTimer=new Timer(new TimerCallback((o) => { _rcvMemoryStream.Seek(0, SeekOrigin.Begin); _rcvState=0; }));
-      this._sendTimer=new Timer(new TimerCallback(SendWaitAck));
+      this._stream.BeginRead(_rcvBuf, 0, 1, RcvProcess, _stream);
+      this._rcvTimer=new Timer(RcvTimeout);
+      this._sendTimer=new Timer(SendWaitAck);
     }
     public bool isOpen {
       get {
         return Socket==null?false:Socket.Connected;
       }
     }
+    public bool isSndPaused {
+      get { return _sndPaused; }
+      set {
+        if(_sndPaused && !value) {
+          SndResume();
+        } else {
+          _sndPaused=value;
+        }
+      }
+    }
+
+    /// <summary> Send Message to broker</summary>
+    /// <param name="msg">MQTT message</param>
+    /// <remarks>Upon receipt of subscription switches to pause.
+    /// Resumes at a pause in the receive of data over 300 ms.
+    /// When paused publish are not sent</remarks>
     public void Send(MqMessage msg) {
       if(msg.QualityOfService!=QoS.AtMostOnce && msg.MessageID==0) {
         int tmp=Interlocked.Increment(ref _messageIdGen);
@@ -73,7 +89,7 @@ namespace X13.MQTT {
         }
         msg.MessageID=(ushort)tmp;
       }
-      if(Interlocked.Exchange(ref _sendProcessed, 1)==0) {
+      if((!_sndPaused || msg.MsgType!=MessageType.PUBLISH) && Interlocked.Exchange(ref _sendProcessed, 1)==0) {
         SendIntern(msg);
       } else {
         lock(_sendQ) {
@@ -109,7 +125,7 @@ namespace X13.MQTT {
         if(_waitAck.Count>0) {
           _sendTimer.Change(900, Timeout.Infinite);
         } else {
-          _sendTimer.Change(30, Timeout.Infinite);
+          _sendTimer.Change(45, Timeout.Infinite);
         }
       }
     }
@@ -144,7 +160,7 @@ namespace X13.MQTT {
       if(_waitAck.Count>0) {
         _waitAck[0].cnt++;
         this.Send(_waitAck[0].msg);
-        if(_waitAck[0].cnt>2) {
+        if(_waitAck.Count>0 && _waitAck[0].cnt>2) {
           _waitAck.RemoveAt(0);
         }
       } else if(_idleCB!=null) {
@@ -152,7 +168,7 @@ namespace X13.MQTT {
       }
     }
 
-    private void ReceiveProcess(IAsyncResult ar) {
+    private void RcvProcess(IAsyncResult ar) {
       bool first=true;
       int len;
       try {
@@ -200,9 +216,12 @@ namespace X13.MQTT {
                 _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
                 MqMessage msg=MqMessage.Parse(_rcvHeader, _rcvLengt, _rcvMemoryStream);
                 if(msg==null) {
-                  Log.Warning("unrecognized message from {0}", ((IPEndPoint)Socket.Client.RemoteEndPoint));
+                  Log.Warning("unrecognized message from {0}={1:X2}[{2}]", ((IPEndPoint)Socket.Client.RemoteEndPoint), _rcvHeader, _rcvLengt);
+                  _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
+                  _rcvState=0;
                 } else {
                   _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
+                  _rcvMemoryStream.SetLength(0);
                   _rcvState=0;
 
                   if(msg.MessageID!=0) {
@@ -221,11 +240,11 @@ namespace X13.MQTT {
                       }
                     }
                   }
+                  if(_rcvCallback!=null) {
+                    _rcvCallback(msg);
+                  }
                 }
 
-                if(_rcvCallback!=null) {
-                  _rcvCallback(msg);
-                }
                 if(_waitAck.Count>0) {
                   _sendTimer.Change(900, Timeout.Infinite); // connection is busy
                 }
@@ -246,6 +265,8 @@ namespace X13.MQTT {
           return;
         }
         catch(Exception ex) {
+          _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
+          _rcvState=0;
           Log.Warning(ex.ToString());
         }
       } else {
@@ -255,21 +276,44 @@ namespace X13.MQTT {
         return;
       }
       try {
-        _stream.BeginRead(_rcvBuf, 0, 1, ReceiveProcess, _stream);
+        _stream.BeginRead(_rcvBuf, 0, 1, RcvProcess, _stream);
       }
       catch(IOException ex) {
         if(_connected) {
           this.Close(true);
-          Log.Warning("MqStreamer.ReceiveProcess {0}", ex.Message);
+          Log.Warning("MqStreamer.RcvProcess {0}", ex.Message);
         }
         return;
       }
       catch(ObjectDisposedException ex) {
-        Log.Warning("MqStreamer.ReceiveProcess {0}", ex.Message);
+        Log.Warning("MqStreamer.RcvProcess {0}", ex.Message);
         return;
       }
     }
+    private void RcvTimeout(object o) {
+      if(_rcvState!=0) {
+        _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
+        _rcvState=0;
+      }
+    }
 
+    private void SndResume() {
+      _sndPaused=false;
+      if(Interlocked.Exchange(ref _sendProcessed, 1)==0) {
+        MqMessage msg;
+        lock(_sendQ) {
+          msg=_sendQ.Count>0?_sendQ.Dequeue():null;
+          if(_sendQ.Count==32) {
+            _sendQ.TrimExcess();
+          }
+        }
+        if(msg!=null) {
+          SendIntern(msg);
+        } else {
+          _sendProcessed=0;
+        }
+      }
+    }
     public override string ToString() {
       if(isOpen) {
         return "Connected to "+Dns.GetHostEntry(((IPEndPoint)Socket.Client.RemoteEndPoint).Address).HostName;
