@@ -147,6 +147,15 @@ namespace X13.MQTT {
       catch(ObjectDisposedException) {
         return;
       }
+      catch(Exception ex) {
+        string re;
+        try{
+          re=Socket.Client.RemoteEndPoint.ToString();
+        }catch(Exception){
+          re="UNK";
+        }
+        Log.Warning("MqStreamer.SendIntern({0}, {1}) - {2}", msg.ToString(), re, ex.ToString());
+      }
       if(msg.QualityOfService!=QoS.AtMostOnce && !msg.Duplicate) {
         _waitAck.Add(new wMessage(msg));
       }

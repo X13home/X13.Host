@@ -316,9 +316,9 @@ namespace X13.PLC {
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         _out.saved=true;
-        if(source==_reset && _reset.value) {
+        if(_reset.value) {
           _out.value=0;
-        } else if((source==_set || source==_val) && _set.value) {
+        } else if(_set.value) {
           _out.value=_val.value;
         } else if(source==_inc && _inc.value) {
           _out.value++;
