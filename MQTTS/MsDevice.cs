@@ -66,9 +66,11 @@ namespace X13.Periphery {
     public State state {
       get { return _stateVar!=null?_stateVar.value:State.Disconnected; }
       protected set {
+        State oldState=State.Disconnected;
         if(_stateVar!=null) {
           try {
             _stateVar.saved=false;
+            oldState=_stateVar.value;
             _stateVar.value=value;
           }
           catch(ObjectDisposedException) {
@@ -77,11 +79,28 @@ namespace X13.Periphery {
         }
         if(_present!=null) {
           try {
-            _present.value=(state==State.Connected || state==State.ASleep || state==State.AWake);
+            _present.saved=false;
+            if(oldState==State.Connected && value==State.Connected && _present.value) { // reconnect from device
+              _present.value=false;
+              new Timer(SetPresent, null, 100, Timeout.Infinite);
+            } else {
+              _present.value=(state==State.Connected || state==State.ASleep || state==State.AWake);
+            }
           }
           catch(ObjectDisposedException) {
             _present=null;
           }
+        }
+      }
+    }
+    private void SetPresent(object o){
+      if(_present!=null) {
+        try {
+          _present.saved=false;
+          _present.value=true;
+        }
+        catch(ObjectDisposedException) {
+          _present=null;
         }
       }
     }
