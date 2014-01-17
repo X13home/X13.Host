@@ -13,7 +13,7 @@ using System.Reflection;
 
 [assembly: AssemblyCompany("X13")]
 [assembly: AssemblyProduct("X13.Home")]
-[assembly: AssemblyCopyright("Copyright ©X13 2013")]
+[assembly: AssemblyCopyright("Copyright ©X13 2014")]
 [assembly: AssemblyTrademark("")]
 
 // Version information for an assembly consists of the following four values:
@@ -27,5 +27,5 @@ using System.Reflection;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 
-[assembly: AssemblyVersion("0.3.1345.4")]
-[assembly: AssemblyFileVersion("0.3.1345.4")]
+[assembly: AssemblyVersion("0.3.143.1")]
+[assembly: AssemblyFileVersion("0.3.143.1")]

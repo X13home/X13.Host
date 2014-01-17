@@ -244,10 +244,7 @@
   </item>
   <item name="type">
     <item name="mqtts_cfg" value="pack://application:,,/CC;component/Images/ty_cfg.png" saved="True" type="System.String">
-      <item name="XD_GroupID" value="4i" saved="True" type="System.String" />
-      <item name="XD_Channel" value="4i" saved="True" type="System.String" />
-      <item name="XD_SleepTime" value="4i" saved="True" type="System.String" />
-      <item name="XD_MACAddr" value="4i" saved="True" type="System.String" />
+      <item name="Xq_MACAddr" value="4i" saved="True" type="System.String" />
       <item name="XD_IPAddr" value="4i" saved="True" type="System.String" />
       <item name="XD_IPMask" value="4i" saved="True" type="System.String" />
       <item name="XD_IPRouter" value="4i" saved="True" type="System.String" />
