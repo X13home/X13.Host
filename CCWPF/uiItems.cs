@@ -501,7 +501,8 @@ namespace X13.CC {
       }
 
       using(DrawingContext dc=this.RenderOpen()) {
-        string text=_pin.GetModel().GetValue().ToString();
+        object o=_pin.GetModel().GetValue();
+        string text=o!=null?o.ToString():"null";
         FormattedText ft=new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LogramView.FtFont, gs*0.6, Brushes.Black);
         width=ft.WidthIncludingTrailingWhitespace;
         ft.MaxTextHeight=gs-3;

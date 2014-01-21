@@ -328,8 +328,8 @@ namespace X13.Periphery {
           val=Encoding.Default.GetString(msgData);
           break;
         case TypeCode.Object:
-          if(ti.topic.valueType==typeof(byte[])) {
-            val=msgData;
+          if(ti.topic.valueType==typeof(PLC.ByteArray)) {
+            val=new PLC.ByteArray(msgData);
             break;
           } else {
             return;
@@ -687,8 +687,8 @@ namespace X13.Periphery {
       new NTRecord("_D", typeof(long)),   //uint32
       new NTRecord("_q", typeof(long)),   //int64
       new NTRecord("_s", typeof(string)),
-      new NTRecord("St", typeof(string)),  // Serial port transmit
-      new NTRecord("Sr", typeof(string)),  // Serial port recieve
+      new NTRecord("St", typeof(PLC.ByteArray)),  // Serial port transmit
+      new NTRecord("Sr", typeof(PLC.ByteArray)),  // Serial port recieve
       new NTRecord("Tz", typeof(bool)),
       new NTRecord("Tb", typeof(long)),   //int8
       new NTRecord("TB", typeof(long)),   //uint8
@@ -698,7 +698,7 @@ namespace X13.Periphery {
       new NTRecord("TD", typeof(long)),   //uint32
       new NTRecord("Tq", typeof(long)),   //int64
       new NTRecord("Ts", typeof(string)),
-      new NTRecord("Ta", typeof(byte[])),
+      new NTRecord("Ta", typeof(PLC.ByteArray)),
       new NTRecord("Xz", typeof(bool)),   // user defined
       new NTRecord("Xb", typeof(long)),   //int8
       new NTRecord("XB", typeof(long)),   //uint8
@@ -708,7 +708,7 @@ namespace X13.Periphery {
       new NTRecord("XD", typeof(long)),   //uint32
       new NTRecord("Xq", typeof(long)),   //int64
       new NTRecord("Xs", typeof(string)),
-      new NTRecord("Xa", typeof(byte[])),
+      new NTRecord("Xa", typeof(PLC.ByteArray)),
       new NTRecord("_declarer", typeof(string)),
       new NTRecord("present", typeof(bool)),
     };

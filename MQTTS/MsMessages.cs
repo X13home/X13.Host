@@ -421,8 +421,8 @@ namespace X13.Periphery {
         }
         break;
       case TypeCode.Object:
-        if(t.valueType==typeof(byte[])) {
-          ret.AddRange((byte[])t.GetValue());
+        if(t.valueType==typeof(PLC.ByteArray) && t.GetValue()!=null) {
+          ret.AddRange(((PLC.ByteArray)t.GetValue()).GetBytes());
         }
         break;
       }

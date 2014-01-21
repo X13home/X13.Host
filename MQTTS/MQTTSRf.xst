@@ -330,19 +330,19 @@
         <item name="Op24" value="8zX7" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-11" saved="True" type="System.String" />
         </item>
-        <item name="Sr0" value="AsX7,S20,B21,B22,B23,B24" saved="True" type="System.String">
+        <item name="Sr0" value="AbX7,S20,B21,B22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="RxD 2400, RX" saved="True" type="System.String" />
         </item>
-        <item name="Sr1" value="AsX7,B20,S21,B22,B23,B24" saved="True" type="System.String">
+        <item name="Sr1" value="AbX7,B20,S21,B22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="RxD 4800, RX" saved="True" type="System.String" />
         </item>
-        <item name="Sr2" value="AsX7,B20,B21,S22,B23,B24" saved="True" type="System.String">
+        <item name="Sr2" value="AbX7,B20,B21,S22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="RxD 9600, RX" saved="True" type="System.String" />
         </item>
-        <item name="Sr3" value="AsX7,B20,B21,B22,S23,B24" saved="True" type="System.String">
+        <item name="Sr3" value="AbX7,B20,B21,B22,S23,B24" saved="True" type="System.String">
           <item name="_description" value="RxD 19200, RX" saved="True" type="System.String" />
         </item>
-        <item name="Sr4" value="AsX7,B20,B21,B22,B23,S24" saved="True" type="System.String">
+        <item name="Sr4" value="AbX7,B20,B21,B22,B23,S24" saved="True" type="System.String">
           <item name="_description" value="RxD 38400, RX" saved="True" type="System.String" />
         </item>
         <item name="OA24" value="EzX7" saved="True" type="System.String">
@@ -365,19 +365,19 @@
         <item name="Op25" value="8zX8" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-12" saved="True" type="System.String" />
         </item>
-        <item name="St0" value="AsX8,S20,B21,B22,B23,B24" saved="True" type="System.String">
+        <item name="St0" value="AbX8,S20,B21,B22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="TxD 2400, TX" saved="True" type="System.String" />
         </item>
-        <item name="St1" value="AsX8,B20,S21,B22,B23,B24" saved="True" type="System.String">
+        <item name="St1" value="AbX8,B20,S21,B22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="TxD 4800, TX" saved="True" type="System.String" />
         </item>
-        <item name="St2" value="AsX8,B20,B21,S22,B23,B24" saved="True" type="System.String">
+        <item name="St2" value="AbX8,B20,B21,S22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="TxD 9600, TX" saved="True" type="System.String" />
         </item>
-        <item name="St3" value="AsX8,B20,B21,B22,S23,B24" saved="True" type="System.String">
+        <item name="St3" value="AbX8,B20,B21,B22,S23,B24" saved="True" type="System.String">
           <item name="_description" value="TxD 19200, TX" saved="True" type="System.String" />
         </item>
-        <item name="St4" value="AsX8,B20,B21,B22,B23,S24" saved="True" type="System.String">
+        <item name="St4" value="AbX8,B20,B21,B22,B23,S24" saved="True" type="System.String">
           <item name="_description" value="TxD 38400, TX" saved="True" type="System.String" />
         </item>
         <item name="OA25" value="EzX8" saved="True" type="System.String">
@@ -870,19 +870,19 @@
         <item name="Op24" value="8zX7" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-10" saved="True" type="System.String" />
         </item>
-        <item name="Sr0" value="AsX7,S20,B21,B22,B23,B24" saved="True" type="System.String">
+        <item name="Sr0" value="AbX7,S20,B21,B22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="RxD 2400, RX, SV1-10" saved="True" type="System.String" />
         </item>
-        <item name="Sr1" value="AsX7,B20,S21,B22,B23,B24" saved="True" type="System.String">
+        <item name="Sr1" value="AbX7,B20,S21,B22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="RxD 4800, RX, SV1-10" saved="True" type="System.String" />
         </item>
-        <item name="Sr2" value="AsX7,B20,B21,S22,B23,B24" saved="True" type="System.String">
+        <item name="Sr2" value="AbX7,B20,B21,S22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="RxD 9600, RX, SV1-10" saved="True" type="System.String" />
         </item>
-        <item name="Sr3" value="AsX7,B20,B21,B22,S23,B24" saved="True" type="System.String">
+        <item name="Sr3" value="AbX7,B20,B21,B22,S23,B24" saved="True" type="System.String">
           <item name="_description" value="RxD 19200, RX, SV1-10" saved="True" type="System.String" />
         </item>
-        <item name="Sr4" value="AsX7,B20,B21,B22,B23,S24" saved="True" type="System.String">
+        <item name="Sr4" value="AbX7,B20,B21,B22,B23,S24" saved="True" type="System.String">
           <item name="_description" value="RxD 38400, RX, SV1-10" saved="True" type="System.String" />
         </item>
         <item name="OA24" value="EzX7" saved="True" type="System.String">
@@ -905,19 +905,19 @@
         <item name="Op25" value="8zX8" saved="True" type="System.String">
           <item name="_description" value="Digital output, SV1-9" saved="True" type="System.String" />
         </item>
-        <item name="St0" value="AsX8,S20,B21,B22,B23,B24" saved="True" type="System.String">
+        <item name="St0" value="AbX8,S20,B21,B22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="TxD 2400, TX, SV1-9" saved="True" type="System.String" />
         </item>
-        <item name="St1" value="AsX8,B20,S21,B22,B23,B24" saved="True" type="System.String">
+        <item name="St1" value="AbX8,B20,S21,B22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="TxD 4800, TX, SV1-9" saved="True" type="System.String" />
         </item>
-        <item name="St2" value="AsX8,B20,B21,S22,B23,B24" saved="True" type="System.String">
+        <item name="St2" value="AbX8,B20,B21,S22,B23,B24" saved="True" type="System.String">
           <item name="_description" value="TxD 9600, TX, SV1-9" saved="True" type="System.String" />
         </item>
-        <item name="St3" value="AsX8,B20,B21,B22,S23,B24" saved="True" type="System.String">
+        <item name="St3" value="AbX8,B20,B21,B22,S23,B24" saved="True" type="System.String">
           <item name="_description" value="TxD 19200, TX, SV1-9" saved="True" type="System.String" />
         </item>
-        <item name="St4" value="AsX8,B20,B21,B22,B23,S24" saved="True" type="System.String">
+        <item name="St4" value="AbX8,B20,B21,B22,B23,S24" saved="True" type="System.String">
           <item name="_description" value="TxD 38400, TX, SV1-9" saved="True" type="System.String" />
         </item>
         <item name="OA25" value="EzX8" saved="True" type="System.String">
