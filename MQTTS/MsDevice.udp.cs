@@ -61,11 +61,11 @@ namespace X13.Periphery {
     internal class MsGUdp : IMsGate {
 
       #region static
-      private static IPAddress[] _myIps;
+      private static byte[][] _myIps;
       private static IPAddress[] _bcIps;
 
       public static void Open() {
-        _myIps=Dns.GetHostEntry(Dns.GetHostName()).AddressList.Where(z => z.AddressFamily==AddressFamily.InterNetwork).ToArray();
+        _myIps=Dns.GetHostEntry(Dns.GetHostName()).AddressList.Where(z => z.AddressFamily==AddressFamily.InterNetwork).Union(new IPAddress[]{ IPAddress.Loopback}).Select(z=>z.GetAddressBytes()).ToArray();
         List<IPAddress> bc=new List<IPAddress>();
         try {
           foreach(var nic in NetworkInterface.GetAllNetworkInterfaces()) {
@@ -121,8 +121,14 @@ namespace X13.Periphery {
         Byte[] buf=null;
         try {
           buf = _udp.EndReceive(ar, ref re);
-          if(!_myIps.Any(z => re.Address==z)) {
-            ParseInPacket(buf, re.Address.GetAddressBytes());
+          byte[] addr=re.Address.GetAddressBytes();
+          int len=buf[0]==1?((buf[1]<<8) | buf[2]):buf[0];
+          if(len!=buf.Length) {
+            if(_verbose.value) {
+              Log.Debug("size mismatch: {0}:{1}", re, BitConverter.ToString(buf));
+            }
+          }else if(!_myIps.Any(z => addr.SequenceEqual(z))) {
+            ParseInPacket(buf, addr);
           }
         }
         catch(Exception ex) {
@@ -134,7 +140,6 @@ namespace X13.Periphery {
       }
       private void ParseInPacket(byte[] buf, byte[] addr) {
         Topic devR=Topic.root.Get("/dev");
-
         var msgTyp=(MsMessageType)(buf[0]>1?buf[1]:buf[3]);
         if(msgTyp==MsMessageType.GWINFO || msgTyp==MsMessageType.ADVERTISE) {
           return;
@@ -165,10 +170,12 @@ namespace X13.Periphery {
           if(dev!=null && dev.state!=State.Disconnected && dev.state!=State.Lost) {
             dev.ParseInPacket(buf);
           } else {
-            if(dev==null || dev.Owner==null) {
-              Log.Debug("unknown device: {0}:{1}", BitConverter.ToString(addr), BitConverter.ToString(buf));
-            } else {
-              Log.Debug("inactive device: [{0}] {1}:{2}", dev.Owner.name, BitConverter.ToString(addr), BitConverter.ToString(buf));
+            if(_verbose.value) {
+              if(dev==null || dev.Owner==null) {
+                Log.Debug("unknown device: {0}:{1}", BitConverter.ToString(addr), BitConverter.ToString(buf));
+              } else {
+                Log.Debug("inactive device: [{0}] {1}:{2}", dev.Owner.name, BitConverter.ToString(addr), BitConverter.ToString(buf));
+              }
             }
             Send(new MsDisconnect() { Addr=addr });
           }
