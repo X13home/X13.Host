@@ -422,6 +422,8 @@ namespace X13.CC {
               return "pack://application:,,/CC;component/Images/ty_ref.png";
             } else if(ptr.valueType==typeof(PiStatement)) {
               return "pack://application:,,/CC;component/Images/ty_func.png";
+            } else if(ptr.valueType==typeof(ByteArray)) {
+              return "pack://application:,,/CC;component/Images/ty_ByteArray.png";
             }
             break;
           case TypeCode.Boolean:

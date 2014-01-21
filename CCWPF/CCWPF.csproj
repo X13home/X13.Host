@@ -286,7 +286,10 @@
     <Resource Include="Images\ar_pid.png" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Images\fu_insertL.png" />
+    <Resource Include="Images\fu_BAGetL.png" />
+    <Resource Include="Images\fu_BAInsertL.png" />
+    <Resource Include="Images\fu_BALength.png" />
+    <Resource Include="Images\ty_ByteArray.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -1604,13 +1604,13 @@ namespace X13.PLC {
 
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/BAInsertL");
-        t1.value="pack://application:,,/CC;component/Images/fu_insertL.png";
+        t1.value="pack://application:,,/CC;component/Images/fu_BAInsertL.png";
         t1.Get<string>("in").value="Ao";
         t1.Get<string>("val").value="Bi";
         t1.Get<string>("pos").value="Ci";
         t1.Get<string>("len").value="Di";
         t1.Get<string>("out").value="ao";
-        t1.Get<string>("_description").value="paInsert long in byteArray";
+        t1.Get<string>("_description").value="paInsert long to byteArray";
         t1.Get<string>("rename").value="|R";
         t1.Get<string>("remove").value="}D";
       }
@@ -1656,7 +1656,7 @@ namespace X13.PLC {
 
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/BAGetL");
-        t1.value="pack://application:,,/CC;component/Images/fu_insertL.png";
+        t1.value="pack://application:,,/CC;component/Images/fu_BAGetL.png";
         t1.Get<string>("in").value="Ao";
         t1.Get<string>("pos").value="Bi";
         t1.Get<string>("len").value="Ci";
@@ -1721,10 +1721,10 @@ namespace X13.PLC {
 
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/BAGetLength");
-        t1.value="pack://application:,,/CC;component/Images/fu_insertL.png";
+        t1.value="pack://application:,,/CC;component/Images/fu_BALength.png";
         t1.Get<string>("in").value="Ao";
         t1.Get<string>("length").value="ai";
-        t1.Get<string>("_description").value="pcGet length byteArray";
+        t1.Get<string>("_description").value="pcLength of byteArray";
         t1.Get<string>("rename").value="|R";
         t1.Get<string>("remove").value="}D";
       }

@@ -87,7 +87,7 @@
               </GridViewColumnHeader>
             </GridViewColumn.Header>
           </GridViewColumn>
-          <GridViewColumn DisplayMemberBinding="{Binding message}" HeaderContainerStyle="{StaticResource hcs}" Header="Message">
+          <GridViewColumn DisplayMemberBinding="{Binding msg}" HeaderContainerStyle="{StaticResource hcs}" Header="Message">
             <GridViewColumn.Width>
               <MultiBinding Converter="{StaticResource ColumnSpringConverter}">
                 <Binding ElementName="lvLog" Path="ActualWidth" Mode="OneWay"/>

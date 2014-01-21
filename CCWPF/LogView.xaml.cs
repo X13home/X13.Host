@@ -39,6 +39,8 @@ namespace X13.CC {
     private DVar<long> _lHead;
     private DVar<string> _lDebug;
     private long _oldHead;
+    private X13.WOUM.BlockingQueue<LogEntry> _log;
+    private string _lfPath;
 
     public LogView() {
       _instance=this;
@@ -46,6 +48,22 @@ namespace X13.CC {
 
       InitializeComponent();
       this.DataContext = this;
+      if(!Directory.Exists("../log")) {
+        Directory.CreateDirectory("../log");
+      }
+
+      var now=DateTime.Now;
+      try {
+        foreach(string f in Directory.GetFiles("../log/", "*_cc.log", SearchOption.TopDirectoryOnly)) {
+          if(File.GetLastWriteTime(f).AddDays(3)<now)
+            File.Delete(f);
+        }
+      }
+      catch(System.IO.IOException) {
+      }
+      _lfPath="../log/"+now.ToString("yyMMdd")+"_cc.log";
+
+      _log=new X13.WOUM.BlockingQueue<LogEntry>(ProcessLog);
       Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
 
       LogCollection=new ObservableCollection<LogEntry>();
@@ -81,7 +99,45 @@ namespace X13.CC {
     }
 
     private void Log_Write(LogLevel logLevel, DateTime time, string text) {
-      Log_Write(new LogEntry(time, logLevel, text));
+      var le=new LogEntry(time, logLevel, text);
+      Log_Write(le);
+#if DEBUG
+      _log.Enqueue(le);
+#endif
+    }
+    private void ProcessLog(LogEntry en) {
+      string rez=null;
+      switch(en.ll) {
+      case LogLevel.Error:
+        rez=string.Format("{0:HH:mm:ss.ff}[{2}] {1}", en.dt, en.msg, en.local?"e":"E");
+        break;
+      case LogLevel.Warning:
+        rez=string.Format("{0:HH:mm:ss.ff}[{2}] {1}", en.dt, en.msg, en.local?"w":"W");
+        break;
+      case LogLevel.Info:
+        rez=string.Format("{0:HH:mm:ss.ff}[{2}] {1}", en.dt, en.msg, en.local?"i":"I");
+        break;
+      case LogLevel.Debug:
+        rez=string.Format("{0:HH:mm:ss.ff}[{2}] {1}", en.dt, en.msg, en.local?"d":"D");
+        break;
+      }
+
+
+      if(en.ll!=LogLevel.Debug ||  _showDebug) {
+        for(int i=2; i>=0; i--) {
+          try {
+            using(FileStream fs=File.Open(_lfPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite)) {
+              fs.Seek(0, SeekOrigin.End);
+              byte[] ba=Encoding.UTF8.GetBytes(rez+"\r\n");
+              fs.Write(ba, 0, ba.Length);
+            }
+            break;
+          }
+          catch(System.IO.IOException) {
+            System.Threading.Thread.Sleep(15);
+          }
+        }
+      }
     }
 
     private void Log_Write(LogEntry le) {
@@ -102,8 +158,8 @@ namespace X13.CC {
       if(idx>1 
         && LogCollection[idx-1].ll==en.ll && LogCollection[idx-1]._msg==en._msg 
         && LogCollection[idx-2].ll==en.ll && LogCollection[idx-2]._msg==en._msg) {
-          en.cnt=LogCollection[idx-1].cnt+1;
-          LogCollection[idx-1]=en;
+        en.cnt=LogCollection[idx-1].cnt+1;
+        LogCollection[idx-1]=en;
       } else {
         LogCollection.Insert(idx, en);
       }
@@ -127,7 +183,7 @@ namespace X13.CC {
           }
           dt=DateTime.Parse(p.Substring(3, idx-3));
           int day;
-          if(int.TryParse(p.Substring(0, 2), out day)){
+          if(int.TryParse(p.Substring(0, 2), out day)) {
             day-=dt.Day;
             if(day>0) {
               dt=dt.AddMonths(-1).AddDays(day);
@@ -153,19 +209,19 @@ namespace X13.CC {
         catch(Exception ex) {
           Log.Warning("LogEntry.ctor({0}) - {1}", p, ex.Message);
         }
-        message=p.Substring(idx+4);
+        msg=p.Substring(idx+4);
         local=false;
       }
       public LogEntry(DateTime time, LogLevel logLevel, string text) {
         this.dt = time;
         this.ll = logLevel;
-        this.message = text;
+        this.msg = text;
         this.local=true;
       }
 
       public DateTime dt { get; private set; }
       public LogLevel ll { get; private set; }
-      public string message { get{ return cnt==0?_msg: string.Format("{0} [{1}]",_msg, cnt);} private set{ _msg=value;} }
+      public string msg { get { return cnt==0?_msg: string.Format("{0} [{1}]", _msg, cnt); } private set { _msg=value; } }
       public bool local { get; private set; }
       public int cnt;
     }
