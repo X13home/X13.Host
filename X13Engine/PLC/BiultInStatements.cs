@@ -1644,6 +1644,58 @@ namespace X13.PLC {
       public void DeInit() {
       }
     }
+    [Export(typeof(IStatement))]
+    [ExportMetadata("declarer", "BAInsertS")]
+    private class BAInsertS : IStatement {
+      private DVar<ByteArray> _in;
+      private DVar<ByteArray> _out;
+      private DVar<string> _val;
+      private DVar<long> _pos;
+      private DVar<long> _len;
+
+      public void Load() {
+        var t1=Topic.root.Get<string>("/etc/declarers/func/BAInsertS");
+        t1.value="pack://application:,,/CC;component/Images/fu_BAInsertS.png";
+        t1.Get<string>("in").value="Ao";
+        t1.Get<string>("val").value="Bs";
+        t1.Get<string>("pos").value="Ci";
+        t1.Get<string>("len").value="Di";
+        t1.Get<string>("out").value="ao";
+        t1.Get<string>("_description").value="pcInsert string to byteArray";
+        t1.Get<string>("rename").value="|R";
+        t1.Get<string>("remove").value="}D";
+      }
+
+      public void Init(DVar<PiStatement> model) {
+        _in=BiultInStatements.AddPin<ByteArray>(model, "in");
+        _out=BiultInStatements.AddPin<ByteArray>(model, "out");
+        _out.saved=false;
+        _val=BiultInStatements.AddPin<string>(model, "val");
+        _pos=BiultInStatements.AddPin<long>(model, "pos");
+        _len=BiultInStatements.AddPin<long>(model, "len");
+      }
+
+      public void Calculate(DVar<PiStatement> model, Topic source) {
+        if(_in==null || _out==null || _pos==null || _len==null || source==_out) {
+          return;
+        }
+        int cnt=(int)_len.value;
+        byte[] data=(_val==null || _val.value==null)?new byte[0]:Encoding.Default.GetBytes(_val.value);
+        if(cnt<1) {
+          cnt=data.Length;
+        } else if(cnt>data.Length){
+          byte[] d2=new byte[cnt];
+          Buffer.BlockCopy(data, 0, d2, 0, data.Length);
+          data=d2;
+        } else {
+          data=data.Take(cnt).ToArray();
+        }
+        _out.value=new ByteArray(_in.value, data, (int)_pos.value);
+      }
+
+      public void DeInit() {
+      }
+    }
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "BAGetL")]
@@ -1687,7 +1739,7 @@ namespace X13.PLC {
         }
         byte[] dst=new byte[8];
         if(srcB<0) {
-          srcB=src.Length+1+srcB;
+          srcB=src.Length+srcB;
         }
         if(srcB<0) {
           cnt+=srcB;
@@ -1714,6 +1766,63 @@ namespace X13.PLC {
     }
 
     [Export(typeof(IStatement))]
+    [ExportMetadata("declarer", "BAGetS")]
+    private class BAGetS : IStatement {
+      private DVar<ByteArray> _in;
+      private DVar<long> _pos;
+      private DVar<long> _len;
+      private DVar<string> _out;
+
+      public void Load() {
+        var t1=Topic.root.Get<string>("/etc/declarers/func/BAGetS");
+        t1.value="pack://application:,,/CC;component/Images/fu_BAGetS.png";
+        t1.Get<string>("in").value="Ao";
+        t1.Get<string>("pos").value="Bi";
+        t1.Get<string>("len").value="Ci";
+        t1.Get<string>("out").value="as";
+        t1.Get<string>("_description").value="pdGet string from byteArray";
+        t1.Get<string>("rename").value="|R";
+        t1.Get<string>("remove").value="}D";
+      }
+
+      public void Init(DVar<PiStatement> model) {
+        _in=BiultInStatements.AddPin<ByteArray>(model, "in");
+        _out=BiultInStatements.AddPin<string>(model, "out");
+        _out.saved=false;
+        _pos=BiultInStatements.AddPin<long>(model, "pos");
+        _len=BiultInStatements.AddPin<long>(model, "len");
+      }
+
+      public void Calculate(DVar<PiStatement> model, Topic source) {
+        if(_out==null || _pos==null || _len==null || source==_out) {
+          return;
+        }
+        if(_in==null || _in.value==null) {
+          _out.value=string.Empty;
+          return;
+        }
+        byte[] src=_in.value.GetBytes();
+        int srcB=(int)_pos.value, cnt=(int)_len.value;
+
+        if(srcB<0) {
+          srcB=src.Length+srcB;
+        }
+
+        if(cnt<1 || cnt>src.Length-srcB) {
+          cnt=src.Length-srcB;
+        }
+        if(srcB<0) {
+          cnt+=srcB;
+          srcB=0;
+        }
+        _out.value=Encoding.Default.GetString(src, srcB, cnt);
+      }
+
+      public void DeInit() {
+      }
+    }
+
+    [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "BAGetLength")]
     private class BAGetLength : IStatement {
       private DVar<ByteArray> _in;
@@ -1723,15 +1832,15 @@ namespace X13.PLC {
         var t1=Topic.root.Get<string>("/etc/declarers/func/BAGetLength");
         t1.value="pack://application:,,/CC;component/Images/fu_BALength.png";
         t1.Get<string>("in").value="Ao";
-        t1.Get<string>("length").value="ai";
-        t1.Get<string>("_description").value="pcLength of byteArray";
+        t1.Get<string>("len").value="ai";
+        t1.Get<string>("_description").value="pzLength of byteArray";
         t1.Get<string>("rename").value="|R";
         t1.Get<string>("remove").value="}D";
       }
 
       public void Init(DVar<PiStatement> model) {
         _in=BiultInStatements.AddPin<ByteArray>(model, "in");
-        _out=BiultInStatements.AddPin<long>(model, "length");
+        _out=BiultInStatements.AddPin<long>(model, "len");
         _out.saved=false;
       }
 

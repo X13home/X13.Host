@@ -9,11 +9,14 @@
 #endregion license
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
 namespace X13.PLC {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
+  [TypeConverter(typeof(ByteArrayConverter))]
   public class ByteArray { // : IConvertible 
     [Newtonsoft.Json.JsonProperty]
     private byte[] _val;
@@ -135,5 +138,28 @@ namespace X13.PLC {
       return 0;
     }*/
 
+  }
+  public class ByteArrayConverter : TypeConverter {
+    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) {
+      if(sourceType == typeof(string)) {
+        return true;
+      }
+      return base.CanConvertFrom(context, sourceType);
+    }
+    // Overrides the ConvertFrom method of TypeConverter.
+    public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) {
+      if(value is string) {
+        string[] v = ((string)value).Split(new char[] { ',', ':', '-' });
+        List<byte> rez=new List<byte>();
+        byte tmp;
+        for(int i=0; i<v.Length; i++) {
+          if(byte.TryParse(v[i], NumberStyles.HexNumber, culture, out tmp)) {
+            rez.Add(tmp);
+          }
+        }
+        return new ByteArray(rez.ToArray());
+      }
+      return base.ConvertFrom(context, culture, value);
+    }
   }
 }
