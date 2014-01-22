@@ -303,15 +303,18 @@ namespace X13 {
       }
 
       try {
-        string url=string.Format("v=1&tid=UA-40770280-3&cid={0}&an={1}&av={2}&t=event&ec={0}+{3}&cd={0}+{3}+{2}&ea={4}+",
+        string url=string.Format("v=1&tid=UA-40770280-3&cid={0}&an={1}&av={2}&t=event&ec={0}+{3}&cd={5}+{3}&ea={4}+",
           id.value,
-          Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location),
+          Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location).ToLower(),
           Assembly.GetExecutingAssembly().GetName().Version.ToString(3),
-          Topic.root.Get<string>("/etc/PLC/default").value
-          ,Topic.root.Get<string>("/local/cfg/id").value
+          Topic.root.Get<string>("/etc/PLC/default").value,
+          Topic.root.Get<string>("/local/cfg/id").value,
+          id.value.Substring(0, 8).ToUpper()
           );
-        if(cmd==0 || cmd==1) {
-          url=string.Concat(url, cmd==1?"start":"stop");
+        if(cmd==1) {
+          url=string.Concat(url, "start&el=", Environment.Version.ToString(4));
+        } else if(cmd==0) {
+          url=string.Concat(url, "stop");
         } else {
           url=string.Concat(url, "uptime&el=", (DateTime.Now-_startDT).TotalDays.ToString("##0.00"));
         }
