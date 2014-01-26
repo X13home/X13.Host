@@ -183,6 +183,9 @@ namespace X13.CC {
       case ItemAction.createStringDef:
         next=cur.Get<string>(ci.Header as string);
         break;
+      case ItemAction.createByteArrDef:
+        next=cur.Get<ByteArray>(ci.Header as string);
+        break;
       case ItemAction.createObjectDef:
         next=cur.Get<object>(ci.Header as string);
         break;
@@ -419,6 +422,8 @@ namespace X13.CC {
               return "pack://application:,,/CC;component/Images/ty_ref.png";
             } else if(ptr.valueType==typeof(PiStatement)) {
               return "pack://application:,,/CC;component/Images/ty_func.png";
+            } else if(ptr.valueType==typeof(ByteArray)) {
+              return "pack://application:,,/CC;component/Images/ty_ByteArray.png";
             }
             break;
           case TypeCode.Boolean:
@@ -590,7 +595,7 @@ namespace X13.CC {
         actions.Add(new ItemActionStr("Add/long", ItemAction.createLongMask, null));
         actions.Add(new ItemActionStr("Add/double", ItemAction.createDoubleMask, null));
         actions.Add(new ItemActionStr("Add/string", ItemAction.createStringMask, null));
-        if(ptr.valueType!=null && Type.GetTypeCode(ptr.valueType)!=TypeCode.Object) {
+        if(ptr.valueType!=null && (ptr.valueType==typeof(ByteArray) || Type.GetTypeCode(ptr.valueType)!=TypeCode.Object)) {
           actions.Add(new ItemActionStr("Attach to Logram", ItemAction.addToLogram, null));
         }
         actions.Add(new ItemActionStr("remove", ItemAction.remove, null));
@@ -697,6 +702,7 @@ namespace X13.CC {
     createLongDef='i',
     createDoubleDef='g',
     createStringDef='s',
+    createByteArrDef='b',
     createObjectDef='o',
 
     addToLogram='A',

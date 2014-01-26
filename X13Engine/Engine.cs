@@ -43,6 +43,7 @@ namespace X13 {
     private static Mutex _singleInstance;
     private static BlockingQueue<LogEntry> _log;
     private static bool _logToConsole;
+    private static DateTime _startDT;
     private string _lfPath;
     private DateTime _firstDT;
     private DVar<LogLevel> _lThreshold;
@@ -50,7 +51,6 @@ namespace X13 {
     private DVar<bool> _debug;
     private Timer _statTimer;
     private string _cfgPath;
-
     private Plugins _plugins;
 
     public bool StartUp(string cfgPath=null) {
@@ -123,9 +123,13 @@ namespace X13 {
       }
 
       _plugins.Start();
+      _startDT=DateTime.Now;
       _statTimer=new Timer(o => {
         SendStat(2);
-      }, null, 1500, 7200000);
+      }, null, 7200000, 7200000);
+      ThreadPool.QueueUserWorkItem(o => {
+        SendStat(1);
+      });
       return true;
     }
 
@@ -137,6 +141,7 @@ namespace X13 {
         _plugins.Stop();
       }
       _log.Dispose();
+      SendStat(0);
       Thread.Sleep(300);
       Topic.Export(_cfgPath, Topic.root.Get("/local/cfg"));
       if(_singleInstance!=null) {
@@ -298,14 +303,20 @@ namespace X13 {
       }
 
       try {
-        string url=string.Format("v=1&tid=UA-40770280-3&cid={0}&an={1}&av={2}&t=appview&cd={0}+{3}",
+        string url=string.Format("v=1&tid=UA-40770280-3&cid={0}&an={1}&av={2}&t=event&ec={0}+{3}&cd={5}+{3}&ea={4}+",
           id.value,
-          Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location),
+          Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location).ToLower(),
           Assembly.GetExecutingAssembly().GetName().Version.ToString(3),
-          Topic.root.Get<string>("/local/cfg/id").value
+          Topic.root.Get<string>("/etc/PLC/default").value,
+          Topic.root.Get<string>("/local/cfg/id").value,
+          id.value.Substring(0, 8).ToUpper()
           );
-        if((cmd==0 || cmd==1) && Topic.root.Get<string>("/local/cfg/id").value==Topic.root.Get<string>("/etc/PLC/default").value) {
-          url=string.Format("{0}&sc={1}", url, cmd==1?"start":"end");
+        if(cmd==1) {
+          url=string.Concat(url, "start&el=", Environment.Version.ToString(4));
+        } else if(cmd==0) {
+          url=string.Concat(url, "stop");
+        } else {
+          url=string.Concat(url, "uptime&el=", (DateTime.Now-_startDT).TotalDays.ToString("##0.00"));
         }
 
         var request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create("http://www.google-analytics.com/collect");

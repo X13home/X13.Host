@@ -285,6 +285,16 @@
   <ItemGroup>
     <Resource Include="Images\ar_pid.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\fu_BAGetL.png" />
+    <Resource Include="Images\fu_BAInsertL.png" />
+    <Resource Include="Images\fu_BALength.png" />
+    <Resource Include="Images\ty_ByteArray.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\fu_BAGetS.png" />
+    <Resource Include="Images\fu_BAInsertS.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

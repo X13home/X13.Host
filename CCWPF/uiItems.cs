@@ -19,7 +19,6 @@ using X13.WOUM;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
-
 namespace X13.CC {
   internal abstract class uiItem : DrawingVisual {
     protected bool _selected;
@@ -40,6 +39,21 @@ namespace X13.CC {
   }
 
   internal class uiPin : uiItem {
+    private static Brush _BABrush;
+    private static Brush _DblBrush;
+    static uiPin() {
+      _DblBrush=new SolidColorBrush(Color.FromRgb(0, 40, 100));
+      _BABrush=new LinearGradientBrush(new GradientStopCollection(
+            new GradientStop[] {  new GradientStop(Colors.LightGreen, 0.22), 
+                                  new GradientStop(Colors.Black, 0.23), 
+                                  new GradientStop(Colors.Black, 0.36), 
+                                  new GradientStop(Colors.LightGreen, 0.37), 
+                                  new GradientStop(Colors.LightGreen, 0.62), 
+                                  new GradientStop(Colors.Black, 0.63), 
+                                  new GradientStop(Colors.Black, 0.76), 
+                                  new GradientStop(Colors.LightGreen, 0.77) }));
+    }
+
     private Vector _ownerOffset;
     private List<uiWire> _connections;
     private uiTracer _tracer;
@@ -84,12 +98,17 @@ namespace X13.CC {
       this.Offset=owner.Offset+_ownerOffset;
       var tc=Type.GetTypeCode(model.valueType);
       object val=model.GetValue();
-      if(tc==TypeCode.Object && val!=null){
+      if(tc==TypeCode.Object && val!=null) {
         tc=Convert.GetTypeCode(val);
       }
       switch(tc) {
       case TypeCode.Object:
-        this.brush=Brushes.Magenta;
+        if(model.valueType==typeof(ByteArray)) {
+          this.brush=_BABrush;
+          //          this.brush=new LinearGradientBrush(Colors.DarkBlue, Colors.LightBlue, new Point(0.45, 0.45), new Point(0.55, 0.55));
+        } else {
+          this.brush=Brushes.Magenta;
+        }
         break;
       case TypeCode.DateTime:
         this.brush=Brushes.LightSeaGreen;
@@ -106,7 +125,7 @@ namespace X13.CC {
             this.brush=Brushes.Lime;
           } else {
             if((t%1.0)!=0) {
-              this.brush=new SolidColorBrush(Color.FromRgb(0, 40, 100));
+              this.brush=_DblBrush;
             } else {
               this.brush=Brushes.Green;
             }
@@ -279,7 +298,7 @@ namespace X13.CC {
       parentNode.Y         = startY;
       parentNode.PX        = startX+Math.Sign(this.A.Offset.X-gs-startX*gs);
       parentNode.PY        = startY+Math.Sign(this.A.Offset.Y-gs-startY*gs);
-      
+
       mOpen.Push(parentNode);
       while(mOpen.Count > 0) {
         parentNode = mOpen.Pop();
@@ -309,9 +328,9 @@ namespace X13.CC {
           newG+= parentNode.G;
 
           // Дополнительная стоимиость поворотов
-          if( ((newNode.Y - parentNode.Y)!=0) != (mVert!=0)) {
+          if(((newNode.Y - parentNode.Y)!=0) != (mVert!=0)) {
             if(this.GetWeigt(parentNode.X, parentNode.Y, direction[i, 0]==0)>100) {
-              continue;   
+              continue;
             }
             newG += 4; // 20;
           }
@@ -501,7 +520,8 @@ namespace X13.CC {
       }
 
       using(DrawingContext dc=this.RenderOpen()) {
-        string text=_pin.GetModel().GetValue().ToString();
+        object o=_pin.GetModel().GetValue();
+        string text=o!=null?o.ToString():"null";
         FormattedText ft=new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, LogramView.FtFont, gs*0.6, Brushes.Black);
         width=ft.WidthIncludingTrailingWhitespace;
         ft.MaxTextHeight=gs-3;
@@ -671,39 +691,39 @@ namespace X13.CC {
     public readonly DVar<PiStatement> model;
 
     private void model_changed(Topic sender, TopicChanged param) {
-        if(param.Art==TopicChanged.ChangeArt.Add) {
-          this.Dispatcher.BeginInvoke(new Action(() => Render(3)));
-        } else if(param.Art==TopicChanged.ChangeArt.Remove) {
-          model.changed-=model_changed;
-          model.Unsubscribe("+", PinChanged);
-          this.Dispatcher.BeginInvoke(new Action(this.Remove));
-          model.Remove();
-        }
+      if(param.Art==TopicChanged.ChangeArt.Add) {
+        this.Dispatcher.BeginInvoke(new Action(() => Render(3)));
+      } else if(param.Art==TopicChanged.ChangeArt.Remove) {
+        model.changed-=model_changed;
+        model.Unsubscribe("+", PinChanged);
+        this.Dispatcher.BeginInvoke(new Action(this.Remove));
+        model.Remove();
       }
+    }
     private void PinChanged(Topic sender, TopicChanged param) {
-        if(!sender.name.StartsWith("_")) {
-          this.Dispatcher.BeginInvoke(new Action(() => {
-            uiPin p=_pins.FirstOrDefault(z => z.GetModel()==sender);
-            if(param.Art!=TopicChanged.ChangeArt.Remove) {
-              if(p==null) {
-                sender.saved=true;
-                p=new uiPin(this, sender);
-                _pins.Add(p);
-                _owner.AddVisual(p);
-                Render(1);
-              }
-              p.Render(1);
-            } else {
-              if(p!=null) {
-                _owner.DeleteVisual(p);
-                _pins.Remove(p);
-                Render(1);
-              }
+      if(!sender.name.StartsWith("_")) {
+        this.Dispatcher.BeginInvoke(new Action(() => {
+          uiPin p=_pins.FirstOrDefault(z => z.GetModel()==sender);
+          if(param.Art!=TopicChanged.ChangeArt.Remove) {
+            if(p==null) {
+              sender.saved=true;
+              p=new uiPin(this, sender);
+              _pins.Add(p);
+              _owner.AddVisual(p);
+              Render(1);
             }
-          }));
-        } else if(sender.parent==model && sender.name=="_location") {
-          this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);
-        }
+            p.Render(1);
+          } else {
+            if(p!=null) {
+              _owner.DeleteVisual(p);
+              _pins.Remove(p);
+              Render(1);
+            }
+          }
+        }));
+      } else if(sender.parent==model && sender.name=="_location") {
+        this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);
+      }
     }
     public override void Render(int chLevel) {
       int gs=LogramView.CellSize;
@@ -712,7 +732,7 @@ namespace X13.CC {
       Topic fd=Topic.root.Get("/etc/declarers/func/");
       Topic dt;
       Topic tmp;
-      if(!model.Exist("_declarer", out dt) || !fd.Exist((dt as DVar<string>).value, out tmp ) || ((declarer=tmp as DVar<string>)==null)) {
+      if(!model.Exist("_declarer", out dt) || !fd.Exist((dt as DVar<string>).value, out tmp) || ((declarer=tmp as DVar<string>)==null)) {
         return;
       }
       uint l=(uint)model.Get<long>("_location");

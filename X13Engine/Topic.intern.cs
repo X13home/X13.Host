@@ -287,6 +287,8 @@ namespace X13 {
                     new JProperty("t", link.valueType==null?string.Empty:link.valueType.FullName),
                     new JProperty("+", "Topic"))).ToString();
                 }
+              } else if(valueType.IsArray) {
+                _json=JsonConvert.SerializeObject(GetValue(), _jcs);            
               } else {
                 object val=GetValue();
                 JObject o;

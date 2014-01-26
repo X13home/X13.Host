@@ -639,6 +639,9 @@ namespace X13.CC {
       case ItemAction.createStringDef:
         cur.Get<string>(ci.Header as string);
         break;
+      case ItemAction.createByteArrDef:
+        cur.Get<ByteArray>(ci.Header as string);
+        break;
       case ItemAction.createObjectDef:
         cur.Get<object>(ci.Header as string);
         break;

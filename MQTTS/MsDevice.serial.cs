@@ -23,7 +23,7 @@ namespace X13.Periphery {
   [ExportMetadata("priority", 5)]
   [ExportMetadata("name", "MQTTS.Gate")]
   public class MQTTSGate : IPlugModul {
-    private const long _version=301;
+    private const long _version=302;
 
     public void Init() {
       Topic.root.Subscribe("/etc/MQTTS/#", Dummy);
