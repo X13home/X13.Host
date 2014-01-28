@@ -122,20 +122,17 @@ namespace X13.CC {
         break;
       }
 
-
-      if(en.ll!=LogLevel.Debug ||  _showDebug) {
-        for(int i=2; i>=0; i--) {
-          try {
-            using(FileStream fs=File.Open(_lfPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite)) {
-              fs.Seek(0, SeekOrigin.End);
-              byte[] ba=Encoding.UTF8.GetBytes(rez+"\r\n");
-              fs.Write(ba, 0, ba.Length);
-            }
-            break;
+      for(int i=2; i>=0; i--) {
+        try {
+          using(FileStream fs=File.Open(_lfPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite)) {
+            fs.Seek(0, SeekOrigin.End);
+            byte[] ba=Encoding.UTF8.GetBytes(rez+"\r\n");
+            fs.Write(ba, 0, ba.Length);
           }
-          catch(System.IO.IOException) {
-            System.Threading.Thread.Sleep(15);
-          }
+          break;
+        }
+        catch(System.IO.IOException) {
+          System.Threading.Thread.Sleep(15);
         }
       }
     }
