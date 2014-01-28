@@ -128,33 +128,40 @@ namespace X13.PLC {
         LazyAction cur;
         while(!_close.WaitOne(1100)) {
           long th=DateTime.Now.AddMilliseconds(-4500).Ticks;
-          while(true) {
-            lock(_actions) {
-              if(_actions.Any() && _actions[0].marker<th) {
-                cur=_actions[0];
-                _actions.RemoveAt(0);
-              } else {
-                break;
+          using(var tr=_connection.BeginTransaction()) {
+            while(true) {
+              lock(_actions) {
+                if(_actions.Any() && _actions[0].marker<th) {
+                  cur=_actions[0];
+                  _actions.RemoveAt(0);
+                } else {
+                  break;
+                }
               }
+              Process(cur, tr);
             }
-            Process(cur);
+            tr.Commit();
           }
         }
-        lock(_actions) {
-          for(int i=0; i<_actions.Count; i++) {
-            Process(_actions[i]);
+        using(var tr=_connection.BeginTransaction()) {
+          lock(_actions) {
+            for(int i=0; i<_actions.Count; i++) {
+              Process(_actions[i], tr);
+            }
           }
+          tr.Commit();
         }
       }
       catch(Exception ex) {
         Log.Error("PersistenStorage.PrThread exception={0}", ex.ToString());
       }
     }
-    private void Process(LazyAction act) {
+    private void Process(LazyAction act, SqliteTransaction tr) {
       if(_connection==null) {
         return;
       }
       IDbCommand cmd=_connection.CreateCommand();
+      cmd.Transaction=tr;
       cmd.Parameters.Add(new SqliteParameter { ParameterName = "@path", Value = act.src.path });
       if(act.art==TopicChanged.ChangeArt.Value) {
         cmd.CommandText="INSERT OR REPLACE INTO topics VALUES (@path, @type, @val);";

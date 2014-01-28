@@ -20,6 +20,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using AvalonDock;
 using X13.PLC;
+using System.Threading;
 
 namespace X13.CC {
   /// <summary>
@@ -335,8 +336,15 @@ namespace X13.CC {
     private void DefDeclarer() {
       Topic dt;
       if(ptr.Exist("_declarer", out dt)) {
-        string dp=(dt as DVar<string>).value;
-        int i=dp.LastIndexOf('.');
+        string dp;
+        int i=3;
+        while((dp=(dt as DVar<string>).value)==null && i-->0) {
+          Thread.Sleep(50);
+        }
+        if(string.IsNullOrEmpty(dp)) {
+          return;
+        }
+        i=dp.LastIndexOf('.');
         if(i>0) {
           dp=dp.Substring(0, i);
         }
