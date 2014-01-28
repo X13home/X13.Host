@@ -191,7 +191,7 @@ namespace X13.PLC {
         Log.Error("PersistenStorage.PrThread exception={0}", ex.ToString());
       }
     }
-    private void Process(LazyAction act, SqliteTransaction tr) {
+    private void Process(LazyAction act, System.Data.Common.DbTransaction tr) {
       if(_connection==null) {
         return;
       }
