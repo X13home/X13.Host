@@ -19,6 +19,10 @@ namespace X13.Periphery {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public partial class MsDevice : ITopicOwned {
     private const int ACK_TIMEOUT=550;
+    private const ushort LOG_D_ID=0xFFE0;
+    private const ushort LOG_I_ID=0xFFE1;
+    private const ushort LOG_W_ID=0xFFE2;
+    private const ushort LOG_E_ID=0xFFE3;
     private static DVar<bool> _verbose;
     private static List<IMsGate> _gates;
 
@@ -225,7 +229,25 @@ namespace X13.Periphery {
           } else {
             throw new NotSupportedException("QoS -1 not supported "+Owner.path);
           }
-          SetValue(ti, msg.Data);
+          if(msg.topicIdType==TopicIdType.PreDefined && msg.TopicId>=LOG_D_ID && msg.TopicId<=LOG_E_ID) {
+            string str=string.Format("{0}:{1} msg={2} msgId={3} ", this.Owner.path, BitConverter.ToString(msg.Addr), msg.Data==null?"null":BitConverter.ToString(msg.Data), msg.MessageId);
+            switch(msg.TopicId) {
+            case LOG_D_ID:
+              Log.Debug(str);
+              break;
+            case LOG_I_ID:
+              Log.Info(str);
+              break;
+            case LOG_W_ID:
+              Log.Warning(str);
+              break;
+            case LOG_E_ID:
+              Log.Error(str);
+              break;
+            }
+          } else if(ti!=null) {
+            SetValue(ti, msg.Data);
+          }
         }
         break;
       case MsMessageType.PUBACK: {
@@ -727,11 +749,16 @@ namespace X13.Periphery {
       //{".cfg/XD_IPRouter",   0xFF23},
       //{".cfg/XD_IPBroker",    0xFF24},
 
-      {"_declarer",         0xFFC0},
+      {"_declarer",          0xFFC0},
       {".cfg/_state",        0xFFC1},
-      {"present",           0xFFC2},
+      {"present",            0xFFC2},
       {".cfg/_via",          0xFFC3},
       {".cfg/_declarer",     0xFFD0},
+
+      {"_logD",              LOG_D_ID},
+      {"_logI",              LOG_I_ID},
+      {"_logW",              LOG_W_ID},
+      {"_logE",              LOG_E_ID},
     };
 
     private struct NTRecord {
