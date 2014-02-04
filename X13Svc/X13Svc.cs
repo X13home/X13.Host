@@ -23,8 +23,11 @@ namespace X13.Svc {
   public partial class X13Svc : ServiceBase {
     static void Main(string[] args) {
       if(args.Length>0) {
-        string name=Assembly.GetExecutingAssembly().Location;
+        if(!Directory.Exists("../log")) {
+          Directory.CreateDirectory("../log");
+        }
         Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
+        string name=Assembly.GetExecutingAssembly().Location;
 
         if(args[0]=="/i") {
           try {
@@ -61,7 +64,7 @@ namespace X13.Svc {
           }
           try {
             if(WindowsFirewall.IsEnabled()) {
-              WindowsFirewall.AuthorizeProgram("X13Engine", name);
+              WindowsFirewall.AuthorizeProgram("X13Svc", name);
               Log.Info("Windows Firewall configuriert for {0}", name);
             } else {
               Log.Info("Windows Firewall disabled");
@@ -90,37 +93,30 @@ namespace X13.Svc {
           }
           return;
         } else if(args[0]=="/update") {
+          Log.Info("update start");
           string[][] list=null;
-
-          // @"http://github.com/X13home/x13home.github.com/raw/master/Download/versions.csv"
           try {
-            var req=(HttpWebRequest)WebRequest.Create(@"http://github.com/X13home/x13home.github.com/raw/master/Download/versions.csv");
-            req.Method="GET";
-            using(var resp=req.GetResponse() as HttpWebResponse) {
-              if(resp.StatusCode!=HttpStatusCode.OK) {
-                Log.Warning("update {0}", resp.StatusDescription);
-              } else {
-                using(var s=resp.GetResponseStream()) {
-                  if(s.CanRead) {
-                    using(var sr=new StreamReader(s, Encoding.UTF8)) {
-                      List<string[]> tmp=new List<string[]>();
-                      string content=sr.ReadToEnd();
-                      var sa=content.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
-                      for(int n=0; n<sa.Length; n++) {
-                        var it=sa[n].Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-                        if(it!=null && it.Length==4) {
-                          tmp.Add(it);
-                        }
-                      }
-                      list=tmp.ToArray();
-                    }
-                  }
-                }
+            string content=null;
+            using(WebClient client = new WebClient()) {
+              content=client.DownloadString(@"http://github.com/X13home/x13home.github.com/raw/master/Download/versions.csv");
+            }
+            if(content==null) {
+              Log.Warning("update list is empty");
+              return;
+            }
+            List<string[]> tmp=new List<string[]>();
+            var sa=content.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            for(int n=1; n<sa.Length; n++) { // [0] - header
+              var it=sa[n].Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+              if(it!=null && it.Length==4) {
+                tmp.Add(it);
               }
             }
+            list=tmp.ToArray();
           }
           catch(Exception ex) {
             Log.Error("update get versions.csv - {0}", ex.Message);
+            return;
           }
           if(list==null) {
             Log.Warning("update list is empty");
@@ -128,16 +124,13 @@ namespace X13.Svc {
           }
           Directory.SetCurrentDirectory(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
 
-          for(int i=1; i<list.Length; i++) { // [0] - header
+          for(int i=0; i<list.Length; i++) {
             try {
               if(!File.Exists(list[i][0])) {
                 continue;
               }
               FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(list[i][0]);
-              if(string.Compare(fvi.FileDescription, list[i][1], true)!=0) {
-                continue;
-              }
-              if(Version.Parse(fvi.FileVersion)>=Version.Parse(list[i][2])) {
+              if(string.Compare(fvi.FileDescription, list[i][1], true)!=0 || Version.Parse(fvi.FileVersion)>=Version.Parse(list[i][2])) {
                 continue;
               }
               string tmpfn=Path.GetFileName(Path.GetTempFileName());
@@ -148,9 +141,10 @@ namespace X13.Svc {
               Log.Info("update {0} version: {1} -> {2}", list[i][0], fvi.FileVersion, list[i][2]);
             }
             catch(Exception ex) {
-              Log.Debug("update check - "+ex.Message);
+              Log.Warning("update {0} - {1}", list[i][0], ex.Message);
             }
           }
+          Log.Info("update complete");
           return;
         }
       } else {
@@ -166,7 +160,14 @@ namespace X13.Svc {
       }
     }
     private static void Log_Write(LogLevel ll, DateTime dt, string msg) {
-      Console.WriteLine("{0}", msg);
+      string text= string.Format("{0}[{1}]\t{2}", dt.ToString("HH:mm:ss.ff"), ll.ToString(), msg);
+      string fn="../log/"+dt.ToString("yyMMdd")+".log";
+      Console.WriteLine(text);
+      try {
+        File.AppendAllText(fn, text+"\r\n");
+      }
+      catch(Exception) {
+      }
     }
 
     private X13.Engine _eng;
