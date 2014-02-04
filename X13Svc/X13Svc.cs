@@ -12,8 +12,12 @@ using CSWindowsServiceRecoveryProperty;
 using System;
 using System.Collections.Generic;
 using System.Configuration.Install;
+using System.Diagnostics;
+using System.IO;
+using System.Net;
 using System.Reflection;
 using System.ServiceProcess;
+using System.Text;
 
 namespace X13.Svc {
   public partial class X13Svc : ServiceBase {
@@ -76,14 +80,76 @@ namespace X13.Svc {
           }
 
           return;
-        }
-        if(args[0]=="/u") {
+        } else if(args[0]=="/u") {
           try {
             string[] args_i=new string[] { "/u", name, "/LogFile=..\\log\\uninstall.log" };
             ManagedInstallerClass.InstallHelper(args_i);
           }
           catch(Exception ex) {
             Log.Error(ex.Message);
+          }
+          return;
+        } else if(args[0]=="/update") {
+          string[][] list=null;
+
+          // @"http://github.com/X13home/x13home.github.com/raw/master/Download/versions.csv"
+          try {
+            var req=(HttpWebRequest)WebRequest.Create(@"http://github.com/X13home/x13home.github.com/raw/master/Download/versions.csv");
+            req.Method="GET";
+            using(var resp=req.GetResponse() as HttpWebResponse) {
+              if(resp.StatusCode!=HttpStatusCode.OK) {
+                Log.Warning("update {0}", resp.StatusDescription);
+              } else {
+                using(var s=resp.GetResponseStream()) {
+                  if(s.CanRead) {
+                    using(var sr=new StreamReader(s, Encoding.UTF8)) {
+                      List<string[]> tmp=new List<string[]>();
+                      string content=sr.ReadToEnd();
+                      var sa=content.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+                      for(int n=0; n<sa.Length; n++) {
+                        var it=sa[n].Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                        if(it!=null && it.Length==4) {
+                          tmp.Add(it);
+                        }
+                      }
+                      list=tmp.ToArray();
+                    }
+                  }
+                }
+              }
+            }
+          }
+          catch(Exception ex) {
+            Log.Error("update get versions.csv - {0}", ex.Message);
+          }
+          if(list==null) {
+            Log.Warning("update list is empty");
+            return;
+          }
+          Directory.SetCurrentDirectory(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+
+          for(int i=1; i<list.Length; i++) { // [0] - header
+            try {
+              if(!File.Exists(list[i][0])) {
+                continue;
+              }
+              FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(list[i][0]);
+              if(string.Compare(fvi.FileDescription, list[i][1], true)!=0) {
+                continue;
+              }
+              if(Version.Parse(fvi.FileVersion)>=Version.Parse(list[i][2])) {
+                continue;
+              }
+              string tmpfn=Path.GetFileName(Path.GetTempFileName());
+              using(WebClient client = new WebClient()) {
+                client.DownloadFile(list[i][3], tmpfn);
+              }
+              File.Replace(tmpfn, list[i][0], list[i][1]+".bak");
+              Log.Info("update {0} version: {1} -> {2}", list[i][0], fvi.FileVersion, list[i][2]);
+            }
+            catch(Exception ex) {
+              Log.Debug("update check - "+ex.Message);
+            }
           }
           return;
         }
