@@ -34,7 +34,8 @@ namespace X13.CC {
     private string _cfgPath;
 
     public MainWindow(string cfg) {
-      _cfgPath=cfg;
+      Directory.SetCurrentDirectory(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location));
+      _cfgPath=Path.GetFullPath(cfg);
       if(!Directory.Exists("../data")) {
         Directory.CreateDirectory("../data");
       }
@@ -243,7 +244,7 @@ namespace X13.CC {
       _plugins.Stop();
       if(_engine!=null) {
         _engine.StandardInput.WriteLine(" ");
-        _engine.WaitForExit(1500);
+        _engine.WaitForExit(3500);
         _engine=null;
       }
       Topic.Export(_cfgPath, Topic.root.Get("/local/cfg"));
