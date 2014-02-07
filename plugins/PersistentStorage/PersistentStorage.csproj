@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Mono|AnyCPU'">
-    <OutputPath>bin\Mono\</OutputPath>
+    <OutputPath>..\..\bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <NoWarn>0168; 0414;</NoWarn>
@@ -29,7 +29,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\bin\</OutputPath>
+    <OutputPath>..\..\bin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -38,20 +38,18 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\bin\</OutputPath>
+    <OutputPath>..\..\bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>0168; 0414;</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Community.CsharpSqlite, Version=3.7.7.1, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\bin\Community.CsharpSqlite.dll</HintPath>
+    <Reference Include="Community.CsharpSqlite">
+      <HintPath>..\..\bin\Community.CsharpSqlite.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\bin\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\bin\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -63,7 +61,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\X13Engine\Properties\VersionInfo.cs">
+    <Compile Include="..\..\X13Engine\Properties\VersionInfo.cs">
       <Link>VersionInfo.cs</Link>
     </Compile>
     <Compile Include="PersistentStorage.cs" />
@@ -96,7 +94,7 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <ProjectReference Include="..\X13Engine\Engine.csproj">
+    <ProjectReference Include="..\..\X13Engine\Engine.csproj">
       <Project>{95861a56-393c-4779-a84c-3840ec0a9304}</Project>
       <Name>Engine</Name>
     </ProjectReference>

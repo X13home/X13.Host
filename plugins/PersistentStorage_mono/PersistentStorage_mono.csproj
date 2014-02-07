@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\bin\</OutputPath>
+    <OutputPath>..\..\bin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -26,13 +26,13 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\bin\</OutputPath>
+    <OutputPath>..\..\bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Mono|AnyCPU'">
-    <OutputPath>..\bin\</OutputPath>
+    <OutputPath>..\..\bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
@@ -43,13 +43,11 @@
     <CodeAnalysisFailOnMissingRules>true</CodeAnalysisFailOnMissingRules>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Mono.Data.Sqlite, Version=4.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\bin\Mono.Data.Sqlite.dll</HintPath>
+    <Reference Include="Mono.Data.Sqlite">
+      <HintPath>..\..\bin\Mono.Data.Sqlite.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\bin\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\bin\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
@@ -61,14 +59,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\X13Engine\Properties\VersionInfo.cs">
+    <Compile Include="..\..\X13Engine\Properties\VersionInfo.cs">
       <Link>VersionInfo.cs</Link>
     </Compile>
     <Compile Include="PersistentStorage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\X13Engine\Engine.csproj">
+    <ProjectReference Include="..\..\X13Engine\Engine.csproj">
       <Project>{95861A56-393C-4779-A84C-3840EC0A9304}</Project>
       <Name>Engine</Name>
     </ProjectReference>
