@@ -871,7 +871,7 @@ function minicolorsWidget() {
     init: function (w) {
       w.find(".colorpicker[data-pub]").each(function (idx, el) {
         $(this).minicolors({
-          control: $(this).attr('data-control') || 'hue',
+          control: 'wheel',
           inline: true,
           changeDelay: 200,
           change: function (hex, opacity) {
@@ -889,7 +889,7 @@ function minicolorsWidget() {
 
       w.find(".colorpicker:not([data-pub])").each(function (idx, el) {
         $(this).minicolors({
-          control: $(this).attr('data-control') || 'hue',
+          control: 'wheel',
           inline: true,
         });
       });
