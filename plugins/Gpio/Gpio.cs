@@ -15,6 +15,7 @@ using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading;
 
 
@@ -23,24 +24,26 @@ namespace X13.Periphery {
   [ExportMetadata("priority", 5)]
   [ExportMetadata("name", "Gpio")]
   public class Gpio : IPlugModul {
-    private const long _version=301;
-    private Dictionary<int, Pin> _pins;
+    private const long _version=300;
+    private Dictionary<uint, Pin> _pins;
     private Topic _gpio;
-    private WOUM.BlockingQueue<Pin> _queue;
-
+    private Timer _poolTimer;
     public Gpio() {
-      _pins=new Dictionary<int, Pin>();
+      _pins=new Dictionary<uint, Pin>();
     }
-
     public void Init() {
       if(!Engine.IsLinux) {
+        Topic.root.Get<bool>("/local/cfg/Gpio.RasPi/enable").value=false;
+        return;
+      }
+      if(!Pin.bcm2835_init()) {
+        Log.Warning("Unable to initialize bcm2835.so library");
         Topic.root.Get<bool>("/local/cfg/Gpio.RasPi/enable").value=false;
         return;
       }
       Topic.root.Subscribe("/etc/Gpio/#", Dummy);
       Topic.root.Subscribe("/etc/declarers/dev/Gpio/#", Dummy);
     }
-
     public void Start() {
       var ver=Topic.root.Get<long>("/etc/Gpio/version");
       if(ver.value<_version) {
@@ -55,24 +58,22 @@ namespace X13.Periphery {
       }
       _gpio=Topic.root.Get("/dev/Gpio");
       _gpio.Get<string>("_declarer", _gpio).value="Gpio";
-      _queue=new WOUM.BlockingQueue<Pin>(Process, Pool);
-      _queue.timeout=30;
       _gpio.Subscribe("+", GpioChanged);
+      _poolTimer=new Timer(Pool, null, 500, 50);
     }
-
     public void Stop() {
       Topic.root.Unsubscribe("/etc/Gpio/#", Dummy);
       Topic.root.Unsubscribe("/etc/declarers/Gpio/#", Dummy);
       _gpio.Unsubscribe("+", GpioChanged);
-      if(_queue!=null) {
-        _queue.Dispose();
-        Thread.Sleep(100);
-        _queue=null;
+      if(_poolTimer!=null) {
+        _poolTimer.Change(-1, -1);
+        _poolTimer=null;
       }
       foreach(var kv in _pins) {
         kv.Value.Dispose();
       }
     }
+
     private void Dummy(Topic t, TopicChanged a) {
     }
     private void GpioChanged(Topic t, TopicChanged a) {
@@ -91,14 +92,13 @@ namespace X13.Periphery {
           pin.Dispose();
         } else if(a.Art==TopicChanged.ChangeArt.Value && pin.dir) {
           pin.value=tb.value;
-          _queue.Enqueue(pin);
         }
       }
     }
     private Pin GetPin(string name) {
       Pin rez=null;
-      int idx=-1;
-      if(name!=null && name.Length>2 && Int32.TryParse(name.Substring(2), out idx)) {  // Ip1, On19
+      uint idx=0;
+      if(name!=null && name.Length>2 && UInt32.TryParse(name.Substring(2), out idx)) {  // Ip1, On19
         char fc=name[0];
         char sc=name[1];
         bool dir;
@@ -113,10 +113,10 @@ namespace X13.Periphery {
         }
         if(sc=='p') {
           negative=false;
-          //} else if(sc=='n') {
-          //  negative=true;
+        } else if(sc=='n') {
+          negative=true;
         } else {
-          Log.Error("unknown type in "+name+", allow 'p'"); //  & 'n'
+          Log.Error("unknown type in "+name+", allow 'p' & 'n'");
           return null;
         }
         if(_pins.TryGetValue(idx, out rez)) {
@@ -128,78 +128,60 @@ namespace X13.Periphery {
           }
         } else {
           rez=new Pin(idx, dir, negative);
-          _queue.Enqueue(rez);
           _pins[idx]=rez;
         }
       }
       return rez;
     }
-    private void Pool() {
-      for(int i=0; i<_pins.Count && _queue!=null; i++) {
-        _queue.Enqueue(_pins.Values.ElementAt(i));
-      }
-    }
-    private void Process(Pin p) {
-      try {
-        if(p.Process()) {
-          var t=_gpio.Get<bool>(p.ToString());
-          t.saved=false;
-          t.SetValue(p.value, new TopicChanged(TopicChanged.ChangeArt.Value, _gpio));
+    private void Pool(object o) {
+      for(int i=0; i<_pins.Count; i++) {
+        try {
+          var p=_pins.Values.ElementAt(i);
+          if(!p.dir && p.Process()) {
+            var t=_gpio.Get<bool>(p.ToString());
+            t.saved=false;
+            t.SetValue(p.value, new TopicChanged(TopicChanged.ChangeArt.Value, _gpio));
+          }
+        }
+        catch(Exception ex) {
+          Log.Warning("gpio - "+ex.Message);
         }
       }
-      catch(IOException) {
-      }
-      catch(Exception ex) {
-        Log.Warning("gpio - "+ex.Message);
-      }
-
     }
+    // based on http://github.com/cypherkey/RaspberryPi.Net/
     private class Pin : IDisposable {
-      private const string GPIO_PATH = "/sys/class/gpio/";
-
-      public readonly int idx;
+      public readonly uint idx;
       private string _idxS;
       private bool _value;
-      private bool _st;
-
-      public Pin(int idx, bool dir, bool neg) {
+      public Pin(uint idx, bool dir, bool neg) {
         this.idx=idx;
         this._idxS=idx.ToString();
         this.dir=dir;
         this.neg=neg;
-        this._st=false;
+        bcm2835_gpio_fsel(idx, dir);
+        if(!dir) {
+          bcm2835_gpio_set_pud(idx, (uint)(neg?2:1)); //OFF = 0,  PULL_DOWN = 1,   PULL_UP = 2
+        }
+        Process();
       }
       /// <summary>false- input, true - output</summary>
       public bool dir { get; private set; }
       public bool neg { get; private set; }
-      public bool value {
-        get { return _value; }
-        set {
-          _value=value;
-        }
-      }
+      public bool value { get { return _value; } set { _value=value; Process(); } }
       public bool Process() {
         try {
-          if(!_st) {
-            if(!Directory.Exists(GPIO_PATH + "gpio" + _idxS.ToString()))
-              File.WriteAllText(GPIO_PATH + "export", _idxS);
-
-            // set i/o direction
-            File.WriteAllText(GPIO_PATH + "gpio" + _idxS + "/direction", dir?"out":"in");
-            _st=true;
-          }
           if(dir) {
-            File.WriteAllText(GPIO_PATH + "gpio" + _idxS + "/value", _value ? "1" : "0");
+            bcm2835_gpio_write(idx,neg?!_value:_value);
           } else {
-            string readValue = File.ReadAllText(GPIO_PATH + "gpio" + _idxS + "/value");
-            bool tmp=(readValue.Length > 0 && readValue[0] == '1');
+            bool tmp=bcm2835_gpio_lev(idx);
+            if(neg) {
+              tmp=!tmp;
+            }
             if(tmp!=_value) {
               _value=tmp;
               return true;
             }
           }
-        }
-        catch(IOException) {
         }
         catch(Exception ex) {
           Log.Warning(this.ToString()+ "Process() - "+ex.Message);
@@ -207,11 +189,27 @@ namespace X13.Periphery {
         return false;
       }
       public void Dispose() {
-        File.WriteAllText(GPIO_PATH + "unexport", _idxS);
       }
       public override string ToString() {
         return string.Concat(dir?"O":"I", neg?"n":"p", idx.ToString("00"));
       }
+
+      #region Imported functions
+      [DllImport("libbcm2835.so", EntryPoint = "bcm2835_init")]
+      public static extern bool bcm2835_init();
+
+      [DllImport("libbcm2835.so", EntryPoint = "bcm2835_gpio_fsel")]
+      static extern void bcm2835_gpio_fsel(uint pin, bool mode_out);
+
+      [DllImport("libbcm2835.so", EntryPoint = "bcm2835_gpio_write")]
+      static extern void bcm2835_gpio_write(uint pin, bool value);
+
+      [DllImport("libbcm2835.so", EntryPoint = "bcm2835_gpio_lev")]
+      static extern bool bcm2835_gpio_lev(uint pin);
+
+      [DllImport("libbcm2835.so", EntryPoint = "bcm2835_gpio_set_pud")]
+      static extern void bcm2835_gpio_set_pud(uint pin, uint pud);
+      #endregion
     }
   }
 }
