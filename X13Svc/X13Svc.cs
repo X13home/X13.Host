@@ -96,6 +96,12 @@ namespace X13.Svc {
           Log.Info("update start");
           string[][] list=null;
           try {
+#pragma warning disable 0618
+            if(Engine.IsLinux) { // mono doesn't ship with any trusted root
+              Log.Info("Certificate policy ignory");
+              ServicePointManager.CertificatePolicy=new AllowApi();
+            }
+#pragma warning restore 0618
             string content=null;
             using(WebClient client = new WebClient()) {
               content=client.DownloadString(@"http://github.com/X13home/x13home.github.com/raw/master/Download/versions.csv");
@@ -124,6 +130,7 @@ namespace X13.Svc {
           }
           Directory.SetCurrentDirectory(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
 
+          List<Tuple<string, string, string>> task=new List<Tuple<string, string, string>>();
           for(int i=0; i<list.Length; i++) {
             try {
               if(!File.Exists(list[i][0])) {
@@ -137,14 +144,41 @@ namespace X13.Svc {
               using(WebClient client = new WebClient()) {
                 client.DownloadFile(list[i][3], tmpfn);
               }
-              File.Replace(tmpfn, list[i][0], list[i][1]+".bak");
-              Log.Info("update {0} version: {1} -> {2}", list[i][0], fvi.FileVersion, list[i][2]);
+              try {
+                File.Replace(tmpfn, list[i][0], list[i][1]+".bak");
+                Log.Info("update {0} version: {1} -> {2}", list[i][0], fvi.FileVersion, list[i][2]);
+              }
+              catch(FileNotFoundException) {
+                Log.Info("update {0}[delayed] version: {1} -> {2}", list[i][0], fvi.FileVersion, list[i][2]);
+                task.Add(new Tuple<string, string, string>(tmpfn, list[i][0], list[i][1]+".bak"));
+              }
             }
             catch(Exception ex) {
               Log.Warning("update {0} - {1}", list[i][0], ex.Message);
             }
           }
-          Log.Info("update complete");
+          if(task.Count>0) {
+            using(StreamWriter shScript = File.CreateText("upd.sh")) {
+              shScript.WriteLine("#!/bin/sh\n");
+              shScript.WriteLine("echo\n");
+              shScript.WriteLine("echo update kernel\n");
+              shScript.WriteLine("sleep 2\n");
+              for(int i=0; i<task.Count; i++) {
+                shScript.WriteLine("mv {0} {1}\n", task[i].Item2, task[i].Item3);
+                shScript.WriteLine("mv {0} {1}\n", task[i].Item1, task[i].Item2);
+                shScript.WriteLine("echo {0} updated\n", task[i].Item2);
+              }
+              shScript.WriteLine("echo update complete. Press any key\n");
+              shScript.Flush();
+            }
+            Log.Info("update complete[delayed]");
+
+            Process shScriptProcess = new Process();
+            shScriptProcess.StartInfo = new ProcessStartInfo("/bin/sh", "upd.sh");
+            shScriptProcess.Start();
+          } else {
+            Log.Info("update complete");
+          }
           return;
         }
       } else {
@@ -167,6 +201,18 @@ namespace X13.Svc {
         File.AppendAllText(fn, text+"\r\n");
       }
       catch(Exception) {
+      }
+    }
+    private class AllowApi : ICertificatePolicy {
+      public bool CheckValidationResult(ServicePoint srvPoint, System.Security.Cryptography.X509Certificates.X509Certificate certificate, WebRequest request, int error) {
+        if(error == 0)
+          return true;
+        // only ask for trust failure (you may want to handle more cases)
+        if(error == -2146762486 && request!=null) {
+          Log.Info("ignory certificate for {0}", request.RequestUri.Host);
+          return true;
+        }
+        return false;
       }
     }
 
