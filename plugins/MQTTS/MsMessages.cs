@@ -395,39 +395,7 @@ namespace X13.Periphery {
     public readonly QoS qualityOfService;
     public readonly TopicIdType topicIdType;
     public readonly ushort TopicId;
-    public byte[] Data { get { return _payload??Serialize(_val); } set { _payload=value; } }
-
-    private static byte[] Serialize(Topic t) {
-      List<byte> ret=new List<byte>();
-      switch(Type.GetTypeCode(t.valueType)) {
-      case TypeCode.Boolean:
-        ret.Add((byte)((bool)t.GetValue()?1:0));
-        break;
-      case TypeCode.Int64:        
-        {
-          long vo=(long)t.GetValue();
-          long v=vo;
-          do {
-            ret.Add((byte)v);
-            v=v>>8;
-          } while(vo<0?(v<-1 || (ret[ret.Count-1]&0x80)==0):(v>0 || (ret[ret.Count-1]&0x80)!=0));
-        }
-        break;
-      case TypeCode.String: {
-          string v=(string)t.GetValue();
-          if(!string.IsNullOrEmpty(v)) {
-            ret.AddRange(Encoding.Default.GetBytes(v));
-          }
-        }
-        break;
-      case TypeCode.Object:
-        if(t.valueType==typeof(PLC.ByteArray) && t.GetValue()!=null) {
-          ret.AddRange(((PLC.ByteArray)t.GetValue()).GetBytes());
-        }
-        break;
-      }
-      return ret.ToArray();
-    }
+    public byte[] Data { get { return _payload??MsDevice.Serialize(_val); } set { _payload=value; } }
 
     public override string ToString() {
       if(_val!=null) {
