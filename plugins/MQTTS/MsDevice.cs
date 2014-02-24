@@ -785,6 +785,7 @@ namespace X13.Periphery {
       new NTRecord("Ts", typeof(string)),
       new NTRecord("Ta", typeof(PLC.ByteArray)),
       new NTRecord("sa", typeof(SmartTwi)),    // Smart TWI
+      //new NTRecord("sa", typeof(PLC.ByteArray)),
       new NTRecord("Xz", typeof(bool)),   // user defined
       new NTRecord("Xb", typeof(long)),   //int8
       new NTRecord("XB", typeof(long)),   //uint8
