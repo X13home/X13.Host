@@ -44,7 +44,7 @@ namespace X13.Periphery {
         if(st.flType!=0) {
           SetValue(st, data);
         }
-      }else if(_state==0xB0) {
+      } else if(_state==0xB0) {
         if(data.Length>1 && data[0]==0xB0) {
           string decl=Encoding.UTF8.GetString(data, 1, data.Length-1);
           Log.Info("{0}.declarer={1}", _owner.path, decl);
@@ -54,7 +54,7 @@ namespace X13.Periphery {
           _to.Change(100, -1);
           return;
         }
-      }else if(_state>=0xC0 && _state<0xF0) {
+      } else if(_state>=0xC0 && _state<0xF0) {
         if(data.Length>0 && data[0]==(byte)_state) {
           if(data.Length==1) {
             _dev.PublishWithPayload(_owner, new byte[] { 0xF0, (byte)'I' });
@@ -105,6 +105,14 @@ namespace X13.Periphery {
       }
       _cntTry=0;
     }
+    internal void Reset() {
+      if(_to!=null) {
+        _state=0xB0;
+        _cntTry=0;
+        _to.Change(150, -1);
+      }
+
+    }
 
     public void SetOwner(Topic owner) {
       if(_owner!=null) {
@@ -123,22 +131,22 @@ namespace X13.Periphery {
     private void SetValue(STVar st, byte[] data) {
       object o;
       switch(st.dateType) {
-      case 'z': 
+      case 'z':
         o=(data[1]!=0);
         break;
       case 'b':
         o=(long)(sbyte)data[1];
         break;
-      case 'B': 
+      case 'B':
         o=(long)data[1];
         break;
-      case 'w': 
+      case 'w':
         o=(long)(short)((data[2]<<8) | data[1]);
         break;
       case 'W':
         o=(long)(ushort)((data[2]<<8) | data[1]);
         break;
-      case 'd': 
+      case 'd':
         o=(long)(int)((data[4]<<24) | (data[3]<<16) | (data[2]<<8) | data[1]);
         break;
       case 'D':
@@ -147,10 +155,10 @@ namespace X13.Periphery {
       case 'q':
         o=(long)((data[8]<<56) | (data[7]<<48) | (data[6]<<40) | (data[5]<<32) | (data[4]<<24) | (data[3]<<16) | (data[2]<<8) | data[1]);
         break;
-      case 's': 
+      case 's':
         o=Encoding.Default.GetString(data, 1, data.Length-1);
         break;
-      case 'a': 
+      case 'a':
         o=new PLC.ByteArray(data.Skip(1).ToArray());
         break;
       default:
@@ -284,5 +292,6 @@ namespace X13.Periphery {
       public bool write { get { return (flType&0x40)!=0; } }
       public char dateType { get { return (char)((flType & 0x3F)+0x40); } }
     }
+
   }
 }

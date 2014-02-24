@@ -211,8 +211,12 @@ namespace X13.Periphery {
           ResetTimer();
           try {
             TopicInfo ti = GetTopicInfo(msg.TopicPath, false);
-            if(ti.topic!=null && ti.topic.valueType==typeof(SmartTwi) && ti.topic.GetValue()==null) {
-              ti.topic.SetValue(new SmartTwi(ti.topic), new TopicChanged(TopicChanged.ChangeArt.Value, Owner));
+            if(ti.topic!=null && ti.topic.valueType==typeof(SmartTwi)) {
+              if(ti.topic.GetValue()==null) {
+                ti.topic.SetValue(new SmartTwi(ti.topic), new TopicChanged(TopicChanged.ChangeArt.Value, Owner));
+              } else {
+                (ti.topic as DVar<SmartTwi>).value.Reset();
+              }
             }
             Send(new MsRegAck(ti.TopicId, msg.MessageId, MsReturnCode.Accepted));
           }
