@@ -8,6 +8,7 @@ namespace X13.Periphery {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public class SmartTwi : ITopicOwned {
     private Topic _owner;
+    private DVar<string> _decl;
     private MsDevice _dev;
     private List<STVar> _vars;
     private int _state;
@@ -47,7 +48,9 @@ namespace X13.Periphery {
       } else if(_state==0xB0) {
         if(data.Length>1 && data[0]==0xB0) {
           string decl=Encoding.UTF8.GetString(data, 1, data.Length-1);
-          Log.Info("{0}.declarer={1}", _owner.path, decl);
+          if(_decl!=null) {
+            _decl.value=decl;
+          }
           _state=0xC0;
           _dev.PublishWithPayload(_owner, new byte[] { 0xF0, (byte)'r', (byte)_state });
         } else {
@@ -113,7 +116,6 @@ namespace X13.Periphery {
       }
 
     }
-
     public void SetOwner(Topic owner) {
       if(_owner!=null) {
         _owner.Unsubscribe("+", STVarChanged);
@@ -124,10 +126,20 @@ namespace X13.Periphery {
         if(_owner.parent!=null && _owner.parent.valueType==typeof(MsDevice)) {
           _dev=(_owner.parent as DVar<MsDevice>).value;
         }
+        _decl=_owner.Get<string>("_declarer", _owner);
         _owner.Subscribe("+", STVarChanged);
+        if(_state!=0xB0) {
+          Reset();
+        }
+      } else {
+        _decl=null;
+        _state=0xB0;
+        _to.Change(-1, -1);
       }
     }
-
+    public override string ToString() {
+      return _decl==null?base.ToString():_decl.value;
+    }
     private void SetValue(STVar st, byte[] data) {
       object o;
       switch(st.dateType) {
@@ -238,15 +250,12 @@ namespace X13.Periphery {
         break;
       case 's': {
           string v=(t as DVar<string>).value;
-
           if(string.IsNullOrEmpty(v)) {
-            payload=new byte[2];
-            payload[1]=0;
+            payload=new byte[1];
           } else {
             byte[] buf=Encoding.Default.GetBytes(v);
-            payload=new byte[buf.Length+2];
+            payload=new byte[buf.Length+1];
             Buffer.BlockCopy(buf, 0, payload, 1, buf.Length);
-            payload[payload.Length-1]=0;
           }
         }
         break;
