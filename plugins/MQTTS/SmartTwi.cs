@@ -241,11 +241,11 @@ namespace X13.Periphery {
           payload[1]=(byte)v;
           payload[2]=(byte)(v>>8);
           payload[3]=(byte)(v>>16);
-          payload[5]=(byte)(v>>24);
-          payload[6]=(byte)(v>>32);
-          payload[7]=(byte)(v>>40);
-          payload[8]=(byte)(v>>48);
-          payload[9]=(byte)(v>>56);
+          payload[4]=(byte)(v>>24);
+          payload[5]=(byte)(v>>32);
+          payload[6]=(byte)(v>>40);
+          payload[7]=(byte)(v>>48);
+          payload[8]=(byte)(v>>56);
         }
         break;
       case 's': {
