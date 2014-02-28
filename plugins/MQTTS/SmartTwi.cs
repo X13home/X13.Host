@@ -39,6 +39,9 @@ namespace X13.Periphery {
       }
 
       Log.Debug("{0}.Recv {1}", _owner.name, BitConverter.ToString(data));
+      if(data.Length>0 && data[0]==0xB0) {
+        _state=0xB0;
+      }
       if(_state==0xF0 && data.Length>1) {
         byte addr=data[0];
         var st=_vars.FirstOrDefault(z => z.addr==addr);
