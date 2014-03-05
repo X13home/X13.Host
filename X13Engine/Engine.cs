@@ -103,6 +103,7 @@ namespace X13 {
         dbVer.saved=true;
         dbVer.value=dbVersion;
         _lHead.saved=true;
+        _lHead.Get<string>("A0").saved=false;
         _lThreshold.saved=true;
 #if DEBUG
         _lThreshold.value=LogLevel.Debug;
