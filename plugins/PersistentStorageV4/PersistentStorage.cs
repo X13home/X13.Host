@@ -40,18 +40,20 @@ namespace X13.PLC {
     private List<FRec> _free;
     private FileStream _file;
     private List<Record> _refitParent;
-    private ManualResetEvent _fileOp;
-    private LinkedList<Tuple<long, byte[]>> _toSave;
+    //private ManualResetEvent _fileOp;
+    //private LinkedList<Tuple<long, byte[]>> _toSave;
     private long _fileLength;
     private bool _terminate;
     private DateTime _nextBak;
     private Topic _sign;
+    private System.Collections.Concurrent.ConcurrentQueue<Topic> _ch;
 
     public PersistentStorage() {
       _tr=new Dictionary<Topic, Record>();
       _free=new List<FRec>();
-      _toSave=new LinkedList<Tuple<long, byte[]>>();
-      _fileOp=new ManualResetEvent(false);
+      _ch=new System.Collections.Concurrent.ConcurrentQueue<Topic>();
+      //_toSave=new LinkedList<Tuple<long, byte[]>>();
+      //_fileOp=new ManualResetEvent(false);
     }
     public void Init() {
       Topic.paused=true;
@@ -131,7 +133,7 @@ namespace X13.PLC {
       Topic.root.Unsubscribe("/#", MqChanged);
 
       _terminate=true;
-      _fileOp.Set();
+      //_fileOp.Set();
       int i=120;
       while(_terminate && i-->0) {
         Thread.Sleep(100);
@@ -143,7 +145,7 @@ namespace X13.PLC {
       if(sender==null || sender.path.StartsWith("/local") || sender.path=="/var/log/A0" || param.Visited(_sign, true)) {
         return;
       }
-      Save(sender, param.Art==TopicChanged.ChangeArt.Remove);
+      _ch.Enqueue(sender);
     }
     private void Backup() {
       DateTime now = DateTime.Now;
@@ -164,19 +166,17 @@ namespace X13.PLC {
       }
     }
     private void FileOperations(object o) {
-      Tuple<long, byte[]> val;
-      bool signal;
+      Topic t;
+      int cnt;
       while(!_terminate) {
         try {
-          _fileOp.Reset();
-          signal=_fileOp.WaitOne(1500);
-        }
-        catch(Exception ex) {
-          Log.Debug("PersistentStorage.FileOperations terminated - "+ex.Message);
-          break;
-        }
-        try {
-          if(!signal) {
+          Thread.Sleep(60);
+          cnt=0;
+          while(_ch.TryDequeue(out t)) {
+            Save(t, t.disposed);
+            cnt++;
+          }
+          if(cnt==0) {
             if(_nextBak<DateTime.Now) {
               Backup();
             }
@@ -190,28 +190,14 @@ namespace X13.PLC {
               }
               if(_fileLength<_file.Length) {
                 _file.SetLength(_fileLength);
+                cnt++;
               }
             }
-          } else {
-            Thread.Sleep(60);
-            while(true) {
-              lock(_toSave) {
-                if(_toSave.First==null) {
-                  val=null;
-                } else {
-                  val=_toSave.First.Value;
-                  _toSave.RemoveFirst();
-                }
-              }
-              if(val==null) {
-                break;
-              } else {
-                _file.Position=val.Item1;
-                _file.Write(val.Item2, 0, val.Item2.Length);
-              }
-            }
+          }
+          if(cnt>0) {
             _file.Flush(true);
           }
+
         }
         catch(Exception ex) {
           Log.Warning("PersistentStorage.FileOperations exception - "+ex.ToString());
@@ -223,33 +209,9 @@ namespace X13.PLC {
       if(buf==null || buf.Length<4) {
         throw new ArgumentException("buf");
       }
-      var val=new Tuple<long, byte[]>(pos, buf);
-      lock(_toSave) {
-        var cur=_toSave.Last;
-        if(cur!=null && (buf[3]&(byte)(FL_REMOVED>>24))==0) {
-          while(cur!=null && (cur.Value.Item2[3]&(byte)(FL_REMOVED>>24))!=0) {
-            if(cur.Value.Item1==pos) {
-              cur=cur.Previous;
-              _toSave.Remove(cur.Next);
-            } else {
-              cur=cur.Previous;
-            }
-          }
-        }
-        if(cur==null) {
-          _toSave.AddFirst(val);
-        } else {
-          _toSave.AddAfter(cur, val);
-          while(cur!=null) {
-            if(cur.Value.Item1==pos) {
-              _toSave.Remove(cur);
-              break;
-            }
-            cur=cur.Previous;
-          }
-        }
-      }
-      _fileOp.Set();
+      _file.Position=pos;
+      _file.Write(buf, 0, buf.Length);
+
     }
     private void Save(Topic t, bool remove) {
       Record rec;

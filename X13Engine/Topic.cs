@@ -77,6 +77,9 @@ namespace X13 {
     public bool saved { get; set; }
 
     [Browsable(false)]
+    public bool disposed { get { return _disposed>0; } }
+
+    [Browsable(false)]
     public IEnumerable<Topic> all { get { return new TopicEnumerator(this, true); } }
 
     [Browsable(false)]
