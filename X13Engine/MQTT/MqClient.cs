@@ -79,6 +79,7 @@ namespace X13.MQTT {
       Topic.root.Subscribe("/etc/repository/#", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/etc/declarers/+", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/etc/declarers/type/#", PLC.PLCPlugin.L_dummy);
+      Topic.root.Subscribe("/etc/PLC/default", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/var/now", PLC.PLCPlugin.L_dummy);
       Topic.paused=true;
       for(int i=600; i>=0; i--) {
