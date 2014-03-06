@@ -30,6 +30,7 @@ namespace X13.PLC {
     /// <summary>mask</summary>
     private const uint FL_SAVED_A  =0x07000000;
     private const uint FL_LOCAL    =0x08000000;
+    private const uint FL_SAVED    =0x20000000;
     private const uint FL_RECORD   =0x40000000;
     private const uint FL_REMOVED  =0x80000000;
     private const int FL_REC_LEN   =0x00FFFFFF;
@@ -77,7 +78,7 @@ namespace X13.PLC {
           int len=(int)fl_size&(((fl_size&FL_RECORD)!=0)?FL_REC_LEN:FL_DATA_LEN);
 
           if(len==0) {
-            Log.Warning("PersistentStorage: Empty record at {0:X8}", curPos);
+            Log.Warning("PersistentStorage: Empty record at 0x{0:X8}", curPos);
             len=1;
           } else if((fl_size & FL_REMOVED)!=0) {
             AddFree((uint)(curPos>>4), (int)fl_size);
@@ -88,7 +89,7 @@ namespace X13.PLC {
             ushort crc1=BitConverter.ToUInt16(buf, len-2);
             ushort crc2=Crc16.ComputeChecksum(buf, len-2);
             if(crc1!=crc2) {
-              throw new ApplicationException("CRC Error Record@0x"+curPos.ToString("X8"));
+              throw new ApplicationException("PersistentStorage: CRC Error at 0x"+curPos.ToString("X8"));
             }
             var r=new Record((uint)(curPos>>4), buf);
 
@@ -180,7 +181,6 @@ namespace X13.PLC {
               Backup();
             }
             lock(_free) {
-              _fileLength=_file.Length;
               for(int i=_free.Count-1; i>=0; i--) {
                 if((((long)_free[i].pos<<4)+((_free[i].size+15)&0x7FFFFFF0))>=_fileLength) {
                   _fileLength=(long)_free[i].pos<<4;
@@ -188,9 +188,9 @@ namespace X13.PLC {
                   break;
                 }
               }
-            }
-            if(_fileLength<_file.Length) {
-              _file.SetLength(_fileLength);
+              if(_fileLength<_file.Length) {
+                _file.SetLength(_fileLength);
+              }
             }
           } else {
             Thread.Sleep(60);
@@ -274,7 +274,7 @@ namespace X13.PLC {
         dataModified=true;
         _tr[t]=rec;
       } else if(remove) {
-        if(rec.saved==FL_SAVED_E && rec.data_pos>0 && rec.data_size>0) {
+        if(rec.saved_fl==FL_SAVED_E && rec.data_pos>0 && rec.data_size>0) {
           AddFree(rec.data_pos, rec.data_size);
         }
         AddFree(rec.pos, rec.size);
@@ -292,7 +292,7 @@ namespace X13.PLC {
             rec.name="/";
             recModified=true;
           }
-        }else if(rec.name!=t.name) {
+        } else if(rec.name!=t.name) {
           rec.name=t.name;
           recModified=true;
         }
@@ -312,15 +312,18 @@ namespace X13.PLC {
         } else {
           rec.data=null;
           rec.data_size=0;
-          rec.saved=0;
+          rec.saved_fl=0;
           if(oldDataSize>0) {
             dataModified=true;
           }
         }
+        if(t.saved) {
+          rec.fl_size|=FL_SAVED;
+        }
       }
       byte[] recBuf=new byte[rec.size];
       if(rec.data_size>0) {
-        if(rec.saved==FL_SAVED_I) {
+        if(rec.saved_fl==FL_SAVED_I) {
           CopyBytes(rec.data_size, recBuf, 8);
           Encoding.UTF8.GetBytes(rec.data).CopyTo(recBuf, recBuf.Length-rec.data_size-2);
           if(rec.data_pos>0 && oldDataSize>0) {
@@ -382,8 +385,8 @@ namespace X13.PLC {
       Type type=null;
       string data=null;
 
-      if(r.saved!=0) {
-        if(r.saved==FL_SAVED_E) {
+      if(r.saved_fl!=0) {
+        if(r.saved_fl==FL_SAVED_E) {
           byte[] lBuf=new byte[4];
           _file.Position=(long)r.data_pos<<4;
           _file.Read(lBuf, 0, 4);
@@ -405,11 +408,11 @@ namespace X13.PLC {
             }
           }
         }
-        if(r.data!=null && r.data.Length>1){
+        if(r.data!=null && r.data.Length>1) {
           var datat=r.data.Split('\0');
           if(datat!=null && datat.Length>0 && !string.IsNullOrEmpty(datat[0])) {
             type=X13.WOUM.ExConverter.FullName2Type(datat[0]);
-            if(datat.Length>1){
+            if(datat.Length>1) {
               data=datat[1];
             }
           }
@@ -423,8 +426,8 @@ namespace X13.PLC {
         t=Topic.GetP(r.name, type, _sign, parent);
       }
       if(t!=null) {
+        t.saved=r.saved;
         if(data!=null) {
-          t.saved=true;
           t.FromJson(data, _sign);
         }
         Log.Debug("R {0}={1} [0x{2:X4}]", t.path, t.GetValue(), r.pos);
@@ -474,7 +477,7 @@ namespace X13.PLC {
       }
     }
     private uint FindFree(int size) {
-      size=(size+7)&0x7FFFFFF8;
+      size=(size+15)&0x7FFFFFF0;
       uint rez;
       lock(_free) {
         int idx=-1;
@@ -596,8 +599,12 @@ namespace X13.PLC {
           data=null;
           data_size=0;
         }
+        if(t.saved) {
+          fl_size|=FL_SAVED;
+        }
       }
-      public uint saved { get { return fl_size&FL_SAVED_A; } set { fl_size=(fl_size & ~FL_SAVED_A) | (value & FL_SAVED_A); } }
+      public uint saved_fl { get { return fl_size&FL_SAVED_A; } set { fl_size=(fl_size & ~FL_SAVED_A) | (value & FL_SAVED_A); } }
+      public bool saved { get { return (fl_size&FL_SAVED)!=0; } set { fl_size=(value?fl_size|FL_SAVED : fl_size&~FL_SAVED); } }
       public bool local { get { return (fl_size&FL_LOCAL)!=0; } set { fl_size=value?fl_size|FL_LOCAL : fl_size&~FL_LOCAL; } }
       public bool removed { get { return (fl_size&FL_REMOVED)!=0; } set { fl_size=value?fl_size|FL_REMOVED:fl_size&~FL_REMOVED; } }
       public int size { get { return (int)fl_size & FL_REC_LEN; } }

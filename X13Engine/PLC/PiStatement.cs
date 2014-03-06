@@ -117,7 +117,7 @@ namespace X13.PLC {
       this._declarer=declarer;
     }
     public void RefreshExec() {
-      if(_owner==null) {
+      if(_owner==null || Topic.paused) {
         return;
       }
       if(_parent==null || !_parent.exec) {
