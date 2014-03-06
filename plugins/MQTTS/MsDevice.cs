@@ -34,11 +34,43 @@ namespace X13.Periphery {
     internal static void Open() {
       MsGUdp.Open();
     }
+    internal static byte[] Serialize(Topic t) {
+      List<byte> ret=new List<byte>();
+      switch(Type.GetTypeCode(t.valueType)) {
+      case TypeCode.Boolean:
+        ret.Add((byte)((t as DVar<bool>).value?1:0));
+        break;
+      case TypeCode.Int64: {
+          long vo=(t as DVar<long>).value;
+          long v=vo;
+          do {
+            ret.Add((byte)v);
+            v=v>>8;
+          } while(vo<0?(v<-1 || (ret[ret.Count-1]&0x80)==0):(v>0 || (ret[ret.Count-1]&0x80)!=0));
+        }
+        break;
+      //case TypeCode.Double:
+      case TypeCode.String: {
+          string v=(string)t.GetValue();
+          if(!string.IsNullOrEmpty(v)) {
+            ret.AddRange(Encoding.Default.GetBytes(v));
+          }
+        }
+        break;
+      case TypeCode.Object:
+        if(t.valueType==typeof(PLC.ByteArray) && t.GetValue()!=null) {
+          ret.AddRange(((PLC.ByteArray)t.GetValue()).GetBytes());
+        }
+        break;
+      }
+      return ret.ToArray();
+    }
     private static void PrintPacket(MsDevice dev, MsMessage msg, byte[] buf) {
       if(_verbose.value) {
         Log.Debug("r {4:X2}:{0}:{1} \t{2}:{3}", BitConverter.ToString(msg.Addr??new byte[0]), BitConverter.ToString(buf??new byte[0]), (dev!=null && dev.Owner!=null)?dev.Owner.name:string.Empty, msg.ToString(), (dev!=null && dev._gate!=null)?dev._gate.gwIdx:0xFF);
       }
     }
+
 
     private int _duration=3000;
     private int _reconnectCnt=0;
@@ -179,6 +211,13 @@ namespace X13.Periphery {
           ResetTimer();
           try {
             TopicInfo ti = GetTopicInfo(msg.TopicPath, false);
+            if(ti.topic!=null && ti.topic.valueType==typeof(SmartTwi)) {
+              if(ti.topic.GetValue()==null) {
+                ti.topic.SetValue(new SmartTwi(ti.topic), new TopicChanged(TopicChanged.ChangeArt.Value, Owner));
+              } else {
+                (ti.topic as DVar<SmartTwi>).value.Reset();
+              }
+            }
             Send(new MsRegAck(ti.TopicId, msg.MessageId, MsReturnCode.Accepted));
           }
           catch(Exception) {
@@ -353,6 +392,17 @@ namespace X13.Periphery {
           if(ti.topic.valueType==typeof(PLC.ByteArray)) {
             val=new PLC.ByteArray(msgData);
             break;
+          } else if(ti.topic.valueType==typeof(SmartTwi)){
+            var sa=(ti.topic.GetValue() as SmartTwi);
+            if(sa==null){
+              sa=new SmartTwi(ti.topic);
+              sa.Recv(msgData);
+              val=sa;
+            }else{
+              sa.Recv(msgData);
+              return;
+            }
+            break;
           } else {
             return;
           }
@@ -395,6 +445,9 @@ namespace X13.Periphery {
         return;
       }
       if(param.Art==TopicChanged.ChangeArt.Add) {
+        if(topic.valueType==typeof(SmartTwi) || (topic.parent!=null && topic.parent.valueType==typeof(SmartTwi))) {
+          return;   // processed from SmartTwi
+        }
         GetTopicInfo(topic);
         return;
       }
@@ -407,6 +460,9 @@ namespace X13.Periphery {
       }
       if(state==State.Disconnected || state==State.Lost || param.Visited(Owner, true)) {
         return;
+      }
+      if(topic.valueType==typeof(SmartTwi) || (topic.parent!=null && topic.parent.valueType==typeof(SmartTwi))) {
+        return;   // processed from SmartTwi
       }
       TopicInfo rez=_topics.FirstOrDefault(ti => ti.path==topic.path);
       if(rez==null && param.Art==TopicChanged.ChangeArt.Value) {
@@ -421,6 +477,17 @@ namespace X13.Periphery {
         Send(new MsRegister(0, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
         _topics.Remove(rez);
       }
+    }
+    internal void PublishWithPayload(Topic t, byte[] payload) {
+      if(state==State.Disconnected || state==State.Lost) {
+        return;
+      }
+      TopicInfo rez=_topics.FirstOrDefault(ti => ti.path==t.path);
+      if(rez==null) {
+        return;
+      }
+      Log.Debug("{0}.Snd {1}", t.name, BitConverter.ToString(payload));
+      Send(new MsPublish(rez.topic, rez.TopicId, QoS.AtLeastOnce) { Data=payload});
     }
 
     /// <summary>Find or create TopicInfo by Topic</summary>
@@ -721,6 +788,8 @@ namespace X13.Periphery {
       new NTRecord("Tq", typeof(long)),   //int64
       new NTRecord("Ts", typeof(string)),
       new NTRecord("Ta", typeof(PLC.ByteArray)),
+      new NTRecord("sa", typeof(SmartTwi)),    // Smart TWI
+      //new NTRecord("sa", typeof(PLC.ByteArray)),
       new NTRecord("Xz", typeof(bool)),   // user defined
       new NTRecord("Xb", typeof(long)),   //int8
       new NTRecord("XB", typeof(long)),   //uint8
