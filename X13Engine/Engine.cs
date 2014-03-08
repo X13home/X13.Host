@@ -130,6 +130,7 @@ namespace X13 {
       }, null, 7200000, 7200000);
       ThreadPool.QueueUserWorkItem(o => {
         SendStat(1);
+        Topic.Export(_cfgPath, Topic.root.Get("/local/cfg"));
       });
       return true;
     }
@@ -144,7 +145,6 @@ namespace X13 {
       SendStat(0);
       _log.Dispose();
       Thread.Sleep(300);
-      Topic.Export(_cfgPath, Topic.root.Get("/local/cfg"));
       if(_singleInstance!=null) {
         _singleInstance.ReleaseMutex();
       }

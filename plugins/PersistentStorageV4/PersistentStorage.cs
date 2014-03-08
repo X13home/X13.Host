@@ -39,7 +39,7 @@ namespace X13.PLC {
 
     private Dictionary<Topic, Record> _tr;
     private LinkedList<Record> _recordsToSave;
-    private List<FRec> _free;
+    private SortedSet<ulong> _freeBlocks;
     private FileStream _file;
     private List<Record> _refitParent;
     private System.Collections.Concurrent.ConcurrentQueue<Topic> _ch;
@@ -55,7 +55,7 @@ namespace X13.PLC {
 
     public PersistentStorage() {
       _tr=new Dictionary<Topic, Record>();
-      _free=new List<FRec>();
+      _freeBlocks=new SortedSet<ulong>();
       _ch=new System.Collections.Concurrent.ConcurrentQueue<Topic>();
     }
     public void Init() {
@@ -70,75 +70,28 @@ namespace X13.PLC {
       if(_file.Length<0x40) {
         _file.Write(new byte[0x40], 0, 0x40);
         _file.Flush(true);
+        _nextBak=DateTime.Now.AddHours(1);
       } else {
-        _file.Position=0x40;
-        long curPos;
-        byte[] lBuf=new byte[4];
-        _refitParent=new List<Record>();
-        Topic t;
-
-        do {
-          curPos=_file.Position;
-          _file.Read(lBuf, 0, 4);
-          uint fl_size=BitConverter.ToUInt32(lBuf, 0);
-          int len=(int)fl_size&(((fl_size&FL_RECORD)!=0)?FL_REC_LEN:FL_DATA_LEN);
-
-          if(len==0) {
-            Log.Warning("PersistentStorage: Empty record at 0x{0:X8}", curPos);
-            len=1;
-          } else if((fl_size & FL_REMOVED)!=0) {
-            AddFree((uint)(curPos>>4), (int)fl_size);
-          } else if((fl_size&FL_RECORD)!=0) {
-            byte[] buf=new byte[len];
-            lBuf.CopyTo(buf, 0);
-            _file.Read(buf, 4, len-4);
-            ushort crc1=BitConverter.ToUInt16(buf, len-2);
-            ushort crc2=Crc16.ComputeChecksum(buf, len-2);
-            if(crc1!=crc2) {
-              throw new ApplicationException("PersistentStorage: CRC Error at 0x"+curPos.ToString("X8"));
-            }
-            var r=new Record((uint)(curPos>>4), buf);
-
-            if(r.parent==0) {
-              if(r.name=="/") {
-                t=AddTopic(null, r);
-              } else {
-                t=null;
-              }
-            } else if(r.parent<r.pos) {
-              t=_tr.FirstOrDefault(z => z.Value.pos==r.parent).Key;
-              if(t!=null) {
-                t=AddTopic(t, r);
-              }
-            } else {
-              t=null;
-            }
-            if(t==null) {
-              int idx=indexPPos(_refitParent, r.parent);
-              _refitParent.Insert(idx+1, r);
-            }
-          }
-          _file.Position=curPos+((len+15)&FL_LEN_MASK);
-        } while(_file.Position<_file.Length);
-        foreach(var kv in _refitParent) {
-          Log.Warning("! [{1:X4}] {0} ({2:X4})", kv.name, kv.pos<<4, kv.parent<<4);
-        }
-        _refitParent=null;
+        Load();
       }
       _fileLength=_file.Length;
       _work=new AutoResetEvent(false);
       _thread=new Thread(new ThreadStart(PrThread));
       _thread.Priority=ThreadPriority.Lowest;
       _now=DateTime.Now;
-      Backup();
+      if(_nextBak<_now) {
+        Backup();
+      }
       _thread.Start();
       Topic.root.Subscribe("/#", MqChanged);
     }
+
     public void Start() {
       Topic.paused=false;
     }
     public void Stop() {
       if(_file!=null) {
+        Topic.paused=true;
         Topic.root.Unsubscribe("/#", MqChanged);
         _terminate=true;
         _work.Set();
@@ -146,6 +99,62 @@ namespace X13.PLC {
         _file.Close();
         _file=null;
       }
+    }
+
+    private void Load() {
+      long curPos;
+      byte[] lBuf=new byte[4];
+      _refitParent=new List<Record>();
+      Topic t;
+      _file.Position=0x40;
+
+      do {
+        curPos=_file.Position;
+        _file.Read(lBuf, 0, 4);
+        uint fl_size=BitConverter.ToUInt32(lBuf, 0);
+        int len=(int)fl_size&(((fl_size&FL_RECORD)!=0)?FL_REC_LEN:FL_DATA_LEN);
+
+        if(len==0) {
+          Log.Warning("PersistentStorage: Empty record at 0x{0:X8}", curPos);
+          len=1;
+        } else if((fl_size & FL_REMOVED)!=0) {
+          AddFree((uint)(curPos>>4), (int)fl_size);
+        } else if((fl_size&FL_RECORD)!=0) {
+          byte[] buf=new byte[len];
+          lBuf.CopyTo(buf, 0);
+          _file.Read(buf, 4, len-4);
+          ushort crc1=BitConverter.ToUInt16(buf, len-2);
+          ushort crc2=Crc16.ComputeChecksum(buf, len-2);
+          if(crc1!=crc2) {
+            throw new ApplicationException("PersistentStorage: CRC Error at 0x"+curPos.ToString("X8"));
+          }
+          var r=new Record((uint)(curPos>>4), buf, _file);
+
+          if(r.parent==0) {
+            if(r.name=="/") {
+              t=AddTopic(null, r);
+            } else {
+              t=null;
+            }
+          } else if(r.parent<r.pos) {
+            t=_tr.FirstOrDefault(z => z.Value.pos==r.parent).Key;
+            if(t!=null) {
+              t=AddTopic(t, r);
+            }
+          } else {
+            t=null;
+          }
+          if(t==null) {
+            int idx=indexPPos(_refitParent, r.parent);
+            _refitParent.Insert(idx+1, r);
+          }
+        }
+        _file.Position=curPos+((len+15)&FL_LEN_MASK);
+      } while(_file.Position<_file.Length);
+      foreach(var kv in _refitParent) {
+        Log.Warning("! [{1:X4}] {0} ({2:X4})", kv.name, kv.pos<<4, kv.parent<<4);
+      }
+      _refitParent=null;
     }
     private void MqChanged(Topic sender, TopicChanged param) {
       if(sender==null || sender.path.StartsWith("/local") || sender.path=="/var/log/A0" || param.Visited(_sign, true)) {
@@ -156,7 +165,6 @@ namespace X13.PLC {
         _work.Set();
       }
     }
-
     private void PrThread() {
       _recordsToSave=new LinkedList<Record>();
       Topic tCh;
@@ -165,6 +173,8 @@ namespace X13.PLC {
       DateTime thr;
       uint parentPos, oldFl_Size;
       int oldDataSize;
+      byte[] rBuf=new byte[64], dBuf=Record.dBuf;
+      int idleCnt=0;
 
       do {
         signal=_work.WaitOne(850);
@@ -185,14 +195,14 @@ namespace X13.PLC {
           }
         }
         signal=false;
-        thr=_now.AddMilliseconds(-1130);
+        thr=_now.AddMilliseconds(-2630);
         while(_recordsToSave.First!=null && (r=_recordsToSave.First.Value)!=null && (r.pos==0 || r.modifyDT<thr || _terminate)) {
           _recordsToSave.RemoveFirst();
           remove=r.t.disposed;
           recModified=false;
           dataModified=false;
 
-          if(r.t.parent==null || remove) {
+          if(r.t==Topic.root || remove) {
             parentPos=0;
           } else {
             pr=GetRecord(r.t.parent);
@@ -201,17 +211,17 @@ namespace X13.PLC {
               continue;
             }
             if(pr.pos==0) {
-              bool found=false;
-              for(var i=_recordsToSave.First; i!=null; i=i.Next) {
+              LinkedListNode<Record> i;
+              for(i=_recordsToSave.First; i!=null; i=i.Next) {
                 if(i.Value==pr) {
-                  found=true;
+                  _recordsToSave.AddAfter(i, r);
                   break;
                 }
               }
-              if(!found) {
-                _recordsToSave.AddLast(pr);
+              if(i==null) {
+                _recordsToSave.AddFirst(r);
+                _recordsToSave.AddFirst(pr);
               }
-              _recordsToSave.AddLast(r);
               continue;
             }
             parentPos=pr.pos;
@@ -242,20 +252,29 @@ namespace X13.PLC {
               recModified=true;
             }
             r.fl_size=FL_RECORD | (uint)(14+Encoding.UTF8.GetByteCount(r.name));
-            string type_data=r.t.valueType==null?string.Empty:string.Concat(r.t.valueType.FullName, "\0", (r.t.saved)?r.t.ToJson():string.Empty);
-            if(type_data.Length>0) {
-              if(r.data!=type_data) {
-                r.data=type_data;
+            string cPayload=(r.t.valueType!=null && r.t.saved)?r.t.ToJson():string.Empty;
+            if(r.t.valueType!=null) {
+              if(r.payload!=cPayload || r.t.valueType!=r.type) {
+                r.payload=cPayload;
+                r.type=r.t.valueType;
                 dataModified=true;
               }
-              r.data_size=(r.data==null?0:Encoding.UTF8.GetByteCount(r.data));
-              if(r.data_size>0 && r.data_size<32) {
+              byte[] tBuf=Encoding.UTF8.GetBytes(r.type.FullName); //TODO: get the short name for known types
+              byte[] pBuf=Encoding.UTF8.GetBytes(r.payload);
+              r.data_size=tBuf.Length+1+pBuf.Length;
+              if(dBuf==null || dBuf.Length<((r.data_size+6+15)&FL_LEN_MASK)) {
+                dBuf=new byte[(r.data_size+6+15)&FL_LEN_MASK];
+              }
+              Buffer.BlockCopy(tBuf, 0, dBuf, 4, tBuf.Length);
+              dBuf[tBuf.Length+4]=0;
+              Buffer.BlockCopy(pBuf, 0, dBuf, tBuf.Length+5, pBuf.Length);
+              if(r.data_size>0 && r.size+r.data_size<64) {
                 r.fl_size=(r.fl_size+(uint)r.data_size) | FL_SAVED_I;
               } else {
                 r.fl_size|=FL_SAVED_E;
               }
             } else {
-              r.data=null;
+              r.payload=string.Empty;
               r.data_size=0;
               r.saved_fl=0;
               if(oldDataSize>0) {
@@ -266,11 +285,13 @@ namespace X13.PLC {
               r.fl_size|=FL_SAVED;
             }
           }
-          byte[] recBuf=new byte[r.size];
+          if(rBuf==null || rBuf.Length<((r.size+15)&FL_LEN_MASK)) {
+            rBuf=new byte[(r.size+15)&FL_LEN_MASK];
+          }
           if(r.data_size>0) {
             if(r.saved_fl==FL_SAVED_I) {
-              CopyBytes(r.data_size, recBuf, 8);
-              Encoding.UTF8.GetBytes(r.data).CopyTo(recBuf, recBuf.Length-r.data_size-2);
+              CopyBytes(r.data_size, rBuf, 8);
+              Buffer.BlockCopy(dBuf, 4, rBuf, r.size-r.data_size-2, r.data_size);
               if(r.data_pos>0 && oldDataSize>0) {  // FL_SAVED_E -> FL_SAVED_I
                 AddFree(r.data_pos, oldDataSize);
                 r.data_pos=0;
@@ -281,30 +302,31 @@ namespace X13.PLC {
               }
             } else {
               if(dataModified) {
-                byte[] dataBuf=new byte[6+r.data_size];
-                CopyBytes(dataBuf.Length, dataBuf, 0);
-                Encoding.UTF8.GetBytes(r.data).CopyTo(dataBuf, 4);
-                if(Write(ref r.data_pos, dataBuf, oldDataSize)) {
+                CopyBytes(6+r.data_size, dBuf, 0);
+                if(Write(ref r.data_pos, dBuf, oldDataSize, r.data_size+6)) {
                   recModified=true;
                 }
                 signal=true;
                 if(_verbose.value) {
-                  Log.Debug("D [{2:X4}]({1}) {0}={3}", r.t.path, dataBuf.Length, r.data_pos<<4, r.data);
+                  Log.Debug("D [{0:X4}]({1}) {2}{3}", r.data_pos<<4, r.data_size+6, r.t.path, r.type==null?" $":string.Concat("<", r.type.FullName, ">=", (r.t.saved)?r.t.ToJson():" $"));
                 }
               }
-              CopyBytes(r.data_pos, recBuf, 8);
+              CopyBytes(r.data_pos, rBuf, 8);
             }
-          } else if(r.data_pos>0 && oldDataSize>0) {  // new data_size==0
-            AddFree(r.data_pos, oldDataSize);
-            r.data_pos=0;
-            recModified=true;
-            signal=true;
+          } else {
+            CopyBytes(r.data_size, rBuf, 8);
+            if(r.data_pos>0 && oldDataSize>0) {  // new data_size==0
+              AddFree(r.data_pos, oldDataSize);
+              r.data_pos=0;
+              recModified=true;
+              signal=true;
+            }
           }
           if(recModified || r.fl_size!=oldFl_Size) {
-            CopyBytes(r.fl_size, recBuf, 0);
-            CopyBytes(r.parent, recBuf, 4);
-            Encoding.UTF8.GetBytes(r.name).CopyTo(recBuf, 12);
-            if(Write(ref r.pos, recBuf, (int)oldFl_Size & FL_REC_LEN)) {
+            CopyBytes(r.fl_size, rBuf, 0);
+            CopyBytes(r.parent, rBuf, 4);
+            Encoding.UTF8.GetBytes(r.name).CopyTo(rBuf, 12);
+            if(Write(ref r.pos, rBuf, (int)oldFl_Size & FL_REC_LEN, r.size)) {
               var ch=r.t.children.ToArray();
               for(int i=ch.Length-1; i>=0; i--) {
                 if(!ch[i].path.StartsWith("/local") && ch[i].path!="/var/log/A0") {
@@ -317,26 +339,38 @@ namespace X13.PLC {
             }
             signal=true;
             if(_verbose.value) {
-              Log.Debug("S [{2:X4}]({1}) {0}", r.t.path, r.size, r.pos<<4);
+              Log.Debug("S [{0:X4}]({1}) {2}{3}", r.pos<<4, r.size, r.t.path, r.saved_fl==FL_SAVED_I?(string.Concat("<", r.type.FullName, ">=", (r.t.saved)?r.t.ToJson():" $")):(r.type==null?" $":string.Empty));
             }
           }
         }
         if(!signal) {
-          if(_nextBak<DateTime.Now) {
+          if(_nextBak<_now) {
             Backup();
-          } else {
-            for(int i=_free.Count-1; i>=0; i--) {
-              if((((long)_free[i].pos<<4)+((_free[i].size+15)&FL_LEN_MASK))>=_fileLength) {
-                _fileLength=(long)_free[i].pos<<4;
-                _free.RemoveAt(i);
-                break;
+          } else if(++idleCnt>100) {
+            List<ulong> rem=null;
+            int fr_sz;
+            long fr_pos;
+            foreach(var b in _freeBlocks.OrderByDescending(z => (uint)z)) {
+              fr_pos=(((long)(uint)b)<<4);
+              fr_sz=(((int)(b>>32)+15)&FL_LEN_MASK);
+              if(fr_pos + fr_sz >=_fileLength) {
+                _fileLength=fr_pos;
+                if(rem==null) {
+                  rem=new List<ulong>();
+                }
+                rem.Add(b);
               }
             }
-            if(_fileLength<_file.Length) {
-              _file.SetLength(_fileLength);
-              signal=true;
-              if(_verbose.value) {
-                Log.Debug("# {0:X4}", _fileLength);
+            if(rem!=null) {
+              for(int i=0; i<rem.Count; i++) {
+                _freeBlocks.Remove(rem[i]);
+              }
+              if(_fileLength<_file.Length) {
+                _file.SetLength(_fileLength);
+                signal=true;
+                if(_verbose.value) {
+                  Log.Debug("# {0:X4}", _fileLength);
+                }
               }
             }
           }
@@ -375,84 +409,43 @@ namespace X13.PLC {
         Log.Warning("PersistentStorage.Backup - "+ex.Message);
       }
     }
-    private bool Write(ref uint pos, byte[] buf, int oldSize) {
-      if(buf==null || buf.Length<6) {
-        throw new ArgumentException("buf.Length");
+    private bool Write(ref uint pos, byte[] buf, int oldSize, int curSize) {
+      int bufSize=((curSize+15)&FL_LEN_MASK);
+      if(buf==null || curSize<6 || buf.Length<bufSize) {
+        throw new ArgumentException("curSize");
       }
       oldSize=((oldSize+15)&FL_LEN_MASK);
-      int bufSize=((buf.Length+15)&FL_LEN_MASK);
       uint oldPos=pos;
-      CopyBytes(Crc16.ComputeChecksum(buf, buf.Length-2), buf, buf.Length-2);
+      CopyBytes(Crc16.ComputeChecksum(buf, curSize-2), buf, curSize-2);
       if(bufSize!=oldSize) {
-        if(pos>0) {
-          AddFree(pos, oldSize);
-        }
-        pos=FindFree(buf.Length);
+        AddFree(pos, oldSize);
+        pos=FindFree(curSize);
       }
-      if(_writeBuf==null || _writeBuf.Length<bufSize) {
-        _writeBuf=new byte[bufSize];
-      }
-      Buffer.BlockCopy(buf, 0, _writeBuf, 0, buf.Length);
-      for(int i=buf.Length; i<bufSize; i++) {
-        _writeBuf[i]=0;
+      for(int i=curSize; i<bufSize; i++) {
+        buf[i]=0;
       }
       _file.Position=(long)pos<<4;
-      _file.Write(_writeBuf, 0, bufSize);
+      _file.Write(buf, 0, bufSize);
       return pos!=oldPos;
     }
     private Topic AddTopic(Topic parent, Record r) {
       Topic t=null;
-      Type type=null;
-      string data=null;
 
-      if(r.saved_fl!=0) {
-        if(r.saved_fl==FL_SAVED_E) {
-          byte[] lBuf=new byte[4];
-          _file.Position=(long)r.data_pos<<4;
-          _file.Read(lBuf, 0, 4);
-          int data_size=BitConverter.ToInt32(lBuf, 0);
-          if((data_size & (FL_REMOVED | FL_RECORD))==0) {
-            if(data_size<4) {
-              Log.Warning("DataStorage: mismatch data size, record @ {0:X8} for {1}/{2}", (long)r.data_pos<<4, parent!=null?parent.path:string.Empty, r.name);
-            } else {
-              r.data_size=data_size-6;
-              byte[] buf=new byte[data_size];
-              lBuf.CopyTo(buf, 0);
-              _file.Read(buf, 4, buf.Length-4);
-              ushort crc1=BitConverter.ToUInt16(buf, buf.Length-2);
-              ushort crc2=Crc16.ComputeChecksum(buf, buf.Length-2);
-              if(crc1!=crc2) {
-                throw new ApplicationException("CRC Error Data@0x"+((long)r.pos<<3).ToString("X8"));
-              }
-              r.data=Encoding.UTF8.GetString(buf, 4, (int)r.data_size);
-            }
-          }
-        }
-        if(r.data!=null && r.data.Length>1) {
-          var datat=r.data.Split('\0');
-          if(datat!=null && datat.Length>0 && !string.IsNullOrEmpty(datat[0])) {
-            type=X13.WOUM.ExConverter.FullName2Type(datat[0]);
-            if(datat.Length>1) {
-              data=datat[1];
-            }
-          }
-        }
-      }
       if(parent==null) {
         if(r.name=="/") {
           t=Topic.root;
         }
       } else {
-        t=Topic.GetP(r.name, type, _sign, parent);
+        t=Topic.GetP(r.name, r.type, _sign, parent);
       }
       if(t!=null) {
         r.t=t;
         t.saved=r.saved;
-        if(data!=null) {
-          t.FromJson(data, _sign);
+        if(!string.IsNullOrEmpty(r.payload)) {
+          t.FromJson(r.payload, _sign);
         }
         if(_verbose.value) {
-          Log.Debug("L [{2:X4}]{0}={1}", t.path, t.GetValue(), r.pos<<4);
+          Log.Debug("L [{0:X4}]{1}<{2}>={3}", r.pos<<4, t.path, t.valueType, t.GetValue());
         }
         _tr[t]=r;
         int idx;
@@ -504,25 +497,18 @@ namespace X13.PLC {
         _file.Write(_writeBuf, 0, sz);
 
       }
-      FRec fr=new FRec(pos, sz);
-      int idx=_free.BinarySearch(fr);
-      idx=idx<0?~idx:idx+1;
-      _free.Insert(idx, fr);
+      _freeBlocks.Add((ulong)sz<<32 | pos);
       if(_verbose.value) {
-        Log.Debug("F [{0:X4}]({1}/{2})", pos<<4, sz, size);
+        Log.Debug("F [{0:X4}]({1}/{2})", pos<<4, size, sz);
       }
     }
     private uint FindFree(int size) {
       size=(size+15)&FL_LEN_MASK;
       uint rez;
-      int idx=-1;
-      idx=_free.BinarySearch(new FRec(0, size));
-      if(idx<0) {
-        idx=~idx;
-      }
-      if(idx<_free.Count && _free[idx].size==size) {
-        rez=_free[idx].pos;
-        _free.RemoveAt(idx);
+      ulong p=_freeBlocks.GetViewBetween((ulong)size<<32, (ulong)(size+1)<<32).FirstOrDefault();
+      if((int)(p>>32)==size) {
+        _freeBlocks.Remove(p);
+        rez=(uint)p;
       } else {
         rez=(uint)((_fileLength+15)>>4);
         _fileLength=((long)rez<<4)+size;
@@ -565,20 +551,9 @@ namespace X13.PLC {
       return new string(result);
     }
 
-    private struct FRec : IComparable<FRec> {
-      private long val;
-
-      public FRec(uint pos, int size) {
-        val=((long)size<<32) | pos;
-      }
-      public int CompareTo(FRec o) {
-        return val.CompareTo(o.val);
-      }
-      public uint pos { get { return (uint)val; } }
-      public int size { get { return (int)(val>>32); } }
-
-    }
     private class Record {
+      public static byte[] dBuf;
+
       public Topic t;
       public DateTime modifyDT;
       public uint fl_size;
@@ -587,34 +562,70 @@ namespace X13.PLC {
       public uint data_pos;
       public int data_size;
       public string name;
-      public string data;
+      public string payload;
+      public Type type;
 
-      public Record(uint pos, byte[] buf) {
+      public Record(uint pos, byte[] buf, FileStream file) {
         this.pos=pos;
         this.fl_size=BitConverter.ToUInt32(buf, 0);
-        uint len=fl_size & FL_REC_LEN;
         parent=BitConverter.ToUInt32(buf, 4);
         uint dataPS=BitConverter.ToUInt32(buf, 8);
         if(dataPS>0) {
           if((fl_size&FL_SAVED_A)==FL_SAVED_I) {
             data_pos=0;
             data_size=(int)dataPS;
-            data=Encoding.UTF8.GetString(buf, (int)(buf.Length-data_size-2), (int)(data_size));
-          } else {
+            if(dBuf==null || dBuf.Length<((data_size+6+15)&FL_LEN_MASK)) {
+              dBuf=new byte[(data_size+6+15)&FL_LEN_MASK];
+            }
+            Buffer.BlockCopy(buf, size-data_size-2, dBuf, 4, data_size);
+          } else {  // saved_fl==FL_SAVED_E
             data_pos=dataPS;
-            data_size=0;
-            data=null;
+            byte[] lBuf=new byte[4];
+            file.Position=(long)data_pos<<4;
+            file.Read(lBuf, 0, 4);
+            data_size=BitConverter.ToInt32(lBuf, 0);
+            if((data_size & (FL_REMOVED | FL_RECORD))==0) {
+              if(data_size<4) {
+                throw new ApplicationException(string.Format("DataStorage: mismatch data size, record @0x{0:X8} {1}", (long)data_pos<<4, name));
+              } else {
+                data_size=data_size-6;
+                if(dBuf==null || dBuf.Length<((data_size+6+15)&FL_LEN_MASK)) {
+                  dBuf=new byte[(data_size+6+15)&FL_LEN_MASK];
+                }
+                Buffer.BlockCopy(lBuf, 0, dBuf, 0, 4);
+                file.Read(dBuf, 4, data_size);
+                ushort crc1=BitConverter.ToUInt16(buf, size-2);
+                ushort crc2=Crc16.ComputeChecksum(buf, size-2);
+                if(crc1!=crc2) {
+                  throw new ApplicationException("DataStorage: CRC Error Data @0x"+((long)data_pos<<4).ToString("X8"));
+                }
+              }
+            }
+          }
+
+          if(data_size>1) {
+            int idx=4;
+            while(idx<data_size+4 && dBuf[idx]!=0) {
+              idx++;
+            }
+            if(idx<data_size+4) {
+              string ts=Encoding.UTF8.GetString(dBuf, 4, idx-4);
+              type=X13.WOUM.ExConverter.FullName2Type(ts);
+              idx++;  // delimiter '\0'
+              if(saved && idx<data_size+4) {
+                payload=Encoding.UTF8.GetString(dBuf, idx, data_size-idx+4);
+              } else {
+                payload=string.Empty;
+              }
+            }
           }
         } else {
-          data=null;
+          payload=string.Empty;
+          type=null;
           data_pos=0;
           data_size=0;
         }
-        name=Encoding.UTF8.GetString(buf, 12, (int)(buf.Length-data_size-14));
-        if(parent==0 && name!="/") {
-          Log.Warning("!");
-        }
-
+        name=Encoding.UTF8.GetString(buf, 12, (int)(size-14-(saved_fl==FL_SAVED_I?data_size:0)));
       }
       public Record(Topic t) {
         this.t=t;
