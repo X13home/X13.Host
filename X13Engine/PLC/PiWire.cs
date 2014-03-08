@@ -18,11 +18,10 @@ using X13.MQTT;
 namespace X13.PLC {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public class PiWire : ITopicOwned {
-    static PiWire() {
-    }
-
+#pragma warning disable 414
     [Newtonsoft.Json.JsonProperty]
     private uint _dummy;
+#pragma warning restore 414
     private DVar<PiWire> _owner;
     private Topic _a;
     private Topic _b;
@@ -32,7 +31,7 @@ namespace X13.PLC {
     private PiLogram _parent;
 
     public PiWire() {
-      _dummy=1000;
+      _dummy=2;
     }
 
     public Topic A {
@@ -83,7 +82,6 @@ namespace X13.PLC {
       if(_owner!=owner) {
         if(_owner!=null) {
           _owner.Unsubscribe("+", _owner_changed);
-          _dummy--;
           if(_aAlias!=null) {
             _aAlias.changed-=_aAlias_changed;
           }
@@ -100,7 +98,6 @@ namespace X13.PLC {
         }
         _owner=owner as DVar<PiWire>;
         if(_owner!=null) {
-          _dummy++;
           _owner.Subscribe("+", _owner_changed);
           _owner.saved=true;
           var dc=_owner.Get<string>("_declarer");

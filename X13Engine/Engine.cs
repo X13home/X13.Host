@@ -141,8 +141,8 @@ namespace X13 {
       if(_plugins!=null) {
         _plugins.Stop();
       }
-      _log.Dispose();
       SendStat(0);
+      _log.Dispose();
       Thread.Sleep(300);
       Topic.Export(_cfgPath, Topic.root.Get("/local/cfg"));
       if(_singleInstance!=null) {

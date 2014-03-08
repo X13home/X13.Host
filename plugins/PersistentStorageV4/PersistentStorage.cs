@@ -35,29 +35,33 @@ namespace X13.PLC {
     private const uint FL_REMOVED  =0x80000000;
     private const int FL_REC_LEN   =0x00FFFFFF;
     private const int FL_DATA_LEN  =0x3FFFFFFF;
+    private const int FL_LEN_MASK  =0x00FFFFF0;
 
     private Dictionary<Topic, Record> _tr;
+    private LinkedList<Record> _recordsToSave;
     private List<FRec> _free;
     private FileStream _file;
     private List<Record> _refitParent;
-    //private ManualResetEvent _fileOp;
-    //private LinkedList<Tuple<long, byte[]>> _toSave;
-    private long _fileLength;
-    private bool _terminate;
-    private DateTime _nextBak;
-    private Topic _sign;
     private System.Collections.Concurrent.ConcurrentQueue<Topic> _ch;
+    private long _fileLength;
+    private byte[] _writeBuf;
+    private DateTime _nextBak;
+    private DateTime _now;
+    private Topic _sign;
+    private Thread _thread;
+    private AutoResetEvent _work;
+    private bool _terminate;
+    private static DVar<bool> _verbose;
 
     public PersistentStorage() {
       _tr=new Dictionary<Topic, Record>();
       _free=new List<FRec>();
       _ch=new System.Collections.Concurrent.ConcurrentQueue<Topic>();
-      //_toSave=new LinkedList<Tuple<long, byte[]>>();
-      //_fileOp=new ManualResetEvent(false);
     }
     public void Init() {
       Topic.paused=true;
       _sign=Topic.root.Get("/local/cfg/PersistentStorage");
+      _verbose=Topic.root.Get<bool>("/local/cfg/PersistentStorage/verbose");
 
       if(!Directory.Exists("../data")) {
         Directory.CreateDirectory("../data");
@@ -114,43 +118,249 @@ namespace X13.PLC {
               _refitParent.Insert(idx+1, r);
             }
           }
-          _file.Position=curPos+((len+15)&0x7FFFFFF0);
+          _file.Position=curPos+((len+15)&FL_LEN_MASK);
         } while(_file.Position<_file.Length);
         foreach(var kv in _refitParent) {
-          Log.Warning("! [{1:X4}] {0} ({2})", kv.name, kv.pos<<3, kv.parent);
+          Log.Warning("! [{1:X4}] {0} ({2:X4})", kv.name, kv.pos<<4, kv.parent<<4);
         }
         _refitParent=null;
       }
       _fileLength=_file.Length;
+      _work=new AutoResetEvent(false);
+      _thread=new Thread(new ThreadStart(PrThread));
+      _thread.Priority=ThreadPriority.Lowest;
+      _now=DateTime.Now;
       Backup();
+      _thread.Start();
+      Topic.root.Subscribe("/#", MqChanged);
     }
     public void Start() {
-      ThreadPool.QueueUserWorkItem(FileOperations);
-      Topic.root.Subscribe("/#", MqChanged);
       Topic.paused=false;
     }
     public void Stop() {
-      Topic.root.Unsubscribe("/#", MqChanged);
-
-      _terminate=true;
-      //_fileOp.Set();
-      int i=120;
-      while(_terminate && i-->0) {
-        Thread.Sleep(100);
+      if(_file!=null) {
+        Topic.root.Unsubscribe("/#", MqChanged);
+        _terminate=true;
+        _work.Set();
+        _thread.Join(3500);
+        _file.Close();
+        _file=null;
       }
-      _file.Close();
-
     }
     private void MqChanged(Topic sender, TopicChanged param) {
       if(sender==null || sender.path.StartsWith("/local") || sender.path=="/var/log/A0" || param.Visited(_sign, true)) {
         return;
       }
       _ch.Enqueue(sender);
+      if(param.Art!=TopicChanged.ChangeArt.Add) {
+        _work.Set();
+      }
     }
+
+    private void PrThread() {
+      _recordsToSave=new LinkedList<Record>();
+      Topic tCh;
+      Record r, pr;
+      bool signal, recModified, dataModified, remove;
+      DateTime thr;
+      uint parentPos, oldFl_Size;
+      int oldDataSize;
+
+      do {
+        signal=_work.WaitOne(850);
+        _now=DateTime.Now;
+        if(signal) {
+          while(_ch.TryDequeue(out tCh)) {
+            r=GetRecord(tCh);
+            r.modifyDT=_now;
+            if(r.pos!=0) {
+              for(var i=_recordsToSave.First; i!=null; i=i.Next) {
+                if(i.Value==r) {
+                  _recordsToSave.Remove(i);
+                  break;
+                }
+              }
+            }
+            _recordsToSave.AddLast(r);
+          }
+        }
+        signal=false;
+        thr=_now.AddMilliseconds(-1130);
+        while(_recordsToSave.First!=null && (r=_recordsToSave.First.Value)!=null && (r.pos==0 || r.modifyDT<thr || _terminate)) {
+          _recordsToSave.RemoveFirst();
+          remove=r.t.disposed;
+          recModified=false;
+          dataModified=false;
+
+          if(r.t.parent==null || remove) {
+            parentPos=0;
+          } else {
+            pr=GetRecord(r.t.parent);
+            if(pr==null) {
+              Log.Warning("PersistentStaorage: parent for {0} not found", r.t.path);
+              continue;
+            }
+            if(pr.pos==0) {
+              bool found=false;
+              for(var i=_recordsToSave.First; i!=null; i=i.Next) {
+                if(i.Value==pr) {
+                  found=true;
+                  break;
+                }
+              }
+              if(!found) {
+                _recordsToSave.AddLast(pr);
+              }
+              _recordsToSave.AddLast(r);
+              continue;
+            }
+            parentPos=pr.pos;
+          }
+
+          if(remove) {
+            if(r.saved_fl==FL_SAVED_E) {
+              AddFree(r.data_pos, r.data_size+6);
+            }
+            AddFree(r.pos, r.size);
+            _tr.Remove(r.t);
+            signal=true;
+            continue;
+          } else {
+            oldFl_Size=r.fl_size;
+            oldDataSize=r.data_size+6;
+            if(r.parent!=parentPos) {
+              r.parent=parentPos;
+              recModified=true;
+            }
+            if(r.t==Topic.root) {
+              if(r.name!="/") {
+                r.name="/";
+                recModified=true;
+              }
+            } else if(r.name!=r.t.name) {
+              r.name=r.t.name;
+              recModified=true;
+            }
+            r.fl_size=FL_RECORD | (uint)(14+Encoding.UTF8.GetByteCount(r.name));
+            string type_data=r.t.valueType==null?string.Empty:string.Concat(r.t.valueType.FullName, "\0", (r.t.saved)?r.t.ToJson():string.Empty);
+            if(type_data.Length>0) {
+              if(r.data!=type_data) {
+                r.data=type_data;
+                dataModified=true;
+              }
+              r.data_size=(r.data==null?0:Encoding.UTF8.GetByteCount(r.data));
+              if(r.data_size>0 && r.data_size<32) {
+                r.fl_size=(r.fl_size+(uint)r.data_size) | FL_SAVED_I;
+              } else {
+                r.fl_size|=FL_SAVED_E;
+              }
+            } else {
+              r.data=null;
+              r.data_size=0;
+              r.saved_fl=0;
+              if(oldDataSize>0) {
+                dataModified=true;
+              }
+            }
+            if(r.t.saved) {
+              r.fl_size|=FL_SAVED;
+            }
+          }
+          byte[] recBuf=new byte[r.size];
+          if(r.data_size>0) {
+            if(r.saved_fl==FL_SAVED_I) {
+              CopyBytes(r.data_size, recBuf, 8);
+              Encoding.UTF8.GetBytes(r.data).CopyTo(recBuf, recBuf.Length-r.data_size-2);
+              if(r.data_pos>0 && oldDataSize>0) {  // FL_SAVED_E -> FL_SAVED_I
+                AddFree(r.data_pos, oldDataSize);
+                r.data_pos=0;
+                signal=true;
+              }
+              if(dataModified) {
+                recModified=true;
+              }
+            } else {
+              if(dataModified) {
+                byte[] dataBuf=new byte[6+r.data_size];
+                CopyBytes(dataBuf.Length, dataBuf, 0);
+                Encoding.UTF8.GetBytes(r.data).CopyTo(dataBuf, 4);
+                if(Write(ref r.data_pos, dataBuf, oldDataSize)) {
+                  recModified=true;
+                }
+                signal=true;
+                if(_verbose.value) {
+                  Log.Debug("D [{2:X4}]({1}) {0}={3}", r.t.path, dataBuf.Length, r.data_pos<<4, r.data);
+                }
+              }
+              CopyBytes(r.data_pos, recBuf, 8);
+            }
+          } else if(r.data_pos>0 && oldDataSize>0) {  // new data_size==0
+            AddFree(r.data_pos, oldDataSize);
+            r.data_pos=0;
+            recModified=true;
+            signal=true;
+          }
+          if(recModified || r.fl_size!=oldFl_Size) {
+            CopyBytes(r.fl_size, recBuf, 0);
+            CopyBytes(r.parent, recBuf, 4);
+            Encoding.UTF8.GetBytes(r.name).CopyTo(recBuf, 12);
+            if(Write(ref r.pos, recBuf, (int)oldFl_Size & FL_REC_LEN)) {
+              var ch=r.t.children.ToArray();
+              for(int i=ch.Length-1; i>=0; i--) {
+                if(!ch[i].path.StartsWith("/local") && ch[i].path!="/var/log/A0") {
+                  pr=GetRecord(ch[i]);
+                  if(pr!=null) {
+                    _recordsToSave.AddLast(pr);
+                  }
+                }
+              }
+            }
+            signal=true;
+            if(_verbose.value) {
+              Log.Debug("S [{2:X4}]({1}) {0}", r.t.path, r.size, r.pos<<4);
+            }
+          }
+        }
+        if(!signal) {
+          if(_nextBak<DateTime.Now) {
+            Backup();
+          } else {
+            for(int i=_free.Count-1; i>=0; i--) {
+              if((((long)_free[i].pos<<4)+((_free[i].size+15)&FL_LEN_MASK))>=_fileLength) {
+                _fileLength=(long)_free[i].pos<<4;
+                _free.RemoveAt(i);
+                break;
+              }
+            }
+            if(_fileLength<_file.Length) {
+              _file.SetLength(_fileLength);
+              signal=true;
+              if(_verbose.value) {
+                Log.Debug("# {0:X4}", _fileLength);
+              }
+            }
+          }
+        }
+        if(signal) {
+          _file.Flush(true);
+        }
+      } while(!_terminate);
+    }
+    private Record GetRecord(Topic t) {
+      Record rec;
+      if(!_tr.TryGetValue(t, out rec)) {
+        if(t.disposed) {
+          return null;
+        }
+        rec=new Record(t);
+        _tr[t]=rec;
+      }
+      return rec;
+    }
+
     private void Backup() {
-      DateTime now = DateTime.Now;
-      _nextBak=now.AddDays(1);
-      string fn="../data/"+LongToString(now.Ticks*3/2000000000L)+".bak";  // 1/66(6)Sec.
+      _nextBak=_now.AddDays(1);
+      string fn="../data/"+LongToString(_now.Ticks*3/2000000000L)+".bak";  // 1/66(6)Sec.
       try {
         var bak=new FileStream(fn, FileMode.Create, FileAccess.ReadWrite);
         _file.Position=0;
@@ -165,181 +375,29 @@ namespace X13.PLC {
         Log.Warning("PersistentStorage.Backup - "+ex.Message);
       }
     }
-    private void FileOperations(object o) {
-      Topic t;
-      int cnt;
-      while(!_terminate) {
-        try {
-          Thread.Sleep(60);
-          cnt=0;
-          while(_ch.TryDequeue(out t)) {
-            Save(t, t.disposed);
-            cnt++;
-          }
-          if(cnt==0) {
-            if(_nextBak<DateTime.Now) {
-              Backup();
-            }
-            lock(_free) {
-              for(int i=_free.Count-1; i>=0; i--) {
-                if((((long)_free[i].pos<<4)+((_free[i].size+15)&0x7FFFFFF0))>=_fileLength) {
-                  _fileLength=(long)_free[i].pos<<4;
-                  _free.RemoveAt(i);
-                  break;
-                }
-              }
-              if(_fileLength<_file.Length) {
-                _file.SetLength(_fileLength);
-                cnt++;
-              }
-            }
-          }
-          if(cnt>0) {
-            _file.Flush(true);
-          }
-
-        }
-        catch(Exception ex) {
-          Log.Warning("PersistentStorage.FileOperations exception - "+ex.ToString());
-        }
-      }
-      _terminate=false;
-    }
-    private void ToSave(long pos, byte[] buf) {
-      if(buf==null || buf.Length<4) {
-        throw new ArgumentException("buf");
-      }
-      _file.Position=pos;
-      _file.Write(buf, 0, buf.Length);
-
-    }
-    private void Save(Topic t, bool remove) {
-      Record rec;
-      uint parentPos, oldFl_Size;
-      int oldDataSize;
-      bool recModified=false, dataModified=false;
-      if(t.parent==null || remove) {
-        parentPos=0;
-      } else if(_tr.TryGetValue(t.parent, out rec)) {
-        parentPos=rec.pos;
-      } else {
-        return;  // parent is unknown
-      }
-      if(!_tr.TryGetValue(t, out rec)) {
-        if(remove) {
-          return;
-        }
-        oldFl_Size=0;
-        oldDataSize=0;
-        rec=new Record(t, parentPos);
-        recModified=true;
-        dataModified=true;
-        _tr[t]=rec;
-      } else if(remove) {
-        if(rec.saved_fl==FL_SAVED_E && rec.data_pos>0 && rec.data_size>0) {
-          AddFree(rec.data_pos, rec.data_size);
-        }
-        AddFree(rec.pos, rec.size);
-        _tr.Remove(t);
-        return;
-      } else {
-        oldFl_Size=rec.fl_size;
-        oldDataSize=rec.data_size+6;
-        if(rec.parent!=parentPos) {
-          rec.parent=parentPos;
-          recModified=true;
-        }
-        if(t==Topic.root) {
-          if(rec.name!="/") {
-            rec.name="/";
-            recModified=true;
-          }
-        } else if(rec.name!=t.name) {
-          rec.name=t.name;
-          recModified=true;
-        }
-        rec.fl_size=FL_RECORD | (uint)(14+Encoding.UTF8.GetByteCount(rec.name));
-        string type_data=t.valueType==null?string.Empty:string.Concat(t.valueType.FullName, "\0", (t.saved)?t.ToJson():string.Empty);
-        if(type_data.Length>0) {
-          if(rec.data!=type_data) {
-            rec.data=type_data;
-            dataModified=true;
-          }
-          rec.data_size=(rec.data==null?0:Encoding.UTF8.GetByteCount(rec.data));
-          if(rec.data_size>0 && rec.data_size<32) {
-            rec.fl_size=(rec.fl_size+(uint)rec.data_size) | FL_SAVED_I;
-          } else {
-            rec.fl_size|=FL_SAVED_E;
-          }
-        } else {
-          rec.data=null;
-          rec.data_size=0;
-          rec.saved_fl=0;
-          if(oldDataSize>0) {
-            dataModified=true;
-          }
-        }
-        if(t.saved) {
-          rec.fl_size|=FL_SAVED;
-        }
-      }
-      byte[] recBuf=new byte[rec.size];
-      if(rec.data_size>0) {
-        if(rec.saved_fl==FL_SAVED_I) {
-          CopyBytes(rec.data_size, recBuf, 8);
-          Encoding.UTF8.GetBytes(rec.data).CopyTo(recBuf, recBuf.Length-rec.data_size-2);
-          if(rec.data_pos>0 && oldDataSize>0) {
-            AddFree(rec.data_pos, oldDataSize);
-            rec.data_pos=0;
-          }
-          if(dataModified) {
-            recModified=true;
-          }
-        } else {
-          if(dataModified) {
-            byte[] dataBuf=new byte[6+rec.data_size];
-            CopyBytes(dataBuf.Length, dataBuf, 0);
-            Encoding.UTF8.GetBytes(rec.data).CopyTo(dataBuf, 4);
-            if(Write(ref rec.data_pos, dataBuf, oldDataSize)) {
-              recModified=true;
-            }
-            Log.Debug("D [0x{2:X4}]{0} ({1}) {3}", t.path, rec.size, rec.data_pos<<4, rec.data);
-          }
-          CopyBytes(rec.data_pos, recBuf, 8);
-        }
-      } else if(rec.data_pos>0 && oldDataSize>0) {
-        AddFree(rec.data_pos, oldDataSize);
-        rec.data_pos=0;
-        recModified=true;
-      }
-      if(recModified || rec.fl_size!=oldFl_Size) {
-        CopyBytes(rec.fl_size, recBuf, 0);
-        CopyBytes(rec.parent, recBuf, 4);
-        Encoding.UTF8.GetBytes(rec.name).CopyTo(recBuf, 12);
-        if(Write(ref rec.pos, recBuf, (int)oldFl_Size & FL_REC_LEN)) {
-          Log.Debug("W {0} {1} [0x{2:X4}]", t.path, rec.size, rec.pos<<4);
-          var ch=t.children.ToArray();
-          for(int i=ch.Length-1; i>=0; i--) {
-            if(!ch[i].path.StartsWith("/local") && ch[i].path!="/var/log/A0") {
-              Save(ch[i], false);
-            }
-          }
-        } else {
-          Log.Debug("W {0} {1} [0x{2:X4}]", t.path, rec.size, rec.pos<<4);
-        }
-      }
-    }
     private bool Write(ref uint pos, byte[] buf, int oldSize) {
-      oldSize=((oldSize+15)&0x7FFFFFF0);
+      if(buf==null || buf.Length<6) {
+        throw new ArgumentException("buf.Length");
+      }
+      oldSize=((oldSize+15)&FL_LEN_MASK);
+      int bufSize=((buf.Length+15)&FL_LEN_MASK);
       uint oldPos=pos;
       CopyBytes(Crc16.ComputeChecksum(buf, buf.Length-2), buf, buf.Length-2);
-      if(((buf.Length+15)&0x00FFFFF0)!=oldSize) {
+      if(bufSize!=oldSize) {
         if(pos>0) {
           AddFree(pos, oldSize);
         }
         pos=FindFree(buf.Length);
       }
-      ToSave((long)pos<<4, buf);
+      if(_writeBuf==null || _writeBuf.Length<bufSize) {
+        _writeBuf=new byte[bufSize];
+      }
+      Buffer.BlockCopy(buf, 0, _writeBuf, 0, buf.Length);
+      for(int i=buf.Length; i<bufSize; i++) {
+        _writeBuf[i]=0;
+      }
+      _file.Position=(long)pos<<4;
+      _file.Write(_writeBuf, 0, bufSize);
       return pos!=oldPos;
     }
     private Topic AddTopic(Topic parent, Record r) {
@@ -388,18 +446,20 @@ namespace X13.PLC {
         t=Topic.GetP(r.name, type, _sign, parent);
       }
       if(t!=null) {
+        r.t=t;
         t.saved=r.saved;
         if(data!=null) {
           t.FromJson(data, _sign);
         }
-        Log.Debug("R {0}={1} [0x{2:X4}]", t.path, t.GetValue(), r.pos);
+        if(_verbose.value) {
+          Log.Debug("L [{2:X4}]{0}={1}", t.path, t.GetValue(), r.pos<<4);
+        }
         _tr[t]=r;
-        int idx=indexPPos(_refitParent, r.pos);
-        while(idx>=0 && idx<_refitParent.Count && _refitParent[idx].parent==r.pos) {
+        int idx;
+        while((idx=indexPPos(_refitParent, r.pos))>=0 && idx<_refitParent.Count && _refitParent[idx].parent==r.pos) {
           Record nextR=_refitParent[idx];
           _refitParent.RemoveAt(idx);
-          AddTopic(t.Get(nextR.name, null), nextR);
-          idx=indexPPos(_refitParent, r.pos);
+          AddTopic(t, nextR);
         }
       }
       return t;
@@ -428,32 +488,44 @@ namespace X13.PLC {
       return mid;
     }
     private void AddFree(uint pos, int size) {
-      if(((uint)size & FL_REMOVED)==0) {
-        ToSave((long)pos<<4, BitConverter.GetBytes(((uint)size+4)&0x7FFFFFF0 | FL_REMOVED));
+      if(pos==0 || size==0) {
+        return;
       }
-      lock(_free) {
-        FRec fr=new FRec(pos, (size+15)&0x7FFFFFF0);
-        int idx=_free.BinarySearch(fr);
-        idx=idx<0?~idx:idx+1;
-        _free.Insert(idx, fr);
+      int sz=(size+15)&FL_LEN_MASK;
+      if(((uint)size & FL_REMOVED)==0) {
+        if(_writeBuf==null || _writeBuf.Length<sz) {
+          _writeBuf=new byte[sz];
+        }
+        CopyBytes((uint)sz | FL_REMOVED, _writeBuf, 0);
+        for(int i=4; i<sz; i++) {
+          _writeBuf[i]=0;
+        }
+        _file.Position=(long)pos<<4;
+        _file.Write(_writeBuf, 0, sz);
+
+      }
+      FRec fr=new FRec(pos, sz);
+      int idx=_free.BinarySearch(fr);
+      idx=idx<0?~idx:idx+1;
+      _free.Insert(idx, fr);
+      if(_verbose.value) {
+        Log.Debug("F [{0:X4}]({1}/{2})", pos<<4, sz, size);
       }
     }
     private uint FindFree(int size) {
-      size=(size+15)&0x7FFFFFF0;
+      size=(size+15)&FL_LEN_MASK;
       uint rez;
-      lock(_free) {
-        int idx=-1;
-        idx=_free.BinarySearch(new FRec(0, size));
-        if(idx<0) {
-          idx=~idx;
-        }
-        if(idx<_free.Count && _free[idx].size==size) {
-          rez=_free[idx].pos;
-          _free.RemoveAt(idx);
-        } else {
-          rez=(uint)((_fileLength+15)>>4);
-          _fileLength=((long)rez<<4)+size;
-        }
+      int idx=-1;
+      idx=_free.BinarySearch(new FRec(0, size));
+      if(idx<0) {
+        idx=~idx;
+      }
+      if(idx<_free.Count && _free[idx].size==size) {
+        rez=_free[idx].pos;
+        _free.RemoveAt(idx);
+      } else {
+        rez=(uint)((_fileLength+15)>>4);
+        _fileLength=((long)rez<<4)+size;
       }
       return rez;
     }
@@ -507,8 +579,10 @@ namespace X13.PLC {
 
     }
     private class Record {
-      public uint pos;
+      public Topic t;
+      public DateTime modifyDT;
       public uint fl_size;
+      public uint pos;
       public uint parent;
       public uint data_pos;
       public int data_size;
@@ -537,40 +611,20 @@ namespace X13.PLC {
           data_size=0;
         }
         name=Encoding.UTF8.GetString(buf, 12, (int)(buf.Length-data_size-14));
+        if(parent==0 && name!="/") {
+          Log.Warning("!");
+        }
+
       }
-      public Record(Topic t, uint parent) {
-        pos=0;
-        data_pos=0;
-        this.parent=parent;
-        if(t==Topic.root) {
-          name="/";
-        } else {
-          name=t.name;
-        }
-        fl_size=FL_RECORD | (uint)(14+Encoding.UTF8.GetByteCount(name));
-        string type_data=t.valueType==null?string.Empty:string.Concat(t.valueType.FullName, "\0", (t.saved)?t.ToJson():string.Empty);
-        if(type_data.Length>0) {
-          data=type_data;
-          data_size=Encoding.UTF8.GetByteCount(data);
-          if(data_size>0 && data_size<32) {
-            fl_size=(fl_size+(uint)data_size) | FL_RECORD | FL_SAVED_I;
-          } else {
-            fl_size|=FL_SAVED_E;
-          }
-        } else {
-          data=null;
-          data_size=0;
-        }
-        if(t.saved) {
-          fl_size|=FL_SAVED;
-        }
+      public Record(Topic t) {
+        this.t=t;
       }
+
       public uint saved_fl { get { return fl_size&FL_SAVED_A; } set { fl_size=(fl_size & ~FL_SAVED_A) | (value & FL_SAVED_A); } }
       public bool saved { get { return (fl_size&FL_SAVED)!=0; } set { fl_size=(value?fl_size|FL_SAVED : fl_size&~FL_SAVED); } }
       public bool local { get { return (fl_size&FL_LOCAL)!=0; } set { fl_size=value?fl_size|FL_LOCAL : fl_size&~FL_LOCAL; } }
       public bool removed { get { return (fl_size&FL_REMOVED)!=0; } set { fl_size=value?fl_size|FL_REMOVED:fl_size&~FL_REMOVED; } }
       public int size { get { return (int)fl_size & FL_REC_LEN; } }
     }
-
   }
 }
