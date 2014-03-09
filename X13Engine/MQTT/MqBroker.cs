@@ -208,7 +208,7 @@ namespace X13.MQTT {
       pm=new MqPublish(sender);
       pm.QualityOfService=param.Subscription.qos;
       if(param.Art==TopicChanged.ChangeArt.Add && sender.valueType!=null && sender.valueType!=typeof(string) && sender.valueType!=typeof(DateTime) && !sender.valueType.IsEnum && !sender.valueType.IsPrimitive) {
-        pm.Payload=(new Newtonsoft.Json.Linq.JObject(new Newtonsoft.Json.Linq.JProperty("+", sender.valueType.FullName))).ToString();
+        pm.Payload=(new Newtonsoft.Json.Linq.JObject(new Newtonsoft.Json.Linq.JProperty("+", WOUM.ExConverter.Type2Name(sender.valueType) ))).ToString();
       } else if(param.Art==TopicChanged.ChangeArt.Remove) {
         pm.Payload=string.Empty;
       }

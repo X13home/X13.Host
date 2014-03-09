@@ -85,7 +85,6 @@ namespace X13.PLC {
       _thread.Start();
       Topic.root.Subscribe("/#", MqChanged);
     }
-
     public void Start() {
       Topic.paused=false;
     }
@@ -174,7 +173,7 @@ namespace X13.PLC {
       uint parentPos, oldFl_Size;
       int oldDataSize;
       byte[] rBuf=new byte[64], dBuf=Record.dBuf;
-      int idleCnt=0;
+      int freeCnt=0;
 
       do {
         signal=_work.WaitOne(850);
@@ -259,7 +258,7 @@ namespace X13.PLC {
                 r.type=r.t.valueType;
                 dataModified=true;
               }
-              byte[] tBuf=Encoding.UTF8.GetBytes(r.type.FullName); //TODO: get the short name for known types
+              byte[] tBuf=Encoding.UTF8.GetBytes(WOUM.ExConverter.Type2Name(r.type));
               byte[] pBuf=Encoding.UTF8.GetBytes(r.payload);
               r.data_size=tBuf.Length+1+pBuf.Length;
               if(dBuf==null || dBuf.Length<((r.data_size+6+15)&FL_LEN_MASK)) {
@@ -308,7 +307,7 @@ namespace X13.PLC {
                 }
                 signal=true;
                 if(_verbose.value) {
-                  Log.Debug("D [{0:X4}]({1}) {2}{3}", r.data_pos<<4, r.data_size+6, r.t.path, r.type==null?" $":string.Concat("<", r.type.FullName, ">=", (r.t.saved)?r.t.ToJson():" $"));
+                  Log.Debug("D [{0:X4}]({1}) {2}{3}", r.data_pos<<4, r.data_size+6, r.t.path, r.type==null?" $":string.Concat("<", WOUM.ExConverter.Type2Name(r.type), ">=", (r.t.saved)?r.t.ToJson():" $"));
                 }
               }
               CopyBytes(r.data_pos, rBuf, 8);
@@ -339,14 +338,15 @@ namespace X13.PLC {
             }
             signal=true;
             if(_verbose.value) {
-              Log.Debug("S [{0:X4}]({1}) {2}{3}", r.pos<<4, r.size, r.t.path, r.saved_fl==FL_SAVED_I?(string.Concat("<", r.type.FullName, ">=", (r.t.saved)?r.t.ToJson():" $")):(r.type==null?" $":string.Empty));
+              Log.Debug("S [{0:X4}]({1}) {2}{3}", r.pos<<4, r.size, r.t.path, r.saved_fl==FL_SAVED_I?(string.Concat("<", WOUM.ExConverter.Type2Name(r.type), ">=", (r.t.saved)?r.t.ToJson():" $")):(r.type==null?" $":string.Empty));
             }
           }
         }
         if(!signal) {
           if(_nextBak<_now) {
             Backup();
-          } else if(++idleCnt>100) {
+          } else if(_freeBlocks.Count>freeCnt+30) {
+            freeCnt=_freeBlocks.Count;
             List<ulong> rem=null;
             int fr_sz;
             long fr_pos;
@@ -445,7 +445,7 @@ namespace X13.PLC {
           t.FromJson(r.payload, _sign);
         }
         if(_verbose.value) {
-          Log.Debug("L [{0:X4}]{1}<{2}>={3}", r.pos<<4, t.path, t.valueType, t.GetValue());
+          Log.Debug("L [{0:X4}]{1}<{2}>={3}", r.pos<<4, t.path, r.type, r.payload);
         }
         _tr[t]=r;
         int idx;

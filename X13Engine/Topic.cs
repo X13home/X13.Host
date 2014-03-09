@@ -42,7 +42,7 @@ namespace X13 {
         if(head.saved) {
           doc.Root.Add(new XAttribute("saved", bool.TrueString));
         }
-        doc.Root.Add(new XAttribute("type", head.valueType.FullName));
+        doc.Root.Add(new XAttribute("type", WOUM.ExConverter.Type2Name(head.valueType)));
       }
       foreach(Topic t in head.children) {
         Export(doc.Root, t);
