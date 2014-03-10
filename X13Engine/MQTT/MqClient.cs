@@ -79,6 +79,7 @@ namespace X13.MQTT {
       Topic.root.Subscribe("/etc/repository/#", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/etc/declarers/+", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/etc/declarers/type/#", PLC.PLCPlugin.L_dummy);
+      Topic.root.Subscribe("/etc/PLC/default", PLC.PLCPlugin.L_dummy);
       Topic.root.Subscribe("/var/now", PLC.PLCPlugin.L_dummy);
       Topic.paused=true;
       for(int i=600; i>=0; i--) {
@@ -372,7 +373,7 @@ namespace X13.MQTT {
       case TopicChanged.ChangeArt.Add: {
           MqPublish pm=new MqPublish(sender);
           if(sender.valueType!=null && sender.valueType!=typeof(string) && !sender.valueType.IsEnum && !sender.valueType.IsPrimitive) {
-            pm.Payload=(new Newtonsoft.Json.Linq.JObject(new Newtonsoft.Json.Linq.JProperty("+", sender.valueType.FullName))).ToString();
+            pm.Payload=(new Newtonsoft.Json.Linq.JObject(new Newtonsoft.Json.Linq.JProperty("+", WOUM.ExConverter.Type2Name(sender.valueType)))).ToString();
           }
           this.Send(pm);
         }

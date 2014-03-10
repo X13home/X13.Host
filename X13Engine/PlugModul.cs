@@ -68,17 +68,25 @@ namespace X13 {
       }
       {
         _now=Topic.root.Get<DateTime>("/var/now");
+        _now.saved=false;
         _nowOffset=Topic.root.Get<long>("/local/cfg/Client/TimeOffset");
+        _nowOffset.saved=false;
         DateTime nowDT=DateTime.Now;
         _now.value=nowDT;
+        _now.Get<long>("second").saved=false;
         _now.Get<long>("second").value=nowDT.Second;
+        _now.Get<long>("minute").saved=false;
         _now.Get<long>("minute").value=nowDT.Minute;
+        _now.Get<long>("hour").saved=false;
         _now.Get<long>("hour").value=nowDT.Hour;
+        _now.Get<long>("wDay").saved=false;
         _now.Get<long>("wDay").value=(long)nowDT.DayOfWeek;
+        _now.Get<long>("day").saved=false;
         _now.Get<long>("day").value=nowDT.Day;
+        _now.Get<long>("month").saved=false;
         _now.Get<long>("month").value=nowDT.Month;
+        _now.Get<long>("year").saved=false;
         _now.Get<long>("year").value=nowDT.Year;
-        //_1SecTimer.Change(Timeout.Infinite, Timeout.Infinite);  // !!!!!!!!!!!!!!!!!!!!!!
       }
 
       foreach(var i in _modules.OrderBy(z => z.Metadata.priority)) {

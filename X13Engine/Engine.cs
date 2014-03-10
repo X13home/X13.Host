@@ -103,6 +103,7 @@ namespace X13 {
         dbVer.saved=true;
         dbVer.value=dbVersion;
         _lHead.saved=true;
+        _lHead.Get<string>("A0").saved=false;
         _lThreshold.saved=true;
 #if DEBUG
         _lThreshold.value=LogLevel.Debug;
@@ -129,6 +130,7 @@ namespace X13 {
       }, null, 7200000, 7200000);
       ThreadPool.QueueUserWorkItem(o => {
         SendStat(1);
+        Topic.Export(_cfgPath, Topic.root.Get("/local/cfg"));
       });
       return true;
     }
@@ -140,10 +142,9 @@ namespace X13 {
       if(_plugins!=null) {
         _plugins.Stop();
       }
-      _log.Dispose();
       SendStat(0);
+      _log.Dispose();
       Thread.Sleep(300);
-      Topic.Export(_cfgPath, Topic.root.Get("/local/cfg"));
       if(_singleInstance!=null) {
         _singleInstance.ReleaseMutex();
       }
@@ -301,23 +302,27 @@ namespace X13 {
         byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(ids));
         id.value=(new Guid(hash)).ToString();
       }
-
-      try {
-        string url=string.Format("v=1&tid=UA-40770280-3&cid={0}&an={1}&av={2}&t=event&ec={0}+{3}&cd={5}+{3}&ea={4}+",
-          id.value,
-          Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location).ToLower(),
-          Assembly.GetExecutingAssembly().GetName().Version.ToString(3),
-          Topic.root.Get<string>("/etc/PLC/default").value,
-          Topic.root.Get<string>("/local/cfg/id").value,
-          id.value.Substring(0, 8).ToUpper()
-          );
-        if(cmd==1) {
-          url=string.Concat(url, "start&el=", Environment.Version.ToString(4));
-        } else if(cmd==0) {
-          url=string.Concat(url, "stop");
+      string id_s=id.value.Substring(0, 8).ToUpper();
+      string an=Path.GetFileNameWithoutExtension(Assembly.GetEntryAssembly().Location).ToLower();
+      string av=Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
+      string ngl=Topic.root.Get<string>("/etc/PLC/default").value;
+      string nlc=Topic.root.Get<string>("/local/cfg/id").value;
+      string pl;
+      if(cmd==1) {
+        pl=string.Concat("start&el=", Environment.Version.ToString(4));
+      } else if(cmd==0) {
+        Topic zNode;
+        if(Topic.brokerMode?Topic.root.Exist("/dev", out zNode):Topic.root.Exist("/plc", out zNode)) {
+          pl="stop&el="+(zNode.children.Count()-1).ToString();
         } else {
-          url=string.Concat(url, "uptime&el=", (DateTime.Now-_startDT).TotalDays.ToString("##0.00"));
+          pl="stop";
         }
+      } else {
+        pl=string.Concat("uptime&el=", (DateTime.Now-_startDT).TotalDays.ToString("##0.00"));
+      }
+      try {
+        string url=string.Format("v=1&tid=UA-40770280-3&cid={0}&an={1}&av={2}&t=event&ec={5}+{3}&cd={4}&ea={4}+{6}",
+          id.value, an, av, ngl, nlc, id_s, pl);
 
         var request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create("http://www.google-analytics.com/collect");
 

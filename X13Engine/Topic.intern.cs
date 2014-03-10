@@ -206,7 +206,7 @@ namespace X13 {
             xCur.Add(new XAttribute("saved", bool.TrueString));
           }
         }
-        xCur.Add(new XAttribute("type", tCur.valueType.FullName));
+        xCur.Add(new XAttribute("type", WOUM.ExConverter.Type2Name(tCur.valueType)));
       }
       xParent.Add(xCur);
       foreach(Topic tNext in tCur.children) {
@@ -242,7 +242,7 @@ namespace X13 {
                 if(valueType.IsEnum) {
                   _json=(new JObject(
                     new JProperty("v", JsonConvert.SerializeObject(GetValue())),
-                    new JProperty("+", valueType.FullName))).ToString();
+                    new JProperty("+", WOUM.ExConverter.Type2Name(valueType)))).ToString();
                 } else if(valueType==typeof(string) && string.IsNullOrEmpty((string)GetValue())) {
                   _json="\"\"";
                 } else {
@@ -284,7 +284,7 @@ namespace X13 {
                   }
                   _json=(new JObject(
                     new JProperty("p", sPath),
-                    new JProperty("t", link.valueType==null?string.Empty:link.valueType.FullName),
+                    new JProperty("t", link.valueType==null?string.Empty:WOUM.ExConverter.Type2Name(link.valueType)),
                     new JProperty("+", "Topic"))).ToString();
                 }
               } else if(valueType.IsArray) {
@@ -294,12 +294,12 @@ namespace X13 {
                 JObject o;
                 if(val==null) {
                   o=JObject.Parse("{ }");
-                  o["+"]=valueType.FullName;
+                  o["+"]=WOUM.ExConverter.Type2Name(valueType);
                 } else if(valueType==typeof(JObject)) {
                   o=val as JObject;
                 } else {
                   o=JObject.FromObject(GetValue());
-                  o["+"]=valueType.FullName;
+                  o["+"]=WOUM.ExConverter.Type2Name(valueType);
                 }
                 _json=o.ToString();
               }

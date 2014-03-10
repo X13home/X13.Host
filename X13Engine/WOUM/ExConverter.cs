@@ -21,7 +21,14 @@ namespace X13.WOUM {
 
     static ExConverter() {
       _fn2t=new Dictionary<string, Type>();
-      _fn2t.Add("X13.PLC.Topic", typeof(X13.Topic));
+      _fn2t.Add("long", typeof(long));
+      _fn2t.Add("bool", typeof(bool));
+      _fn2t.Add("string", typeof(string));
+      _fn2t.Add("double", typeof(double));
+      _fn2t.Add("DateTime", typeof(DateTime));
+      _fn2t.Add("Topic", typeof(X13.Topic));
+      _fn2t.Add("Statement", typeof(X13.PLC.PiStatement));
+      _fn2t.Add("Wire", typeof(X13.PLC.PiWire));
     }
 
     #region String2Name
@@ -88,6 +95,41 @@ namespace X13.WOUM {
       }
       return ret;
     }
+    public static string Type2Name(Type type) {
+      if(type==null) {
+        return string.Empty;
+      }
+      
+      string rez=type.FullName;
+      switch(rez) {
+      case "System.Int64":
+        rez="long";
+        break;
+      case "System.Boolean":
+        rez="bool";
+        break;
+      case "System.String":
+        rez="string";
+        break;
+      case "System.Double":
+        rez="double";
+        break;
+      case "System.DateTime":
+        rez="DateTime";
+        break;
+      case "X13.Topic":
+        rez="Topic";
+        break;
+      case "X13.PLC.PiStatement":
+        rez="Statement";
+        break;
+      case "X13.PLC.PiWire":
+        rez="Wire";
+        break;
+      }
+
+      return rez;
+    }
     public static Type Json2Type(string json) {
       if(string.IsNullOrWhiteSpace(json)) {
         return null;
@@ -99,12 +141,7 @@ namespace X13.WOUM {
         JObject o=JObject.Parse(json);
         JToken jDesc;
         if(o.TryGetValue("+", out jDesc)) {
-          string type=jDesc.ToObject<string>();
-          if(type=="Topic") {
-            return typeof(X13.Topic);
-          } else {
-            return FullName2Type(type);
-          }
+          return FullName2Type(jDesc.ToObject<string>());
         }
         return null;
       }

@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine", "X13Engine\Engine.csproj", "{95861A56-393C-4779-A84C-3840EC0A9304}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "bin", "bin", "{5B4161F4-E2B5-4A0D-8C89-7B9F97728466}"
@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersistentStorage", "plugin
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersistentStorage_mono", "plugins\PersistentStorage_mono\PersistentStorage_mono.csproj", "{956793FB-3CC7-45DE-8851-489E0FF084BC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersistentStorageV4", "plugins\PersistentStorageV4\PersistentStorageV4.csproj", "{DD0F4B02-9E4C-45DB-8288-AB5050BB99DA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,7 +66,6 @@ Global
 		{77161FD0-777F-490F-88E0-DAEC394C6BCA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77161FD0-777F-490F-88E0-DAEC394C6BCA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F87698F1-486E-44BF-BBC9-C1124C61528F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F87698F1-486E-44BF-BBC9-C1124C61528F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F87698F1-486E-44BF-BBC9-C1124C61528F}.Mono|Any CPU.ActiveCfg = Mono|Any CPU
 		{F87698F1-486E-44BF-BBC9-C1124C61528F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F87698F1-486E-44BF-BBC9-C1124C61528F}.Release|Any CPU.Build.0 = Release|Any CPU
@@ -73,7 +74,6 @@ Global
 		{F9686660-E95F-491C-A456-27A1BCA7954B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9686660-E95F-491C-A456-27A1BCA7954B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C1FA9660-9931-4627-84BA-92D759769806}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C1FA9660-9931-4627-84BA-92D759769806}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1FA9660-9931-4627-84BA-92D759769806}.Mono|Any CPU.ActiveCfg = Mono|Any CPU
 		{C1FA9660-9931-4627-84BA-92D759769806}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1FA9660-9931-4627-84BA-92D759769806}.Release|Any CPU.Build.0 = Release|Any CPU
@@ -81,6 +81,12 @@ Global
 		{956793FB-3CC7-45DE-8851-489E0FF084BC}.Mono|Any CPU.ActiveCfg = Mono|Any CPU
 		{956793FB-3CC7-45DE-8851-489E0FF084BC}.Mono|Any CPU.Build.0 = Mono|Any CPU
 		{956793FB-3CC7-45DE-8851-489E0FF084BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD0F4B02-9E4C-45DB-8288-AB5050BB99DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD0F4B02-9E4C-45DB-8288-AB5050BB99DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD0F4B02-9E4C-45DB-8288-AB5050BB99DA}.Mono|Any CPU.ActiveCfg = Release|Any CPU
+		{DD0F4B02-9E4C-45DB-8288-AB5050BB99DA}.Mono|Any CPU.Build.0 = Release|Any CPU
+		{DD0F4B02-9E4C-45DB-8288-AB5050BB99DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD0F4B02-9E4C-45DB-8288-AB5050BB99DA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -91,6 +97,7 @@ Global
 		{F9686660-E95F-491C-A456-27A1BCA7954B} = {8FA8C7C4-5060-4993-86DB-F6F7AD3F31A0}
 		{C1FA9660-9931-4627-84BA-92D759769806} = {8FA8C7C4-5060-4993-86DB-F6F7AD3F31A0}
 		{956793FB-3CC7-45DE-8851-489E0FF084BC} = {8FA8C7C4-5060-4993-86DB-F6F7AD3F31A0}
+		{DD0F4B02-9E4C-45DB-8288-AB5050BB99DA} = {8FA8C7C4-5060-4993-86DB-F6F7AD3F31A0}
 		{E6C73F8B-D966-47B6-8C0A-87E878A518E4} = {55722C60-92B2-4AF2-8EF8-2D3F56FD84F6}
 	EndGlobalSection
 EndGlobal

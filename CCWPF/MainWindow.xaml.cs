@@ -239,9 +239,9 @@ namespace X13.CC {
         Settings.MainWindowHeight=(int)this.Height;
 
       }
-      Engine.SendStat(0);
       System.Threading.Thread.Sleep(150);
       _plugins.Stop();
+      Engine.SendStat(0);
       if(_engine!=null) {
         _engine.StandardInput.WriteLine(" ");
         _engine.WaitForExit(3500);
