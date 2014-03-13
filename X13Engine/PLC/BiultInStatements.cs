@@ -32,6 +32,7 @@ namespace X13.PLC {
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "NOT")]
     private class bNot : IStatement {
+      DVar<bool> _a, _q;
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/NOT");
         m.value="pack://application:,,/CC;component/Images/bi_not.png";
@@ -43,14 +44,13 @@ namespace X13.PLC {
       }
 
       public void Init(DVar<PiStatement> model) {
-        AddPin<bool>(model, "A");
-        AddPin<bool>(model, "Q");
+        _a=AddPin<bool>(model, "A");
+        _q=AddPin<bool>(model, "Q");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        DVar<bool> op=model.Get<bool>("Q");
-        op.saved=true;
-        op.value=!model.Get<bool>("A").value;
+        _q.saved=false;
+        _q.value=!_a.value;
       }
 
       public void DeInit() {
@@ -60,6 +60,8 @@ namespace X13.PLC {
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "DTriger")]
     private class DTriger : IStatement {
+      private bool _st;
+      private DVar<bool> _s, _r, _c, _d, _q, _nq;
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/DTriger");
         m.value="pack://application:,,/CC;component/Images/bi_triger.png";
@@ -75,33 +77,26 @@ namespace X13.PLC {
       }
 
       public void Init(DVar<PiStatement> model) {
-        AddPin<bool>(model, "S");
-        AddPin<bool>(model, "C");
-        AddPin<bool>(model, "D");
-        AddPin<bool>(model, "R");
-        AddPin<bool>(model, "Q");
-        AddPin<bool>(model, "!Q");
-        model.Get<bool>("!Q").value=!model.Get<bool>("Q").value;
+        _s=AddPin<bool>(model, "S");
+        _c=AddPin<bool>(model, "C");
+        _d=AddPin<bool>(model, "D");
+        _r=AddPin<bool>(model, "R");
+        _q=AddPin<bool>(model, "Q");
+        _nq=AddPin<bool>(model, "!Q");
+        _nq.value=!_q.value;
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        bool ret=model.Get<bool>("Q");
-        if(model.Get<bool>("R")) {
-          ret=false;
-        } else if(model.Get<bool>("S")) {
-          ret=true;
-        } else if(source.name=="C" && model.Get<bool>("C")) {
-          ret=model.Get<bool>("D");
-        } else {
-          return;
+        if(_r.value) {
+          _st=false;
+        } else if(_s.value) {
+          _st=true;
+        } else if(source==_c && _c.value) {
+          _st=_d.value;
         }
-
-        DVar<bool> op=model.Get<bool>("Q");
-        op.saved=true;
-        op.value=ret;
-        op=model.Get<bool>("!Q");
-        op.saved=true;
-        op.value=!ret;
+        _q.saved=true;
+        _q.value=_st;
+        _nq.value=!_st;
       }
 
       public void DeInit() {
@@ -111,6 +106,8 @@ namespace X13.PLC {
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "ANDI")]
     private class AndI : IStatement {
+      DVar<long> _q;
+      DVar<bool> _nq;
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/ANDI");
         m.value="pack://application:,,/CC;component/Images/bi_and.png";
@@ -132,8 +129,8 @@ namespace X13.PLC {
       public void Init(DVar<PiStatement> model) {
         AddPin<long>(model, "A");
         AddPin<long>(model, "B");
-        AddPin<long>(model, "Q");
-        AddPin<bool>(model, "N");
+        _q=AddPin<long>(model, "Q");
+        _nq=AddPin<bool>(model, "N");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
@@ -141,8 +138,8 @@ namespace X13.PLC {
         foreach(DVar<long> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(long) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<long>>()) {
           ret&=pin.value;
         }
-        model.Get<long>("Q").value=ret;
-        model.Get<bool>("N").value=(ret & 1)==0;
+        _q.value=ret;
+        _nq.value=(ret & 1)==0;
       }
 
       public void DeInit() {
@@ -152,6 +149,8 @@ namespace X13.PLC {
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "ORI")]
     private class OrI : IStatement {
+      DVar<long> _q;
+      DVar<bool> _nq;
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/ORI");
         m.value="pack://application:,,/CC;component/Images/bi_or.png";
@@ -173,8 +172,8 @@ namespace X13.PLC {
       public void Init(DVar<PiStatement> model) {
         AddPin<long>(model, "A");
         AddPin<long>(model, "B");
-        AddPin<long>(model, "Q");
-        AddPin<bool>(model, "N");
+        _q=AddPin<long>(model, "Q");
+        _nq=AddPin<bool>(model, "N");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
@@ -182,8 +181,8 @@ namespace X13.PLC {
         foreach(DVar<long> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(long) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<long>>()) {
           ret|=pin;
         }
-        model.Get<long>("Q").value=ret;
-        model.Get<bool>("N").value=(ret & 1)==0;
+        _q.value=ret;
+        _nq.value=(ret & 1)==0;
       }
 
       public void DeInit() {
@@ -193,6 +192,8 @@ namespace X13.PLC {
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "XORI")]
     private class XorI : IStatement {
+      DVar<long> _q;
+      DVar<bool> _nq;
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/XORI");
         m.value="pack://application:,,/CC;component/Images/bi_xor.png";
@@ -214,8 +215,8 @@ namespace X13.PLC {
       public void Init(DVar<PiStatement> model) {
         AddPin<long>(model, "A");
         AddPin<long>(model, "B");
-        AddPin<long>(model, "Q");
-        AddPin<bool>(model, "N");
+        _q=AddPin<long>(model, "Q");
+        _nq=AddPin<bool>(model, "N");
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
@@ -223,8 +224,8 @@ namespace X13.PLC {
         foreach(DVar<long> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(long) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<long>>()) {
           ret^=pin;
         }
-        model.Get<long>("Q").value=ret;
-        model.Get<bool>("N").value=(ret & 1)==0;
+        _q.value=ret;
+        _nq.value=(ret & 1)==0;
       }
 
       public void DeInit() {
@@ -354,7 +355,6 @@ namespace X13.PLC {
         _b=AddPin<double>(model, "B");
         AddPin<bool>(model, "Q");
         AddPin<bool>(model, "!Q");
-        Calculate(model, _a);
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         model.Get<bool>("Q").value=_a.value==_b.value;
@@ -388,7 +388,6 @@ namespace X13.PLC {
         _b=AddPin<double>(model, "B");
         AddPin<bool>(model, "Q");
         AddPin<bool>(model, "!Q");
-        Calculate(model, _a);
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         model.Get<bool>("Q").value=_a.value>_b.value;
@@ -422,7 +421,6 @@ namespace X13.PLC {
         _b=AddPin<double>(model, "B");
         AddPin<bool>(model, "Q");
         AddPin<bool>(model, "!Q");
-        Calculate(model, _a);
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         model.Get<bool>("Q").value=_a.value<_b.value;
@@ -1279,6 +1277,7 @@ namespace X13.PLC {
       private DVar<long> _period;
       private Timer _timerOn;
       private Timer _timerOff;
+      private bool _st;
 
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/SqPulse");
@@ -1306,26 +1305,32 @@ namespace X13.PLC {
       }
       private void SwitchOn(object o) {
         _timerOff.Change(_offDelay, _period.value);
-        _output.value=true;
-        _iOutput.value=false;
+        _st=true;
+        _output.value=_st;
+        _iOutput.value=!_st;
       }
       private void SwitchOff(object o) {
-        _output.value=false;
-        _iOutput.value=true;
+        _st=false;
+        _output.value=_st;
+        _iOutput.value=!_st;
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         if(source==_output || source==_iOutput) {
+          _output.value=_st;
+          _iOutput.value=!_st;
           return;
         }
         if(!_enable.value || _offDelay.value==0) {
-          _output.value=false;
-          _iOutput.value=true;
+          _st=false;
+          _output.value=_st;
+          _iOutput.value=!_st;
           _timerOn.Change(Timeout.Infinite, Timeout.Infinite);
           _timerOff.Change(Timeout.Infinite, Timeout.Infinite);
           return;
         }
-        _output.value=true;
-        _iOutput.value=false;
+        _st=true;
+        _output.value=_st;
+        _iOutput.value=!_st;
         if(_offDelay.value>_period.value) {
           _timerOn.Change(Timeout.Infinite, Timeout.Infinite);
           _timerOff.Change(Timeout.Infinite, Timeout.Infinite);

@@ -441,9 +441,6 @@ namespace X13.PLC {
       if(t!=null) {
         r.t=t;
         t.saved=r.saved;
-        if(!string.IsNullOrEmpty(r.payload)) {
-          t.FromJson(r.payload, _sign);
-        }
         if(_verbose.value) {
           Log.Debug("L [{0:X4}]{1}<{2}>={3}", r.pos<<4, t.path, r.type, r.payload);
         }
@@ -454,9 +451,11 @@ namespace X13.PLC {
           _refitParent.RemoveAt(idx);
           AddTopic(t, nextR);
         }
+        if(!string.IsNullOrEmpty(r.payload)) {
+          t.FromJson(r.payload, _sign);
+        }
       }
       return t;
-
     }
     private int indexPPos(List<Record> np, uint ppos) {
       int min=0, mid=-1, max=np.Count-1;

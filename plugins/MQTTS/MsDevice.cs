@@ -116,27 +116,11 @@ namespace X13.Periphery {
         if(_present!=null) {
           try {
             _present.saved=false;
-            if(oldState==State.Connected && value==State.Connected && _present.value) { // reconnect from device
-              _present.value=false;
-              new Timer(SetPresent, null, 100, Timeout.Infinite);
-            } else {
-              _present.value=(state==State.Connected || state==State.ASleep || state==State.AWake);
-            }
+            _present.value=(state==State.Connected || state==State.ASleep || state==State.AWake);
           }
           catch(ObjectDisposedException) {
             _present=null;
           }
-        }
-      }
-    }
-    private void SetPresent(object o){
-      if(_present!=null) {
-        try {
-          _present.saved=false;
-          _present.value=true;
-        }
-        catch(ObjectDisposedException) {
-          _present=null;
         }
       }
     }
@@ -177,7 +161,7 @@ namespace X13.Periphery {
           PrintPacket(this, msg, buf);
           if(state==State.WillMsg) {
             _wilMsg=msg.Payload;
-            state=State.Connected;
+            state=State.PreConnect;
             ProccessAcknoledge(msg);
             Send(new MsConnack(MsReturnCode.Accepted));
             Log.Info("{0} connected", Owner.path);
@@ -201,6 +185,9 @@ namespace X13.Periphery {
             topicId=ti.TopicId;
           }
           Send(new MsSuback(msg.qualityOfService, topicId, msg.MessageId, MsReturnCode.Accepted));
+          if(state==State.PreConnect) {
+            state=State.Connected;
+          }
           s=Owner.Subscribe(msg.path, PublishTopic, msg.qualityOfService);
           _subsscriptions.Add(s);
         }
@@ -360,7 +347,7 @@ namespace X13.Periphery {
         if(state!=State.ASleep) {
           Log.Info("{0}.state {1} => Connected", Owner.path, state);
         }
-        state=State.Connected;
+        state=State.PreConnect;
         Send(new MsConnack(MsReturnCode.Accepted));
       }
     }
@@ -392,13 +379,13 @@ namespace X13.Periphery {
           if(ti.topic.valueType==typeof(PLC.ByteArray)) {
             val=new PLC.ByteArray(msgData);
             break;
-          } else if(ti.topic.valueType==typeof(SmartTwi)){
+          } else if(ti.topic.valueType==typeof(SmartTwi)) {
             var sa=(ti.topic.GetValue() as SmartTwi);
-            if(sa==null){
+            if(sa==null) {
               sa=new SmartTwi(ti.topic);
               sa.Recv(msgData);
               val=sa;
-            }else{
+            } else {
               sa.Recv(msgData);
               return;
             }
@@ -458,13 +445,19 @@ namespace X13.Periphery {
           }
         }
       }
-      if(state==State.Disconnected || state==State.Lost || param.Visited(Owner, true)) {
+      if(!(state==State.Connected || state==State.ASleep || state==State.AWake) || param.Visited(Owner, true)) {
         return;
       }
       if(topic.valueType==typeof(SmartTwi) || (topic.parent!=null && topic.parent.valueType==typeof(SmartTwi))) {
         return;   // processed from SmartTwi
       }
-      TopicInfo rez=_topics.FirstOrDefault(ti => ti.path==topic.path);
+      TopicInfo rez=null;
+      for(int i=_topics.Count-1; i>=0; i--) {
+        if(_topics[i].path==topic.path) {
+          rez=_topics[i];
+          break;
+        }
+      }
       if(rez==null && param.Art==TopicChanged.ChangeArt.Value) {
         rez=GetTopicInfo(topic, true);
       }
@@ -482,12 +475,18 @@ namespace X13.Periphery {
       if(state==State.Disconnected || state==State.Lost) {
         return;
       }
-      TopicInfo rez=_topics.FirstOrDefault(ti => ti.path==t.path);
+      TopicInfo rez=null;
+      for(int i=_topics.Count-1; i>=0; i--) {
+        if(_topics[i].path==t.path) {
+          rez=_topics[i];
+          break;
+        }
+      }
       if(rez==null) {
         return;
       }
       Log.Debug("{0}.Snd {1}", t.name, BitConverter.ToString(payload));
-      Send(new MsPublish(rez.topic, rez.TopicId, QoS.AtLeastOnce) { Data=payload});
+      Send(new MsPublish(rez.topic, rez.TopicId, QoS.AtLeastOnce) { Data=payload });
     }
 
     /// <summary>Find or create TopicInfo by Topic</summary>
@@ -498,7 +497,13 @@ namespace X13.Periphery {
       if(tp==null) {
         return null;
       }
-      TopicInfo rez=_topics.FirstOrDefault(ti => ti.path==tp.path);
+      TopicInfo rez=null;
+      for(int i=_topics.Count-1; i>=0; i--) {
+        if(_topics[i].path==tp.path) {
+          rez=_topics[i];
+          break;
+        }
+      }
       string tpc=(tp.path.StartsWith(Owner.path))?tp.path.Remove(0, Owner.path.Length+1):tp.path;
       if(rez==null) {
         rez=new TopicInfo();
@@ -596,9 +601,9 @@ namespace X13.Periphery {
         MsMessage reqMsg;
         if(_sendQueue.Count>0 && (reqMsg=_sendQueue.Peek()).MsgTyp==rMsg.ReqTyp && reqMsg.MessageId==rMsg.MessageId) {
           _sendQueue.Dequeue();
-        }
-        if(_sendQueue.Count>0 && !(msg=_sendQueue.Peek()).IsRequest) {
-          _sendQueue.Dequeue();
+          if(_sendQueue.Count>0 && !(msg=_sendQueue.Peek()).IsRequest) {
+            _sendQueue.Dequeue();
+          }
         }
       }
       if(msg!=null || state==State.AWake) {
@@ -852,6 +857,7 @@ namespace X13.Periphery {
       ASleep,
       AWake,
       Lost,
+      PreConnect,
     }
   }
 }

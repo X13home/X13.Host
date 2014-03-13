@@ -130,7 +130,6 @@ namespace X13.PLC {
           _owner.Get<string>("_declarer").saved=true;
           _owner.Get<string>("_declarer").value=_declarer;
           _st=(IStatement)Activator.CreateInstance(_statements[_declarer]);
-          _owner.Subscribe("+", _owner_changed);
           _initDelay=new Timer(DoInit, null, 100, Timeout.Infinite);
         } else {
           Log.Warning("{0}[{1}] unknown on {2}", _owner.path, _declarer??string.Empty, Topic.root.Get<string>("/local/cfg/id").value);
@@ -144,6 +143,7 @@ namespace X13.PLC {
         _initDelay=null;
         if(_st!=null && _owner!=null) {
           _st.Init(_owner);
+          _owner.Subscribe("+", _owner_changed);
         }
       }
     }
