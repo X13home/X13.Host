@@ -76,9 +76,7 @@ namespace X13.WOUM {
     private static Dictionary<string, Type> _fn2t;
     public static Type FullName2Type(string fullName) {
       Type ret=null;
-      if(string.IsNullOrWhiteSpace(fullName)) {
-        //Do nothing
-      } else if(_fn2t.TryGetValue(fullName, out ret)) {
+      if(string.IsNullOrWhiteSpace(fullName) || _fn2t.TryGetValue(fullName, out ret)) {
         //Do nothing
       } else if((ret=Type.GetType(fullName))!=null) {
         _fn2t[fullName]=ret;
@@ -102,7 +100,14 @@ namespace X13.WOUM {
       
       string rez=type.FullName;
       switch(rez) {
+      case "System.Byte":
+      case "System.Int16":
+      case "System.Int32":
+      case "System.SByte":
+      case "System.UInt16":
+      case "System.UInt32":
       case "System.Int64":
+      case "System.UInt64":
         rez="long";
         break;
       case "System.Boolean":
@@ -111,7 +116,9 @@ namespace X13.WOUM {
       case "System.String":
         rez="string";
         break;
+      case "System.Decimal":
       case "System.Double":
+      case "System.Single":
         rez="double";
         break;
       case "System.DateTime":

@@ -181,6 +181,9 @@ namespace X13.PLC {
         if(signal) {
           while(_ch.TryDequeue(out tCh)) {
             r=GetRecord(tCh);
+            if(r==null) {
+              continue;
+            }
             r.modifyDT=_now;
             if(r.pos!=0) {
               for(var i=_recordsToSave.First; i!=null; i=i.Next) {

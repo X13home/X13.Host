@@ -92,7 +92,11 @@
     <Compile Include="SQLite\SqliteRowUpdatingEventHandler.cs" />
     <Compile Include="SQLite\SqliteTransaction.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="bin\Community.CsharpSqlite.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\X13Engine\Engine.csproj">
       <Project>{95861a56-393c-4779-a84c-3840ec0a9304}</Project>
