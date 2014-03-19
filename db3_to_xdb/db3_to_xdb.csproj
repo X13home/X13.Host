@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{2B741998-1C10-4187-8272-A503E5F91073}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>X13</RootNamespace>
+    <AssemblyName>db3_to_xdb</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>..\bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <OutputPath>..\bin\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
+    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Community.CsharpSqlite">
+      <HintPath>..\plugins\PersistentStorage\bin\Community.CsharpSqlite.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Data.Sqlite">
+      <HintPath>..\plugins\PersistentStorage_mono\bin\Mono.Data.Sqlite.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\plugins\PersistentStorageV4\crc16.cs">
+      <Link>crc16.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteClientFactory.cs">
+      <Link>SQLite\SqliteClientFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteCommand.cs">
+      <Link>SQLite\SqliteCommand.cs</Link>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteCommandBuilder.cs">
+      <Link>SQLite\SqliteCommandBuilder.cs</Link>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteConnection.cs">
+      <Link>SQLite\SqliteConnection.cs</Link>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteConnectionStringBuilder.cs">
+      <Link>SQLite\SqliteConnectionStringBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteDataAdapter.cs">
+      <Link>SQLite\SqliteDataAdapter.cs</Link>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteDataReader.cs">
+      <Link>SQLite\SqliteDataReader.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteDataSourceEnumerator.cs">
+      <Link>SQLite\SqliteDataSourceEnumerator.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteError.cs">
+      <Link>SQLite\SqliteError.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteExceptions.cs">
+      <Link>SQLite\SqliteExceptions.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteParameter.cs">
+      <Link>SQLite\SqliteParameter.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteParameterCollection.cs">
+      <Link>SQLite\SqliteParameterCollection.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteRowUpdatedEventArgs.cs">
+      <Link>SQLite\SqliteRowUpdatedEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteRowUpdatedEventHandler.cs">
+      <Link>SQLite\SqliteRowUpdatedEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteRowUpdatingEventArgs.cs">
+      <Link>SQLite\SqliteRowUpdatingEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteRowUpdatingEventHandler.cs">
+      <Link>SQLite\SqliteRowUpdatingEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\plugins\PersistentStorage\SQLite\SqliteTransaction.cs">
+      <Link>SQLite\SqliteTransaction.cs</Link>
+    </Compile>
+    <Compile Include="Db3ToXdb.cs" />
+    <Compile Include="Db3_mono.cs" />
+    <Compile Include="Db3_win.cs" />
+    <Compile Include="Idb3.cs" />
+    <Compile Include="Log.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Topic.cs" />
+    <Compile Include="Xdb.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
