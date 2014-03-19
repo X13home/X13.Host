@@ -90,9 +90,10 @@ namespace X13.CC {
 
     private void _lHead_changed(Topic sender, TopicChanged args) {
       Topic lEntry;
+      DVar<string> leStr;
       while(_oldHead!=_lHead.value) {
-        if(_lHead.Exist(_oldHead.ToString("D2"), out lEntry)) {
-          Log_Write(new LogEntry((lEntry as DVar<string>).value));
+        if(_lHead.Exist(_oldHead.ToString("D2"), out lEntry) && (leStr=lEntry as DVar<string>)!=null) {
+          Log_Write(new LogEntry(leStr.value));
         }
         _oldHead=(_oldHead+1)%100;
       }

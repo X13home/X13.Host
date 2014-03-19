@@ -137,6 +137,9 @@
   <ItemGroup>
     <EmbeddedResource Include="PLC\types.xst" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="bin\Newtonsoft.Json.dll" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
