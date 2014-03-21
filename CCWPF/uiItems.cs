@@ -201,11 +201,18 @@ namespace X13.CC {
       A.AddConnection(this);
       B.AddConnection(this);
       string name;
-      for(int i=1; _owner.model.Exist(name=string.Format("W{0:X4}", i)); i++)
+      for(int i=1; _owner.model.Exist(name=string.Format("W{0:X3}", i)); i++)
         ;
       model=_owner.model.Get<PiWire>(name);
       model.saved=true;
       model.value=new PiWire();
+      if(B.Direction==1) {
+        model.value.Direction=1;
+      } else if(A.Direction==1) {
+        model.value.Direction=2;
+      } else {
+        model.value.Direction=0;
+      }
       uiAlias al=A.owner as uiAlias;
       if(al!=null) {
         model.value.A=al.model;
@@ -219,13 +226,6 @@ namespace X13.CC {
         model.value.B=B.GetModel();
       }
       model.changed+=model_changed;
-      if(B.Direction==1) {
-        model.value.Direction=1;
-      } else if(A.Direction==1) {
-        model.value.Direction=2;
-      } else {
-        model.value.Direction=0;
-      }
       Render(3);
     }
     public override void Render(int chLevel) {
@@ -248,12 +248,12 @@ namespace X13.CC {
 
       using(DrawingContext dc=this.RenderOpen()) {
         int gs=LogramView.CellSize;
-        Pen pn=new Pen(A.brush, 2.0);
+        Pen pn=_selected?Schema.SelectionPen:new Pen((model==null || model.value==null || model.value.Direction!=2)?A.brush:B.brush, 2.0);
         for(int i=0; i<_track.Count-1; i++) {
           if(_track[i].X==_track[i+1].X && _track[i].Y==_track[i+1].Y) {
             dc.DrawEllipse(A.brush, null, _track[i], 3, 3);
           } else {
-            dc.DrawLine(_selected?Schema.SelectionPen:pn, _track[i], _track[i+1]);
+            dc.DrawLine(pn, _track[i], _track[i+1]);
           }
         }
       }

@@ -311,7 +311,7 @@ namespace X13 {
           }
         }
       }
-      return _json;
+      return _json??string.Empty;
     }
     public void FromJson(string json, Topic initiator=null) {
       if(valueType==null || string.IsNullOrEmpty(json)) {

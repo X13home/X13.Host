@@ -361,7 +361,11 @@ l1: { }
       Source=old.Source;
       Sender=old.Sender;
       Subscription=old.Subscription;
-      _initiator=old._initiator;
+      if(old._initiator==null || old._initiator.path.StartsWith("/local/MQ")) {
+        _initiator=null;
+      } else {
+        _initiator=old._initiator;
+      }
     }
     public bool Visited(Topic it, bool save) {
       if(it==null) {

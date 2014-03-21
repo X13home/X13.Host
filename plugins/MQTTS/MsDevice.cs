@@ -141,12 +141,52 @@ namespace X13.Periphery {
     [Newtonsoft.Json.JsonProperty]
     private string backName { get; set; }
 
+    private void Stat(bool send, MsMessageType t, bool dub=false) {
+#if DEBUG
+      string n2;
+      switch(t) {
+      case MsMessageType.CONNECT:
+        n2="_Connect";
+        break;
+      case MsMessageType.GWINFO:
+        n2="_Lost";
+        break;
+      case MsMessageType.PUBLISH:
+        if(send) {
+          n2=dub?"e_sPublishDup":"d_sPublish";
+        } else {
+          n2=dub?"b_rPublishDup":"a_rPublish";
+        }
+        break;
+      case MsMessageType.PUBACK:
+        n2=send?"c_sPubAck":"f_rPubAck";
+        break;
+      case MsMessageType.PINGREQ:
+        n2="g_PingReq";
+        break;
+      case MsMessageType.PINGRESP:
+        n2="h_PingResp";
+        break;
+      default:
+        n2=send?"o_sOther":"o_rOther";
+        break;
+      }
+      if(Owner==null){
+        return;
+      }
+      string p=string.Concat("/etc/MQTTS/stat/", Owner.name, "/", n2);
+      DVar<long> d=Topic.root.Get<long>(p);
+      d.saved=false;
+      d.value++;
+#endif
+    }
 
     private void ParseInPacket(byte[] buf) {
       var msgTyp=(MsMessageType)(buf[0]>1?buf[1]:buf[2]);
       switch(msgTyp) {
       case MsMessageType.WILLTOPIC: {
           var msg=new MsWillTopic(buf) { Addr=this.Addr };
+          Stat(false, msgTyp);
           PrintPacket(this, msg, buf);
           if(state==State.WillTopic) {
             _willPath=msg.Path;
@@ -157,6 +197,7 @@ namespace X13.Periphery {
         }
         break;
       case MsMessageType.WILLMSG: {
+          Stat(false, msgTyp);
           var msg=new MsWillMsg(buf) { Addr=this.Addr };
           PrintPacket(this, msg, buf);
           if(state==State.WillMsg) {
@@ -170,6 +211,7 @@ namespace X13.Periphery {
         break;
       case MsMessageType.SUBSCRIBE: {
           var msg=new MsSubscribe(buf) { Addr=this.Addr };
+          Stat(false, msgTyp, msg.dup);
           PrintPacket(this, msg, buf);
 
           SyncMsgId(msg.MessageId);
@@ -194,6 +236,7 @@ namespace X13.Periphery {
         break;
       case MsMessageType.REGISTER: {
           var msg=new MsRegister(buf) { Addr=this.Addr };
+          Stat(false, msgTyp);
           PrintPacket(this, msg, buf);
           ResetTimer();
           try {
@@ -215,6 +258,7 @@ namespace X13.Periphery {
         break;
       case MsMessageType.REGACK: {
           var msg=new MsRegAck(buf) { Addr=this.Addr };
+          Stat(false, msgTyp);
           PrintPacket(this, msg, buf);
           ProccessAcknoledge(msg);
           TopicInfo ti=_topics.FirstOrDefault(z => z.TopicId==msg.TopicId);
@@ -238,6 +282,7 @@ namespace X13.Periphery {
         break;
       case MsMessageType.PUBLISH: {
           var msg=new MsPublish(buf) { Addr=this.Addr };
+          Stat(false, msgTyp, msg.Dup);
           PrintPacket(this, msg, buf);
           TopicInfo ti=_topics.Find(z => z.TopicId==msg.TopicId && z.it==msg.topicIdType);
           if(ti==null && msg.topicIdType!=TopicIdType.Normal) {
@@ -278,12 +323,14 @@ namespace X13.Periphery {
         break;
       case MsMessageType.PUBACK: {
           var msg=new MsPubAck(buf) { Addr=this.Addr };
+          Stat(false, msgTyp);
           PrintPacket(this, msg, buf);
           ProccessAcknoledge(msg);
         }
         break;
       case MsMessageType.PINGREQ: {
           var msg=new MsPingReq(buf) { Addr=this.Addr };
+          Stat(false, msgTyp);
           PrintPacket(this, msg, buf);
           if(state==State.ASleep) {
             if(string.IsNullOrEmpty(msg.ClientId) || msg.ClientId==Owner.name) {
@@ -293,8 +340,8 @@ namespace X13.Periphery {
               //  state=State.Disconnected;
               //  Log.Info("{0} refresh connection", Owner.path);
               //} else {
-                state=State.AWake;
-                ProccessAcknoledge(msg);    // resume send proccess
+              state=State.AWake;
+              ProccessAcknoledge(msg);    // resume send proccess
               //}
             } else {
               Send(new MsDisconnect());
@@ -305,12 +352,14 @@ namespace X13.Periphery {
             ResetTimer();
             if(_gate!=null) {
               _gate.Send(new MsMessage(MsMessageType.PINGRESP) { Addr=this.Addr });
+              Stat(true, MsMessageType.PINGRESP, false);
             }
           }
         }
         break;
       case MsMessageType.DISCONNECT: {
           var msg=new MsDisconnect(buf) { Addr=this.Addr };
+          Stat(false, msgTyp);
           PrintPacket(this, msg, buf);
           Disconnect(msg.Duration);
         }
@@ -352,6 +401,7 @@ namespace X13.Periphery {
         }
         Send(new MsConnack(MsReturnCode.Accepted));
       }
+      Stat(false, MsMessageType.CONNECT, msg.CleanSession);
     }
     //TODO: Unsubscribe
     private void SetValue(TopicInfo ti, byte[] msgData) {
@@ -640,6 +690,7 @@ namespace X13.Periphery {
       while((msg!=null || state==State.AWake) && state!=State.ASleep) {
         if(msg!=null) {
           if(_gate!=null) {
+            Stat(true, msg.MsgTyp, ((msg is MsPublish && (msg as MsPublish).Dup) || (msg is MsSubscribe && (msg as MsSubscribe).dup)));
             _gate.Send(msg);
           }
           if(msg.IsRequest) {
@@ -652,6 +703,7 @@ namespace X13.Periphery {
           if(_sendQueue.Count==0 && state==State.AWake) {
             if(_gate!=null) {
               _gate.Send(new MsMessage(MsMessageType.PINGRESP) { Addr=this.Addr });
+              Stat(true, MsMessageType.PINGRESP, false);
             }
             state=State.ASleep;
             break;
@@ -695,6 +747,7 @@ namespace X13.Periphery {
       state=State.Lost;
       if(Owner!=null) {
         Disconnect();
+        Stat(false, MsMessageType.GWINFO);
         Log.Warning("{0} Lost", Owner.path);
       }
       lock(_sendQueue) {
@@ -702,6 +755,7 @@ namespace X13.Periphery {
       }
       if(_gate!=null) {
         _gate.Send(new MsDisconnect() { Addr=this.Addr });
+        Stat(true, MsMessageType.DISCONNECT, false);
       }
     }
 

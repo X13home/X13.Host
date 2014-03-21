@@ -501,7 +501,7 @@ namespace X13.PLC {
       }
       _freeBlocks.Add((ulong)sz<<32 | pos);
       if(_verbose.value) {
-        Log.Debug("F [{0:X4}]({1}/{2})", pos<<4, size, sz);
+        Log.Debug("F [{0:X4}]({1}/{2})", pos<<4, size&FL_LEN_MASK, sz);
       }
     }
     private uint FindFree(int size) {
