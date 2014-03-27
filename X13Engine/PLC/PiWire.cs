@@ -141,6 +141,13 @@ namespace X13.PLC {
           }
         }
       }
+      if(exec && _a!=null && _b!=null && _direction!=null) {
+        if(Direction==0 || Direction==1) {
+          _b.SetValue(_a.GetValue(), new TopicChanged(TopicChanged.ChangeArt.Value, _owner));
+        } else {
+          _a.SetValue(_b.GetValue(), new TopicChanged(TopicChanged.ChangeArt.Value, _owner));
+        }
+      }
     }
 
     private void ChangedPin(DVar<Topic> p) {
@@ -171,7 +178,6 @@ namespace X13.PLC {
           }
           Change_B(_bAlias);
         }
-
       }
     }
 
@@ -211,8 +217,6 @@ namespace X13.PLC {
       if(exec && param.Art==TopicChanged.ChangeArt.Value && _b!=null && !param.Visited(_b, true)) {
         if(Direction==0 || Direction==1) {
           _b.SetValue(_a.GetValue(), new TopicChanged(param));
-        //} else {
-        //  _a.SetValue(_b.GetValue(), new TopicChanged(TopicChanged.ChangeArt.Value, _b));
         }
       }
     }
@@ -220,8 +224,6 @@ namespace X13.PLC {
       if(exec && param.Art==TopicChanged.ChangeArt.Value && _a!=null && !param.Visited(_a, true)) {
         if(Direction==0 || Direction==2) {
           _a.SetValue(_b.GetValue(), new TopicChanged(param));
-        //} else {
-        //  _b.SetValue(_a.GetValue(), new TopicChanged(TopicChanged.ChangeArt.Value, _a));
         }
       }
     }
