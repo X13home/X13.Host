@@ -248,7 +248,7 @@
         {{else _declarer=='ui_link'}}
           <a href="{{:value}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</a>
         {{else _declarer=='ui_img'}}
-          <img src="{{:value}}" data-sub="{{:path}}" />
+          <img src="{{:value}}" {{if _hsize}}height="{{>_hsize}}"{{/if}} {{if _vsize}}width="{{>_vsize}}"{{/if}} data-sub="{{:path}}" />
         {{else _declarer=='ui_colorpicker' }}
           <input class="colorpicker" type="text" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} ">
         {{/if}}
