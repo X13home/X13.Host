@@ -93,9 +93,7 @@
     <Compile Include="SQLite\SqliteTransaction.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\Community.CsharpSqlite.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <None Include="bin\Community.CsharpSqlite.dll" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\X13Engine\Engine.csproj">

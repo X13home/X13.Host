@@ -4,14 +4,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{F9686660-E95F-491C-A456-27A1BCA7954B}</ProjectGuid>
+    <ProjectGuid>{BDBED71F-9C62-4943-86C8-BAC903E80F8C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>X13.Periphery</RootNamespace>
-    <AssemblyName>OneWire</AssemblyName>
+    <RootNamespace>X13.Plugins</RootNamespace>
+    <AssemblyName>HttpServer</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,12 +30,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\bin\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="OneWireLinkLayer">
-      <HintPath>..\..\bin\OneWireLinkLayer.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.Core" />
@@ -45,19 +38,17 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="websocket-sharp, Version=1.0.2.14943, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\websocket-sharp.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\X13Engine\Properties\VersionInfo.cs">
-      <Link>VersionInfo.cs</Link>
+      <Link>Properties\VersionInfo.cs</Link>
     </Compile>
-    <Compile Include="DS18S20.cs" />
-    <Compile Include="DS2406.cs" />
-    <Compile Include="DS2413.cs" />
-    <Compile Include="DS2438.cs" />
-    <Compile Include="OneWireBase.cs" />
-    <Compile Include="DS18B20.cs" />
-    <Compile Include="OneWireGate.cs" />
-    <Compile Include="OneWirePlugin.cs" />
+    <Compile Include="ApiV03.cs" />
+    <Compile Include="HttpWsPl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -67,16 +58,28 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Images\1w_adapter.png" />
-    <Resource Include="Images\1w_slave.png" />
+    <None Include="bin\websocket-sharp.dll" />
+    <EmbeddedResource Include="ui.xst" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="OneWire.xst">
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="bin\OneWireLinkLayer.dll" />
+    <Resource Include="..\HttpServer\Images\image.png">
+      <Link>Images\image.png</Link>
+    </Resource>
+    <Resource Include="..\HttpServer\Images\link.png">
+      <Link>Images\link.png</Link>
+    </Resource>
+    <Resource Include="..\HttpServer\Images\page.png">
+      <Link>Images\page.png</Link>
+    </Resource>
+    <Resource Include="..\HttpServer\Images\root.png">
+      <Link>Images\root.png</Link>
+    </Resource>
+    <Resource Include="..\HttpServer\Images\titel.png">
+      <Link>Images\titel.png</Link>
+    </Resource>
+    <Resource Include="..\HttpServer\Images\var.png">
+      <Link>Images\var.png</Link>
+    </Resource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -296,15 +296,9 @@
     <Resource Include="Images\fu_BAInsertS.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\AvalonDock.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="bin\AvalonDock.Themes.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="bin\WPFToolkit.Extended.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <None Include="bin\AvalonDock.dll" />
+    <None Include="bin\AvalonDock.Themes.dll" />
+    <None Include="bin\WPFToolkit.Extended.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

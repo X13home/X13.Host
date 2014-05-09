@@ -30,6 +30,7 @@ namespace X13 {
         Console.ForegroundColor=ConsoleColor.Green;
       }
       Console.WriteLine("Engine running; press Enter to Exit");
+      Console.ResetColor();
       Console.Read();
       eng.Shutdown();
       Console.ForegroundColor=ConsoleColor.Gray;
