@@ -26,7 +26,7 @@ namespace X13 {
     protected static readonly Topic _mq;
     private static WOUM.BlockingQueue<TopicChanged> _publishQueue;
     private static JsonConverter[] _jcs=new JsonConverter[] { new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter() };
-
+    private static JsonSerializerSettings _parseObj=new JsonSerializerSettings() { MissingMemberHandling=MissingMemberHandling.Ignore };
     static Topic() {
       root=new Topic(null) { _name=string.Empty, path="/" };
       _publishQueue=new WOUM.BlockingQueue<TopicChanged>(PubAction, PqIdle);
@@ -120,10 +120,10 @@ namespace X13 {
       return cur;
     }
     private static void PubAction(TopicChanged tc) {
-        while(tc.Sender!=null) {
-          tc.Sender.onChange(tc.Sender, tc);
-          tc.Sender=tc.Sender.parent;
-        }
+      while(tc.Sender!=null) {
+        tc.Sender.onChange(tc.Sender, tc);
+        tc.Sender=tc.Sender.parent;
+      }
     }
     private static void PqIdle() {
       ready.Set();
@@ -288,13 +288,12 @@ namespace X13 {
                     new JProperty("+", "Topic"))).ToString();
                 }
               } else if(valueType.IsArray) {
-                _json=JsonConvert.SerializeObject(GetValue(), _jcs);            
+                _json=JsonConvert.SerializeObject(GetValue(), _jcs);
               } else {
                 object val=GetValue();
                 JObject o;
                 if(val==null) {
-                  o=JObject.Parse("{ }");
-                  o["+"]=WOUM.ExConverter.Type2Name(valueType);
+                  o=new JObject(new JProperty("+", WOUM.ExConverter.Type2Name(valueType)));
                 } else if(valueType==typeof(JObject)) {
                   o=val as JObject;
                 } else {
@@ -311,7 +310,7 @@ namespace X13 {
           }
         }
       }
-      return _json;
+      return _json??string.Empty;
     }
     public void FromJson(string json, Topic initiator=null) {
       if(valueType==null || string.IsNullOrEmpty(json)) {
@@ -374,16 +373,13 @@ namespace X13 {
           this.SetValue(JObject.Parse(json), param);
         } else {
           if(json[0]=='{') {
-            var jo=JObject.Parse(json);
-            jo.Remove("+");
-            if(jo.Count>0) {
-              json=jo.ToString();
+            if(JObject.Parse(json).Count>1) {
               object tmp=this.GetValue();
               if(tmp!=null) {
-                JsonConvert.PopulateObject(json, tmp);
+                JsonConvert.PopulateObject(json, tmp, _parseObj);
                 Publish(this, param);
               } else {
-                this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
+                this.SetValue(JsonConvert.DeserializeObject(json, valueType, _parseObj), param);
               }
             }
           } else {
