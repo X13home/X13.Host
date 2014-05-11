@@ -58,8 +58,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="..\HttpServer\ui.xst">
+      <Link>ui.xst</Link>
+    </EmbeddedResource>
     <None Include="bin\websocket-sharp.dll" />
-    <EmbeddedResource Include="ui.xst" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="..\HttpServer\Images\image.png">

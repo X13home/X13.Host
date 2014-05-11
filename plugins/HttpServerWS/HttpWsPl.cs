@@ -23,7 +23,38 @@ namespace X13.Plugins {
   [ExportMetadata("priority", 20)]
   [ExportMetadata("name", "HttpServer")]
   public class HttpWsPl : IPlugModul {
-    private const long _version=270;
+    public static int ProcessPublish(string path, string json, string user) {
+      Topic cur=Topic.root;
+      Type vt=null;
+
+      string[] pt=path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+      int i=0;
+      while(i<pt.Length && cur.Exist(pt[i])) {
+        cur=cur.Get(pt[i++]);
+      }
+      if(string.IsNullOrEmpty(json) || json=="null") {                      // Remove
+        if(i==pt.Length && MQTT.MqBroker.CheckAcl(user, cur, TopicAcl.Delete)) {
+          cur.Remove();
+        }
+        return 200;
+      }
+      if(i<pt.Length || cur.valueType==null) {                             // path not exist
+        vt=X13.WOUM.ExConverter.Json2Type(json);
+        if(!MQTT.MqBroker.CheckAcl(user, cur, TopicAcl.Create)) {
+          return 403;
+        }
+        cur=Topic.GetP(path, vt);        // Create
+      }
+
+      if(cur.valueType!=null) {                 // Publish
+        if(MQTT.MqBroker.CheckAcl(user, cur, TopicAcl.Change)) {
+          cur.FromJson(json);
+        }
+      }
+      return 200;
+    }
+
+    private const long _version=271;
     private DVar<bool> _verbose;
     private HttpServer _sv;
 
@@ -46,6 +77,8 @@ namespace X13.Plugins {
             Topic.Import(sr, null);
           }
         }
+      }
+      if(!Topic.root.Exist("/export/_declarer")) {
         var exp=Topic.root.Get("/export");
         Topic.root.Get<long>("/etc/Broker/security/acls/export").value=0x1F000001;
         exp.Get<string>("_declarer").value="ui_root";
@@ -60,7 +93,7 @@ namespace X13.Plugins {
       _sv = new HttpServer((int)portD.value);
       _sv.Log.Output=WsLog;
       _sv.Log.Level=WebSocketSharp.LogLevel.Warn;
-      _sv.RootPath=Path.GetFullPath(Path.GetFullPath("../public"));
+      _sv.RootPath=Path.GetFullPath(Path.GetFullPath("../htdocs"));
       _sv.OnGet+=OnGet;
       _sv.AddWebSocketService<ApiV03>("/api/v03");
       _sv.Start();
@@ -83,7 +116,7 @@ namespace X13.Plugins {
     }
     private byte[] getContent(string path) {
       if(path == "/")
-        path += "index.html";
+        path += "idx_ws.html";
 
       return _sv.GetFile(path);
     }
