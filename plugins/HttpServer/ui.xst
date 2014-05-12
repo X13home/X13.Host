@@ -77,6 +77,7 @@
     <item name="remove" value="ZD" saved="True" type="System.String" />
   </item>
   <item name="ui_link" value="/HttpServer;component/Images/link.png" saved="True" type="System.String">
+    <item name="_text" value="1s" saved="True" type="System.String" />
     <item name="_class" value="As" saved="True" type="System.String" />
     <item name="_style" value="Bs" saved="True" type="System.String" />
     <item name="_idx" value="Ti" saved="True" type="System.String" />

@@ -28,166 +28,195 @@
     <script type="text/javascript" src="js/jquery.rs.carousel-touch-min.js"></script>
     <!-- X13.Home -->
     <script type="text/javascript">
-        $(document).ready(function () {
-            $.views.converters("fmt", function (val, fmt) {
-                if (fmt != null) {
-                    return String.format(fmt, val)
-                } else {
-                    return val;
-                }
+      $(document).ready(function () {
+        $.views.converters({
+          'fmt':function (val, fmt) {
+            if (fmt != null) {
+              return String.format(fmt, val)
+            } else {
+              return val;
+            }
+          },
+          'clr': function (c, path) {
+            var r = (c >> 16) & 0xFF;
+            var g = (c >> 8) & 0xFF;
+            var b = c & 0xFF;
+            var rgb = '#' + (r < 16 ? '0' : '') + r.toString(16) +
+                   (g < 16 ? '0' : '') + g.toString(16) +
+                   (b < 16 ? '0' : '') + b.toString(16);
+            $(".colorpicker.minicolors-input[id='" + path + "']").each(function (idx, el) {
+              $(el).minicolors('value', rgb);
             });
-            Tree = { 'Tiles': [], 'curPage': null };
-            $.templates("#HeaderTmpl").link("#rs-carousel", Tree);
-            Tree.ws = new WebSocket("ws://" + window.location.host + "/api/v03");
-            Tree.ws.onopen = function (evt) {
-                Tree.ws.send("S\t/export/+/header/#");
-            };
-            //Tree.ws.onclose = function (evt) { };
-            //Tree.ws.onerror = function (evt) { };
-
-            Tree.ws.onmessage = function (evt) {
-                var sa = evt.data.split('\t');
-                if (sa[0] == "P" && sa.length == 3) {
-                    var pa = sa[1].split('/');
-                    if (pa[1] == 'export' && pa.length > 2) {
-                        var tPath = "/" + pa[1] + "/" + pa[2] + "/";
-                        var tile = null;
-                        for (var tileIdx = 0; tileIdx < Tree.Tiles.length; tileIdx++) {
-                            if (Tree.Tiles[tileIdx]["path"] == tPath) {
-                                tile = Tree.Tiles[tileIdx];
-                                break;
-                            }
-                        }
-                        if (pa[3] == 'header') {  // header
-                            if (tile == null) {
-                                if (sa[2] != 'null') {
-                                    tile = { 'id': pa[2], 'path': tPath, 'header': [], 'body': [], '_idx': 9999 };
-                                    $.observable(Tree.Tiles).insert(Tree.Tiles.length, tile);
-                                    $('#rs-carousel').carousel('refresh');
-                                    if (Tree.curPage == null) {
-                                        Tree.SetPage(tile);
-                                    }
-                                }
-                            } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
-                                $.observable(Tree.Tiles).remove(tileIdx, 1);
-                                tile = null;
-                                $('#rs-carousel').carousel('refresh');
-                            }
-                            if (tile != null && pa.length > 4) {
-                                if (pa.length == 5 && pa[4].substring(0, 1) == '_') {
-                                    $.observable(Tree.Tiles[tileIdx]).setProperty(pa[4], JSON.parse(sa[2]));
-                                    if (pa[4] == '_idx') {
-                                        $.observable(Tree.Tiles).refresh(Tree.Tiles.sort(function (a, b) {
-                                            return a._idx - b._idx;
-                                        }));
-                                    }
-                                } else {
-                                    var ui = null;
-                                    var uIdx;
-                                    var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3] + "/" + pa[4];
-                                    for (uIdx = 0; uIdx < tile.header.length; uIdx++) {
-                                        if (tile.header[uIdx]["id"] == uPath) {
-                                            ui = tile.header[uIdx];
-                                            break;
-                                        }
-                                    }
-                                    if (ui == null) {
-                                        if (sa[2] != 'null') {
-                                            ui = { 'id': uPath, '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
-                                            $.observable(tile.header).insert(uIdx, ui);
-                                        }
-                                    } else if ((pa.length == 5 || (pa.length == 6 && pa[4] == '_declarer')) && sa[2] == 'null') {
-                                        $.observable(tile.header).remove(uIdx, 1);
-                                        ui = null;
-                                    }
-                                    if (ui != null && pa.length == 5) {
-                                        $.observable(ui).setProperty('value', JSON.parse(sa[2]));
-                                    } else if (ui != null && pa.length == 6) {
-                                        $.observable(ui).setProperty(pa[5], JSON.parse(sa[2]));
-                                        if (pa[5] == '_idx') {
-                                            $.observable(tile.header).refresh(tile.header.sort(function (a, b) {
-                                                return a._idx - b._idx;
-                                            }));
-                                        } else if (pa[5] == '_declarer') {
-                                            if (ui._declarer == 'ui_checkbox') {
-                                                $.observable(ui).setProperty('_readonly', true);
-                                                var el = $('input[id="' + ui.id + '"]');
-                                                $(el[0].parentElement).addClass('checkbox').addClass("readonly");
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else if (tile != null) {  // body
-                            if (pa.length == 4 && pa[3].substring(0, 1) == '_') {
-                            //    $.observable(Tree.Tiles[tileIdx]).setProperty(pa[3], JSON.parse(sa[2]));
-                            } else {
-                                var ui = null;
-                                var uIdx;
-                                var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3];
-                                for (uIdx = 0; uIdx < tile.body.length; uIdx++) {
-                                    if (tile.body[uIdx]["id"] == uPath) {
-                                        ui = tile.body[uIdx];
-                                        break;
-                                    }
-                                }
-                                if (ui == null) {
-                                    if (sa[2] != 'null') {
-                                        ui = { 'id': uPath, '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
-                                        $.observable(tile.body).insert(uIdx, ui);
-                                    }
-                                } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
-                                    $.observable(tile.body).remove(uIdx, 1);
-                                    ui = null;
-                                }
-                                if (ui != null && pa.length == 4) {
-                                    $.observable(ui).setProperty('value', JSON.parse(sa[2]));
-                                } else if (ui != null && pa.length == 5) {
-                                    $.observable(ui).setProperty(pa[4], JSON.parse(sa[2]));
-                                    if (pa[4] == '_idx') {
-                                        $.observable(tile.body).refresh(tile.body.sort(function (a, b) {
-                                            return a._idx - b._idx;
-                                        }));
-                                    } else if (pa[4] == '_declarer') {
-                                        if (ui._declarer == 'ui_checkbox') {
-                                            var el = $('input[id="' + ui.id + '"]');
-                                            $(el[0].parentElement).addClass('checkbox');
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            };
-            Tree.hClick = function (p) {
-                if (p != null && typeof (p) === "string") {
-                    if (p.substring(0, 8) == "/export/") {
-                        var cTile = null;
-                        for (var i = Tree.Tiles.length - 1; i >= 0; i--) {
-                            if (Tree.Tiles[i]['path'] == p) {
-                                Tree.SetPage(Tree.Tiles[i]);
-                                break;
-                            }
-                        }
-                    }
-                }
-            };
-            Tree.SetPage = function (p) {
-                if (p == Tree.curPage) {
-                    return;
-                }
-                Tree.ws.send("S\t" + p.path + "#");
-                //$("#content").html("");
-                $.observable(Tree).setProperty('curPage', p);
-                $.templates("#ContentTmpl").link("#content", Tree.curPage);
-            };
-            $('#rs-carousel').carousel({
-                'pagination': false,
-                'nextPrevActions': false,
-                'touch': true,
-            });
+            return rgb;
+          },
         });
+        Tree = { 'Tiles': [], 'selected': null };
+        $.templates("#HeaderTmpl").link("#rs-carousel", Tree);
+        $.templates("#ContentTmpl").link("#content", Tree);
+
+        Tree.ws = new WebSocket("ws://" + window.location.host + "/api/v03");
+        Tree.ws.onopen = function (evt) {
+          Tree.ws.send("S\t/export/+/header/#");
+        };
+        //Tree.ws.onclose = function (evt) { };
+        //Tree.ws.onerror = function (evt) { };
+
+        Tree.ws.onmessage = function (evt) {
+          var sa = evt.data.split('\t');
+          if (sa[0] == "P" && sa.length == 3) {
+            var pa = sa[1].split('/');
+            if (pa[1] == 'export' && pa.length > 2) {
+              var tPath = "/" + pa[1] + "/" + pa[2] + "/";
+              var tile = null;
+              for (var tileIdx = 0; tileIdx < Tree.Tiles.length; tileIdx++) {
+                if (Tree.Tiles[tileIdx]["path"] == tPath) {
+                  tile = Tree.Tiles[tileIdx];
+                  break;
+                }
+              }
+              if (pa[3] == 'header') {  // header
+                if (tile == null) {
+                  if (sa[2] != 'null') {
+                    tile = { 'id': pa[2], 'path': tPath, 'header': [], 'body': [], '_idx': 9999 };
+                    $.observable(Tree.Tiles).insert(Tree.Tiles.length, tile);
+                    $('#rs-carousel').carousel('refresh');
+                    if (Tree.curPage == null) {
+                      Tree.SetPage(0);
+                    }
+                  }
+                } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
+                  $.observable(Tree.Tiles).remove(tileIdx, 1);
+                  tile = null;
+                  $('#rs-carousel').carousel('refresh');
+                }
+                if (tile != null && pa.length > 4) {
+                  if (pa.length == 5 && pa[4].substring(0, 1) == '_') {
+                    $.observable(Tree.Tiles[tileIdx]).setProperty(pa[4], JSON.parse(sa[2]));
+                    if (pa[4] == '_idx') {
+                      $.observable(Tree.Tiles).refresh(Tree.Tiles.sort(function (a, b) {
+                        return a._idx - b._idx;
+                      }));
+                    }
+                  } else {
+                    var ui = null;
+                    var uIdx;
+                    var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3] + "/" + pa[4];
+                    for (uIdx = 0; uIdx < tile.header.length; uIdx++) {
+                      if (tile.header[uIdx]["id"] == uPath) {
+                        ui = tile.header[uIdx];
+                        break;
+                      }
+                    }
+                    if (ui == null) {
+                      if (sa[2] != 'null') {
+                        ui = { 'id': uPath, '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
+                        $.observable(tile.header).insert(uIdx, ui);
+                      }
+                    } else if ((pa.length == 5 || (pa.length == 6 && pa[4] == '_declarer')) && sa[2] == 'null') {
+                      $.observable(tile.header).remove(uIdx, 1);
+                      ui = null;
+                    }
+                    if (ui != null && pa.length == 5) {
+                      $.observable(ui).setProperty('value', JSON.parse(sa[2]));
+                    } else if (ui != null && pa.length == 6) {
+                      $.observable(ui).setProperty(pa[5], JSON.parse(sa[2]));
+                      if (pa[5] == '_idx') {
+                        $.observable(tile.header).refresh(tile.header.sort(function (a, b) {
+                          return a._idx - b._idx;
+                        }));
+                      }
+                    }
+                  }
+                }
+              } else if (tile != null) {  // body
+                if (pa.length == 4 && pa[3].substring(0, 1) == '_') {
+                  //    $.observable(Tree.Tiles[tileIdx]).setProperty(pa[3], JSON.parse(sa[2]));
+                } else {
+                  var ui = null;
+                  var uIdx;
+                  var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3];
+                  for (uIdx = 0; uIdx < tile.body.length; uIdx++) {
+                    if (tile.body[uIdx]["id"] == uPath) {
+                      ui = tile.body[uIdx];
+                      break;
+                    }
+                  }
+                  if (ui == null) {
+                    if (sa[2] != 'null') {
+                      ui = { 'id': uPath, 'name':pa[3], '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
+                      $.observable(tile.body).insert(uIdx, ui);
+                    }
+                  } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
+                    $.observable(tile.body).remove(uIdx, 1);
+                    ui = null;
+                  }
+                  if (ui != null && pa.length == 4) {
+                    $.observable(ui).setProperty('value', JSON.parse(sa[2]));
+                  } else if (ui != null && pa.length == 5) {
+                    $.observable(ui).setProperty(pa[4], JSON.parse(sa[2]));
+                    if (pa[4] == '_idx') {
+                      $.observable(tile.body).refresh(tile.body.sort(function (a, b) {
+                        return a._idx - b._idx;
+                      }));
+                    } else if (pa[4] == '_declarer') {
+                      if (ui._declarer == 'ui_colorpicker') {
+                        $('input[id="'+ui.id+'"]').minicolors({
+                          control: 'wheel',
+                          inline: true,
+                          changeDelay: 200,
+                          change: function (hex, opacity) {
+                            var c;
+                            if ((c = parseInt(hex.substring(1), 16)) != null) {
+                              Tree.publish(this.id, parseInt(hex.substring(1), 16));
+                            }
+                          },
+                        });
+
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        };
+        Tree.hClick = function (p) {
+          if (p != null && typeof (p) === "string") {
+            if (p.substring(0, 8) == "/export/") {
+              for (var i = Tree.Tiles.length - 1; i >= 0; i--) {
+                if (Tree.Tiles[i]['path'] == p) {
+                  Tree.SetPage(i);
+                  break;
+                }
+              }
+            }
+          }
+        };
+        Tree.SetPage = function (idx) {
+          if (idx>=0 && idx<Tree.Tiles.length && idx!=Tree.selected) {
+            Tree.ws.send("S\t" + Tree.Tiles[idx].path + "#");
+            $.observable(Tree).setProperty('selected', idx);
+          }
+        };
+        Tree.publish = function (path, val) {
+          if (val == undefined) {
+            for (var i = Tree.Tiles[Tree.selected].body.length - 1; i >= 0; i--) {
+              if (Tree.Tiles[Tree.selected].body[i].id == path) {
+                var msg = 'P\t' + path + '\t' + JSON.stringify(Tree.Tiles[Tree.selected].body[i].value);
+                Tree.ws.send(msg);
+                break;
+              }
+            }
+          } else {
+            Tree.ws.send('P\t' + path + '\t' + JSON.stringify(val));
+          }
+        }
+        $('#rs-carousel').carousel({
+          'pagination': false,
+          'nextPrevActions': false,
+          'touch': true,
+        });
+      });
     </script>
     <script id="HeaderTmpl" type="text/x-jsrender">
     <ul>
@@ -195,43 +224,58 @@
         <li data-page="{{>path}}" class="rs-carousel-item rs-carousel-item-active bg_nav_{{:#index%5+1}}" onclick="Tree.hClick('{{>path}}')" >
           <span class="nav_head">{{>id}}</span>
           {^{for header}}
-            <div data-link="class{:_class} style{:_style}">
-              {^{if _declarer=='ui_var'}}
+            {^{if _declarer=='ui_var'}}
+              <div data-link="class{:_class} style{:_style}">
                 <var class="nav_var"  data-link="{fmt:value _format}"></var>
-              {{else _declarer=='ui_checkbox'}}
-                <input type="checkbox" id="{{>id}}" data-link="checked{:value} disabled{:_readonly}" />
+              </div>
+            {{else _declarer=='ui_checkbox'}}
+              <div data-link="class{:_class+' checkbox readonly'} style{:_style}">
+                <input type="checkbox" id="{{>id}}" disabled="disabled" data-link="{:value}" />
                 <label for="{{>id}}"></label>
+              </div>
               {{/if}}
-            </div>
           {{/for}}
         </li>
       {{/for}}
     </ul>
     </script>
     <script id="ContentTmpl" type="text/x-jsrender">
-      {^{for body}}
-        {{if _declarer=='ui_dygraph'}}
-          <div id="{{>id}}" {{if _style}}style="{{:_style}}"{{/if}} class="dygraph" data-src="{{:value}}">
-        {{else}}
-          <div data-link="class{:_class} style{:_style}">
-            {^{if _declarer=='ui_var'}}
-                <var class="nav_var"  data-link="{fmt:value _format}"></var>
-            {{else _declarer=='ui_button'}}
-              <button data-pub="{{>path}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</button>
-            {{else _declarer=='ui_checkbox'}}
-              <input type="checkbox" id="{{>id}}" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
+      {^{for Tiles[selected]}}
+        {^{for body }}
+          {^{if _declarer=='ui_var'}}
+            <div data-link="class{:_class} style{:_style}">
+              <var class="nav_var"  data-link="{fmt:value _format}"></var>
+            </div>
+          {{else _declarer=='ui_checkbox'}}
+            <div data-link="class{:_class+' checkbox'} class{merge:_readonly toggle='readonly'} style{:_style}">
+              <input type="checkbox" id="{{>id}}" data-link="{:value} disabled{:_readonly}" onchange="Tree.publish('{{>id}}', checked)" />
               <label for="{{>id}}"></label>
-            {{else _declarer=='ui_range'}}
-              <input type="range" {{if _min}}min="{{>_min}}"{{/if}} {{if _max}}max="{{>_max}}"{{/if}} data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} />
-            {{else _declarer=='ui_link'}}
-              <a href="{{:value}}">{{if _text}}{{:_text}}{{else}}{{:id}}{{/if}}</a>
-            {{else _declarer=='ui_img'}}
-              <img src="{{:value}}" {{if _hsize}}height="{{>_hsize}}"{{/if}} {{if _vsize}}width="{{>_vsize}}"{{/if}} data-sub="{{:path}}" />
-            {{else _declarer=='ui_colorpicker' }}
-              <input class="colorpicker" type="text" data-sub="{{>path}}" {{if _readonly==true}}{{else}}data-pub="{{>path}}"{{/if}} ">
-            {{/if}}
+            </div>
+          {{else _declarer=='ui_button'}}
+            <div data-link="class{:_class} style{:_style}">
+              <button onmousedown="Tree.publish('{{>id}}', true)" onmouseup="Tree.publish('{{>id}}', false)" onmouseout="Tree.publish('{{>id}}', false)">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</button>
+            </div>
+          {{else _declarer=='ui_range'}}
+            <div data-link="class{:_class} style{:_style}">
+              <input type="range" id="{{>id}}" data-link="{:value} disabled{:_readonly} min{:_min} max{:_max}"  onchange="Tree.publish('{{>id}}', value)" />
+            </div>
+          {{else _declarer=='ui_link'}}
+            <div data-link="class{:_class} style{:_style}">
+              <a data-link="href{:value}">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</a>
+            </div>
+          {{else _declarer=='ui_img'}}
+            <div data-link="class{:_class} style{:_style}">
+              <img data-link="src{:value} height{:_hsize} width{:_vsize}" />
+            </div>
+          {{else _declarer=='ui_colorpicker' }}
+            <div data-link="class{:_class} style{:_style}">
+              <input type="text" id="{{>id}}" class="colorpicker" data-link="{clr:value id}" />
+            </div>
+          {{else _declarer=='ui_dygraph'}}
+            <div id="{{>id}}" data-link="class{:_class+' dygraph'} style{:_style} data-src{:value}">
+            </div>
           {{/if}}
-          </div>
+        {{/for}}
       {{/for}}
     </script>
 
