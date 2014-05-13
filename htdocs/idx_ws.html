@@ -107,10 +107,14 @@
         }
       };
       Tree.SetPage = function (idx, init) {
+        if (Tree.selected != null) {
+          $.observable(Tree.selected).setProperty('active', false);
+        }
         if (idx >= 0 && idx < Tree.Tiles.length) {
           var cur = Tree.Tiles[idx];
           $.observable(Tree).setProperty('selected', cur);
           Tree.ws.send("S\t" + cur.path + "#");
+          $.observable(Tree.selected).setProperty('active', true);
         }
       };
       Tree.publish = function (path, val) {
@@ -142,7 +146,7 @@
             if (pa[3] == 'header') {  // header
               if (tile == null) {
                 if (sa[2] != 'null') {
-                  tile = { 'id': pa[2], 'path': tPath, 'header': [], 'body': [], '_idx': 9999 };
+                  tile = { 'id': pa[2], 'path': tPath, 'header': [], 'body': [], '_idx': 9999, 'active':false};
                   $.observable(Tree.Tiles).insert(Tree.Tiles.length, tile);
                   $('#rs-carousel').carousel('refresh');
                   if (Tree.curPage == null) {
@@ -303,7 +307,7 @@
   <script id="HeaderTmpl" type="text/x-jsrender">
     <ul>
       {^{for Tiles}}
-        <li data-page="{{>path}}" class="rs-carousel-item rs-carousel-item-active bg_nav_{{:#index%5+1}}" onclick="Tree.hClick('{{>path}}')">
+        <li data-page="{{>path}}" data-link="class{:active?'active rs-carousel-item rs-carousel-item-active  bg_nav_{{:#index%5+1}}':'rs-carousel-item rs-carousel-item-active  bg_nav_{{:#index%5+1}}'}" onclick="Tree.hClick('{{>path}}')">
           <span class="nav_head">{{>id}}</span>
           {^{for header}}
             {^{if _declarer=='ui_var'}}

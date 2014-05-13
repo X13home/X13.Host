@@ -108,30 +108,63 @@ namespace X13.Plugins {
     }
 
     private void WsLog(LogData d, string f) {
-      Log.Debug("WS({0}) - {1}", d.Level ,d.Message);
+      Log.Debug("WS({0}) - {1}", d.Level, d.Message);
     }
     private void L_dummy(Topic sender, TopicChanged arg) {
       return;
-    }
-    private byte[] getContent(string path) {
-      if(path == "/")
-        path += "idx_ws.html";
-
-      return _sv.GetFile(path);
     }
 
     private void OnGet(object sender, HttpRequestEventArgs e) {
       var req = e.Request;
       var res = e.Response;
-      var content = getContent(req.RawUrl);
-      if(content != null) {
-        res.WriteContent(content);
+      string path=req.RawUrl=="/"?"/"+"idx_ws.html":req.RawUrl;
+      FileInfo f = new FileInfo(Path.Combine(_sv.RootPath, path.Substring(1)));
+
+      if(f.Exists) {
+        //string eTag=f.LastWriteTimeUtc.Ticks.ToString("X8")+"-"+f.Length.ToString("X4");
+        //string et;
+        //if(req.Headers.Contains("If-None-Match") && (et=req.Headers["If-None-Match"])==eTag) {
+        //  res.Headers.Add("ETag", eTag);
+        //  res.ContentLength64=0;
+        //  res.StatusCode=(int)HttpStatusCode.NotModified;
+        //} else {
+          byte[] content;
+          if((content =_sv.GetFile(path))!=null) {
+            //res.Headers.Add("ETag", eTag);
+            res.ContentType=Ext2ContentType(f.Extension);
+            res.WriteContent(content);
+          } else {
+            res.StatusCode=(int)HttpStatusCode.Conflict;
+            res.WriteContent(new byte[0]);
+          }
+        //}
       } else {
         res.StatusCode = (int)HttpStatusCode.NotFound;
+        res.WriteContent(new byte[0]);
       }
-      if(_verbose.value) {
+      //if(_verbose.value) {
         Log.Debug("{0}[{1}]{2} - {3}", req.RemoteEndPoint.Address.ToString(), req.HttpMethod, req.RawUrl, ((HttpStatusCode)res.StatusCode).ToString());
-      }
+      //}
     }
+    private string Ext2ContentType(string ext) {
+      switch(ext) {
+      case ".jpg":
+      case ".jpeg":
+        return "image/jpeg";
+      case ".png":
+        return "image/png";
+      case ".css":
+        return "text/css";
+      case ".csv":
+        return "text/csv";
+      case ".htm":
+      case ".html":
+        return "text/html";
+      case ".js":
+        return "application/javascript";
+      }
+      return "application/octet-stream";
+    }
+
   }
 }
