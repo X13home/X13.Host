@@ -232,7 +232,7 @@
                       return a._idx - b._idx;
                     }));
                     Tree.dygs = [];
-                    $('input[id="' + ui.id + '"]').each(function (idx, el) {
+                    $('input.colorpicker').each(function (idx, el) {
                       Tree.InitMiniColor(el);
                     });
                     $(".dygraph").each(function (idx, el) {
@@ -240,7 +240,7 @@
                     });
                   } else if (pa[4] == '_declarer') {
                     if (ui._declarer == 'ui_colorpicker') {
-                      $('input.colorpicker').each(function (idx, el) {
+                        $('input.colorpicker[id="' + ui.id + '"]').each(function (idx, el) {
                         Tree.InitMiniColor(el);
                       });
 
