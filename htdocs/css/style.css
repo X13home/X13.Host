@@ -12,6 +12,9 @@ body {
 #rs-carousel {
   width: 100%;
 }
+.offline {
+  background-color: #D8D8D8;
+}
 #rs-carousel .rs-carousel-mask { border: 0;}
 #rs-carousel ul li { width: 100px; height: 100px; list-style: none; cursor: pointer; border: 5px solid lightgray; padding: 5px; margin-right: 1em; overflow: hidden; }
 .bg_nav_1 { background-color: #F0FCFF;}

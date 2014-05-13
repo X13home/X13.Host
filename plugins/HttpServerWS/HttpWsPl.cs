@@ -92,7 +92,6 @@ namespace X13.Plugins {
       }
       _sv = new HttpServer((int)portD.value);
       _sv.Log.Output=WsLog;
-      _sv.Log.Level=WebSocketSharp.LogLevel.Warn;
       _sv.RootPath=Path.GetFullPath(Path.GetFullPath("../htdocs"));
       _sv.OnGet+=OnGet;
       _sv.AddWebSocketService<ApiV03>("/api/v03");
