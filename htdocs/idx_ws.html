@@ -39,61 +39,114 @@
             return val;
           }
         },
-        'clr': function (c, path) {
-          var r = (c >> 16) & 0xFF;
-          var g = (c >> 8) & 0xFF;
-          var b = c & 0xFF;
-          var rgb = '#' + (r < 16 ? '0' : '') + r.toString(16) +
-                 (g < 16 ? '0' : '') + g.toString(16) +
-                 (b < 16 ? '0' : '') + b.toString(16);
-          $(".colorpicker.minicolors-input[id='" + path + "']").each(function (idx, el) {
-            $(el).minicolors('value', rgb);
-          });
-          return rgb;
-        },
       });
-      Tree = { 'Tiles': [], 'selected': null, 'dygs': [] };
-      Tree.InitMiniColor = function (el) {
-        $(el).minicolors({
-          control: 'wheel',
-          inline: true,
-          changeDelay: 200,
-          change: function (hex, opacity) {
-            var c;
-            if ((c = parseInt(hex.substring(1), 16)) != null) {
-              Tree.publish(el.id, c);
+      $.views.tags({
+        'miniColor': {
+          init: function (tagCtx, linkCtx) {
+            if (this._.inline && !tagCtx.content) {
+              this.template = "<input type='text' class='colorpicker'/>";
             }
           },
-        });
-      };
-      Tree.initDygraph = function (el) {
-        var opt = {};
-        var op_s = "";
-        for (var i = Tree.selected.body.length - 1; i >= 0; i--) {
-          if (Tree.selected.body[i]['id'] == el.id) {
-            op_s = Tree.selected.body[i]['_options'];
+          onAfterLink: function (tagCtx, linkCtx) {
+            var tag = this;
+            if (!tag.linkedElem) {
+              tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
+            }
+            $(tag.linkedElem).minicolors({
+              control: 'wheel',
+              inline: true,
+              changeDelay: 200,
+              change: function (hex, opacity) {
+                var c;
+                if ((c = parseInt(hex.substring(1), 16)) != null) {
+                  Tree.publish(this.id, c);
+                }
+              },
+            });
+            if (tagCtx.args[0] !== undefined) {
+              tag.setValue(tagCtx.args[0]);
+            }
+            if (tagCtx.args[1] !== undefined) {
+              tag.linkedElem[0].id = tagCtx.args[1];
+            }
+
+          },
+          setValue: function (c) {
+            if (c !== undefined) {
+              var tag = this;
+              var r = (c >> 16) & 0xFF;
+              var g = (c >> 8) & 0xFF;
+              var b = c & 0xFF;
+              var rgb = '#' + (r < 16 ? '0' : '') + r.toString(16) +
+                     (g < 16 ? '0' : '') + g.toString(16) +
+                     (b < 16 ? '0' : '') + b.toString(16);
+              $(tag.linkedElem).minicolors('value', rgb);
+            }
+          },
+        },
+        'dygraph': {
+          data: null,
+          el: null,
+          dyg : null,
+          init: function (tagCtx, linkCtx) {
+            if (this._.inline && !tagCtx.content) {
+              this.template = "<div class='dygraph'></div>";
+            }
+          },
+          onAfterLink: function (tagCtx, linkCtx) {
+            data = linkCtx.data;
+            var tag = this;
+            el = tag.linkedElem == null ? null : tag.linkedElem[0];
+            if (el == null) {
+              tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
+              el = tag.linkedElem[0];
+            }
+            if (el == null) {
+              return;
+            }
+            el.id = data.id;
+            var opt = {};
             try {
-              opt = JSON.parse(op_s);
+              opt = JSON.parse(data._options);
             } catch (ex2) {
               opt = {};
             }
-            break;
-          }
+
+            opt["drawCallback"] = function (me, initial) {
+              if (blockRedraw || initial) return;
+              blockRedraw = true;
+              var range = me.xAxisRange();
+              for (var j = 0; j < Tree.dygs.length; j++) {
+                if (Tree.dygs[j] == me) continue;
+                Tree.dygs[j].updateOptions({ dateWindow: range });
+              }
+              blockRedraw = false;
+            };
+            el.className = 'dygraph ' + data._class;
+            el.style.cssText = data._style;
+            dyg = new Dygraph(el, data.value, opt);
+            Tree.dygs.push(dyg);
+          },
+          onUpdate: function (ev, eventArgs, tagCtxs) {
+            if (eventArgs.path == 'value') {
+              dyg.updateOptions({ 'file': eventArgs.value });
+              dyg.resetZoom();
+            } else if (eventArgs.path == '_options') {
+              try {
+                var opt = JSON.parse(data._options);
+                dyg.updateOptions(opt);
+              } catch (ex2) {
+              }
+            } else if (eventArgs.path == '_class') {
+              el.className = 'dygraph ' + eventArgs.value;
+            } else if (eventArgs.path == '_style') {
+              el.style.cssText=eventArgs.value;
+            }
+            return false;
+          },
         }
-
-        opt["drawCallback"] = function (me, initial) {
-          if (blockRedraw || initial) return;
-          blockRedraw = true;
-          var range = me.xAxisRange();
-          for (var j = 0; j < Tree.dygs.length; j++) {
-            if (Tree.dygs[j] == me) continue;
-            Tree.dygs[j].updateOptions({ dateWindow: range });
-          }
-          blockRedraw = false;
-        };
-        Tree.dygs.push(new Dygraph(el, $(el).data("src"), opt));
-
-      };
+      });
+      Tree = { 'Tiles': [], 'selected': null, 'dygs': [] };
       Tree.hClick = function (p) {
         if (p != null && typeof (p) === "string") {
           if (p.substring(0, 8) == "/export/") {
@@ -146,7 +199,7 @@
             if (pa[3] == 'header') {  // header
               if (tile == null) {
                 if (sa[2] != 'null') {
-                  tile = { 'id': pa[2], 'path': tPath, 'header': [], 'body': [], '_idx': 9999, 'active':false};
+                  tile = { 'id': pa[2], 'path': tPath, 'header': [], 'body': [], '_idx': 9999, 'active': false };
                   $.observable(Tree.Tiles).insert(Tree.Tiles.length, tile);
                   $('#rs-carousel').carousel('refresh');
                   if (Tree.curPage == null) {
@@ -231,35 +284,17 @@
                     $.observable(tile.body).refresh(tile.body.sort(function (a, b) {
                       return a._idx - b._idx;
                     }));
-                    Tree.dygs = [];
-                    $('input.colorpicker').each(function (idx, el) {
-                      Tree.InitMiniColor(el);
-                    });
-                    $(".dygraph").each(function (idx, el) {
-                      Tree.initDygraph(el);
-                    });
-                  } else if (pa[4] == '_declarer') {
-                    if (ui._declarer == 'ui_colorpicker') {
-                        $('input.colorpicker[id="' + ui.id + '"]').each(function (idx, el) {
-                        Tree.InitMiniColor(el);
-                      });
-
-                    } else if (ui._declarer == 'ui_dygraph') {
-                      $('div.dygraph[id="' + ui.id + '"]').each(function (idx, el) {
-                        Tree.initDygraph(el);
-                      });
-                    }
-                  } else if (pa[4] == '_options' && ui._declarer == 'ui_dygraph') {
-                    for (var i = Tree.selected.body.length - 1; i >= 0; i--) {
-                      try {
-                        var opt = JSON.parse(ui._options);
-                        $('div.dygraph[id="' + ui.id + '"]').each(function (idx, el) {
-                          $(el).updateOptions(opt, true);
-                        });
-                      } catch (ex2) {
-                      }
-                      break;
-                    }
+                    //} else if (pa[4] == '_options' && ui._declarer == 'ui_dygraph') {
+                    //  for (var i = Tree.selected.body.length - 1; i >= 0; i--) {
+                    //    try {
+                    //      var opt = JSON.parse(ui._options);
+                    //      $('div.dygraph[id="' + ui.id + '"]').each(function (idx, el) {
+                    //        $(el).updateOptions(opt, true);
+                    //      });
+                    //    } catch (ex2) {
+                    //    }
+                    //    break;
+                    //  }
                   }
                 }
               }
@@ -276,7 +311,7 @@
           Tree.ws = new WebSocket("ws://" + window.location.host + "/api/v03");
           Tree.ws.onopen = function (evt) {
             Tree.ws.send("S\t/export/+/header/#");
-            if(Tree.selected != null) {
+            if (Tree.selected != null) {
               Tree.ws.send("S\t" + Tree.selected.path + "#");
             }
             $(document.body).removeClass('offline');
@@ -358,12 +393,11 @@
               </div>
     {{else _declarer=='ui_colorpicker' }}
               <div data-link="class{:_class} style{:_style}">
-                <input type="text" id="{{>id}}" class="colorpicker" data-link="{clr:value id}" />
+                {^{miniColor value id /}}
               </div>
     {{else _declarer=='ui_dygraph'}}
-              <div id="{{>id}}" data-link="class{:_class+' dygraph'} style{:_style} data-src{:value}">
-              </div>
-    {{/if}}
+                {^{dygraph value _options _class _style /}}
+            {{/if}}
           {{/for}}
         {{/for}}
       {{/if}}
