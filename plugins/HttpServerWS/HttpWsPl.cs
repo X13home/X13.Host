@@ -56,6 +56,7 @@ namespace X13.Plugins {
 
     private const long _version=271;
     private DVar<bool> _verbose;
+    private DVar<bool> _disAnonym;
     private HttpServer _sv;
 
     public void Init() {
@@ -85,6 +86,7 @@ namespace X13.Plugins {
       }
 
       _verbose=Topic.root.Get<bool>("/etc/HttpServer/_verbose");
+      _disAnonym=Topic.root.Get<bool>("/etc/HttpServer/DisableAnonymus");
       var portD=Topic.root.Get<long>("/local/cfg/HttpServer/_port");
 
       if(portD.value==0) {
@@ -118,33 +120,40 @@ namespace X13.Plugins {
       var req = e.Request;
       var res = e.Response;
       string path=req.RawUrl=="/"?"/"+"idx_ws.html":req.RawUrl;
-      FileInfo f = new FileInfo(Path.Combine(_sv.RootPath, path.Substring(1)));
+      string client=req.RemoteEndPoint==null?"?.?.?.?":req.RemoteEndPoint.Address.ToString();
+      string exc=string.Empty;
+      try {
+        FileInfo f = new FileInfo(Path.Combine(_sv.RootPath, path.Substring(1)));
 
-      if(f.Exists) {
-        //string eTag=f.LastWriteTimeUtc.Ticks.ToString("X8")+"-"+f.Length.ToString("X4");
-        //string et;
-        //if(req.Headers.Contains("If-None-Match") && (et=req.Headers["If-None-Match"])==eTag) {
-        //  res.Headers.Add("ETag", eTag);
-        //  res.ContentLength64=0;
-        //  res.StatusCode=(int)HttpStatusCode.NotModified;
-        //} else {
-          byte[] content;
-          if((content =_sv.GetFile(path))!=null) {
-            //res.Headers.Add("ETag", eTag);
-            res.ContentType=Ext2ContentType(f.Extension);
-            res.WriteContent(content);
+        if(f.Exists) {
+          string eTag=f.LastWriteTimeUtc.Ticks.ToString("X8")+"-"+f.Length.ToString("X4");
+          string et;
+          if(req.Headers.Contains("If-None-Match") && (et=req.Headers["If-None-Match"])==eTag) {
+            res.Headers.Add("ETag", eTag);
+            res.StatusCode=(int)HttpStatusCode.NotModified;
+            res.WriteContent(Encoding.UTF8.GetBytes("Not Modified"));
           } else {
-            res.StatusCode=(int)HttpStatusCode.Conflict;
-            res.WriteContent(new byte[0]);
+            byte[] content;
+            if((content =_sv.GetFile(path))!=null) {
+              res.Headers.Add("ETag", eTag);
+              res.ContentType=Ext2ContentType(f.Extension);
+              res.WriteContent(content);
+            } else {
+              res.StatusCode=(int)HttpStatusCode.InternalServerError;
+              res.WriteContent(Encoding.UTF8.GetBytes("Content is broken"));
+            }
           }
-        //}
-      } else {
-        res.StatusCode = (int)HttpStatusCode.NotFound;
-        res.WriteContent(new byte[0]);
+        } else {
+          res.StatusCode = (int)HttpStatusCode.NotFound;
+          res.WriteContent(Encoding.UTF8.GetBytes("404 Not found"));
+        }
       }
-      //if(_verbose.value) {
-        Log.Debug("{0}[{1}]{2} - {3}", req.RemoteEndPoint.Address.ToString(), req.HttpMethod, req.RawUrl, ((HttpStatusCode)res.StatusCode).ToString());
-      //}
+      catch(Exception ex) {
+        exc=" ("+ex.ToString()+")";
+      }
+      if(_verbose.value) {
+        Log.Debug("{0}[{1}]{2} - {3}{4}", client, req.HttpMethod, req.RawUrl, ((HttpStatusCode)res.StatusCode).ToString(), exc);
+      }
     }
     private string Ext2ContentType(string ext) {
       switch(ext) {

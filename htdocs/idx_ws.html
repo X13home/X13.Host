@@ -9,6 +9,7 @@
   <link rel="stylesheet" type="text/css" href="css/jquery.minicolors.css" />
 </head>
 <body class="offline">
+  <header><a href="login.html" >Login </a></header>
   <div id="rs-carousel">
   </div>
   <div id="content">Loading ...</div>
@@ -42,17 +43,26 @@
       });
       $.views.tags({
         'miniColor': {
+          data: null,
+          el: null,
           init: function (tagCtx, linkCtx) {
             if (this._.inline && !tagCtx.content) {
               this.template = "<input type='text' class='colorpicker'/>";
             }
           },
           onAfterLink: function (tagCtx, linkCtx) {
+            data = linkCtx.data;
             var tag = this;
-            if (!tag.linkedElem) {
+            el = tag.linkedElem == null ? null : tag.linkedElem[0];
+            if (el == null) {
               tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
+              el = tag.linkedElem[0];
             }
-            $(tag.linkedElem).minicolors({
+            if (el == null) {
+              return;
+            }
+            el.id = data.id;
+            $(el).minicolors({
               control: 'wheel',
               inline: true,
               changeDelay: 200,
@@ -66,10 +76,6 @@
             if (tagCtx.args[0] !== undefined) {
               tag.setValue(tagCtx.args[0]);
             }
-            if (tagCtx.args[1] !== undefined) {
-              tag.linkedElem[0].id = tagCtx.args[1];
-            }
-
           },
           setValue: function (c) {
             if (c !== undefined) {
@@ -281,25 +287,29 @@
                 } else if (ui != null && pa.length == 5) {
                   $.observable(ui).setProperty(pa[4], JSON.parse(sa[2]));
                   if (pa[4] == '_idx') {
-                    $.observable(tile.body).refresh(tile.body.sort(function (a, b) {
-                      return a._idx - b._idx;
-                    }));
-                    //} else if (pa[4] == '_options' && ui._declarer == 'ui_dygraph') {
-                    //  for (var i = Tree.selected.body.length - 1; i >= 0; i--) {
-                    //    try {
-                    //      var opt = JSON.parse(ui._options);
-                    //      $('div.dygraph[id="' + ui.id + '"]').each(function (idx, el) {
-                    //        $(el).updateOptions(opt, true);
-                    //      });
-                    //    } catch (ex2) {
-                    //    }
-                    //    break;
-                    //  }
+                    $.observable(tile.body).refresh(tile.body.sort(function (a, b) { return a._idx - b._idx; }));
                   }
                 }
               }
             }
           }
+        } else if (sa[0] == 'I' && sa.length == 3) {
+          document.cookie = "sessionId=" + sa[1];
+          if (sa[2] == 'true' || (sa[2] == 'null' && localStorage.getItem("userName") == null)) {
+            Tree.ws.send("S\t/export/+/header/#");
+            if (Tree.selected != null) {
+              Tree.ws.send("S\t" + Tree.selected.path + "#");
+            }
+            $(document.body).removeClass('offline');
+          } else {
+            Tree.ws.send('C\t' + localStorage.getItem('userName') + '\t' + localStorage.getItem('password'));
+          }
+        } else if (sa[0] == 'C' && sa.length == 2 && sa[1] == 'true') {
+          Tree.ws.send("S\t/export/+/header/#");
+          if (Tree.selected != null) {
+            Tree.ws.send("S\t" + Tree.selected.path + "#");
+          }
+          $(document.body).removeClass('offline');
         }
       };
       Tree.createWS = function () {
@@ -310,11 +320,6 @@
           }
           Tree.ws = new WebSocket("ws://" + window.location.host + "/api/v03");
           Tree.ws.onopen = function (evt) {
-            Tree.ws.send("S\t/export/+/header/#");
-            if (Tree.selected != null) {
-              Tree.ws.send("S\t" + Tree.selected.path + "#");
-            }
-            $(document.body).removeClass('offline');
             Tree.ws.onmessage = Tree.onMessage;
             Tree.ws.onclose = function (evt) {
               $(document.body).addClass('offline');
@@ -393,7 +398,7 @@
               </div>
     {{else _declarer=='ui_colorpicker' }}
               <div data-link="class{:_class} style{:_style}">
-                {^{miniColor value id /}}
+                {^{miniColor value /}}
               </div>
     {{else _declarer=='ui_dygraph'}}
                 {^{dygraph value _options _class _style /}}

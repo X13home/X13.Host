@@ -7,52 +7,53 @@ using WebSocketSharp.Net;
 using WebSocketSharp.Server;
 
 namespace X13.Plugins {
-  internal class ApiV03: WebSocketService {
+  internal class ApiV03 : WebSocketService {
     private static DVar<bool> _verbose;
+    private static DVar<bool> _disAnonym;
 
     static ApiV03() {
       _verbose=Topic.root.Get<bool>("/etc/HttpServer/_verbose");
+      _disAnonym=Topic.root.Get<bool>("/etc/HttpServer/DisableAnonymus");
     }
 
-    private DVar<string> _owner;
-    private string user;
     private List<Topic.Subscription> _subscriptions;
+    private Session _ses;
 
     protected override void OnOpen() {
-      Topic r=Topic.root.Get("/etc/HttpServer/clients");
-      int i=1;
-      while(r.Exist("guest "+i.ToString("X2"))) {
-        i++;
+      string sid=null;
+      if(Context.CookieCollection["sessionId"]!=null) {
+        sid=Context.CookieCollection["sessionId"].Value;
       }
-      _owner=r.Get<string>("guest "+i.ToString("X2"));
-      _owner.saved=false;
+      _ses=Session.Get(sid, Context.UserEndPoint.Address);
       _subscriptions=new List<Topic.Subscription>();
-      user=string.Empty;
-      System.Threading.ThreadPool.QueueUserWorkItem(o => {
-        string host=Context.UserEndPoint.Address.ToString();
-        try {
-          var he=System.Net.Dns.GetHostEntry(Context.UserEndPoint.Address);
-          host=he.HostName;
-        }
-        catch(Exception) {
-        }
-        _owner.value=string.Format("{0}:{1}", host, Context.UserEndPoint.Port);
-      });
-      X13.Log.Debug("{0} connect from {1}", _owner.name, Context.UserEndPoint.Address.ToString());
+      Send(string.Concat("I\t", _ses.id, "\t", (string.IsNullOrEmpty(_ses.userName)?(_disAnonym.value?"false":"null"):"true").ToString()));
+      if(_verbose.value) {
+        X13.Log.Debug("{0} connect from {1}", _ses.owner.name, _ses.ip.ToString());
+      }
     }
     protected override void OnMessage(MessageEventArgs e) {
       string[] sa;
       if(e.Type==Opcode.Text && !string.IsNullOrEmpty(e.Data) && (sa=e.Data.Split('\t'))!=null && sa.Length>0) {
         if(sa[0]=="P" && sa.Length==3) {
-          HttpWsPl.ProcessPublish(sa[1], sa[2], user);
+          HttpWsPl.ProcessPublish(sa[1], sa[2], _ses.userName);
         } else if(sa[0]=="S" && sa.Length==2) {
           _subscriptions.Add(Topic.root.Subscribe(sa[1], SubChanged));
+        } else if(sa[0]=="C" && sa.Length==3) {  // Connect, username, password
+          if(MQTT.MqBroker.CheckAuth(sa[1], sa[2])) {
+            _ses.userName=sa[1];
+            Send("C\ttrue");
+            X13.Log.Debug("Connect {0}@{1} success", _ses.userName, _ses.ip.ToString());
+          } else {
+            Send("C\tfalse");
+            X13.Log.Warning("Connect {0}@{1} fail", _ses.userName, _ses.ip.ToString());
+            //TODO: Close connection
+          }
         }
       }
     }
 
     private void SubChanged(Topic t, TopicChanged a) {
-      if(t.path.StartsWith("/local") || !MQTT.MqBroker.CheckAcl(user, t, TopicAcl.Subscribe)) {
+      if(t.path.StartsWith("/local") || !MQTT.MqBroker.CheckAcl(_ses.userName, t, TopicAcl.Subscribe)) {
         return;
       }
       if(a.Art==TopicChanged.ChangeArt.Remove) {
@@ -64,14 +65,59 @@ namespace X13.Plugins {
       }
     }
     protected override void OnClose(CloseEventArgs e) {
-      if(_owner!=null) {
-        X13.Log.Debug("{0} Disconnect: [{1}]{2}", _owner.name, e.Code, e.Reason);
-        _owner.Remove();
-        _owner=null;
+      if(_ses!=null) {
+        if(_verbose.value) {
+          X13.Log.Debug("{0} Disconnect: [{1}]{2}", _ses.owner.name, e.Code, e.Reason);
+        }
+        _ses.Close();
+        _ses=null;
       }
       foreach(var s in _subscriptions) {
         Topic.root.Unsubscribe(s.path, s.func);
       }
+    }
+  }
+  internal class Session {
+    private static List<Session> sessions;
+    static Session() {
+      sessions=new List<Session>();
+      
+    }
+    public static Session Get(string sid, System.Net.IPAddress ip) {
+      Session s;
+      if(string.IsNullOrEmpty(sid) || (s=sessions.FirstOrDefault(z => z.id==sid && z.ip==ip))==null) {
+        s=new Session(ip);
+      }
+      return s;
+    }
+
+    private Session(System.Net.IPAddress ip) {
+      Topic r=Topic.root.Get("/etc/HttpServer/clients");
+      this.id = Guid.NewGuid().ToString();
+      this.ip = ip;
+      int i=1;
+      while(r.Exist("guest "+i.ToString("X2"))) {
+        i++;
+      }
+      owner=r.Get<string>("guest "+i.ToString("X2"));
+      owner.saved=false;
+      try {
+        var he=System.Net.Dns.GetHostEntry(this.ip);
+        this.owner.value=string.Format("{0}[{1}]", he.HostName, this.ip.ToString());
+      }
+      catch(Exception) {
+        this.owner.value=string.Format("[{0}]", this.ip.ToString());
+      }
+      Log.Debug("Ses({0}) - {1}", this.ip.ToString(), this.id);
+    }
+    private string _host;
+    public readonly string id;
+    public readonly System.Net.IPAddress ip;
+    public string userName;
+    public DVar<string> owner { get; private set; }
+    public void Close() {
+      sessions.Remove(this);
+      owner.Remove();
     }
   }
 }
