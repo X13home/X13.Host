@@ -7,7 +7,7 @@ using WebSocketSharp.Net;
 using WebSocketSharp.Server;
 
 namespace X13.Plugins {
-  internal class ApiV03 : WebSocketService {
+  internal class ApiV03: WebSocketService {
     private static DVar<bool> _verbose;
     private static DVar<bool> _disAnonym;
 
@@ -24,9 +24,9 @@ namespace X13.Plugins {
       if(Context.CookieCollection["sessionId"]!=null) {
         sid=Context.CookieCollection["sessionId"].Value;
       }
-      _ses=Session.Get(sid, Context.UserEndPoint.Address);
+      _ses=Session.Get(sid, Context.UserEndPoint);
       _subscriptions=new List<Topic.Subscription>();
-      Send(string.Concat("I\t", _ses.id, "\t", (string.IsNullOrEmpty(_ses.userName)?(_disAnonym.value?"false":"null"):"true").ToString()));
+      Send(string.Concat("I\t", _ses.id, "\t", (string.IsNullOrEmpty(_ses.userName)?(_disAnonym.value?"false":"null"):"true")));
       if(_verbose.value) {
         X13.Log.Debug("{0} connect from {1}", _ses.owner.name, _ses.ip.ToString());
       }
@@ -34,19 +34,21 @@ namespace X13.Plugins {
     protected override void OnMessage(MessageEventArgs e) {
       string[] sa;
       if(e.Type==Opcode.Text && !string.IsNullOrEmpty(e.Data) && (sa=e.Data.Split('\t'))!=null && sa.Length>0) {
-        if(sa[0]=="P" && sa.Length==3) {
-          HttpWsPl.ProcessPublish(sa[1], sa[2], _ses.userName);
-        } else if(sa[0]=="S" && sa.Length==2) {
-          _subscriptions.Add(Topic.root.Subscribe(sa[1], SubChanged));
-        } else if(sa[0]=="C" && sa.Length==3) {  // Connect, username, password
-          if(MQTT.MqBroker.CheckAuth(sa[1], sa[2])) {
+        if(sa[0]=="C" && sa.Length==3) {  // Connect, username, password
+          if((sa[1]!="local" || _ses.ip.IsLocal()) && MQTT.MqBroker.CheckAuth(sa[1], sa[2])) {
             _ses.userName=sa[1];
             Send("C\ttrue");
-            X13.Log.Debug("Connect {0}@{1} success", _ses.userName, _ses.ip.ToString());
+            X13.Log.Debug("Connect {0} success", _ses.ToString());
           } else {
             Send("C\tfalse");
-            X13.Log.Warning("Connect {0}@{1} fail", _ses.userName, _ses.ip.ToString());
+            X13.Log.Warning("Connect {0} fail", _ses.ToString());
             //TODO: Close connection
+          }
+        } else if(!_disAnonym.value || (_ses!=null && !string.IsNullOrEmpty(_ses.userName))) {
+          if(sa[0]=="P" && sa.Length==3) {
+            HttpWsPl.ProcessPublish(sa[1], sa[2], _ses.userName);
+          } else if(sa[0]=="S" && sa.Length==2) {
+            _subscriptions.Add(Topic.root.Subscribe(sa[1], SubChanged));
           }
         }
       }
@@ -81,20 +83,24 @@ namespace X13.Plugins {
     private static List<Session> sessions;
     static Session() {
       sessions=new List<Session>();
-      
+
     }
-    public static Session Get(string sid, System.Net.IPAddress ip) {
+    public static Session Get(string sid, System.Net.IPEndPoint ep, bool create=true) {
       Session s;
-      if(string.IsNullOrEmpty(sid) || (s=sessions.FirstOrDefault(z => z.id==sid && z.ip==ip))==null) {
-        s=new Session(ip);
+      if(string.IsNullOrEmpty(sid) || (s=sessions.FirstOrDefault(z => z.id==sid && z.ip==ep.Address))==null) {
+        if(create) {
+          s=new Session(ep);
+        } else {
+          s=null;
+        }
       }
       return s;
     }
 
-    private Session(System.Net.IPAddress ip) {
+    private Session(System.Net.IPEndPoint ep) {
       Topic r=Topic.root.Get("/etc/HttpServer/clients");
       this.id = Guid.NewGuid().ToString();
-      this.ip = ip;
+      this.ip = ep.Address;
       int i=1;
       while(r.Exist("guest "+i.ToString("X2"))) {
         i++;
@@ -103,11 +109,13 @@ namespace X13.Plugins {
       owner.saved=false;
       try {
         var he=System.Net.Dns.GetHostEntry(this.ip);
-        this.owner.value=string.Format("{0}[{1}]", he.HostName, this.ip.ToString());
+        _host=string.Format("{0}[{1}]:{2}", he.HostName, this.ip.ToString(), ep.Port);
       }
       catch(Exception) {
-        this.owner.value=string.Format("[{0}]", this.ip.ToString());
+        _host=string.Format("[{0}]:{1}", this.ip.ToString(), ep.Port);
       }
+      this.owner.value=_host;
+
       Log.Debug("Ses({0}) - {1}", this.ip.ToString(), this.id);
     }
     private string _host;
@@ -119,5 +127,9 @@ namespace X13.Plugins {
       sessions.Remove(this);
       owner.Remove();
     }
+    public override string ToString() {
+      return (string.IsNullOrEmpty(userName)?"anonymus":userName)+"@"+_host;
+    }
+
   }
 }

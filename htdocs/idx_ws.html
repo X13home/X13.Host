@@ -1,350 +1,410 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>X13.Home</title>
-  <!--CSS -->
-  <link rel="stylesheet" type="text/css" href="css/style.css" />
-  <link rel="stylesheet" type="text/css" href="css/rs-carousel-min.css" />
-  <link rel="stylesheet" type="text/css" href="css/jquery.minicolors.css" />
+    <meta charset="utf-8">
+    <title>Asgard</title>
+    <!--CSS -->
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <link rel="stylesheet" type="text/css" href="css/rs-carousel-min.css" />
+    <link rel="stylesheet" type="text/css" href="css/jquery.minicolors.css" />
 </head>
 <body class="offline">
-  <header><a href="login.html" >Login </a></header>
-  <div id="rs-carousel">
-  </div>
-  <div id="content">Loading ...</div>
-  <!-- lib -->
-  <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
-  <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
-  <script type="text/javascript" src="js/jquery.event.drag.js"></script>
-  <script type="text/javascript" src="js/jquery.translate3d.js"></script>
-  <script type="text/javascript" src="js/stringformat.js"></script>
-  <script type="text/javascript" src="js/modernizr.3dtransforms.touch.js"></script>
-  <script type="text/javascript" src="js/jquery.minicolors.js"></script>
-  <script type="text/javascript" src="js/jsviews.min.js"></script>
-  <script type="text/javascript" src="js/html5slider.js"></script>
-  <script type="text/javascript" src="js/dygraph-combined.js"></script>
-  <!-- carousel -->
-  <script type="text/javascript" src="js/jquery.rs.carousel-min.js"></script>
-  <script type="text/javascript" src="js/jquery.rs.carousel-touch-min.js"></script>
-  <!-- X13.Home -->
-  <script type="text/javascript">
-    $(document).ready(function () {
-      blockRedraw = false;
+    <header>
+       <div style="margin-left:90%; width:10%;"><input style="min-width:50%;" type="button" id="loginButton" onclick="LoginForm(true)" value="Login" /></div>
+    </header>
+    <div id="rs-carousel">
+    </div>
+    <div id="content">Loading ...</div>
+    <div id="login_form">
+        <h1>Login to X13.Home</h1>
+        <p>
+            <input type="text" id="userName" name="login" placeholder="Username or Email" />
+        </p>
+        <p>
+            <input type="password" id="userPassword" name="password" placeholder="Password" />
+        </p>
+        <p class="remember_me">
+            <label>
+                <input type="checkbox" id="userRemeber"/>
+                Remember me on this computer
+            </label>
+        </p>
+        <input type="submit" onclick="Login()">
+    </div>
+    <!-- lib -->
+    <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
+    <script type="text/javascript" src="js/jquery.event.drag.js"></script>
+    <script type="text/javascript" src="js/jquery.translate3d.js"></script>
+    <script type="text/javascript" src="js/stringformat.js"></script>
+    <script type="text/javascript" src="js/modernizr.3dtransforms.touch.js"></script>
+    <script type="text/javascript" src="js/jquery.minicolors.js"></script>
+    <script type="text/javascript" src="js/jsviews.min.js"></script>
+    <script type="text/javascript" src="js/html5slider.js"></script>
+    <script type="text/javascript" src="js/dygraph-combined.js"></script>
+    <!-- carousel -->
+    <script type="text/javascript" src="js/jquery.rs.carousel-min.js"></script>
+    <script type="text/javascript" src="js/jquery.rs.carousel-touch-min.js"></script>
+    <!-- X13.Home -->
+    <script type="text/javascript">
+        $(document).ready(function () {
+            blockRedraw = false;
 
-      $.views.converters({
-        'fmt': function (val, fmt) {
-          if (fmt != null) {
-            return String.format(fmt, val)
-          } else {
-            return val;
-          }
-        },
-      });
-      $.views.tags({
-        'miniColor': {
-          data: null,
-          el: null,
-          init: function (tagCtx, linkCtx) {
-            if (this._.inline && !tagCtx.content) {
-              this.template = "<input type='text' class='colorpicker'/>";
-            }
-          },
-          onAfterLink: function (tagCtx, linkCtx) {
-            data = linkCtx.data;
-            var tag = this;
-            el = tag.linkedElem == null ? null : tag.linkedElem[0];
-            if (el == null) {
-              tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
-              el = tag.linkedElem[0];
-            }
-            if (el == null) {
-              return;
-            }
-            el.id = data.id;
-            $(el).minicolors({
-              control: 'wheel',
-              inline: true,
-              changeDelay: 200,
-              change: function (hex, opacity) {
-                var c;
-                if ((c = parseInt(hex.substring(1), 16)) != null) {
-                  Tree.publish(this.id, c);
-                }
-              },
+            $.views.converters({
+                'fmt': function (val, fmt) {
+                    if (fmt != null) {
+                        return String.format(fmt, val)
+                    } else {
+                        return val;
+                    }
+                },
             });
-            if (tagCtx.args[0] !== undefined) {
-              tag.setValue(tagCtx.args[0]);
-            }
-          },
-          setValue: function (c) {
-            if (c !== undefined) {
-              var tag = this;
-              var r = (c >> 16) & 0xFF;
-              var g = (c >> 8) & 0xFF;
-              var b = c & 0xFF;
-              var rgb = '#' + (r < 16 ? '0' : '') + r.toString(16) +
-                     (g < 16 ? '0' : '') + g.toString(16) +
-                     (b < 16 ? '0' : '') + b.toString(16);
-              $(tag.linkedElem).minicolors('value', rgb);
-            }
-          },
-        },
-        'dygraph': {
-          data: null,
-          el: null,
-          dyg : null,
-          init: function (tagCtx, linkCtx) {
-            if (this._.inline && !tagCtx.content) {
-              this.template = "<div class='dygraph'></div>";
-            }
-          },
-          onAfterLink: function (tagCtx, linkCtx) {
-            data = linkCtx.data;
-            var tag = this;
-            el = tag.linkedElem == null ? null : tag.linkedElem[0];
-            if (el == null) {
-              tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
-              el = tag.linkedElem[0];
-            }
-            if (el == null) {
-              return;
-            }
-            el.id = data.id;
-            var opt = {};
-            try {
-              opt = JSON.parse(data._options);
-            } catch (ex2) {
-              opt = {};
-            }
+            $.views.tags({
+                'miniColor': {
+                    data: null,
+                    el: null,
+                    init: function (tagCtx, linkCtx) {
+                        if (this._.inline && !tagCtx.content) {
+                            this.template = "<input type='text' class='colorpicker'/>";
+                        }
+                    },
+                    onAfterLink: function (tagCtx, linkCtx) {
+                        data = linkCtx.data;
+                        var tag = this;
+                        el = tag.linkedElem == null ? null : tag.linkedElem[0];
+                        if (el == null) {
+                            tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
+                            el = tag.linkedElem[0];
+                        }
+                        if (el == null) {
+                            return;
+                        }
+                        el.id = data.id;
+                        $(el).minicolors({
+                            control: 'wheel',
+                            inline: true,
+                            changeDelay: 200,
+                            change: function (hex, opacity) {
+                                var c;
+                                if ((c = parseInt(hex.substring(1), 16)) != null) {
+                                    Tree.publish(this.id, c);
+                                }
+                            },
+                        });
+                        if (tagCtx.args[0] !== undefined) {
+                            tag.setValue(tagCtx.args[0]);
+                        }
+                    },
+                    setValue: function (c) {
+                        if (c !== undefined) {
+                            var tag = this;
+                            var r = (c >> 16) & 0xFF;
+                            var g = (c >> 8) & 0xFF;
+                            var b = c & 0xFF;
+                            var rgb = '#' + (r < 16 ? '0' : '') + r.toString(16) +
+                                   (g < 16 ? '0' : '') + g.toString(16) +
+                                   (b < 16 ? '0' : '') + b.toString(16);
+                            $(tag.linkedElem).minicolors('value', rgb);
+                        }
+                    },
+                },
+                'dygraph': {
+                    data: null,
+                    el: null,
+                    dyg: null,
+                    init: function (tagCtx, linkCtx) {
+                        if (this._.inline && !tagCtx.content) {
+                            this.template = "<div class='dygraph'></div>";
+                        }
+                    },
+                    onAfterLink: function (tagCtx, linkCtx) {
+                        data = linkCtx.data;
+                        var tag = this;
+                        el = tag.linkedElem == null ? null : tag.linkedElem[0];
+                        if (el == null) {
+                            tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
+                            el = tag.linkedElem[0];
+                        }
+                        if (el == null) {
+                            return;
+                        }
+                        el.id = data.id;
+                        var opt = {};
+                        try {
+                            opt = JSON.parse(data._options);
+                        } catch (ex2) {
+                            opt = {};
+                        }
 
-            opt["drawCallback"] = function (me, initial) {
-              if (blockRedraw || initial) return;
-              blockRedraw = true;
-              var range = me.xAxisRange();
-              for (var j = 0; j < Tree.dygs.length; j++) {
-                if (Tree.dygs[j] == me) continue;
-                Tree.dygs[j].updateOptions({ dateWindow: range });
-              }
-              blockRedraw = false;
-            };
-            el.className = 'dygraph ' + data._class;
-            el.style.cssText = data._style;
-            dyg = new Dygraph(el, data.value, opt);
-            Tree.dygs.push(dyg);
-          },
-          onUpdate: function (ev, eventArgs, tagCtxs) {
-            if (eventArgs.path == 'value') {
-              dyg.updateOptions({ 'file': eventArgs.value });
-              dyg.resetZoom();
-            } else if (eventArgs.path == '_options') {
-              try {
-                var opt = JSON.parse(data._options);
-                dyg.updateOptions(opt);
-              } catch (ex2) {
-              }
-            } else if (eventArgs.path == '_class') {
-              el.className = 'dygraph ' + eventArgs.value;
-            } else if (eventArgs.path == '_style') {
-              el.style.cssText=eventArgs.value;
-            }
-            return false;
-          },
-        }
-      });
-      Tree = { 'Tiles': [], 'selected': null, 'dygs': [] };
-      Tree.hClick = function (p) {
-        if (p != null && typeof (p) === "string") {
-          if (p.substring(0, 8) == "/export/") {
-            for (var i = Tree.Tiles.length - 1; i >= 0; i--) {
-              if (Tree.Tiles[i]['path'] == p) {
-                Tree.SetPage(i, false);
-                break;
-              }
-            }
-          }
-        }
-      };
-      Tree.SetPage = function (idx, init) {
-        if (Tree.selected != null) {
-          $.observable(Tree.selected).setProperty('active', false);
-        }
-        if (idx >= 0 && idx < Tree.Tiles.length) {
-          var cur = Tree.Tiles[idx];
-          $.observable(Tree).setProperty('selected', cur);
-          Tree.ws.send("S\t" + cur.path + "#");
-          $.observable(Tree.selected).setProperty('active', true);
-        }
-      };
-      Tree.publish = function (path, val) {
-        if (val == undefined) {
-          for (var i = Tree.Tiles[Tree.selected].body.length - 1; i >= 0; i--) {
-            if (Tree.Tiles[Tree.selected].body[i].id == path) {
-              var msg = 'P\t' + path + '\t' + JSON.stringify(Tree.Tiles[Tree.selected].body[i].value);
-              Tree.ws.send(msg);
-              break;
-            }
-          }
-        } else {
-          Tree.ws.send('P\t' + path + '\t' + JSON.stringify(val));
-        }
-      }
-      Tree.onMessage = function (evt) {
-        var sa = evt.data.split('\t');
-        if (sa[0] == "P" && sa.length == 3) {
-          var pa = sa[1].split('/');
-          if (pa[1] == 'export' && pa.length > 2) {
-            var tPath = "/" + pa[1] + "/" + pa[2] + "/";
-            var tile = null;
-            for (var tileIdx = 0; tileIdx < Tree.Tiles.length; tileIdx++) {
-              if (Tree.Tiles[tileIdx]["path"] == tPath) {
-                tile = Tree.Tiles[tileIdx];
-                break;
-              }
-            }
-            if (pa[3] == 'header') {  // header
-              if (tile == null) {
-                if (sa[2] != 'null') {
-                  tile = { 'id': pa[2], 'path': tPath, 'header': [], 'body': [], '_idx': 9999, 'active': false };
-                  $.observable(Tree.Tiles).insert(Tree.Tiles.length, tile);
-                  $('#rs-carousel').carousel('refresh');
-                  if (Tree.curPage == null) {
-                    Tree.SetPage(0, true);
-                  }
+                        opt["drawCallback"] = function (me, initial) {
+                            if (blockRedraw || initial) return;
+                            blockRedraw = true;
+                            var range = me.xAxisRange();
+                            for (var j = 0; j < Tree.dygs.length; j++) {
+                                if (Tree.dygs[j] == me) continue;
+                                Tree.dygs[j].updateOptions({ dateWindow: range });
+                            }
+                            blockRedraw = false;
+                        };
+                        el.className = 'dygraph ' + data._class;
+                        el.style.cssText = data._style;
+                        dyg = new Dygraph(el, data.value, opt);
+                        Tree.dygs.push(dyg);
+                    },
+                    onUpdate: function (ev, eventArgs, tagCtxs) {
+                        if (eventArgs.path == 'value') {
+                            dyg.updateOptions({ 'file': eventArgs.value });
+                            dyg.resetZoom();
+                        } else if (eventArgs.path == '_options') {
+                            try {
+                                var opt = JSON.parse(data._options);
+                                dyg.updateOptions(opt);
+                            } catch (ex2) {
+                            }
+                        } else if (eventArgs.path == '_class') {
+                            el.className = 'dygraph ' + eventArgs.value;
+                        } else if (eventArgs.path == '_style') {
+                            el.style.cssText = eventArgs.value;
+                        }
+                        return false;
+                    },
                 }
-              } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
-                $.observable(Tree.Tiles).remove(tileIdx, 1);
-                tile = null;
-                $('#rs-carousel').carousel('refresh');
-              }
-              if (tile != null && pa.length > 4) {
-                if (pa.length == 5 && pa[4].substring(0, 1) == '_') {
-                  $.observable(Tree.Tiles[tileIdx]).setProperty(pa[4], JSON.parse(sa[2]));
-                  if (pa[4] == '_idx') {
-                    var ot = Tree.Tiles[Tree.selected];
-                    $.observable(Tree.Tiles).refresh(Tree.Tiles.sort(function (a, b) {
-                      return a._idx - b._idx;
-                    }));
-                    if (ot != Tree.Tiles[Tree.selected]) {
-                      Tree.SetPage(Tree.selected, true);
+            });
+            Tree = { 'Tiles': [], 'selected': null, 'dygs': [], user: {} };
+            Tree.hClick = function (p) {
+                if (p != null && typeof (p) === "string") {
+                    if (p.substring(0, 8) == "/export/") {
+                        for (var i = Tree.Tiles.length - 1; i >= 0; i--) {
+                            if (Tree.Tiles[i]['path'] == p) {
+                                Tree.SetPage(i, false);
+                                break;
+                            }
+                        }
                     }
-                  }
+                }
+            };
+            Tree.SetPage = function (idx, init) {
+                if (Tree.selected != null) {
+                    $.observable(Tree.selected).setProperty('active', false);
+                }
+                if (idx >= 0 && idx < Tree.Tiles.length) {
+                    var cur = Tree.Tiles[idx];
+                    $.observable(Tree).setProperty('selected', cur);
+                    Tree.ws.send("S\t" + cur.path + "#");
+                    $.observable(Tree.selected).setProperty('active', true);
+                }
+            };
+            Tree.publish = function (path, val) {
+                if (val == undefined) {
+                    for (var i = Tree.Tiles[Tree.selected].body.length - 1; i >= 0; i--) {
+                        if (Tree.Tiles[Tree.selected].body[i].id == path) {
+                            var msg = 'P\t' + path + '\t' + JSON.stringify(Tree.Tiles[Tree.selected].body[i].value);
+                            Tree.ws.send(msg);
+                            break;
+                        }
+                    }
                 } else {
-                  var ui = null;
-                  var uIdx;
-                  var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3] + "/" + pa[4];
-                  for (uIdx = 0; uIdx < tile.header.length; uIdx++) {
-                    if (tile.header[uIdx]["id"] == uPath) {
-                      ui = tile.header[uIdx];
-                      break;
-                    }
-                  }
-                  if (ui == null) {
-                    if (sa[2] != 'null') {
-                      ui = { 'id': uPath, '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
-                      $.observable(tile.header).insert(uIdx, ui);
-                    }
-                  } else if ((pa.length == 5 || (pa.length == 6 && pa[4] == '_declarer')) && sa[2] == 'null') {
-                    $.observable(tile.header).remove(uIdx, 1);
-                    ui = null;
-                  }
-                  if (ui != null && pa.length == 5) {
-                    $.observable(ui).setProperty('value', JSON.parse(sa[2]));
-                  } else if (ui != null && pa.length == 6) {
-                    $.observable(ui).setProperty(pa[5], JSON.parse(sa[2]));
-                    if (pa[5] == '_idx') {
-                      $.observable(tile.header).refresh(tile.header.sort(function (a, b) {
-                        return a._idx - b._idx;
-                      }));
-                    }
-                  }
+                    Tree.ws.send('P\t' + path + '\t' + JSON.stringify(val));
                 }
-              }
-            } else if (tile != null) {  // body
-              if (pa.length == 4 && pa[3].substring(0, 1) == '_') {
-                //    $.observable(Tree.Tiles[tileIdx]).setProperty(pa[3], JSON.parse(sa[2]));
-              } else {
-                var ui = null;
-                var uIdx;
-                var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3];
-                for (uIdx = 0; uIdx < tile.body.length; uIdx++) {
-                  if (tile.body[uIdx]["id"] == uPath) {
-                    ui = tile.body[uIdx];
-                    break;
-                  }
-                }
-                if (ui == null) {
-                  if (sa[2] != 'null') {
-                    ui = { 'id': uPath, 'name': pa[3], '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
-                    $.observable(tile.body).insert(uIdx, ui);
-                  }
-                } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
-                  $.observable(tile.body).remove(uIdx, 1);
-                  ui = null;
-                }
-                if (ui != null && pa.length == 4) {
-                  $.observable(ui).setProperty('value', JSON.parse(sa[2]));
-                } else if (ui != null && pa.length == 5) {
-                  $.observable(ui).setProperty(pa[4], JSON.parse(sa[2]));
-                  if (pa[4] == '_idx') {
-                    $.observable(tile.body).refresh(tile.body.sort(function (a, b) { return a._idx - b._idx; }));
-                  }
-                }
-              }
             }
-          }
-        } else if (sa[0] == 'I' && sa.length == 3) {
-          document.cookie = "sessionId=" + sa[1];
-          if (sa[2] == 'true' || (sa[2] == 'null' && localStorage.getItem("userName") == null)) {
-            Tree.ws.send("S\t/export/+/header/#");
-            if (Tree.selected != null) {
-              Tree.ws.send("S\t" + Tree.selected.path + "#");
-            }
-            $(document.body).removeClass('offline');
-          } else {
-            Tree.ws.send('C\t' + localStorage.getItem('userName') + '\t' + localStorage.getItem('password'));
-          }
-        } else if (sa[0] == 'C' && sa.length == 2 && sa[1] == 'true') {
-          Tree.ws.send("S\t/export/+/header/#");
-          if (Tree.selected != null) {
-            Tree.ws.send("S\t" + Tree.selected.path + "#");
-          }
-          $(document.body).removeClass('offline');
-        }
-      };
-      Tree.createWS = function () {
-        if (Tree.ws == null || Tree.ws.readyState == Tree.ws.CLOSED) {
-          if (Tree.ws != null) {
-            Tree.ws.close();
-            $(document.body).addClass('offline');
-          }
-          Tree.ws = new WebSocket("ws://" + window.location.host + "/api/v03");
-          Tree.ws.onopen = function (evt) {
-            Tree.ws.onmessage = Tree.onMessage;
-            Tree.ws.onclose = function (evt) {
-              $(document.body).addClass('offline');
-              setTimeout(Tree.createWS, 1500);
+            Tree.onMessage = function (evt) {
+                var sa = evt.data.split('\t');
+                if (sa[0] == "P" && sa.length == 3) {
+                    var pa = sa[1].split('/');
+                    if (pa[1] == 'export' && pa.length > 2) {
+                        var tPath = "/" + pa[1] + "/" + pa[2] + "/";
+                        var tile = null;
+                        for (var tileIdx = 0; tileIdx < Tree.Tiles.length; tileIdx++) {
+                            if (Tree.Tiles[tileIdx]["path"] == tPath) {
+                                tile = Tree.Tiles[tileIdx];
+                                break;
+                            }
+                        }
+                        if (pa[3] == 'header') {  // header
+                            if (tile == null) {
+                                if (sa[2] != 'null') {
+                                    tile = { 'id': pa[2], 'path': tPath, 'header': [], 'body': [], '_idx': 9999, 'active': false };
+                                    $.observable(Tree.Tiles).insert(Tree.Tiles.length, tile);
+                                    $('#rs-carousel').carousel('refresh');
+                                    if (Tree.curPage == null) {
+                                        Tree.SetPage(0, true);
+                                    }
+                                }
+                            } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
+                                $.observable(Tree.Tiles).remove(tileIdx, 1);
+                                tile = null;
+                                $('#rs-carousel').carousel('refresh');
+                            }
+                            if (tile != null && pa.length > 4) {
+                                if (pa.length == 5 && pa[4].substring(0, 1) == '_') {
+                                    $.observable(Tree.Tiles[tileIdx]).setProperty(pa[4], JSON.parse(sa[2]));
+                                    if (pa[4] == '_idx') {
+                                        var ot = Tree.Tiles[Tree.selected];
+                                        $.observable(Tree.Tiles).refresh(Tree.Tiles.sort(function (a, b) {
+                                            return a._idx - b._idx;
+                                        }));
+                                        if (ot != Tree.Tiles[Tree.selected]) {
+                                            Tree.SetPage(Tree.selected, true);
+                                        }
+                                    }
+                                } else {
+                                    var ui = null;
+                                    var uIdx;
+                                    var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3] + "/" + pa[4];
+                                    for (uIdx = 0; uIdx < tile.header.length; uIdx++) {
+                                        if (tile.header[uIdx]["id"] == uPath) {
+                                            ui = tile.header[uIdx];
+                                            break;
+                                        }
+                                    }
+                                    if (ui == null) {
+                                        if (sa[2] != 'null') {
+                                            ui = { 'id': uPath, '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
+                                            $.observable(tile.header).insert(uIdx, ui);
+                                        }
+                                    } else if ((pa.length == 5 || (pa.length == 6 && pa[4] == '_declarer')) && sa[2] == 'null') {
+                                        $.observable(tile.header).remove(uIdx, 1);
+                                        ui = null;
+                                    }
+                                    if (ui != null && pa.length == 5) {
+                                        $.observable(ui).setProperty('value', JSON.parse(sa[2]));
+                                    } else if (ui != null && pa.length == 6) {
+                                        $.observable(ui).setProperty(pa[5], JSON.parse(sa[2]));
+                                        if (pa[5] == '_idx') {
+                                            $.observable(tile.header).refresh(tile.header.sort(function (a, b) {
+                                                return a._idx - b._idx;
+                                            }));
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (tile != null) {  // body
+                            if (pa.length == 4 && pa[3].substring(0, 1) == '_') {
+                                //    $.observable(Tree.Tiles[tileIdx]).setProperty(pa[3], JSON.parse(sa[2]));
+                            } else {
+                                var ui = null;
+                                var uIdx;
+                                var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3];
+                                for (uIdx = 0; uIdx < tile.body.length; uIdx++) {
+                                    if (tile.body[uIdx]["id"] == uPath) {
+                                        ui = tile.body[uIdx];
+                                        break;
+                                    }
+                                }
+                                if (ui == null) {
+                                    if (sa[2] != 'null') {
+                                        ui = { 'id': uPath, 'name': pa[3], '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
+                                        $.observable(tile.body).insert(uIdx, ui);
+                                    }
+                                } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
+                                    $.observable(tile.body).remove(uIdx, 1);
+                                    ui = null;
+                                }
+                                if (ui != null && pa.length == 4) {
+                                    $.observable(ui).setProperty('value', JSON.parse(sa[2]));
+                                } else if (ui != null && pa.length == 5) {
+                                    $.observable(ui).setProperty(pa[4], JSON.parse(sa[2]));
+                                    if (pa[4] == '_idx') {
+                                        $.observable(tile.body).refresh(tile.body.sort(function (a, b) { return a._idx - b._idx; }));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if (sa[0] == 'I' && sa.length == 3) {
+                    document.cookie='sessionId='+sa[1];
+                    if (sa[2] == 'true' || (sa[2] == 'null' && localStorage.getItem("userName") == null)) {
+                        Tree.user.userName = localStorage.getItem('userName');
+                        Tree.ws.send("S\t/export/+/header/#");
+                        if (Tree.selected != null) {
+                            Tree.ws.send("S\t" + Tree.selected.path + "#");
+                        }
+                        $(document.body).removeClass('offline');
+                        var b = $('#loginButton').prop('value', Tree.user.userName ? Tree.user.userName : 'anonymous');
+                    } else if (localStorage.getItem("userName") != null) {
+                        Tree.user.userName = localStorage.getItem('userName');
+                        Tree.user.userPass = localStorage.getItem('password');
+                        Tree.user.userSave = true;
+                        Tree.ws.send('C\t' + localStorage.getItem('userName') + '\t' + localStorage.getItem('password'));
+                    } else {
+                        LoginForm(true);
+                    }
+                } else if (sa[0] == 'C' && sa.length == 2) {
+                    if (sa[1] == 'true') {
+                        Tree.ws.send("S\t/export/+/header/#");
+                        if (Tree.selected != null) {
+                            Tree.ws.send("S\t" + Tree.selected.path + "#");
+                        }
+                        $(document.body).removeClass('offline');
+                        if (Tree.user.userSave) {
+                            localStorage.setItem('userName', Tree.user.userName);
+                            localStorage.setItem('password', Tree.user.userPass);
+                        } else {
+                            localStorage.removeItem('userName');
+                            localStorage.removeItem('password');
+                        }
+                        LoginForm(false);
+                        var b=$('#loginButton').prop('value', Tree.user.userName ? Tree.user.userName : 'anonymous');
+                    }
+                }
             };
-            Tree.ws.onerror = function (evt) {
-              $(document.body).addClass('offline');
-              setTimeout(Tree.createWS, 1500);
+            Tree.createWS = function () {
+                if (Tree.ws == null || Tree.ws.readyState == Tree.ws.CLOSED) {
+                    if (Tree.ws != null) {
+                        Tree.ws.close();
+                        $(document.body).addClass('offline');
+                    }
+                    Tree.ws = new WebSocket("ws://" + window.location.host + "/api/v03");
+                    Tree.ws.onopen = function (evt) {
+                        Tree.ws.onmessage = Tree.onMessage;
+                        Tree.ws.onclose = function (evt) {
+                            $(document.body).addClass('offline');
+                            setTimeout(Tree.createWS, 1500);
+                        };
+                        Tree.ws.onerror = function (evt) {
+                            $(document.body).addClass('offline');
+                            setTimeout(Tree.createWS, 1500);
+                        };
+                    };
+                    setTimeout(Tree.createWS, 15000);
+                }
             };
-          };
-          setTimeout(Tree.createWS, 15000);
-        }
-      };
-      Tree.createWS();
+            Tree.createWS();
 
-      $.templates("#HeaderTmpl").link("#rs-carousel", Tree);
-      $.templates("#ContentTmpl").link("#content", Tree);
-      $('#rs-carousel').carousel({
-        'pagination': false,
-        'nextPrevActions': false,
-        'touch': true,
-      });
-    });
-  </script>
-  <script id="HeaderTmpl" type="text/x-jsrender">
+            $.templates("#HeaderTmpl").link("#rs-carousel", Tree);
+            $.templates("#ContentTmpl").link("#content", Tree);
+            $('#rs-carousel').carousel({
+                'pagination': false,
+                'nextPrevActions': false,
+                'touch': true,
+            });
+        });
+        function LoginForm(show) {
+            if (show) {
+                if (localStorage.getItem("userName") != null) {
+                    $('#userName').val(localStorage.getItem('userName'));
+                    $('#userPassword').val(localStorage.getItem('password'));
+                    $('#userRemeber').prop('checked', true);
+                } else {
+                    $('#userName').val("");
+                    $('#userPassword').val("");
+                    $('#userRemeber').prop('checked', false);
+                }
+                $('#login_form').show();
+            } else {
+                $('#login_form').hide();
+            }
+        }
+        function Login() {
+            Tree.user.userName = $('#userName').val();
+            Tree.user.userPass = $('#userPassword').val();
+            Tree.user.userSave = $('#userRemeber').prop('checked');
+            if (Tree.ws != null) {
+                Tree.ws.send('C\t' + Tree.user.userName + '\t' + Tree.user.userPass);
+            }
+        }
+    </script>
+    <script id="HeaderTmpl" type="text/x-jsrender">
     <ul>
       {^{for Tiles}}
         <li data-page="{{>path}}" data-link="class{:active?'active rs-carousel-item rs-carousel-item-active  bg_nav_{{:#index%5+1}}':'rs-carousel-item rs-carousel-item-active  bg_nav_{{:#index%5+1}}'}" onclick="Tree.hClick('{{>path}}')">
@@ -364,8 +424,8 @@
         </li>
       {{/for}}
     </ul>
-  </script>
-  <script id="ContentTmpl" type="text/x-jsrender">
+    </script>
+    <script id="ContentTmpl" type="text/x-jsrender">
     {^{if selected==null}}
         <div><span>Loading ...</span></div>
     {{else}}
@@ -406,6 +466,6 @@
           {{/for}}
         {{/for}}
       {{/if}}
-  </script>
+    </script>
 </body>
 </html>

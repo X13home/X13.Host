@@ -34,6 +34,21 @@ body {
 #content>div:not(.newline) {
   float:left;
 }
+body.offline #loginButton {
+    background-color: yellow;
+}
+#login_form
+{
+    display: none;
+    position: absolute;
+    width: 400px;
+    background: #F0F0F0;
+    left: 50%;
+    top: 100px;
+    margin-left: -200px;
+    z-index: 1000;
+    border-radius: 10px;
+}
 
 .newline {
   float:left;

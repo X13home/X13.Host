@@ -119,9 +119,27 @@ namespace X13.Plugins {
     private void OnGet(object sender, HttpRequestEventArgs e) {
       var req = e.Request;
       var res = e.Response;
-      string path=req.RawUrl=="/"?"/"+"idx_ws.html":req.RawUrl;
-      string client=req.RemoteEndPoint==null?"?.?.?.?":req.RemoteEndPoint.Address.ToString();
+      if(req.RemoteEndPoint==null){
+        res.StatusCode=(int)HttpStatusCode.NotAcceptable;
+        return;
+      }
+      string path=req.RawUrl=="/"?"/idx_ws.html":req.RawUrl;
       string exc=string.Empty;
+      string client;
+      Session ses;
+
+      if(req.Cookies["sessionId"]!=null) {
+        ses=Session.Get(req.Cookies["sessionId"].Value, req.RemoteEndPoint, false);
+      } else {
+        ses=null;
+      }
+      
+      if(ses!=null) {
+        client=ses.ToString();
+      } else {
+        client=req.RemoteEndPoint.Address.ToString();
+      }
+
       try {
         FileInfo f = new FileInfo(Path.Combine(_sv.RootPath, path.Substring(1)));
 
