@@ -124,7 +124,6 @@ namespace X13.Plugins {
         return;
       }
       string path=req.RawUrl=="/"?"/idx_ws.html":req.RawUrl;
-      string exc=string.Empty;
       string client;
       Session ses;
 
@@ -134,8 +133,8 @@ namespace X13.Plugins {
         ses=null;
       }
       
-      if(ses!=null) {
-        client=ses.ToString();
+      if(ses!=null && ses.owner!=null) {
+        client=ses.owner.name;
       } else {
         client=req.RemoteEndPoint.Address.ToString();
       }
@@ -165,12 +164,14 @@ namespace X13.Plugins {
           res.StatusCode = (int)HttpStatusCode.NotFound;
           res.WriteContent(Encoding.UTF8.GetBytes("404 Not found"));
         }
+        if(_verbose.value) {
+          Log.Debug("{0}[{1}]{2} - {3}", client, req.HttpMethod, req.RawUrl, ((HttpStatusCode)res.StatusCode).ToString());
+        }
       }
       catch(Exception ex) {
-        exc=" ("+ex.ToString()+")";
-      }
-      if(_verbose.value) {
-        Log.Debug("{0}[{1}]{2} - {3}{4}", client, req.HttpMethod, req.RawUrl, ((HttpStatusCode)res.StatusCode).ToString(), exc);
+        if(_verbose.value) {
+          Log.Debug("{0}[{1}]{2} - {3}", client, req.HttpMethod, req.RawUrl, ex.Message);
+        }
       }
     }
     private string Ext2ContentType(string ext) {

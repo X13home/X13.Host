@@ -7,6 +7,11 @@ using System.Threading;
 namespace X13.Periphery {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public class SmartTwi : ITopicOwned {
+    private static DVar<bool> _verbose;
+
+    static SmartTwi() {
+      _verbose=Topic.root.Get<bool>("/etc/MQTTS/verbose");
+    }
     private Topic _owner;
     private DVar<string> _decl;
     private MsDevice _dev;
@@ -37,8 +42,9 @@ namespace X13.Periphery {
           _dev=(_owner.parent as DVar<MsDevice>).value;
         }
       }
-
-      Log.Debug("{0}.Recv {1}", _owner.name, BitConverter.ToString(data));
+      if(_verbose) {
+        Log.Debug("{0}.Recv {1}", _owner.name, BitConverter.ToString(data));
+      }
       if(data.Length>0 && data[0]==0xB0) {
         _state=0xB0;
       }

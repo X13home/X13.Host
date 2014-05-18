@@ -28,7 +28,6 @@ namespace X13.Periphery {
 
     static MsDevice() {
       _verbose=Topic.root.Get<bool>("/etc/MQTTS/verbose");
-      _verbose.saved=true;
       _gates=new List<IMsGate>();
     }
     internal static void Open() {
@@ -537,7 +536,9 @@ namespace X13.Periphery {
       if(rez==null) {
         return;
       }
-      Log.Debug("{0}.Snd {1}", t.name, BitConverter.ToString(payload));
+      if(_verbose.value) {
+        Log.Debug("{0}.Snd {1}", t.name, BitConverter.ToString(payload));
+      }
       Send(new MsPublish(rez.topic, rez.TopicId, QoS.AtLeastOnce) { Data=payload });
     }
 

@@ -18,7 +18,7 @@
     <div id="login_form">
         <h1>Login to X13.Home</h1>
         <p>
-            <input type="text" id="userName" name="login" placeholder="Username or Email" />
+            <input type="text" id="userName" name="login" placeholder="Username" />
         </p>
         <p>
             <input type="password" id="userPassword" name="password" placeholder="Password" />
@@ -378,6 +378,11 @@
                 'nextPrevActions': false,
                 'touch': true,
             });
+        });
+        $(window).bind("beforeunload", function () {
+            if (Tree.ws != null) {
+                Tree.ws.close(1000);
+            }
         });
         function LoginForm(show) {
             if (show) {
