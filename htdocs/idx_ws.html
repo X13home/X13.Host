@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="css/jquery.minicolors.css" />
 </head>
 <body class="offline">
-    <header>
+    <header style="border-bottom:inset 2px #dbd8d8; margin-left:125px;">
        <div style="margin-left:90%; width:10%;"><input style="min-width:50%;" type="button" id="loginButton" onclick="LoginForm(true)" value="Login" /></div>
     </header>
     <div id="rs-carousel">
@@ -344,7 +344,7 @@
                             localStorage.removeItem('password');
                         }
                         LoginForm(false);
-                        var b=$('#loginButton').prop('value', Tree.user.userName ? Tree.user.userName : 'anonymous');
+                        var b=$('#loginButton').prop('value', 'Logged on: '+(Tree.user.userName ? Tree.user.userName : 'anonymous'));
                     }
                 }
             };
@@ -374,6 +374,7 @@
             $.templates("#HeaderTmpl").link("#rs-carousel", Tree);
             $.templates("#ContentTmpl").link("#content", Tree);
             $('#rs-carousel').carousel({
+                'orientation': 'vertical',
                 'pagination': false,
                 'nextPrevActions': false,
                 'touch': true,
