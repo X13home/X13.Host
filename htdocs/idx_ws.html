@@ -9,8 +9,9 @@
     <link rel="stylesheet" type="text/css" href="css/jquery.minicolors.css" />
 </head>
 <body class="offline">
-    <header style="border-bottom:inset 2px #dbd8d8; margin-left:125px;">
-       <div style="margin-left:90%; width:10%;"><input style="min-width:50%;" type="button" id="loginButton" onclick="LoginForm(true)" value="Login" /></div>
+    <header>
+      <div style="float:left; width: 10%;"><input type="button" id="SkimpyButton" onclick="SwitchSkimpy()" value="<" /></div>
+       <div style="float:left; margin-left:70%; width:20%;"><input style="min-width:90%;" type="button" id="loginButton" onclick="LoginForm(true)" value="Login" /></div>
     </header>
     <div id="rs-carousel">
     </div>
@@ -344,7 +345,7 @@
                             localStorage.removeItem('password');
                         }
                         LoginForm(false);
-                        var b=$('#loginButton').prop('value', 'Logged on: '+(Tree.user.userName ? Tree.user.userName : 'anonymous'));
+                        $('#loginButton').prop('value', 'Logged on: '+(Tree.user.userName ? Tree.user.userName : 'anonymous'));
                     }
                 }
             };
@@ -408,6 +409,19 @@
             if (Tree.ws != null) {
                 Tree.ws.send('C\t' + Tree.user.userName + '\t' + Tree.user.userPass);
             }
+        }
+        function SwitchSkimpy() {
+          if ($('header').hasClass('skimpy')) {
+            $('header').removeClass('skimpy');
+            $('#rs-carousel').removeClass('skimpy');
+            $('#content').removeClass('skimpy');
+            $('#SkimpyButton').prop('value', '<');
+          } else {
+            $('header').addClass('skimpy');
+            $('#rs-carousel').addClass('skimpy');
+            $('#content').addClass('skimpy');
+            $('#SkimpyButton').prop('value', '>');
+          }
         }
     </script>
     <script id="HeaderTmpl" type="text/x-jsrender">
