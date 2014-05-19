@@ -23,7 +23,7 @@ namespace X13.Plugins {
   [ExportMetadata("priority", 20)]
   [ExportMetadata("name", "HttpServer")]
   public class HttpWsPl : IPlugModul {
-    public static int ProcessPublish(string path, string json, string user) {
+    internal static int ProcessPublish(string path, string json, Session ses) {
       Topic cur=Topic.root;
       Type vt=null;
 
@@ -33,22 +33,22 @@ namespace X13.Plugins {
         cur=cur.Get(pt[i++]);
       }
       if(string.IsNullOrEmpty(json) || json=="null") {                      // Remove
-        if(i==pt.Length && MQTT.MqBroker.CheckAcl(user, cur, TopicAcl.Delete)) {
+        if(i==pt.Length && MQTT.MqBroker.CheckAcl(ses==null?string.Empty:ses.userName, cur, TopicAcl.Delete)) {
           cur.Remove();
         }
         return 200;
       }
       if(i<pt.Length || cur.valueType==null) {                             // path not exist
         vt=X13.WOUM.ExConverter.Json2Type(json);
-        if(!MQTT.MqBroker.CheckAcl(user, cur, TopicAcl.Create)) {
+        if(!MQTT.MqBroker.CheckAcl(ses==null?string.Empty:ses.userName, cur, TopicAcl.Create)) {
           return 403;
         }
-        cur=Topic.GetP(path, vt);        // Create
+        cur=Topic.GetP(path, vt, ses==null?null:ses.owner);        // Create
       }
 
       if(cur.valueType!=null) {                 // Publish
-        if(MQTT.MqBroker.CheckAcl(user, cur, TopicAcl.Change)) {
-          cur.FromJson(json);
+        if(MQTT.MqBroker.CheckAcl(ses==null?string.Empty:ses.userName, cur, TopicAcl.Change)) {
+          cur.FromJson(json, ses==null?null:ses.owner);
         }
       }
       return 200;

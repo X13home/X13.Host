@@ -46,7 +46,7 @@ namespace X13.Plugins {
           }
         } else if(!_disAnonym.value || (_ses!=null && !string.IsNullOrEmpty(_ses.userName))) {
           if(sa[0]=="P" && sa.Length==3) {
-            HttpWsPl.ProcessPublish(sa[1], sa[2], _ses.userName);
+            HttpWsPl.ProcessPublish(sa[1], sa[2], _ses);
           } else if(sa[0]=="S" && sa.Length==2) {
             _subscriptions.Add(Topic.root.Subscribe(sa[1], SubChanged));
           }
@@ -55,7 +55,7 @@ namespace X13.Plugins {
     }
 
     private void SubChanged(Topic t, TopicChanged a) {
-      if(t.path.StartsWith("/local") || !MQTT.MqBroker.CheckAcl(_ses.userName, t, TopicAcl.Subscribe)) {
+      if(t.path.StartsWith("/local") || a.Visited(_ses.owner, true) || !MQTT.MqBroker.CheckAcl(_ses.userName, t, TopicAcl.Subscribe)) {
         return;
       }
       if(a.Art==TopicChanged.ChangeArt.Remove) {

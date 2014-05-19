@@ -50,6 +50,7 @@
     <Compile Include="ApiV03.cs" />
     <Compile Include="HttpWsPl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WsSyncPl.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\X13Engine\Engine.csproj">
