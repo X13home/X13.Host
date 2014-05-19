@@ -1,433 +1,435 @@
 <!doctype html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>Asgard</title>
-    <!--CSS -->
-    <link rel="stylesheet" type="text/css" href="css/style.css" />
-    <link rel="stylesheet" type="text/css" href="css/rs-carousel-min.css" />
-    <link rel="stylesheet" type="text/css" href="css/jquery.minicolors.css" />
+  <meta charset="utf-8">
+  <meta name="description" content="http://x13home.github.io/" />
+  <title>X13.Home</title>
+  <!--CSS -->
+  <link rel="stylesheet" type="text/css" href="css/style.css" />
+  <link rel="stylesheet" type="text/css" href="css/rs-carousel-min.css" />
+  <link rel="stylesheet" type="text/css" href="css/jquery.minicolors.css" />
 </head>
 <body class="offline">
-    <header>
-      <div style="float:left; width: 10%;"><input type="button" id="SkimpyButton" onclick="SwitchSkimpy()" value="<" /></div>
-       <div style="float:left; margin-left:70%; width:20%;"><input style="min-width:90%;" type="button" id="loginButton" onclick="LoginForm(true)" value="Login" /></div>
-    </header>
-    <div id="rs-carousel">
-    </div>
-    <div id="content">Loading ...</div>
-    <div id="login_form">
-        <h1>Login to X13.Home</h1>
-        <p>
-            <input type="text" id="userName" name="login" placeholder="Username" />
-        </p>
-        <p>
-            <input type="password" id="userPassword" name="password" placeholder="Password" />
-        </p>
-        <p class="remember_me">
-            <label>
-                <input type="checkbox" id="userRemeber"/>
-                Remember me on this computer
-            </label>
-        </p>
-        <input type="submit" onclick="Login()">
-    </div>
-    <!-- lib -->
-    <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
-    <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
-    <script type="text/javascript" src="js/jquery.event.drag.js"></script>
-    <script type="text/javascript" src="js/jquery.translate3d.js"></script>
-    <script type="text/javascript" src="js/stringformat.js"></script>
-    <script type="text/javascript" src="js/modernizr.3dtransforms.touch.js"></script>
-    <script type="text/javascript" src="js/jquery.minicolors.js"></script>
-    <script type="text/javascript" src="js/jsviews.min.js"></script>
-    <script type="text/javascript" src="js/html5slider.js"></script>
-    <script type="text/javascript" src="js/dygraph-combined.js"></script>
-    <!-- carousel -->
-    <script type="text/javascript" src="js/jquery.rs.carousel-min.js"></script>
-    <script type="text/javascript" src="js/jquery.rs.carousel-touch-min.js"></script>
-    <!-- X13.Home -->
-    <script type="text/javascript">
-        $(document).ready(function () {
-            blockRedraw = false;
-
-            $.views.converters({
-                'fmt': function (val, fmt) {
-                    if (fmt != null) {
-                        return String.format(fmt, val)
-                    } else {
-                        return val;
-                    }
-                },
-            });
-            $.views.tags({
-                'miniColor': {
-                    data: null,
-                    el: null,
-                    init: function (tagCtx, linkCtx) {
-                        if (this._.inline && !tagCtx.content) {
-                            this.template = "<input type='text' class='colorpicker'/>";
-                        }
-                    },
-                    onAfterLink: function (tagCtx, linkCtx) {
-                        data = linkCtx.data;
-                        var tag = this;
-                        el = tag.linkedElem == null ? null : tag.linkedElem[0];
-                        if (el == null) {
-                            tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
-                            el = tag.linkedElem[0];
-                        }
-                        if (el == null) {
-                            return;
-                        }
-                        el.id = data.id;
-                        $(el).minicolors({
-                            control: 'wheel',
-                            inline: true,
-                            changeDelay: 200,
-                            change: function (hex, opacity) {
-                                var c;
-                                if ((c = parseInt(hex.substring(1), 16)) != null) {
-                                    Tree.publish(this.id, c);
-                                }
-                            },
-                        });
-                        if (tagCtx.args[0] !== undefined) {
-                            tag.setValue(tagCtx.args[0]);
-                        }
-                    },
-                    setValue: function (c) {
-                        if (c !== undefined) {
-                            var tag = this;
-                            var r = (c >> 16) & 0xFF;
-                            var g = (c >> 8) & 0xFF;
-                            var b = c & 0xFF;
-                            var rgb = '#' + (r < 16 ? '0' : '') + r.toString(16) +
-                                   (g < 16 ? '0' : '') + g.toString(16) +
-                                   (b < 16 ? '0' : '') + b.toString(16);
-                            $(tag.linkedElem).minicolors('value', rgb);
-                        }
-                    },
-                },
-                'dygraph': {
-                    data: null,
-                    el: null,
-                    dyg: null,
-                    init: function (tagCtx, linkCtx) {
-                        if (this._.inline && !tagCtx.content) {
-                            this.template = "<div class='dygraph'></div>";
-                        }
-                    },
-                    onAfterLink: function (tagCtx, linkCtx) {
-                        data = linkCtx.data;
-                        var tag = this;
-                        el = tag.linkedElem == null ? null : tag.linkedElem[0];
-                        if (el == null) {
-                            tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
-                            el = tag.linkedElem[0];
-                        }
-                        if (el == null) {
-                            return;
-                        }
-                        el.id = data.id;
-                        var opt = {};
-                        try {
-                            opt = JSON.parse(data._options);
-                        } catch (ex2) {
-                            opt = {};
-                        }
-
-                        opt["drawCallback"] = function (me, initial) {
-                            if (blockRedraw || initial) return;
-                            blockRedraw = true;
-                            var range = me.xAxisRange();
-                            for (var j = 0; j < Tree.dygs.length; j++) {
-                                if (Tree.dygs[j] == me) continue;
-                                Tree.dygs[j].updateOptions({ dateWindow: range });
-                            }
-                            blockRedraw = false;
-                        };
-                        el.className = 'dygraph ' + data._class;
-                        el.style.cssText = data._style;
-                        dyg = new Dygraph(el, data.value, opt);
-                        Tree.dygs.push(dyg);
-                    },
-                    onUpdate: function (ev, eventArgs, tagCtxs) {
-                        if (eventArgs.path == 'value') {
-                            dyg.updateOptions({ 'file': eventArgs.value });
-                            dyg.resetZoom();
-                        } else if (eventArgs.path == '_options') {
-                            try {
-                                var opt = JSON.parse(data._options);
-                                dyg.updateOptions(opt);
-                            } catch (ex2) {
-                            }
-                        } else if (eventArgs.path == '_class') {
-                            el.className = 'dygraph ' + eventArgs.value;
-                        } else if (eventArgs.path == '_style') {
-                            el.style.cssText = eventArgs.value;
-                        }
-                        return false;
-                    },
-                }
-            });
-            Tree = { 'Tiles': [], 'selected': null, 'dygs': [], user: {} };
-            Tree.hClick = function (p) {
-                if (p != null && typeof (p) === "string") {
-                    if (p.substring(0, 8) == "/export/") {
-                        for (var i = Tree.Tiles.length - 1; i >= 0; i--) {
-                            if (Tree.Tiles[i]['path'] == p) {
-                                Tree.SetPage(i, false);
-                                break;
-                            }
-                        }
-                    }
-                }
-            };
-            Tree.SetPage = function (idx, init) {
-                if (Tree.selected != null) {
-                    $.observable(Tree.selected).setProperty('active', false);
-                }
-                if (idx >= 0 && idx < Tree.Tiles.length) {
-                    var cur = Tree.Tiles[idx];
-                    $.observable(Tree).setProperty('selected', cur);
-                    Tree.ws.send("S\t" + cur.path + "#");
-                    $.observable(Tree.selected).setProperty('active', true);
-                }
-            };
-            Tree.publish = function (path, val) {
-                if (val == undefined) {
-                    for (var i = Tree.Tiles[Tree.selected].body.length - 1; i >= 0; i--) {
-                        if (Tree.Tiles[Tree.selected].body[i].id == path) {
-                            var msg = 'P\t' + path + '\t' + JSON.stringify(Tree.Tiles[Tree.selected].body[i].value);
-                            Tree.ws.send(msg);
-                            break;
-                        }
-                    }
-                } else {
-                    Tree.ws.send('P\t' + path + '\t' + JSON.stringify(val));
-                }
-            }
-            Tree.onMessage = function (evt) {
-                var sa = evt.data.split('\t');
-                if (sa[0] == "P" && sa.length == 3) {
-                    var pa = sa[1].split('/');
-                    if (pa[1] == 'export' && pa.length > 2) {
-                        var tPath = "/" + pa[1] + "/" + pa[2] + "/";
-                        var tile = null;
-                        for (var tileIdx = 0; tileIdx < Tree.Tiles.length; tileIdx++) {
-                            if (Tree.Tiles[tileIdx]["path"] == tPath) {
-                                tile = Tree.Tiles[tileIdx];
-                                break;
-                            }
-                        }
-                        if (pa[3] == 'header') {  // header
-                            if (tile == null) {
-                                if (sa[2] != 'null') {
-                                    tile = { 'id': pa[2], 'path': tPath, 'header': [], 'body': [], '_idx': 9999, 'active': false };
-                                    $.observable(Tree.Tiles).insert(Tree.Tiles.length, tile);
-                                    $('#rs-carousel').carousel('refresh');
-                                    if (Tree.curPage == null) {
-                                        Tree.SetPage(0, true);
-                                    }
-                                }
-                            } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
-                                $.observable(Tree.Tiles).remove(tileIdx, 1);
-                                tile = null;
-                                $('#rs-carousel').carousel('refresh');
-                            }
-                            if (tile != null && pa.length > 4) {
-                                if (pa.length == 5 && pa[4].substring(0, 1) == '_') {
-                                    $.observable(Tree.Tiles[tileIdx]).setProperty(pa[4], JSON.parse(sa[2]));
-                                    if (pa[4] == '_idx') {
-                                        var ot = Tree.Tiles[Tree.selected];
-                                        $.observable(Tree.Tiles).refresh(Tree.Tiles.sort(function (a, b) {
-                                            return a._idx - b._idx;
-                                        }));
-                                        if (ot != Tree.Tiles[Tree.selected]) {
-                                            Tree.SetPage(Tree.selected, true);
-                                        }
-                                    }
-                                } else {
-                                    var ui = null;
-                                    var uIdx;
-                                    var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3] + "/" + pa[4];
-                                    for (uIdx = 0; uIdx < tile.header.length; uIdx++) {
-                                        if (tile.header[uIdx]["id"] == uPath) {
-                                            ui = tile.header[uIdx];
-                                            break;
-                                        }
-                                    }
-                                    if (ui == null) {
-                                        if (sa[2] != 'null') {
-                                            ui = { 'id': uPath, '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
-                                            $.observable(tile.header).insert(uIdx, ui);
-                                        }
-                                    } else if ((pa.length == 5 || (pa.length == 6 && pa[4] == '_declarer')) && sa[2] == 'null') {
-                                        $.observable(tile.header).remove(uIdx, 1);
-                                        ui = null;
-                                    }
-                                    if (ui != null && pa.length == 5) {
-                                        $.observable(ui).setProperty('value', JSON.parse(sa[2]));
-                                    } else if (ui != null && pa.length == 6) {
-                                        $.observable(ui).setProperty(pa[5], JSON.parse(sa[2]));
-                                        if (pa[5] == '_idx') {
-                                            $.observable(tile.header).refresh(tile.header.sort(function (a, b) {
-                                                return a._idx - b._idx;
-                                            }));
-                                        }
-                                    }
-                                }
-                            }
-                        } else if (tile != null) {  // body
-                            if (pa.length == 4 && pa[3].substring(0, 1) == '_') {
-                                //    $.observable(Tree.Tiles[tileIdx]).setProperty(pa[3], JSON.parse(sa[2]));
-                            } else {
-                                var ui = null;
-                                var uIdx;
-                                var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3];
-                                for (uIdx = 0; uIdx < tile.body.length; uIdx++) {
-                                    if (tile.body[uIdx]["id"] == uPath) {
-                                        ui = tile.body[uIdx];
-                                        break;
-                                    }
-                                }
-                                if (ui == null) {
-                                    if (sa[2] != 'null') {
-                                        ui = { 'id': uPath, 'name': pa[3], '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
-                                        $.observable(tile.body).insert(uIdx, ui);
-                                    }
-                                } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
-                                    $.observable(tile.body).remove(uIdx, 1);
-                                    ui = null;
-                                }
-                                if (ui != null && pa.length == 4) {
-                                    $.observable(ui).setProperty('value', JSON.parse(sa[2]));
-                                } else if (ui != null && pa.length == 5) {
-                                    $.observable(ui).setProperty(pa[4], JSON.parse(sa[2]));
-                                    if (pa[4] == '_idx') {
-                                        $.observable(tile.body).refresh(tile.body.sort(function (a, b) { return a._idx - b._idx; }));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else if (sa[0] == 'I' && sa.length == 3) {
-                    document.cookie='sessionId='+sa[1];
-                    if (sa[2] == 'true' || (sa[2] == 'null' && localStorage.getItem("userName") == null)) {
-                        Tree.user.userName = localStorage.getItem('userName');
-                        Tree.ws.send("S\t/export/+/header/#");
-                        if (Tree.selected != null) {
-                            Tree.ws.send("S\t" + Tree.selected.path + "#");
-                        }
-                        $(document.body).removeClass('offline');
-                        var b = $('#loginButton').prop('value', Tree.user.userName ? Tree.user.userName : 'anonymous');
-                    } else if (localStorage.getItem("userName") != null) {
-                        Tree.user.userName = localStorage.getItem('userName');
-                        Tree.user.userPass = localStorage.getItem('password');
-                        Tree.user.userSave = true;
-                        Tree.ws.send('C\t' + localStorage.getItem('userName') + '\t' + localStorage.getItem('password'));
-                    } else {
-                        LoginForm(true);
-                    }
-                } else if (sa[0] == 'C' && sa.length == 2) {
-                    if (sa[1] == 'true') {
-                        Tree.ws.send("S\t/export/+/header/#");
-                        if (Tree.selected != null) {
-                            Tree.ws.send("S\t" + Tree.selected.path + "#");
-                        }
-                        $(document.body).removeClass('offline');
-                        if (Tree.user.userSave) {
-                            localStorage.setItem('userName', Tree.user.userName);
-                            localStorage.setItem('password', Tree.user.userPass);
-                        } else {
-                            localStorage.removeItem('userName');
-                            localStorage.removeItem('password');
-                        }
-                        LoginForm(false);
-                        $('#loginButton').prop('value', 'Logged on: '+(Tree.user.userName ? Tree.user.userName : 'anonymous'));
-                    }
-                }
-            };
-            Tree.createWS = function () {
-                if (Tree.ws == null || Tree.ws.readyState == Tree.ws.CLOSED) {
-                    if (Tree.ws != null) {
-                        Tree.ws.close();
-                        $(document.body).addClass('offline');
-                    }
-                    Tree.ws = new WebSocket("ws://" + window.location.host + "/api/v03");
-                    Tree.ws.onopen = function (evt) {
-                        Tree.ws.onmessage = Tree.onMessage;
-                        Tree.ws.onclose = function (evt) {
-                            $(document.body).addClass('offline');
-                            setTimeout(Tree.createWS, 1500);
-                        };
-                        Tree.ws.onerror = function (evt) {
-                            $(document.body).addClass('offline');
-                            setTimeout(Tree.createWS, 1500);
-                        };
-                    };
-                    setTimeout(Tree.createWS, 15000);
-                }
-            };
-            Tree.createWS();
-
-            $.templates("#HeaderTmpl").link("#rs-carousel", Tree);
-            $.templates("#ContentTmpl").link("#content", Tree);
-            $('#rs-carousel').carousel({
-                'orientation': 'vertical',
-                'pagination': false,
-                'nextPrevActions': false,
-                'touch': true,
-            });
-        });
-        $(window).bind("beforeunload", function () {
-            if (Tree.ws != null) {
-                Tree.ws.close(1000);
-            }
-        });
-        function LoginForm(show) {
-            if (show) {
-                if (localStorage.getItem("userName") != null) {
-                    $('#userName').val(localStorage.getItem('userName'));
-                    $('#userPassword').val(localStorage.getItem('password'));
-                    $('#userRemeber').prop('checked', true);
-                } else {
-                    $('#userName').val("");
-                    $('#userPassword').val("");
-                    $('#userRemeber').prop('checked', false);
-                }
-                $('#login_form').show();
-            } else {
-                $('#login_form').hide();
-            }
+  <header>
+    <div style="float: left; width: 10%;">
+      <input type="button" id="SkimpyButton" onclick="Lank.f.SwitchSkimpy()" value="<" /></div>
+    <div style="float: left; margin-left: 70%; width: 20%;">
+      <input style="min-width: 90%;" type="button" id="loginButton" onclick="Lank.f.LoginForm(true)" value="Login" /></div>
+  </header>
+  <div id="rs-carousel">
+  </div>
+  <div id="content">Loading ...</div>
+  <div id="login_form">
+    <h2>Login</h2>
+    <p>
+      <input type="text" id="userName" name="login" placeholder="Username" />
+    </p>
+    <p>
+      <input type="password" id="userPassword" name="password" placeholder="Password" />
+    </p>
+    <p class="remember_me">
+      <label>
+        <input type="checkbox" id="userRemeber" />
+        Remember me on this computer
+      </label>
+    </p>
+    <input type="submit" onclick="Lank.f.Login()">
+  </div>
+  <!-- lib -->
+  <script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="js/jquery.ui.widget.js"></script>
+  <script type="text/javascript" src="js/jquery.event.drag.js"></script>
+  <script type="text/javascript" src="js/jquery.translate3d.js"></script>
+  <script type="text/javascript" src="js/stringformat.js"></script>
+  <script type="text/javascript" src="js/modernizr.3dtransforms.touch.js"></script>
+  <script type="text/javascript" src="js/jquery.minicolors.js"></script>
+  <script type="text/javascript" src="js/jsviews.min.js"></script>
+  <script type="text/javascript" src="js/html5slider.js"></script>
+  <script type="text/javascript" src="js/dygraph-combined.js"></script>
+  <!-- carousel -->
+  <script type="text/javascript" src="js/jquery.rs.carousel-min.js"></script>
+  <script type="text/javascript" src="js/jquery.rs.carousel-touch-min.js"></script>
+  <!-- X13.Home -->
+  <script type="text/javascript">
+    $(window).bind("beforeunload", function () {
+      if (Lank.ws != null) {
+        Lank.ws.close(1000);
+      }
+    });
+    $.views.converters({
+      'fmt': function (val, fmt) {
+        if (fmt != null) {
+          return String.format(fmt, val)
+        } else {
+          return val;
         }
-        function Login() {
-            Tree.user.userName = $('#userName').val();
-            Tree.user.userPass = $('#userPassword').val();
-            Tree.user.userSave = $('#userRemeber').prop('checked');
-            if (Tree.ws != null) {
-                Tree.ws.send('C\t' + Tree.user.userName + '\t' + Tree.user.userPass);
+      },
+    });
+    $.views.tags({
+      'miniColor': {
+        data: null,
+        el: null,
+        init: function (tagCtx, linkCtx) {
+          if (this._.inline && !tagCtx.content) {
+            this.template = "<input type='text' class='colorpicker'/>";
+          }
+        },
+        onAfterLink: function (tagCtx, linkCtx) {
+          data = linkCtx.data;
+          var tag = this;
+          el = tag.linkedElem == null ? null : tag.linkedElem[0];
+          if (el == null) {
+            tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
+            el = tag.linkedElem[0];
+          }
+          if (el == null) {
+            return;
+          }
+          el.id = data.id;
+          $(el).minicolors({
+            control: 'wheel',
+            inline: true,
+            changeDelay: 200,
+            change: function (hex, opacity) {
+              var c;
+              if ((c = parseInt(hex.substring(1), 16)) != null) {
+                Lank.publish(this.id, c);
+              }
+            },
+          });
+          if (tagCtx.args[0] !== undefined) {
+            tag.setValue(tagCtx.args[0]);
+          }
+        },
+        setValue: function (c) {
+          if (c !== undefined) {
+            var tag = this;
+            var r = (c >> 16) & 0xFF;
+            var g = (c >> 8) & 0xFF;
+            var b = c & 0xFF;
+            var rgb = '#' + (r < 16 ? '0' : '') + r.toString(16) +
+                   (g < 16 ? '0' : '') + g.toString(16) +
+                   (b < 16 ? '0' : '') + b.toString(16);
+            $(tag.linkedElem).minicolors('value', rgb);
+          }
+        },
+      },
+      'dygraph': {
+        data: null,
+        el: null,
+        dyg: null,
+        init: function (tagCtx, linkCtx) {
+          if (this._.inline && !tagCtx.content) {
+            this.template = "<div class='dygraph'></div>";
+          }
+        },
+        onAfterLink: function (tagCtx, linkCtx) {
+          data = linkCtx.data;
+          var tag = this;
+          el = tag.linkedElem == null ? null : tag.linkedElem[0];
+          if (el == null) {
+            tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
+            el = tag.linkedElem[0];
+          }
+          if (el == null) {
+            return;
+          }
+          el.id = data.id;
+          var opt = {};
+          try {
+            opt = JSON.parse(data._options);
+          } catch (ex2) {
+            opt = {};
+          }
+
+          opt["drawCallback"] = function (me, initial) {
+            if (Lank.blockRedraw || initial) return;
+            Lank.blockRedraw = true;
+            var range = me.xAxisRange();
+            for (var j = 0; j < Lank.dygs.length; j++) {
+              if (Lank.dygs[j] == me) continue;
+              Lank.dygs[j].updateOptions({ dateWindow: range });
             }
-        }
-        function SwitchSkimpy() {
-          if ($('header').hasClass('skimpy')) {
-            $('header').removeClass('skimpy');
-            $('#rs-carousel').removeClass('skimpy');
-            $('#content').removeClass('skimpy');
-            $('#SkimpyButton').prop('value', '<');
-          } else {
-            $('header').addClass('skimpy');
-            $('#rs-carousel').addClass('skimpy');
-            $('#content').addClass('skimpy');
-            $('#SkimpyButton').prop('value', '>');
+            Lank.blockRedraw = false;
+          };
+          el.className = 'dygraph ' + data._class;
+          el.style.cssText = data._style;
+          dyg = new Dygraph(el, data.value, opt);
+          Lank.dygs.push(dyg);
+        },
+        onUpdate: function (ev, eventArgs, tagCtxs) {
+          if (eventArgs.path == 'value') {
+            dyg.updateOptions({ 'file': eventArgs.value });
+            dyg.resetZoom();
+          } else if (eventArgs.path == '_options') {
+            try {
+              var opt = JSON.parse(data._options);
+              dyg.updateOptions(opt);
+            } catch (ex2) {
+            }
+          } else if (eventArgs.path == '_class') {
+            el.className = 'dygraph ' + eventArgs.value;
+          } else if (eventArgs.path == '_style') {
+            el.style.cssText = eventArgs.value;
+          }
+          return false;
+        },
+      }
+    });
+    Lank = { 'Tiles': [], 'selected': null, 'dygs': [], 'user': {}, 'blockRedraw': false, 'f': {} };
+    Lank.publish = function (path, val) {
+      if (val == undefined) {
+        for (var i = Lank.Tiles[Lank.selected].body.length - 1; i >= 0; i--) {
+          if (Lank.Tiles[Lank.selected].body[i].id == path) {
+            var msg = 'P\t' + path + '\t' + JSON.stringify(Lank.Tiles[Lank.selected].body[i].value);
+            Lank.ws.send(msg);
+            break;
           }
         }
-    </script>
-    <script id="HeaderTmpl" type="text/x-jsrender">
+      } else {
+        Lank.ws.send('P\t' + path + '\t' + JSON.stringify(val));
+      }
+    }
+    Lank.f.onMessage = function (evt) {
+      var sa = evt.data.split('\t');
+      if (sa[0] == "P" && sa.length == 3) {
+        var pa = sa[1].split('/');
+        if (pa[1] == 'export' && pa.length > 2) {
+          var tPath = "/" + pa[1] + "/" + pa[2] + "/";
+          var tile = null;
+          for (var tileIdx = 0; tileIdx < Lank.Tiles.length; tileIdx++) {
+            if (Lank.Tiles[tileIdx]["path"] == tPath) {
+              tile = Lank.Tiles[tileIdx];
+              break;
+            }
+          }
+          if (pa[3] == 'header') {  // header
+            if (tile == null) {
+              if (sa[2] != 'null') {
+                tile = { 'id': pa[2], 'path': tPath, 'header': [], 'body': [], '_idx': 9999, 'active': false };
+                $.observable(Lank.Tiles).insert(Lank.Tiles.length, tile);
+                $('#rs-carousel').carousel('refresh');
+                if (Lank.curPage == null) {
+                  Lank.f.SetPage(0, true);
+                }
+              }
+            } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
+              $.observable(Lank.Tiles).remove(tileIdx, 1);
+              tile = null;
+              $('#rs-carousel').carousel('refresh');
+            }
+            if (tile != null && pa.length > 4) {
+              if (pa.length == 5 && pa[4].substring(0, 1) == '_') {
+                $.observable(Lank.Tiles[tileIdx]).setProperty(pa[4], JSON.parse(sa[2]));
+                if (pa[4] == '_idx') {
+                  var ot = Lank.Tiles[Lank.selected];
+                  $.observable(Lank.Tiles).refresh(Lank.Tiles.sort(function (a, b) {
+                    return a._idx - b._idx;
+                  }));
+                  if (ot != Lank.Tiles[Lank.selected]) {
+                    Lank.f.SetPage(Lank.selected, true);
+                  }
+                }
+              } else {
+                var ui = null;
+                var uIdx;
+                var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3] + "/" + pa[4];
+                for (uIdx = 0; uIdx < tile.header.length; uIdx++) {
+                  if (tile.header[uIdx]["id"] == uPath) {
+                    ui = tile.header[uIdx];
+                    break;
+                  }
+                }
+                if (ui == null) {
+                  if (sa[2] != 'null') {
+                    ui = { 'id': uPath, '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
+                    $.observable(tile.header).insert(uIdx, ui);
+                  }
+                } else if ((pa.length == 5 || (pa.length == 6 && pa[4] == '_declarer')) && sa[2] == 'null') {
+                  $.observable(tile.header).remove(uIdx, 1);
+                  ui = null;
+                }
+                if (ui != null && pa.length == 5) {
+                  $.observable(ui).setProperty('value', JSON.parse(sa[2]));
+                } else if (ui != null && pa.length == 6) {
+                  $.observable(ui).setProperty(pa[5], JSON.parse(sa[2]));
+                  if (pa[5] == '_idx') {
+                    $.observable(tile.header).refresh(tile.header.sort(function (a, b) {
+                      return a._idx - b._idx;
+                    }));
+                  }
+                }
+              }
+            }
+          } else if (tile != null) {  // body
+            if (pa.length == 4 && pa[3].substring(0, 1) == '_') {
+              //    $.observable(Lank.Tiles[tileIdx]).setProperty(pa[3], JSON.parse(sa[2]));
+            } else {
+              var ui = null;
+              var uIdx;
+              var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3];
+              for (uIdx = 0; uIdx < tile.body.length; uIdx++) {
+                if (tile.body[uIdx]["id"] == uPath) {
+                  ui = tile.body[uIdx];
+                  break;
+                }
+              }
+              if (ui == null) {
+                if (sa[2] != 'null') {
+                  ui = { 'id': uPath, 'name': pa[3], '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
+                  $.observable(tile.body).insert(uIdx, ui);
+                }
+              } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
+                $.observable(tile.body).remove(uIdx, 1);
+                ui = null;
+              }
+              if (ui != null && pa.length == 4) {
+                $.observable(ui).setProperty('value', JSON.parse(sa[2]));
+              } else if (ui != null && pa.length == 5) {
+                $.observable(ui).setProperty(pa[4], JSON.parse(sa[2]));
+                if (pa[4] == '_idx') {
+                  $.observable(tile.body).refresh(tile.body.sort(function (a, b) { return a._idx - b._idx; }));
+                }
+              }
+            }
+          }
+        }
+      } else if (sa[0] == 'I' && sa.length == 3) {
+        document.cookie = 'sessionId=' + sa[1];
+        if (sa[2] == 'true' || (sa[2] == 'null' && localStorage.getItem("userName") == null)) {
+          Lank.user.userName = localStorage.getItem('userName');
+          Lank.ws.send("S\t/export/+/header/#");
+          if (Lank.selected != null) {
+            Lank.ws.send("S\t" + Lank.selected.path + "#");
+          }
+          $(document.body).removeClass('offline');
+          var b = $('#loginButton').prop('value', Lank.user.userName ? Lank.user.userName : 'anonymous');
+        } else if (localStorage.getItem("userName") != null) {
+          Lank.user.userName = localStorage.getItem('userName');
+          Lank.user.userPass = localStorage.getItem('password');
+          Lank.user.userSave = true;
+          Lank.ws.send('C\t' + localStorage.getItem('userName') + '\t' + localStorage.getItem('password'));
+        } else {
+          Lank.f.LoginForm(true);
+        }
+      } else if (sa[0] == 'C' && sa.length == 2) {
+        if (sa[1] == 'true') {
+          Lank.ws.send("S\t/export/+/header/#");
+          if (Lank.selected != null) {
+            Lank.ws.send("S\t" + Lank.selected.path + "#");
+          }
+          $(document.body).removeClass('offline');
+          if (Lank.user.userSave) {
+            localStorage.setItem('userName', Lank.user.userName);
+            localStorage.setItem('password', Lank.user.userPass);
+          } else {
+            localStorage.removeItem('userName');
+            localStorage.removeItem('password');
+          }
+          Lank.f.LoginForm(false);
+          $('#loginButton').prop('value', 'Logged on: ' + (Lank.user.userName ? Lank.user.userName : 'anonymous'));
+        }
+      }
+    };
+    Lank.f.createWS = function () {
+      if (Lank.ws == null || Lank.ws.readyState == Lank.ws.CLOSED) {
+        if (Lank.ws != null) {
+          Lank.ws.close();
+          $(document.body).addClass('offline');
+        }
+        Lank.ws = new WebSocket("ws://" + window.location.host + "/api/v03");
+        Lank.ws.onopen = function (evt) {
+          Lank.ws.onmessage = Lank.f.onMessage;
+          Lank.ws.onclose = function (evt) {
+            $(document.body).addClass('offline');
+            setTimeout(Lank.f.createWS, 1500);
+          };
+          Lank.ws.onerror = function (evt) {
+            $(document.body).addClass('offline');
+            setTimeout(Lank.f.createWS, 1500);
+          };
+        };
+        setTimeout(Lank.f.createWS, 15000);
+      }
+    };
+    Lank.f.SetPage = function (idx, init) {
+      if (Lank.selected != null) {
+        $.observable(Lank.selected).setProperty('active', false);
+      }
+      if (idx >= 0 && idx < Lank.Tiles.length) {
+        var cur = Lank.Tiles[idx];
+        $.observable(Lank).setProperty('selected', cur);
+        Lank.ws.send("S\t" + cur.path + "#");
+        $.observable(Lank.selected).setProperty('active', true);
+      }
+    };
+    Lank.f.hClick = function (p) {
+      if (p != null && typeof (p) === "string") {
+        if (p.substring(0, 8) == "/export/") {
+          for (var i = Lank.Tiles.length - 1; i >= 0; i--) {
+            if (Lank.Tiles[i]['path'] == p) {
+              Lank.f.SetPage(i, false);
+              break;
+            }
+          }
+        }
+      }
+    };
+    Lank.f.LoginForm = function (show) {
+      if (show) {
+        if (localStorage.getItem("userName") != null) {
+          $('#userName').val(localStorage.getItem('userName'));
+          $('#userPassword').val(localStorage.getItem('password'));
+          $('#userRemeber').prop('checked', true);
+        } else {
+          $('#userName').val("");
+          $('#userPassword').val("");
+          $('#userRemeber').prop('checked', false);
+        }
+        $('#login_form').show();
+      } else {
+        $('#login_form').hide();
+      }
+    }
+    Lank.f.Login = function () {
+      Lank.user.userName = $('#userName').val();
+      Lank.user.userPass = $('#userPassword').val();
+      Lank.user.userSave = $('#userRemeber').prop('checked');
+      if (Lank.ws != null) {
+        Lank.ws.send('C\t' + Lank.user.userName + '\t' + Lank.user.userPass);
+      }
+    }
+    Lank.f.SwitchSkimpy = function () {
+      if ($('header').hasClass('skimpy')) {
+        $('header').removeClass('skimpy');
+        $('#rs-carousel').removeClass('skimpy');
+        $('#content').removeClass('skimpy');
+        $('#SkimpyButton').prop('value', '<');
+      } else {
+        $('header').addClass('skimpy');
+        $('#rs-carousel').addClass('skimpy');
+        $('#content').addClass('skimpy');
+        $('#SkimpyButton').prop('value', '>');
+      }
+    }
+
+    $(document).ready(function () {
+      Lank.f.createWS();
+
+      $.templates("#HeaderTmpl").link("#rs-carousel", Lank);
+      $.templates("#ContentTmpl").link("#content", Lank);
+      $('#rs-carousel').carousel({
+        'orientation': 'vertical',
+        'pagination': false,
+        'nextPrevActions': false,
+        'touch': true,
+      });
+    });
+  </script>
+  <script id="HeaderTmpl" type="text/x-jsrender">
     <ul>
       {^{for Tiles}}
-        <li data-page="{{>path}}" data-link="class{:active?'active rs-carousel-item rs-carousel-item-active  bg_nav_{{:#index%5+1}}':'rs-carousel-item rs-carousel-item-active  bg_nav_{{:#index%5+1}}'}" onclick="Tree.hClick('{{>path}}')">
+        <li data-page="{{>path}}" data-link="class{:active?'active rs-carousel-item rs-carousel-item-active  bg_nav_{{:#index%5+1}}':'rs-carousel-item rs-carousel-item-active  bg_nav_{{:#index%5+1}}'}" onclick="Lank.f.hClick('{{>path}}')">
           <span class="nav_head">{{>id}}</span>
           {^{for header}}
             {^{if _declarer=='ui_var'}}
@@ -444,8 +446,8 @@
         </li>
       {{/for}}
     </ul>
-    </script>
-    <script id="ContentTmpl" type="text/x-jsrender">
+  </script>
+  <script id="ContentTmpl" type="text/x-jsrender">
     {^{if selected==null}}
         <div><span>Loading ...</span></div>
     {{else}}
@@ -457,16 +459,16 @@
               </div>
     {{else _declarer=='ui_checkbox'}}
               <div data-link="class{:_class+' checkbox'} class{merge:_readonly toggle='readonly'} style{:_style}">
-                <input type="checkbox" id="{{>id}}" data-link="{:value} disabled{:_readonly}" onchange="Tree.publish('{{>id}}', checked)" />
+                <input type="checkbox" id="{{>id}}" data-link="{:value} disabled{:_readonly}" onchange="Lank.publish('{{>id}}', checked)" />
                 <label for="{{>id}}"></label>
               </div>
     {{else _declarer=='ui_button'}}
               <div data-link="class{:_class} style{:_style}">
-                <button onmousedown="Tree.publish('{{>id}}', true)" onmouseup="Tree.publish('{{>id}}', false)" onmouseout="Tree.publish('{{>id}}', false)">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</button>
+                <button onmousedown="Lank.publish('{{>id}}', true)" onmouseup="Lank.publish('{{>id}}', false)" onmouseout="Lank.publish('{{>id}}', false)">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</button>
               </div>
     {{else _declarer=='ui_range'}}
               <div data-link="class{:_class} style{:_style}">
-                <input type="range" id="{{>id}}" data-link="{:value} disabled{:_readonly} min{:_min} max{:_max}" onchange="Tree.publish('{{>id}}', value)" />
+                <input type="range" id="{{>id}}" data-link="{:value} disabled{:_readonly} min{:_min} max{:_max}" onchange="Lank.publish('{{>id}}', value)" />
               </div>
     {{else _declarer=='ui_link'}}
               <div data-link="class{:_class} style{:_style}">
@@ -486,6 +488,6 @@
           {{/for}}
         {{/for}}
       {{/if}}
-    </script>
+  </script>
 </body>
 </html>
