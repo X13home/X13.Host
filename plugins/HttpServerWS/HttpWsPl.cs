@@ -123,6 +123,10 @@ namespace X13.Plugins {
         res.StatusCode=(int)HttpStatusCode.NotAcceptable;
         return;
       }
+      if(req.HttpMethod!="GET") {
+        res.StatusCode=(int)HttpStatusCode.MethodNotAllowed;
+        return;
+      }
       string path=req.RawUrl=="/"?"/idx_ws.html":req.RawUrl;
       string client;
       Session ses;

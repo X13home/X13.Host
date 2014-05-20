@@ -12,9 +12,11 @@
 <body class="offline">
   <header>
     <div style="float: left; width: 10%;">
-      <input type="button" id="SkimpyButton" onclick="Lank.f.SwitchSkimpy()" value="<" /></div>
+      <input type="button" id="SkimpyButton" onclick="Lank.f.SwitchSkimpy()" value="<" />
+    </div>
     <div style="float: left; margin-left: 70%; width: 20%;">
-      <input style="min-width: 90%;" type="button" id="loginButton" onclick="Lank.f.LoginForm(true)" value="Login" /></div>
+      <input style="min-width: 90%;" type="button" id="loginButton" onclick="Lank.f.LoginForm(true)" value="Login" />
+    </div>
   </header>
   <div id="rs-carousel">
   </div>
@@ -51,6 +53,7 @@
   <script type="text/javascript" src="js/jquery.rs.carousel-touch-min.js"></script>
   <!-- X13.Home -->
   <script type="text/javascript">
+    "use strict";
     $(window).bind("beforeunload", function () {
       if (Lank.ws != null) {
         Lank.ws.close(1000);
@@ -75,18 +78,18 @@
           }
         },
         onAfterLink: function (tagCtx, linkCtx) {
-          data = linkCtx.data;
+          this.data = linkCtx.data;
           var tag = this;
-          el = tag.linkedElem == null ? null : tag.linkedElem[0];
-          if (el == null) {
+          this.el = tag.linkedElem == null ? null : tag.linkedElem[0];
+          if (this.el == null) {
             tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
-            el = tag.linkedElem[0];
+            this.el = tag.linkedElem[0];
           }
-          if (el == null) {
+          if (this.el == null) {
             return;
           }
-          el.id = data.id;
-          $(el).minicolors({
+          this.el.id = this.data.id;
+          $(this.el).minicolors({
             control: 'wheel',
             inline: true,
             changeDelay: 200,
@@ -124,20 +127,20 @@
           }
         },
         onAfterLink: function (tagCtx, linkCtx) {
-          data = linkCtx.data;
+          this.data = linkCtx.data;
           var tag = this;
-          el = tag.linkedElem == null ? null : tag.linkedElem[0];
-          if (el == null) {
+          this.el = tag.linkedElem == null ? null : tag.linkedElem[0];
+          if (this.el == null) {
             tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
-            el = tag.linkedElem[0];
+            this.el = tag.linkedElem[0];
           }
-          if (el == null) {
+          if (this.el == null) {
             return;
           }
-          el.id = data.id;
+          this.el.id = this.data.id;
           var opt = {};
           try {
-            opt = JSON.parse(data._options);
+            opt = JSON.parse(this.data._options);
           } catch (ex2) {
             opt = {};
           }
@@ -152,31 +155,31 @@
             }
             Lank.blockRedraw = false;
           };
-          el.className = 'dygraph ' + data._class;
-          el.style.cssText = data._style;
-          dyg = new Dygraph(el, data.value, opt);
-          Lank.dygs.push(dyg);
+          this.el.className = 'dygraph ' + this.data._class;
+          this.el.style.cssText = this.data._style;
+          this.dyg = new Dygraph(this.el, this.data.value, opt);
+          Lank.dygs.push(this.dyg);
         },
         onUpdate: function (ev, eventArgs, tagCtxs) {
           if (eventArgs.path == 'value') {
-            dyg.updateOptions({ 'file': eventArgs.value });
-            dyg.resetZoom();
+            this.dyg.updateOptions({ 'file': eventArgs.value });
+            this.dyg.resetZoom();
           } else if (eventArgs.path == '_options') {
             try {
-              var opt = JSON.parse(data._options);
-              dyg.updateOptions(opt);
+              var opt = JSON.parse(this.data._options);
+              this.dyg.updateOptions(opt);
             } catch (ex2) {
             }
           } else if (eventArgs.path == '_class') {
-            el.className = 'dygraph ' + eventArgs.value;
+            this.el.className = 'dygraph ' + eventArgs.value;
           } else if (eventArgs.path == '_style') {
-            el.style.cssText = eventArgs.value;
+            this.el.style.cssText = eventArgs.value;
           }
           return false;
         },
       }
     });
-    Lank = { 'Tiles': [], 'selected': null, 'dygs': [], 'user': {}, 'blockRedraw': false, 'f': {} };
+    var Lank = { 'Tiles': [], 'selected': null, 'dygs': [], 'user': {}, 'blockRedraw': false, 'f': {} };
     Lank.publish = function (path, val) {
       if (val == undefined) {
         for (var i = Lank.Tiles[Lank.selected].body.length - 1; i >= 0; i--) {

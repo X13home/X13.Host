@@ -385,6 +385,9 @@ namespace X13.PLC {
     }
     private Record GetRecord(Topic t) {
       Record rec;
+      if(t==null) {
+        return null;
+      }
       if(!_tr.TryGetValue(t, out rec)) {
         if(t.disposed) {
           return null;
