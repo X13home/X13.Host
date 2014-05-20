@@ -72,7 +72,7 @@ namespace X13.Plugins {
         ver.saved=true;
         ver.value=_version;
         Log.Info("Load HttpServer declarers");
-        var st=System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.HttpServerWS.ui.xst");
+        var st=System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Plugins.ui.xst");
         if(st!=null) {
           using(var sr=new StreamReader(st)) {
             Topic.Import(sr, null);
@@ -127,7 +127,7 @@ namespace X13.Plugins {
         res.StatusCode=(int)HttpStatusCode.MethodNotAllowed;
         return;
       }
-      string path=req.RawUrl=="/"?"/idx_ws.html":req.RawUrl;
+      string path=req.RawUrl=="/"?"/index.html":req.RawUrl;
       string client;
       Session ses;
 

@@ -59,30 +59,26 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\HttpServer\ui.xst">
-      <Link>ui.xst</Link>
-    </EmbeddedResource>
     <None Include="bin\websocket-sharp.dll" />
+    <EmbeddedResource Include="ui.xst" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\HttpServer\Images\image.png">
-      <Link>Images\image.png</Link>
-    </Resource>
-    <Resource Include="..\HttpServer\Images\link.png">
-      <Link>Images\link.png</Link>
-    </Resource>
-    <Resource Include="..\HttpServer\Images\page.png">
-      <Link>Images\page.png</Link>
-    </Resource>
-    <Resource Include="..\HttpServer\Images\root.png">
-      <Link>Images\root.png</Link>
-    </Resource>
-    <Resource Include="..\HttpServer\Images\titel.png">
-      <Link>Images\titel.png</Link>
-    </Resource>
-    <Resource Include="..\HttpServer\Images\var.png">
-      <Link>Images\var.png</Link>
-    </Resource>
+    <Resource Include="Images\image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\link.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\page.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\root.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\titel.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\var.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
