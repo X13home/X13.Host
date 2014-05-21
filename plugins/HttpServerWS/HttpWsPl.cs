@@ -127,12 +127,19 @@ namespace X13.Plugins {
         res.StatusCode=(int)HttpStatusCode.MethodNotAllowed;
         return;
       }
+      System.Net.IPEndPoint remoteEndPoint = req.RemoteEndPoint;
+      {
+        System.Net.IPAddress remIP;
+        if(req.Headers.Contains("X-Real-IP") && System.Net.IPAddress.TryParse(req.Headers["X-Real-IP"], out remIP)) {
+          remoteEndPoint=new System.Net.IPEndPoint(remIP, remoteEndPoint.Port);        
+        }
+      }
       string path=req.RawUrl=="/"?"/index.html":req.RawUrl;
       string client;
       Session ses;
 
       if(req.Cookies["sessionId"]!=null) {
-        ses=Session.Get(req.Cookies["sessionId"].Value, req.RemoteEndPoint, false);
+        ses=Session.Get(req.Cookies["sessionId"].Value, remoteEndPoint, false);
       } else {
         ses=null;
       }
@@ -140,7 +147,7 @@ namespace X13.Plugins {
       if(ses!=null && ses.owner!=null) {
         client=ses.owner.name;
       } else {
-        client=req.RemoteEndPoint.Address.ToString();
+        client=remoteEndPoint.Address.ToString();
       }
 
       try {

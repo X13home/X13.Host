@@ -24,7 +24,14 @@ namespace X13.Plugins {
       if(Context.CookieCollection["sessionId"]!=null) {
         sid=Context.CookieCollection["sessionId"].Value;
       }
-      _ses=Session.Get(sid, Context.UserEndPoint);
+      System.Net.IPEndPoint remoteEndPoint = Context.UserEndPoint;
+      {
+        System.Net.IPAddress remIP;
+        if(Context.Headers.Contains("X-Real-IP") && System.Net.IPAddress.TryParse(Context.Headers["X-Real-IP"], out remIP)) {
+          remoteEndPoint=new System.Net.IPEndPoint(remIP, remoteEndPoint.Port);
+        }
+      }
+      _ses=Session.Get(sid, remoteEndPoint);
       _subscriptions=new List<Topic.Subscription>();
       Send(string.Concat("I\t", _ses.id, "\t", (string.IsNullOrEmpty(_ses.userName)?(_disAnonym.value?"false":"null"):"true")));
       if(_verbose.value) {
@@ -41,7 +48,7 @@ namespace X13.Plugins {
             X13.Log.Debug("Connect {0} success", _ses.ToString());
           } else {
             Send("C\tfalse");
-            X13.Log.Warning("Connect {0} fail", _ses.ToString());
+            X13.Log.Warning("Connect {0}@{1} fail", sa[1], _ses.owner.value);
             //TODO: Close connection
           }
         } else if(!_disAnonym.value || (_ses!=null && !string.IsNullOrEmpty(_ses.userName))) {
