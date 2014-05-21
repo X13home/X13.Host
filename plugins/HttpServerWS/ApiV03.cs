@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using WebSocketSharp;
 using WebSocketSharp.Net;
 using WebSocketSharp.Server;
@@ -10,16 +11,28 @@ namespace X13.Plugins {
   internal class ApiV03: WebSocketService {
     private static DVar<bool> _verbose;
     private static DVar<bool> _disAnonym;
+    private static Timer _pingTimer;
+    private static WebSocketSessionManager _wsMan;
 
     static ApiV03() {
       _verbose=Topic.root.Get<bool>("/etc/HttpServer/_verbose");
       _disAnonym=Topic.root.Get<bool>("/etc/HttpServer/DisableAnonymus");
+      _pingTimer=new Timer(PingF, null, 270000, 300000);
+    }
+
+    private static void PingF(object o) {
+      if(_wsMan!=null) {
+        _wsMan.Broadping();
+      }
     }
 
     private List<Topic.Subscription> _subscriptions;
     private Session _ses;
 
     protected override void OnOpen() {
+      if(_wsMan==null) {
+        _wsMan=Sessions;
+      }
       string sid=null;
       if(Context.CookieCollection["sessionId"]!=null) {
         sid=Context.CookieCollection["sessionId"].Value;
@@ -49,7 +62,7 @@ namespace X13.Plugins {
           } else {
             Send("C\tfalse");
             X13.Log.Warning("Connect {0}@{1} fail", sa[1], _ses.owner.value);
-            //TODO: Close connection
+            Sessions.CloseSession(base.ID);
           }
         } else if(!_disAnonym.value || (_ses!=null && !string.IsNullOrEmpty(_ses.userName))) {
           if(sa[0]=="P" && sa.Length==3) {
