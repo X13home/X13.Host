@@ -11,16 +11,18 @@
 </head>
 <body class="offline">
   <header>
-    <div style="float: left; width: 10%;">
-      <input type="button" id="SkimpyButton" onclick="Lank.f.SwitchSkimpy()" value="<" />
-    </div>
-    <div style="float: left; margin-left: 70%; width: 20%;">
-      <input style="min-width: 90%;" type="button" id="loginButton" onclick="Lank.f.LoginForm(true)" value="Login" />
+    <div>
+      <div style="float: left; width: 10%;">
+        <input type="button" id="SkimpyButton" onclick="Lank.f.SwitchSkimpy()" value="<" />
+      </div>
+      <div style="float: left; margin-left: 70%; width: 20%;">
+        <input style="min-width: 90%;" type="button" id="loginButton" onclick="Lank.f.LoginForm(true)" value="Login" />
+      </div>
     </div>
   </header>
   <div id="rs-carousel">
   </div>
-  <div id="content">Loading ...</div>
+  <div id="content">Connecting ...</div>
   <div id="login_form">
     <h2>Login</h2>
     <p>
@@ -379,7 +381,7 @@
       }
     };
     Lank.f.LoginForm = function (show) {
-      if (show) {
+      if (show && !$('#login_form').is(":visible")) {
         if (localStorage.getItem("userName") != null) {
           $('#userName').val(localStorage.getItem('userName'));
           $('#userPassword').val(localStorage.getItem('password'));

@@ -7,31 +7,38 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
 }
 
 body {
-  height: 99%;
-  width: 99%;
+  height: 100%;
+  width: 100%;
 }
 
 body.offline {
   background-color: #E8E8E8;
 }
 
-header {
-  border-bottom: inset 2px #dbd8d8;
-  margin-left: 125px;
+header{
+  margin-left: 115px;
+  border-bottom: solid black 2px;
 }
+  header > div {
+    background: linear-gradient(90deg, #000000 0px, #606978 3px, #707988 50%, #AEAFB4 90%);
+    width:100%;
+    height: 2em;
+  }
   header.skimpy {
     margin-left: 0;
   }
 
 /* rs carousel */
 #rs-carousel {
-  width: 125px;
+  width: 115px;
   position: fixed;
   top: 0;
   bottom: 0;
   left: 0;
-  border-right: solid 2px black;
-  visibility:visible;
+  visibility: visible;
+  padding-top: 2em;
+  background-color: #707988;
+  background: linear-gradient(90deg, #AEAFB4 0%, #707988 30%, #606978 112px, #000000 113px);
 }
 
   #rs-carousel.skimpy {
@@ -39,46 +46,60 @@ header {
   }
 
 #rs-carousel .rs-carousel-mask {
-  border: 0;
+  position: fixed;
+  top: 2em;
+  bottom: 0;
+  padding-bottom: 1em;
 }
 
 #rs-carousel ul li {
-  border-style: solid;
-  border-width: 5px 5px 5px 0px;
-  border-color: lightgray;
   width: 100px;
   height: 100px;
   list-style: none;
   cursor: pointer;
-  padding: 5px;
-  overflow: hidden;
-  margin-top: 1em;
+  margin: 12px 0px 0px 0px;
+  padding: 8px 5px 8px 5px;
+  overflow: hidden; /*border-radius: 15px;*/
 }
 
 .bg_nav_1 {
   background-color: #F0FCFF;
 }
+.bg_nav_1.active {
+  background: linear-gradient(#000 2%, #F0FCFF 3%, #F0FCFF 97%, #000 98%);
+}
 
 .bg_nav_2 {
   background-color: #EBFFF6;
+}
+.bg_nav_2.active {
+  background: linear-gradient(#000 2%, #EBFFF6 3%, #EBFFF6 97%, #000 98%);
 }
 
 .bg_nav_3 {
   background-color: #FFFFCC;
 }
+.bg_nav_3.active {
+  background: linear-gradient(#000 2%, #FFFFCC 3%, #FFFFCC 97%, #000 98%); 
+}
 
 .bg_nav_4 {
   background-color: #FFF5EB;
+}
+.bg_nav_4.active {
+  background: linear-gradient(#000 2%, #FFF5EB 3%, #FFF5EB 97%, #000 98%); 
 }
 
 .bg_nav_5 {
   background-color: #F8F0FF;
 }
+.bg_nav_5.active {
+  background: linear-gradient(#000 2%, #F8F0FF 3%, #F8F0FF 97%, #000 98%); 
+}
 
 #rs-carousel ul li.active {
-  border-style: inset;
-  border-width: 5px 5px 5px 0px;
-  border-color: orange;
+  border-radius: 15px 0px 0px 15px;
+  padding: 8px 10px 8px 5px;
 }
 
 .nav-arrow {
@@ -102,7 +123,7 @@ header {
 }
 
 #content {
-  margin: 1em 1em 1em 140px;
+  margin: 1em 1em 1em 120px;
 }
 
   #content.skimpy {
