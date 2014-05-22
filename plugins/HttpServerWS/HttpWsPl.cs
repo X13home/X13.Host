@@ -54,7 +54,7 @@ namespace X13.Plugins {
       return 200;
     }
 
-    private const long _version=271;
+    private const long _version=272;
     private DVar<bool> _verbose;
     private DVar<bool> _disAnonym;
     private HttpServer _sv;

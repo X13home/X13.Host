@@ -69,6 +69,7 @@
   <item name="ui_range" value="pack://application:,,/CC;component/Images/ty_f02.png" saved="True" type="System.String">
     <item name="_min" value="1i" saved="True" type="System.String" />
     <item name="_max" value="2i" saved="True" type="System.String" />
+    <item name="current" value="3i" saved="True" type="System.String" />
     <item name="_readonly" value="9z" saved="True" type="System.String" />
     <item name="_class" value="As" saved="True" type="System.String" />
     <item name="_style" value="Bs" saved="True" type="System.String" />
