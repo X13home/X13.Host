@@ -12,11 +12,11 @@
 <body class="offline">
     <header>
         <div>
-            <div style="float: left; width: 10%;">
+            <div style="float: left;">
                 <input type="button" id="SkimpyButton" onclick="Lank.f.SwitchSkimpy()" value="<" />
             </div>
-            <div style="float: left; margin-left: 70%; width: 20%;">
-                <input style="min-width: 90%;" type="button" id="loginButton" onclick="Lank.f.LoginForm(true)" value="Login" />
+            <div style="float: right;">
+                <input type="button" id="loginButton" onclick="Lank.f.LoginForm(true)" value="Login" />
             </div>
         </div>
     </header>
@@ -63,7 +63,7 @@
         });
         $.views.converters({
             'fmt': function (val, fmt) {
-                if (fmt != null) {
+                if (fmt) {
                     return String.format(fmt, val)
                 } else {
                     return val;
@@ -186,7 +186,7 @@
 
                 init: function (tagCtx, linkCtx) {
                     if (this._.inline && !tagCtx.content) {
-                        this.template = '<div class="pp-slider clearfix"><div class="pp-slider-scale"><div class="pp-slider-progress"></div><div class="pp-slider-button"><div class="pp-slider-divies"></div></div><div class="pp-slider-tooltip"></div></div></div>';
+                      this.template = '<div class="ui_range clearfix"><div class="ui_range-scale"><div class="ui_range-divies"></div><div class="ui_range-progress"></div><div class="ui_range-button"></div><div class="ui_range-tooltip"></div></div></div>';
                     }
                 },
                 onAfterLink: function (tagCtx, linkCtx) {
@@ -206,16 +206,12 @@
                     var options = {};
 
                     this.data = linkCtx.data;
-                    //el.id = this.data.id;
                     var container = $(this.el);
                     if (typeof (ptr.data._min) == 'undefined') {
                         ptr.data._min = 0;
                     }
                     if (typeof (ptr.data._max) == 'undefined') {
                         ptr.data._max = 100;
-                    }
-                    if (container.parent().width() < 100) {
-                        container.parent().width('200px');
                     }
 
                     var startSlide = function (e) {
@@ -254,10 +250,14 @@
                         var spanX = (pos.x - startMouseX);
 
                         var newPos = (lastElemLeft + spanX)
-                        var upperBound = (container.find('.pp-slider-scale').width() - container.find('.pp-slider-button').width());
+                        var upperBound = (container.find('.ui_range-scale').width() - container.find('.ui_range-button').width());
                         newPos = Math.max(0, newPos);
                         newPos = Math.min(newPos, upperBound);
-                        ptr.data.value = ptr.data._min + Math.round((newPos / upperBound) * (ptr.data._max - ptr.data._min), 0);
+                        var curVal = ptr.data._min + (newPos / upperBound) * (ptr.data._max - ptr.data._min);
+                        if (ptr.data._declarer == 'ui_range') {
+                          curVal = Math.round(curVal, 0);
+                        }
+                        ptr.data.value = curVal;
                         ptr.updValue(container, ptr);
                     };
 
@@ -275,39 +275,44 @@
                         }
                     };
                     ptr.updValue(container, ptr);
-                    container.find('.pp-slider-button').bind('mousedown', startSlide);
+                    container.find('.ui_range-button').bind('mousedown', startSlide);
                     $(document).mousemove(function (e) { moving(e); });
                     $(document).mouseup(function (e) { dropCallback(e); });
                 },
                 onUpdate: function (ev, eventArgs, tagCtxs) {
                     var container = $(this.el);
-                    if (eventArgs.path == '_style' && container.parent().width() < 100) {
-                        container.parent().width('200px');
-                    }
                     this.updValue(container, this);
                     return false;
                 },
                 updValue: function (container, ptr) {
-                    var upperBound = (container.find('.pp-slider-scale').width() - container.find('.pp-slider-button').width());
+                    var upperBound = (container.find('.ui_range-scale').width() - container.find('.ui_range-button').width());
                     var newPos = (ptr.data.value - ptr.data._min) / (ptr.data._max - ptr.data._min) * upperBound;
                     if (ptr.data._readonly == true) {
-                        container.find('.pp-slider-button').hide();
-                        container.find('.pp-slider-tooltip').hide();
+                        container.find('.ui_range-button').hide();
+                        container.find('.ui_range-tooltip').hide();
                     } else {
-                        if (!container.find('.pp-slider-button').is(":visible")) {
-                            container.find('.pp-slider-button').show();
-                            container.find('.pp-slider-tooltip').show();
+                        if (!container.find('.ui_range-button').is(":visible")) {
+                            container.find('.ui_range-button').show();
+                            container.find('.ui_range-tooltip').show();
                         }
                         if (newPos < 0) {
-                            newpos = 0;
+                            newPos = 0;
                         } else if (newPos > upperBound) {
                             newPos = upperBound;
                         }
-                        container.find('.pp-slider-button').css("left", newPos);
-                        container.find('.pp-slider-tooltip').html(ptr.data.value);
-                        container.find('.pp-slider-tooltip').css('left', newPos - 6);
+                        container.find('.ui_range-button').css("left", newPos);
+                        var tVal;
+                        if (ptr.data._format) {
+                          tVal = String.format(ptr.data._format, ptr.data.value);
+                        } else if (ptr.data._declarer == 'ui_rangeF') {
+                          tVal = String.format('{0:0.0}', ptr.data.value);
+                        } else {
+                          tVal = ptr.data.value;
+                        }
+                        container.find('.ui_range-tooltip').html(tVal);
+                        container.find('.ui_range-tooltip').css('left', newPos - 6);
                     }
-                    upperBound=container.find('.pp-slider-scale').width();
+                    upperBound=container.find('.ui_range-scale').width();
                     if (typeof (ptr.data.current) != 'undefined') {
                         newPos = (ptr.data.current - ptr.data._min) / (ptr.data._max - ptr.data._min) * upperBound;
                     } else {
@@ -318,7 +323,7 @@
                     } else if (newPos > upperBound) {
                         newPos = upperBound;
                     }
-                    container.find('.pp-slider-progress').css("width", newPos);
+                    container.find('.ui_range-progress').css("width", newPos);
                 }
             }
         });
@@ -614,7 +619,13 @@
               </div>
     {{else _declarer=='ui_range'}}
               <div data-link="class{:_class} style{:_style}">
-                {^{pPslider value _min _max _readonly current _style /}}
+                <span style="clear:left; float:left; width:25%; margin-top:13px;">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</span>
+                {^{pPslider value _min _max _readonly current _style _format /}}
+              </div>
+    {{else _declarer=='ui_rangeF'}}
+              <div data-link="class{:_class} style{:_style}">
+                <span style="clear:left; float:left; width:24%; margin-top:13px;">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</span>
+                {^{pPslider value _min _max _readonly current _style _format /}}
               </div>
     {{else _declarer=='ui_link'}}
               <div data-link="class{:_class} style{:_style}">

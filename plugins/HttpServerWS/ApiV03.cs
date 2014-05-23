@@ -8,7 +8,7 @@ using WebSocketSharp.Net;
 using WebSocketSharp.Server;
 
 namespace X13.Plugins {
-  internal class ApiV03: WebSocketService {
+  internal class ApiV03 : WebSocketService {
     private static DVar<bool> _verbose;
     private static DVar<bool> _disAnonym;
     private static Timer _pingTimer;
@@ -48,7 +48,7 @@ namespace X13.Plugins {
       _subscriptions=new List<Topic.Subscription>();
       Send(string.Concat("I\t", _ses.id, "\t", (string.IsNullOrEmpty(_ses.userName)?(_disAnonym.value?"false":"null"):"true")));
       if(_verbose.value) {
-        X13.Log.Debug("{0} connect from {1}", _ses.owner.name, _ses.ip.ToString());
+        X13.Log.Debug("{0} connect webSocket", _ses.owner.name);
       }
     }
     protected override void OnMessage(MessageEventArgs e) {
@@ -58,10 +58,10 @@ namespace X13.Plugins {
           if((sa[1]!="local" || _ses.ip.IsLocal()) && MQTT.MqBroker.CheckAuth(sa[1], sa[2])) {
             _ses.userName=sa[1];
             Send("C\ttrue");
-            X13.Log.Debug("Connect {0} success", _ses.ToString());
+            X13.Log.Info("{0} logon as {1} success", _ses.owner.name, _ses.ToString());
           } else {
             Send("C\tfalse");
-            X13.Log.Warning("Connect {0}@{1} fail", sa[1], _ses.owner.value);
+            X13.Log.Warning("{0}@{2} logon  as {1} fail", _ses.owner.name, sa[1], _ses.owner.value);
             Sessions.CloseSession(base.ID);
           }
         } else if(!_disAnonym.value || (_ses!=null && !string.IsNullOrEmpty(_ses.userName))) {
@@ -88,9 +88,7 @@ namespace X13.Plugins {
     }
     protected override void OnClose(CloseEventArgs e) {
       if(_ses!=null) {
-        if(_verbose.value) {
-          X13.Log.Debug("{0} Disconnect: [{1}]{2}", _ses.owner.name, e.Code, e.Reason);
-        }
+        X13.Log.Info("{0} Disconnect: [{1}]{2}", _ses.owner.name, e.Code, e.Reason);
         _ses.Close();
         _ses=null;
       }
@@ -99,17 +97,20 @@ namespace X13.Plugins {
       }
     }
   }
-  internal class Session {
-    private static List<Session> sessions;
-    static Session() {
-      sessions=new List<Session>();
+  internal class Session : IDisposable {
+    private static List<WeakReference> sessions;
+    private static DVar<bool> _verbose;
 
+    static Session() {
+      sessions=new List<WeakReference>();
+      _verbose=Topic.root.Get<bool>("/etc/HttpServer/_verbose");
     }
     public static Session Get(string sid, System.Net.IPEndPoint ep, bool create=true) {
       Session s;
-      if(string.IsNullOrEmpty(sid) || (s=sessions.FirstOrDefault(z => z.id==sid && z.ip==ep.Address))==null) {
+      if(string.IsNullOrEmpty(sid) || (s=sessions.Where(z => z.IsAlive).Select(z => z.Target as Session).FirstOrDefault(z => z!=null && z.id==sid && z.ip.Equals(ep.Address)))==null) {
         if(create) {
           s=new Session(ep);
+          sessions.Add(new WeakReference(s));
         } else {
           s=null;
         }
@@ -122,34 +123,50 @@ namespace X13.Plugins {
       this.id = Guid.NewGuid().ToString();
       this.ip = ep.Address;
       int i=1;
-      while(r.Exist("guest "+i.ToString("X2"))) {
+      string pre=ip.ToString();
+      while(r.Exist(pre+i.ToString())) {
         i++;
       }
-      owner=r.Get<string>("guest "+i.ToString("X2"));
+      _owner=r.Get<string>(pre+i.ToString());
       owner.saved=false;
       try {
         var he=System.Net.Dns.GetHostEntry(this.ip);
-        _host=string.Format("{0}[{1}]:{2}", he.HostName, this.ip.ToString(), ep.Port);
+        _host=string.Format("{0}[{1}]", he.HostName, this.ip.ToString());
+        var tmp=he.HostName.Split('.');
+        if(tmp!=null && tmp.Length>0 && !string.IsNullOrEmpty(tmp[0])) {
+          i=1;
+          while(r.Exist(tmp[0]+"-"+i.ToString())) {
+            i++;
+          }
+          _owner.Move(r, tmp[0]+"-"+i.ToString());
+        }
       }
       catch(Exception) {
-        _host=string.Format("[{0}]:{1}", this.ip.ToString(), ep.Port);
+        _host=string.Format("[{0}]", this.ip.ToString());
       }
       this.owner.value=_host;
-
-      Log.Debug("Ses({0}) - {1}", this.ip.ToString(), this.id);
+      if(_verbose.value) {
+        Log.Info("{0} session[{2}] - {1}", owner.name, this._host, this.id);
+      }
     }
     private string _host;
+    private DVar<string> _owner;
     public readonly string id;
     public readonly System.Net.IPAddress ip;
     public string userName;
-    public DVar<string> owner { get; private set; }
+    public DVar<string> owner { get { return _owner; } }
     public void Close() {
-      sessions.Remove(this);
-      owner.Remove();
+      sessions.RemoveAll(z => !z.IsAlive || z.Target==this);
+      Dispose();
     }
     public override string ToString() {
       return (string.IsNullOrEmpty(userName)?"anonymus":userName)+"@"+_host;
     }
-
+    public void Dispose() {
+      var o=Interlocked.Exchange(ref _owner, null);
+      if(o!=null && !o.disposed) {
+        o.Remove();
+      }
+    }
   }
 }

@@ -54,7 +54,7 @@ namespace X13.Plugins {
       return 200;
     }
 
-    private const long _version=272;
+    private const long _version=276;
     private DVar<bool> _verbose;
     private DVar<bool> _disAnonym;
     private HttpServer _sv;
@@ -137,7 +137,6 @@ namespace X13.Plugins {
       string path=req.RawUrl=="/"?"/index.html":req.RawUrl;
       string client;
       Session ses;
-
       if(req.Cookies["sessionId"]!=null) {
         ses=Session.Get(req.Cookies["sessionId"].Value, remoteEndPoint, false);
       } else {
@@ -152,7 +151,6 @@ namespace X13.Plugins {
 
       try {
         FileInfo f = new FileInfo(Path.Combine(_sv.RootPath, path.Substring(1)));
-
         if(f.Exists) {
           string eTag=f.LastWriteTimeUtc.Ticks.ToString("X8")+"-"+f.Length.ToString("X4");
           string et;
@@ -176,12 +174,12 @@ namespace X13.Plugins {
           res.WriteContent(Encoding.UTF8.GetBytes("404 Not found"));
         }
         if(_verbose.value) {
-          Log.Debug("{0}[{1}]{2} - {3}", client, req.HttpMethod, req.RawUrl, ((HttpStatusCode)res.StatusCode).ToString());
+          Log.Debug("{0} [{1}]{2} - {3}", client, req.HttpMethod, req.RawUrl, ((HttpStatusCode)res.StatusCode).ToString());
         }
       }
       catch(Exception ex) {
         if(_verbose.value) {
-          Log.Debug("{0}[{1}]{2} - {3}", client, req.HttpMethod, req.RawUrl, ex.Message);
+          Log.Debug("{0} [{1}]{2} - {3}", client, req.HttpMethod, req.RawUrl, ex.Message);
         }
       }
     }
