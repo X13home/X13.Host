@@ -145,9 +145,7 @@ namespace X13.Plugins {
         _host=string.Format("[{0}]", this.ip.ToString());
       }
       this.owner.value=_host;
-      if(_verbose.value) {
-        Log.Info("{0} session[{2}] - {1}", owner.name, this._host, this.id);
-      }
+      Log.Info("{0} session[{2}] - {1}", owner.name, this._host, this.id);
     }
     private string _host;
     private DVar<string> _owner;

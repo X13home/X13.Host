@@ -57,9 +57,10 @@
     <script type="text/javascript">
         "use strict";
         $(window).bind("beforeunload", function () {
-            if (Lank.ws != null) {
+            if (Lank.ws != null && Lank.ws.readyState==Lank.ws.OPEN) {
                 Lank.ws.close(1000);
             }
+            Lank.ws=null;
         });
         $.views.converters({
             'fmt': function (val, fmt) {
@@ -223,6 +224,9 @@
                         lastElemLeft = ($(this).offset().left - $(this).parent().offset().left);
                         updatePosition(e);
 
+                        $("#content").bind("mousemove", moving);
+                        $("#content").bind("mouseup", dropCallback);
+
                         return false;
                     };
 
@@ -271,13 +275,13 @@
                     var dropCallback = function (e) {
                         if (isMouseDown) {
                             isMouseDown = false;
+                            $("#content").unbind("mousemove", moving);
+                            $("#content").unbind("mouseup", dropCallback);
                             Lank.publish(ptr.data.id, ptr.data.value);
                         }
                     };
                     ptr.updValue(container, ptr);
                     container.find('.ui_range-button').bind('mousedown', startSlide);
-                    $(document).mousemove(function (e) { moving(e); });
-                    $(document).mouseup(function (e) { dropCallback(e); });
                 },
                 onUpdate: function (ev, eventArgs, tagCtxs) {
                     var container = $(this.el);
@@ -585,12 +589,14 @@
           {^{for header}}
             {^{if _declarer=='ui_var'}}
               <div data-link="class{:_class} style{:_style}">
-                <var class="nav_var" data-link="{fmt:value _format}"></var>
+                <var data-link="{fmt:value _format}"></var>
               </div>
           {{else _declarer=='ui_checkbox'}}
-              <div data-link="class{:_class+' checkbox readonly'} style{:_style}">
-                <input type="checkbox" id="{{>id}}" disabled="disabled" data-link="{:value}" />
-                <label for="{{>id}}"></label>
+              <div data-link="class{:_class} style{:_style}">
+                <div class='checkbox readonly'>
+                  <input type="checkbox" id="{{>id}}" disabled="disabled" data-link="{:value}" />
+                  <label for="{{>id}}"></label>
+                </div>
               </div>
           {{/if}}
           {{/for}}
@@ -605,37 +611,40 @@
         {^{for selected}}
           {^{for body }}
             {^{if _declarer=='ui_var'}}
-              <div data-link="class{:_class} style{:_style}">
-                <var class="nav_var" data-link="{fmt:value _format}"></var>
+              <div data-link="class{:_class+' str_in'} style{:_style}">
+                <var data-link="{fmt:value _format}"></var>
               </div>
     {{else _declarer=='ui_checkbox'}}
-              <div data-link="class{:_class+' checkbox'} class{merge:_readonly toggle='readonly'} style{:_style}">
-                <input type="checkbox" id="{{>id}}" data-link="{:value} disabled{:_readonly}" onchange="Lank.publish('{{>id}}', checked)" />
-                <label for="{{>id}}"></label>
+              <div data-link="class{:_class+' str_in'} style{:_style}">
+                <label style="float:left; width:49%; margin-top:28px;">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</label>
+                <div data-link="class{:_readonly?'readonly checkbox':'checkbox'}">
+                  <input type="checkbox" id="{{>id}}" data-link="{:value} disabled{:_readonly}" onchange="Lank.publish('{{>id}}', checked)" />
+                  <label for="{{>id}}"></label>
+                </div>
               </div>
     {{else _declarer=='ui_button'}}
-              <div data-link="class{:_class} style{:_style}">
+              <div data-link="class{:_class+' str_in'} style{:_style}">
                 <button onmousedown="Lank.publish('{{>id}}', true)" onmouseup="Lank.publish('{{>id}}', false)" onmouseout="Lank.publish('{{>id}}', false)">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</button>
               </div>
     {{else _declarer=='ui_range'}}
               <div data-link="class{:_class} style{:_style}">
-                <span style="clear:left; float:left; width:25%; margin-top:13px;">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</span>
+                <span style="float:left; width:24%; margin-top:13px;">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</span>
                 {^{pPslider value _min _max _readonly current _style _format /}}
               </div>
     {{else _declarer=='ui_rangeF'}}
               <div data-link="class{:_class} style{:_style}">
-                <span style="clear:left; float:left; width:24%; margin-top:13px;">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</span>
+                <span style="float:left; width:24%; margin-top:13px;">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</span>
                 {^{pPslider value _min _max _readonly current _style _format /}}
               </div>
     {{else _declarer=='ui_link'}}
-              <div data-link="class{:_class} style{:_style}">
+              <div data-link="class{:_class+' str_in'} style{:_style}">
                 <a data-link="href{:value}">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</a>
               </div>
     {{else _declarer=='ui_img'}}
               <div data-link="class{:_class} style{:_style}">
                 <img data-link="src{:value} height{:_hsize} width{:_vsize}" />
               </div>
-    {{else _declarer=='ui_colorpicker' }}
+    {{else _declarer=='ui_colorpicker'}}
               <div data-link="class{:_class} style{:_style}">
                 {^{miniColor value /}}
               </div>

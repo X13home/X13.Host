@@ -129,15 +129,6 @@ header {
   text-align: right;
 }
 
-#content {
-  margin: 0 0 0 120px;
-  padding: 1em;
-}
-
-  #content.skimpy {
-    margin-left: 0;
-  }
-
 body.offline #loginButton {
   background-color: yellow;
 }
@@ -154,6 +145,31 @@ body.offline #loginButton {
   border-radius: 10px;
 }
 
+#content {
+  margin: 0 0 0 120px;
+  padding: 1em;
+}
+
+  #content.skimpy {
+    margin-left: 0;
+  }
+
+/*#content layout*/
+    #content > div {
+        display: block;
+        width: 100%;
+        float: none;
+        clear: both;
+    }
+        #content > div.str_in {
+            display: inline;
+            float: left;
+            clear: none;
+            width: 25%;
+        }
+        #content > div.newline {
+            clear: both;
+        }
 /* var */
 var {
   font-style: normal;
@@ -164,20 +180,21 @@ var {
 }
 
 .checkbox {
-  width: 56px;
-  height: 56px;
-  background: #fcfff4;
-  background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-  background: -moz-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-  background: -o-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-  background: -ms-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-  background: linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
-  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfff4', endColorstr='#b3bead',GradientType=0 );
-  margin: 20px;
-  -webkit-box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0,0,0,0.5);
-  -moz-box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0,0,0,0.5);
-  box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0,0,0,0.5);
-  position: relative;
+    width: 56px;
+    height: 56px;
+    background: #fcfff4;
+    background: -webkit-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
+    background: -moz-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
+    background: -o-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
+    background: -ms-linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
+    background: linear-gradient(top, #fcfff4 0%, #dfe5d7 40%, #b3bead 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fcfff4', endColorstr='#b3bead',GradientType=0 );
+    margin: 15px 0 0 0;
+    -webkit-box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0,0,0,0.5);
+    -moz-box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0,0,0,0.5);
+    box-shadow: inset 0px 1px 1px white, 0px 1px 3px rgba(0,0,0,0.5);
+    position: relative;
+    float: left;
 }
 
   .checkbox.readonly {
@@ -187,9 +204,9 @@ var {
   }
 
 #rs-carousel .checkbox {
-  width: 28px;
-  height: 28px;
-  margin: 10px;
+    width: 28px;
+    height: 28px;
+    margin: 3px 8px 3px 5px;
 }
 
 .checkbox label {
@@ -268,17 +285,17 @@ var {
   opacity: 1;
 }
 
-.checkbox.fg_green label:after {
+.fg_green .checkbox label:after {
   background: #00bf00;
   background: linear-gradient(top, #00bf00 0%, #009400 100%);
 }
 
-.checkbox.fg_red label:after {
+.fg_red .checkbox label:after {
   background: #bf0000;
   background: linear-gradient(top, #bf0000 0%, #940000 100%);
 }
 
-.checkbox.fg_blue label:after {
+.fg_blue .checkbox label:after {
   background: #0091FF;
   background: linear-gradient(top, #0091FF 0%, #006BBD 100%);
 }

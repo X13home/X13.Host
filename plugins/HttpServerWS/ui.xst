@@ -52,6 +52,7 @@
     <item name="remove" value="ZD" saved="True" type="System.String" />
   </item>
   <item name="ui_checkbox" value="pack://application:,,/CC;component/Images/ty_bool.png" saved="True" type="System.String">
+    <item name="_text" value="4s" saved="True" type="System.String" />
     <item name="_readonly" value="9z" saved="True" type="System.String" />
     <item name="_class" value="As" saved="True" type="System.String" />
     <item name="_style" value="Bs" saved="True" type="System.String" />
