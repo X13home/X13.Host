@@ -176,6 +176,7 @@ namespace X13.Plugins {
             } else {
               res.Headers.Add("ETag", rsc.Item2);
               res.ContentType=Ext2ContentType(Path.GetExtension(path));
+              rsc.Item1.Position=0;
               rsc.Item1.CopyTo(res.OutputStream);
               statusCode=HttpStatusCode.OK;
             }
