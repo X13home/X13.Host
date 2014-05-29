@@ -80,6 +80,26 @@
   <ItemGroup>
     <Resource Include="Images\var.png" />
   </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="www\dygraph-combined.js" />
+    <EmbeddedResource Include="www\favicon.ico" />
+    <EmbeddedResource Include="www\index.html" />
+    <EmbeddedResource Include="www\jquery-1.11.1.min.js" />
+    <EmbeddedResource Include="www\jquery.event.drag.js" />
+    <EmbeddedResource Include="www\jquery.minicolors.css" />
+    <EmbeddedResource Include="www\jquery.minicolors.js" />
+    <EmbeddedResource Include="www\jquery.minicolors.png" />
+    <EmbeddedResource Include="www\jquery.rs.carousel-min.js" />
+    <EmbeddedResource Include="www\jquery.rs.carousel-touch-min.js" />
+    <EmbeddedResource Include="www\jquery.translate3d.js" />
+    <EmbeddedResource Include="www\jquery.ui.widget.js" />
+    <EmbeddedResource Include="www\jsviews.min.js" />
+    <EmbeddedResource Include="www\modernizr.3dtransforms.touch.js" />
+    <EmbeddedResource Include="www\rs-carousel-min.css" />
+    <EmbeddedResource Include="www\stringformat.js" />
+    <EmbeddedResource Include="www\style.css" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

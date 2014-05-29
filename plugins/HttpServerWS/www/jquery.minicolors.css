@@ -45,7 +45,7 @@
 	width: 20px;
 	height: 20px;
 	text-align: left;
-	background: url(../img/jquery.minicolors.png) -80px 0;
+	background: url(jquery.minicolors.png) -80px 0;
 	border: solid 1px #CCC;
 	vertical-align: middle;
 	display: inline-block;
@@ -95,7 +95,7 @@
 	left: 1px;
 	width: 150px;
 	height: 150px;
-	background: url(../img/jquery.minicolors.png) -120px 0;
+	background: url(jquery.minicolors.png) -120px 0;
 	cursor: crosshair;
 }
 
@@ -113,7 +113,7 @@
 }
 
 .minicolors-slider-saturation .minicolors-grid-inner {
-	background: url(../img/jquery.minicolors.png) -270px 0;
+	background: url(jquery.minicolors.png) -270px 0;
 }
 
 .minicolors-slider-brightness .minicolors-grid {
@@ -135,7 +135,7 @@
 	left: 152px;
 	width: 20px;
 	height: 150px;
-	background: white url(../img/jquery.minicolors.png) 0 0;
+	background: white url(jquery.minicolors.png) 0 0;
 	cursor: crosshair;
 }
 

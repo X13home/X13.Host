@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using WebSocketSharp;
 using WebSocketSharp.Net;
@@ -22,7 +23,7 @@ namespace X13.Plugins {
   [Export(typeof(IPlugModul))]
   [ExportMetadata("priority", 20)]
   [ExportMetadata("name", "HttpServer")]
-  public class HttpWsPl : IPlugModul {
+  public class HttpWsPl: IPlugModul {
     internal static int ProcessPublish(string path, string json, Session ses) {
       Topic cur=Topic.root;
       Type vt=null;
@@ -58,6 +59,7 @@ namespace X13.Plugins {
     private DVar<bool> _verbose;
     private DVar<bool> _disAnonym;
     private HttpServer _sv;
+    private SortedList<string, Tuple<Stream, string>> _resources;
 
     public void Init() {
       Topic.root.Subscribe("/etc/Broker/security/#", L_dummy);
@@ -74,6 +76,7 @@ namespace X13.Plugins {
         Log.Info("Load HttpServer declarers");
         var st=System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Plugins.ui.xst");
         if(st!=null) {
+
           using(var sr=new StreamReader(st)) {
             Topic.Import(sr, null);
           }
@@ -83,6 +86,17 @@ namespace X13.Plugins {
         var exp=Topic.root.Get("/export");
         Topic.root.Get<long>("/etc/Broker/security/acls/export").value=0x1F000001;
         exp.Get<string>("_declarer").value="ui_root";
+      }
+      {
+        var assembly = Assembly.GetExecutingAssembly();
+
+        var etf=assembly.GetName().Version.ToString(4).GetHashCode().ToString("X8")+"-";
+        _resources=new SortedList<string, Tuple<Stream, string>>();
+        foreach(var resourceName in assembly.GetManifestResourceNames().Where(z => z.StartsWith("X13.Plugins.www."))) {
+          var stream=assembly.GetManifestResourceStream(resourceName);
+          string eTag=etf+stream.Length.ToString("X4");
+          _resources[resourceName.Substring(16)]=new Tuple<Stream, string>(stream, eTag);
+        }
       }
 
       _verbose=Topic.root.Get<bool>("/etc/HttpServer/_verbose");
@@ -119,7 +133,7 @@ namespace X13.Plugins {
     private void OnGet(object sender, HttpRequestEventArgs e) {
       var req = e.Request;
       var res = e.Response;
-      if(req.RemoteEndPoint==null){
+      if(req.RemoteEndPoint==null) {
         res.StatusCode=(int)HttpStatusCode.NotAcceptable;
         return;
       }
@@ -131,7 +145,7 @@ namespace X13.Plugins {
       {
         System.Net.IPAddress remIP;
         if(req.Headers.Contains("X-Real-IP") && System.Net.IPAddress.TryParse(req.Headers["X-Real-IP"], out remIP)) {
-          remoteEndPoint=new System.Net.IPEndPoint(remIP, remoteEndPoint.Port);        
+          remoteEndPoint=new System.Net.IPEndPoint(remIP, remoteEndPoint.Port);
         }
       }
       string path=req.RawUrl=="/"?"/index.html":req.RawUrl;
@@ -142,7 +156,7 @@ namespace X13.Plugins {
       } else {
         ses=null;
       }
-      
+
       if(ses!=null && ses.owner!=null) {
         client=ses.owner.name;
       } else {
@@ -150,31 +164,47 @@ namespace X13.Plugins {
       }
 
       try {
-        FileInfo f = new FileInfo(Path.Combine(_sv.RootPath, path.Substring(1)));
-        if(f.Exists) {
-          string eTag=f.LastWriteTimeUtc.Ticks.ToString("X8")+"-"+f.Length.ToString("X4");
-          string et;
-          if(req.Headers.Contains("If-None-Match") && (et=req.Headers["If-None-Match"])==eTag) {
-            res.Headers.Add("ETag", eTag);
-            res.StatusCode=(int)HttpStatusCode.NotModified;
-            res.WriteContent(Encoding.UTF8.GetBytes("Not Modified"));
-          } else {
-            byte[] content;
-            if((content =_sv.GetFile(path))!=null) {
+        Tuple<Stream, string> rsc;
+        HttpStatusCode statusCode;
+        if(_resources.TryGetValue(path.Substring(1), out rsc)) {
+            string et;
+            if(req.Headers.Contains("If-None-Match") && (et=req.Headers["If-None-Match"])==rsc.Item2) {
+              res.Headers.Add("ETag", rsc.Item2);
+              statusCode=HttpStatusCode.NotModified;
+              res.StatusCode=(int)statusCode;
+              res.WriteContent(Encoding.UTF8.GetBytes("Not Modified"));
+            } else {
+              res.Headers.Add("ETag", rsc.Item2);
+              res.ContentType=Ext2ContentType(Path.GetExtension(path));
+              rsc.Item1.CopyTo(res.OutputStream);
+              statusCode=HttpStatusCode.OK;
+            }
+        } else {
+          FileInfo f = new FileInfo(Path.Combine(_sv.RootPath, path.Substring(1)));
+          if(f.Exists) {
+            string eTag=f.LastWriteTimeUtc.Ticks.ToString("X8")+"-"+f.Length.ToString("X4");
+            string et;
+            if(req.Headers.Contains("If-None-Match") && (et=req.Headers["If-None-Match"])==eTag) {
+              res.Headers.Add("ETag", eTag);
+              statusCode=HttpStatusCode.NotModified;
+              res.StatusCode=(int)statusCode;
+              res.WriteContent(Encoding.UTF8.GetBytes("Not Modified"));
+            } else {
               res.Headers.Add("ETag", eTag);
               res.ContentType=Ext2ContentType(f.Extension);
-              res.WriteContent(content);
-            } else {
-              res.StatusCode=(int)HttpStatusCode.InternalServerError;
-              res.WriteContent(Encoding.UTF8.GetBytes("Content is broken"));
+              using(var fs=f.OpenRead()) {
+                fs.CopyTo(res.OutputStream);
+              }
+              statusCode=HttpStatusCode.OK;
             }
+          } else {
+            statusCode=HttpStatusCode.NotFound;
+            res.StatusCode = (int)statusCode;
+            res.WriteContent(Encoding.UTF8.GetBytes("404 Not found"));
           }
-        } else {
-          res.StatusCode = (int)HttpStatusCode.NotFound;
-          res.WriteContent(Encoding.UTF8.GetBytes("404 Not found"));
         }
         if(_verbose.value) {
-          Log.Debug("{0} [{1}]{2} - {3}", client, req.HttpMethod, req.RawUrl, ((HttpStatusCode)res.StatusCode).ToString());
+          Log.Debug("{0} [{1}]{2} - {3}", client, req.HttpMethod, req.RawUrl, statusCode.ToString());
         }
       }
       catch(Exception ex) {
