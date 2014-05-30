@@ -82,8 +82,8 @@
     <item name="remove" value="ZD" saved="True" type="System.String" />
   </item>
   <item name="ui_rangeF" value="pack://application:,,/CC;component/Images/ty_f02.png" saved="True" type="System.String">
-    <item name="_min" value="1i" saved="True" type="System.String" />
-    <item name="_max" value="2i" saved="True" type="System.String" />
+    <item name="_min" value="1g" saved="True" type="System.String" />
+    <item name="_max" value="2g" saved="True" type="System.String" />
     <item name="current" value="3g" saved="True" type="System.String" />
     <item name="_text" value="4s" saved="True" type="System.String" />
     <item name="_format" value="8s" saved="True" type="System.String" />

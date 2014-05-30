@@ -106,9 +106,13 @@ namespace X13.Plugins {
       if(portD.value==0) {
         portD.value=Engine.IsLinux?8080:80;
       }
+
       _sv = new HttpServer((int)portD.value);
       _sv.Log.Output=WsLog;
       _sv.RootPath=Path.GetFullPath(Path.GetFullPath("../htdocs"));
+      if(!Directory.Exists(_sv.RootPath)) {
+        Directory.CreateDirectory(_sv.RootPath);
+      }
       _sv.OnGet+=OnGet;
       _sv.AddWebSocketService<ApiV03>("/api/v03");
       _sv.Start();
@@ -135,10 +139,6 @@ namespace X13.Plugins {
       var res = e.Response;
       if(req.RemoteEndPoint==null) {
         res.StatusCode=(int)HttpStatusCode.NotAcceptable;
-        return;
-      }
-      if(req.HttpMethod!="GET") {
-        res.StatusCode=(int)HttpStatusCode.MethodNotAllowed;
         return;
       }
       System.Net.IPEndPoint remoteEndPoint = req.RemoteEndPoint;
