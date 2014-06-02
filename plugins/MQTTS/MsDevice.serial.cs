@@ -162,8 +162,15 @@ namespace X13.Periphery {
             if(_verbose.value) {
               Log.Debug("MQTTS.Serial search on {0} - {1}", pns[i], ex.Message);
             }
-            if(port!=null && port.IsOpen) {
-              port.Close();
+            try {
+              if(port!=null) {
+                if(port!=null && port.IsOpen) {
+                  port.Close();
+                }
+                port.Dispose();
+              }
+            }
+            catch(Exception) {
             }
           }
           port=null;

@@ -120,10 +120,9 @@ namespace X13.Plugins {
       _st=State.Dispose;
       _var.Unsubscribe(_remotePath.Substring(_remoteBase.Length), _local_changed);
       if(_ws!=null) {
-        if(_ws.IsAlive) {
+        if(_ws.ReadyState==WebSocketState.Open) {
           _ws.CloseAsync(CloseStatusCode.Normal);
         }
-        _ws=null;
       }
     }
 
@@ -180,6 +179,8 @@ namespace X13.Plugins {
             Connect();
           }
         }, null, _rccnt*15000, -1);
+      } else if(_st==State.Dispose) {
+        _ws=null;
       }
     }
     private void _ws_OnError(object sender, WebSocketSharp.ErrorEventArgs e) {
@@ -242,7 +243,7 @@ namespace X13.Plugins {
       _rccnt=0;
     }
     private void _local_changed(Topic sender, TopicChanged p) {
-      if(sender==null || sender==_present || _val==null || p.Initiator==_val || !sender.path.StartsWith(_val.path) || p.Art==TopicChanged.ChangeArt.Add) {
+      if(_val==null || sender==null || sender==_present || _val==null || p.Initiator==_val || sender.path==null || !sender.path.StartsWith(_val.path) || p.Art==TopicChanged.ChangeArt.Add) {
         return;
       }
       string path;
@@ -257,7 +258,9 @@ namespace X13.Plugins {
       } else {
         content="null";
       }
-      _ws.Send("P\t"+path+"\t"+content);
+      if(_ws!=null && _ws.ReadyState==WebSocketState.Open) {
+        _ws.Send("P\t"+path+"\t"+content);
+      }
     }
     private void Parse(string rp, string json) {
       if(rp.StartsWith(_remoteBase)) {
