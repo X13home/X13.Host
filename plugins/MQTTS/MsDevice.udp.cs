@@ -24,7 +24,7 @@ namespace X13.Periphery {
   [ExportMetadata("priority", 5)]
   [ExportMetadata("name", "MQTTS.udp")]
   public class MQTTSUdp : IPlugModul {
-    private const long _version=302;
+    private const long _version=303;
 
     public void Init() {
       Topic.root.Subscribe("/etc/MQTTS/#", Dummy);
@@ -151,7 +151,7 @@ namespace X13.Periphery {
           DVar<MsDevice> dev=devR.Get<MsDevice>(msg.ClientId);
           if(!msg.CleanSession && (dev.value==null || dev.value.Addr!=msg.Addr || dev.value.state==State.Disconnected || dev.value.state==State.Lost)) {
             PrintPacket(dev, msg, buf);
-            Send(new MsConnack(MsReturnCode.InvalidTopicId) { Addr=msg.Addr });
+            Send(new MsConnack(MsReturnCode.NotSupportes) { Addr=msg.Addr });
             return;
           }
           if(dev.value==null) {

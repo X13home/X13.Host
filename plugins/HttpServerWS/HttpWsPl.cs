@@ -55,7 +55,7 @@ namespace X13.Plugins {
       return 200;
     }
 
-    private const long _version=276;
+    private const long _version=277;
     private DVar<bool> _verbose;
     private DVar<bool> _disAnonym;
     private HttpServer _sv;
@@ -108,6 +108,9 @@ namespace X13.Plugins {
       }
 
       _sv = new HttpServer((int)portD.value);
+#if DEBUG
+      _sv.Log.Level=WebSocketSharp.LogLevel.Trace;
+#endif
       _sv.Log.Output=WsLog;
       _sv.RootPath=Path.GetFullPath(Path.GetFullPath("../htdocs"));
       if(!Directory.Exists(_sv.RootPath)) {

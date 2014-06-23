@@ -233,9 +233,9 @@ namespace X13 {
       }
       catch(Exception) {
       }
-      if(!e.IsTerminating) {
-        return;
-      }
+      //if(!e.IsTerminating) {
+      //  return;
+      //}
       try {
         MqBroker.Close();
       }
@@ -248,6 +248,9 @@ namespace X13 {
       catch(Exception) {
       }
       Console.ForegroundColor=ConsoleColor.Gray;
+      if(!e.IsTerminating) {
+        System.Diagnostics.Process.GetCurrentProcess().Kill();
+      }
     }
 
     private void MQTT_Main_changed(Topic sender, TopicChanged param) {

@@ -442,7 +442,13 @@ namespace X13.PLC {
           t=Topic.root;
         }
       } else {
-        t=Topic.GetP(r.name, r.type, _sign, parent);
+        try {
+          t=Topic.GetP(r.name, r.type, _sign, parent);
+        }
+        catch(ArgumentException ex) {
+          Log.Warning("PersistentStorage.AddTopic - {0}", ex.Message);
+          t=null;
+        }
       }
       if(t!=null) {
         r.t=t;

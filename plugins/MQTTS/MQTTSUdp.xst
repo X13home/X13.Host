@@ -244,11 +244,11 @@
   </item>
   <item name="type">
     <item name="mqtts_cfg" value="pack://application:,,/CC;component/Images/ty_cfg.png" saved="True" type="System.String">
-      <item name="Xq_MACAddr" value="4i" saved="True" type="System.String" />
-      <item name="XD_IPAddr" value="4i" saved="True" type="System.String" />
-      <item name="XD_IPMask" value="4i" saved="True" type="System.String" />
-      <item name="XD_IPRouter" value="4i" saved="True" type="System.String" />
-      <!--<item name="XD_IPBroker" value="4i" saved="True" type="System.String" />-->
+      <item name="Xa_MACAddr" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPAddr" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPMask" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPRouter" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPBroker" value="4b" saved="True" type="System.String" />
     </item>
   </item>
 </root>
