@@ -145,12 +145,16 @@ namespace X13.Svc {
                 client.DownloadFile(list[i][3], tmpfn);
               }
               try {
-                File.Replace(tmpfn, list[i][0], list[i][1]+".bak");
+                if(!Directory.Exists("bak")) {
+                  Directory.CreateDirectory("bak");
+                }
+
+                File.Replace(tmpfn, list[i][0], "bak/"+list[i][1]+".bak");
                 Log.Info("update {0} version: {1} -> {2}", list[i][0], fvi.FileVersion, list[i][2]);
               }
               catch(FileNotFoundException) {
                 Log.Info("update {0}[delayed] version: {1} -> {2}", list[i][0], fvi.FileVersion, list[i][2]);
-                task.Add(new Tuple<string, string, string>(tmpfn, list[i][0], list[i][1]+".bak"));
+                task.Add(new Tuple<string, string, string>(tmpfn, list[i][0], "bak/"+list[i][1]+".bak"));
               }
             }
             catch(Exception ex) {
@@ -171,7 +175,7 @@ namespace X13.Svc {
               shScript.WriteLine("echo update complete. Press any key\n");
               shScript.Flush();
             }
-            Log.Info("update complete[delayed]");
+            Log.Info("update[delayed] complete");
 
             Process shScriptProcess = new Process();
             shScriptProcess.StartInfo = new ProcessStartInfo("/bin/sh", "upd.sh");

@@ -1,12 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root head="/etc/declarers">
   <item name="dev">
-    <item name="NDLN00" value="pack://application:,,/CC;component/Images/ty_unode.png" saved="True" type="System.String">
-      <item name="Add">
-        <item name="bool" value="2Z" saved="True" type="System.String" />
-        <item name="long" value="4I" saved="True" type="System.String" />
-        <item name="string" value="5S" saved="True" type="System.String" />
-      </item>
+    <item name="NDLN00" value="pack://application:,,/CC;component/Images/ty_unode.png" saved="True" type="System.String" ver="2.6.4">
       <item name="remove" value="ZD" saved="True" type="System.String" />
       <item name="SV1-01">
         <item name="Ai7" value="6iX6" saved="True" type="System.String">
@@ -243,7 +238,10 @@
     </item>
   </item>
   <item name="type">
-    <item name="mqtts_cfg" value="pack://application:,,/CC;component/Images/ty_cfg.png" saved="True" type="System.String">
+    <item name="mqtts_cfg" value="pack://application:,,/CC;component/Images/ty_cfg.png" saved="True" type="System.String" ver="2.6.4">
+      <item name="XD_GroupID" value="4i" saved="True" type="System.String" />
+      <item name="XD_Channel" value="4i" saved="True" type="System.String" />
+      <item name="XD_SleepTime" value="4i" saved="True" type="System.String" />
       <item name="Xa_MACAddr" value="4b" saved="True" type="System.String" />
       <item name="Xa_IPAddr" value="4b" saved="True" type="System.String" />
       <item name="Xa_IPMask" value="4b" saved="True" type="System.String" />

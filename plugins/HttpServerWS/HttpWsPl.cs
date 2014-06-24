@@ -23,7 +23,7 @@ namespace X13.Plugins {
   [Export(typeof(IPlugModul))]
   [ExportMetadata("priority", 20)]
   [ExportMetadata("name", "HttpServer")]
-  public class HttpWsPl: IPlugModul {
+  public class HttpWsPl : IPlugModul {
     internal static int ProcessPublish(string path, string json, Session ses) {
       Topic cur=Topic.root;
       Type vt=null;
@@ -55,7 +55,6 @@ namespace X13.Plugins {
       return 200;
     }
 
-    private const long _version=277;
     private DVar<bool> _verbose;
     private DVar<bool> _disAnonym;
     private HttpServer _sv;
@@ -69,18 +68,8 @@ namespace X13.Plugins {
     }
 
     public void Start() {
-      var ver=Topic.root.Get<long>("/etc/HttpServer/version");
-      if(ver.value<_version) {
-        ver.saved=true;
-        ver.value=_version;
-        Log.Info("Load HttpServer declarers");
-        var st=System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Plugins.ui.xst");
-        if(st!=null) {
-
-          using(var sr=new StreamReader(st)) {
-            Topic.Import(sr, null);
-          }
-        }
+      using(var sr=new StreamReader(System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Plugins.ui.xst"))) {
+        Topic.Import(sr, null);
       }
       if(!Topic.root.Exist("/export/_declarer")) {
         var exp=Topic.root.Get("/export");
@@ -170,19 +159,19 @@ namespace X13.Plugins {
         Tuple<Stream, string> rsc;
         HttpStatusCode statusCode;
         if(_resources.TryGetValue(path.Substring(1), out rsc)) {
-            string et;
-            if(req.Headers.Contains("If-None-Match") && (et=req.Headers["If-None-Match"])==rsc.Item2) {
-              res.Headers.Add("ETag", rsc.Item2);
-              statusCode=HttpStatusCode.NotModified;
-              res.StatusCode=(int)statusCode;
-              res.WriteContent(Encoding.UTF8.GetBytes("Not Modified"));
-            } else {
-              res.Headers.Add("ETag", rsc.Item2);
-              res.ContentType=Ext2ContentType(Path.GetExtension(path));
-              rsc.Item1.Position=0;
-              rsc.Item1.CopyTo(res.OutputStream);
-              statusCode=HttpStatusCode.OK;
-            }
+          string et;
+          if(req.Headers.Contains("If-None-Match") && (et=req.Headers["If-None-Match"])==rsc.Item2) {
+            res.Headers.Add("ETag", rsc.Item2);
+            statusCode=HttpStatusCode.NotModified;
+            res.StatusCode=(int)statusCode;
+            res.WriteContent(Encoding.UTF8.GetBytes("Not Modified"));
+          } else {
+            res.Headers.Add("ETag", rsc.Item2);
+            res.ContentType=Ext2ContentType(Path.GetExtension(path));
+            rsc.Item1.Position=0;
+            rsc.Item1.CopyTo(res.OutputStream);
+            statusCode=HttpStatusCode.OK;
+          }
         } else {
           FileInfo f = new FileInfo(Path.Combine(_sv.RootPath, path.Substring(1)));
           if(f.Exists) {

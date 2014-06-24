@@ -23,25 +23,14 @@ namespace X13.Periphery {
   [ExportMetadata("priority", 5)]
   [ExportMetadata("name", "MQTTS.Gate")]
   public class MQTTSGate : IPlugModul {
-    private const long _version=302;
 
     public void Init() {
       Topic.root.Subscribe("/etc/MQTTS/#", Dummy);
       Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
     }
     public void Start() {
-      var ver=Topic.root.Get<long>("/etc/MQTTS/Gate/version");
-      if(ver.value<_version) {
-        ver.saved=true;
-        ver.value=_version;
-        Log.Info("Load MQTTS.Gate declarers");
-        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTSRf.xst");
-        if(st!=null) {
-          using(var sr=new StreamReader(st)) {
-            Topic.Import(sr, null);
-          }
-        }
-
+      using(var sr=new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTSRf.xst"))) {
+        Topic.Import(sr, null);
       }
       MsDevice.MsGSerial.Open();
     }
@@ -353,7 +342,7 @@ namespace X13.Periphery {
         catch(Exception ex) {
           Log.Error("MsGSerial({0}).CommThread() - {1}", gwIdx, ex.ToString());
         }
-        if(_verbose.value){
+        if(_verbose.value) {
           Log.Debug("MsGSerial({0}).CommThread - exit", gwIdx);
         }
         this.Dispose();
@@ -425,7 +414,8 @@ namespace X13.Periphery {
           if(_port!=null && _port.IsOpen) {
             _port.Close();
           }
-        }catch(Exception){
+        }
+        catch(Exception) {
         }
         _port=null;
         _gates.Remove(this);

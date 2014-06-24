@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root head="/etc/declarers">
   <item name="dev">
-    <item name="GWUN10" value="pack://application:,,/CC;component/Images/ty_ugate.png" saved="True" type="System.String">
+    <item name="GWUN10" value="pack://application:,,/CC;component/Images/ty_ugate.png" saved="True" type="System.String" ver="2.6.4">
       <item name="Add">
         <item name="bool" value="1Z" saved="True" type="System.String" />
         <item name="long" value="4I" saved="True" type="System.String" />
@@ -198,7 +198,7 @@
         </item>
       </item>
     </item>
-    <item name="NDUN10" value="pack://application:,,/CC;component/Images/ty_unode.png" saved="True" type="System.String">
+    <item name="NDUN10" value="pack://application:,,/CC;component/Images/ty_unode.png" saved="True" type="System.String" ver="2.6.4">
       <item name="Add">
         <item name="bool" value="2Z" saved="True" type="System.String" />
         <item name="long" value="4I" saved="True" type="System.String" />
@@ -525,7 +525,7 @@
         </item>
       </item>
     </item>
-    <item name="GWUP20" value="pack://application:,,/CC;component/Images/ty_ugate.png" saved="True" type="System.String">
+    <item name="GWUP20" value="pack://application:,,/CC;component/Images/ty_ugate.png" saved="True" type="System.String" ver="2.6.4">
       <item name="Add">
         <item name="bool" value="1Z" saved="True" type="System.String" />
         <item name="long" value="4I" saved="True" type="System.String" />
@@ -730,7 +730,7 @@
         </item>
       </item>
     </item>
-    <item name="NDUP20" value="pack://application:,,/CC;component/Images/ty_unode.png" saved="True" type="System.String">
+    <item name="NDUP20" value="pack://application:,,/CC;component/Images/ty_unode.png" saved="True" type="System.String" ver="2.6.4">
       <item name="Add">
         <item name="bool" value="2Z" saved="True" type="System.String" />
         <item name="long" value="4I" saved="True" type="System.String" />
@@ -1067,10 +1067,15 @@
     </item>
   </item>
   <item name="type">
-    <item name="mqtts_cfg" value="pack://application:,,/CC;component/Images/ty_cfg.png" saved="True" type="System.String">
+    <item name="mqtts_cfg" value="pack://application:,,/CC;component/Images/ty_cfg.png" saved="True" type="System.String" ver="2.6.4">
       <item name="XD_GroupID" value="4i" saved="True" type="System.String" />
       <item name="XD_Channel" value="4i" saved="True" type="System.String" />
       <item name="XD_SleepTime" value="4i" saved="True" type="System.String" />
+      <item name="Xa_MACAddr" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPAddr" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPMask" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPRouter" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPBroker" value="4b" saved="True" type="System.String" />
     </item>
   </item>
 </root>

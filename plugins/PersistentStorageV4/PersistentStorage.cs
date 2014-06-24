@@ -87,6 +87,12 @@ namespace X13.PLC {
     }
     public void Start() {
       Topic.paused=false;
+      if(!Directory.Exists("../data/import")) {
+        Directory.CreateDirectory("../data/import");
+      }
+      foreach(string f in Directory.GetFiles("../data/import/", "*.xst", SearchOption.TopDirectoryOnly)) {
+        Topic.Import(f);
+      }
     }
     public void Stop() {
       if(_file!=null) {

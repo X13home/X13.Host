@@ -130,10 +130,8 @@ namespace X13 {
     }
     public static void Import(StreamReader reader, string path) {
       XDocument doc=XDocument.Load(reader);
-      bool clear=false;
       if(string.IsNullOrEmpty(path) && doc.Root.Attribute("head")!=null) {
         path=doc.Root.Attribute("head").Value;
-        clear=true;
       }
       Type tp;
       if(doc.Root.Attribute("type")!=null) {
@@ -143,11 +141,6 @@ namespace X13 {
       }
 
       Topic owner=GetP(path, tp, null);
-      if(clear) {
-        //foreach(Topic t in owner.children.Reverse().ToArray()) {
-        //  t.Remove();
-        //}
-      }
       foreach(var xNext in doc.Root.Elements("item")) {
         Import(xNext, owner);
       }
@@ -163,30 +156,50 @@ namespace X13 {
       }
     }
     private static void Import(XElement xElement, Topic owner) {
-      if(xElement==null || owner==null) {
+      if(xElement==null || owner==null || xElement.Attribute("name")==null) {
         return;
       }
-      if(xElement.Attribute("name")!=null) {
-        Type tp;
-        if(xElement.Attribute("type")!=null) {
-          tp=X13.WOUM.ExConverter.FullName2Type(xElement.Attribute("type").Value);
-        } else {
-          tp=null;
-        }
-        Topic cur=GetP(xElement.Attribute("name").Value, tp, null, owner);
-        foreach(var xNext in xElement.Elements("item")) {
-          Import(xNext, cur);
-        }
-        cur.saved=xElement.Attribute("saved")!=null && xElement.Attribute("saved").Value!=bool.FalseString;
-        if(tp!=null && xElement.Attribute("value")!=null) {
-          string json;
-          if(tp==typeof(string)) {
-            json="\""+xElement.Attribute("value").Value+"\"";
+      Type tp;
+      if(xElement.Attribute("type")!=null) {
+        tp=X13.WOUM.ExConverter.FullName2Type(xElement.Attribute("type").Value);
+      } else {
+        tp=null;
+      }
+      Version ver;
+      Topic cur;
+      bool setVersion=false;
+      if(xElement.Attribute("ver")!=null && Version.TryParse(xElement.Attribute("ver").Value, out ver)) {
+        if(owner.Exist(xElement.Attribute("name").Value, out cur)) {
+          Topic tVer;
+          Version oldVer;
+          if(!cur.Exist("_ver", out tVer) || (tVer as DVar<string>)==null || !Version.TryParse((tVer as DVar<string>).value, out oldVer) || oldVer<ver) {
+            setVersion=true;
+            cur.Remove();
           } else {
-            json=""+xElement.Attribute("value").Value+"";
+            return; // don't import older version
           }
-          cur.FromJson(json);
+        } else {
+          setVersion=true;
         }
+      } else {
+        ver=default(Version);
+      }
+      cur=GetP(xElement.Attribute("name").Value, tp, null, owner);
+      foreach(var xNext in xElement.Elements("item")) {
+        Import(xNext, cur);
+      }
+      cur.saved=xElement.Attribute("saved")!=null && xElement.Attribute("saved").Value!=bool.FalseString;
+      if(tp!=null && xElement.Attribute("value")!=null) {
+        string json;
+        if(tp==typeof(string)) {
+          json="\""+xElement.Attribute("value").Value+"\"";
+        } else {
+          json=""+xElement.Attribute("value").Value+"";
+        }
+        cur.FromJson(json);
+      }
+      if(setVersion) {
+        cur.Get<string>("_ver").value=ver.ToString();
       }
     }
     public static void Export(XElement xParent, Topic tCur) {
