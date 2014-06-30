@@ -96,11 +96,11 @@ namespace X13.Plugins {
         portD.value=Engine.IsLinux?8080:80;
       }
 
+      _sv.Log.Output=WsLog;
       _sv = new HttpServer((int)portD.value);
 #if DEBUG
       _sv.Log.Level=WebSocketSharp.LogLevel.Trace;
 #endif
-      _sv.Log.Output=WsLog;
       _sv.RootPath=Path.GetFullPath(Path.GetFullPath("../htdocs"));
       if(!Directory.Exists(_sv.RootPath)) {
         Directory.CreateDirectory(_sv.RootPath);
@@ -120,7 +120,9 @@ namespace X13.Plugins {
     }
 
     private void WsLog(LogData d, string f) {
-      Log.Debug("WS({0}) - {1}", d.Level, d.Message);
+      if(_verbose.value) {
+        Log.Debug("WS({0}) - {1}", d.Level, d.Message);
+      }
     }
     private void L_dummy(Topic sender, TopicChanged arg) {
       return;
