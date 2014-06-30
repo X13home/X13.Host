@@ -96,8 +96,8 @@ namespace X13.Plugins {
         portD.value=Engine.IsLinux?8080:80;
       }
 
-      _sv.Log.Output=WsLog;
       _sv = new HttpServer((int)portD.value);
+      _sv.Log.Output=WsLog;
 #if DEBUG
       _sv.Log.Level=WebSocketSharp.LogLevel.Trace;
 #endif
