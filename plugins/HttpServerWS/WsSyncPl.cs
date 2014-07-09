@@ -205,7 +205,9 @@ namespace X13.Plugins {
     private void _ws_OnMessage(object sender, MessageEventArgs e) {
       string[] sa;
       if(e.Type==Opcode.Text && !string.IsNullOrEmpty(e.Data) && (sa=e.Data.Split('\t'))!=null && sa.Length>0) {
-        Log.Debug("WsSync/{0} << {1}", name, e.Data);
+        if(_verbose.value) {
+          Log.Debug("WsSync/{0} << {1}", name, e.Data);
+        }
         if(sa[0]=="P" && sa.Length==3) {
           Parse(sa[1], sa[2]);
         } else if(sa[0]=="C" && sa.Length==2) {  // Connect, username, password

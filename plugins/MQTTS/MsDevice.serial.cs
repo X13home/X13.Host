@@ -181,7 +181,9 @@ namespace X13.Periphery {
             if(cnt>1 && cnt==buf[0]) {
               return true;
             } else {
-              Log.Warning("size mismatch: {0}", cnt>0?BitConverter.ToString(buf, 0, cnt):"[0]");
+              if(cnt>1) {
+                Log.Warning("size mismatch: {0}", cnt>0?BitConverter.ToString(buf, 0, cnt):"[0]");
+              }
               cnt=-1;
             }
             continue;
