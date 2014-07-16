@@ -1460,6 +1460,119 @@ namespace X13.PLC {
     }
 
     [Export(typeof(IStatement))]
+    [ExportMetadata("declarer", "NarodMon")]
+    private class NarodMon : IStatement {
+      private DVar<bool> _push;
+      private DVar<string> _mac;
+
+      public void Load() {
+        var m=Topic.root.Get<string>("/etc/declarers/func/NarodMon");
+        m.value="pack://application:,,/CC;component/Images/fu_NarodMon.png";
+        m.Get<string>("_description").value="v Export to narodmon.ru";
+        m.Get<string>("Push").value="Az";
+        m.Get<string>("A").value="Bg";
+        m.Get<string>("B").value="Cg";
+        m.Get<string>("C").value="Dg";
+        m.Get<string>("D").value="Eg";
+        m.Get<string>("E").value="Fg";
+        m.Get<string>("F").value="Gg";
+        m.Get<string>("G").value="Hg";
+        m.Get<string>("rename").value="|R";
+        m.Get<string>("remove").value="}D";
+      }
+
+      public void Init(DVar<PiStatement> model) {
+        AddPin<double>(model, "A");
+        _push=AddPin<bool>(model, "Push");
+        _mac=AddPin<string>(model, "_feed");
+      }
+
+      public void Calculate(DVar<PiStatement> model, Topic source) {
+        if(string.IsNullOrEmpty(_mac.value)) {
+          string s1=Topic.root.Get<string>("/etc/PLC/default").value.ToUpper();
+          string s2=_mac.parent.parent.name.ToUpper();
+          string s3=_mac.parent.name.ToUpper();
+          if(s3.Length>2) {
+            s3=s3.Substring(s3.Length-2);
+          }
+          if(s1.Length<6) {
+            s1=s1+"0";
+          }
+          s1=s1+s2;
+          if(s1.Length<12) {
+            s1=s1+"0123456789AB".Substring(0, 12-s1.Length);
+          } else if(s1.Length>12) {
+            s1=s1.Substring(0, 12);
+          }
+
+          _mac.value=s1+s3;
+        }
+        if(!_push.value) {
+          return;
+        }
+        //ID=MAC&mac1=value1&...&macN=valueN[&time=UnixTime][&name=NAME][&lat=LAT][&lng=LNG]
+        StringBuilder sb=new StringBuilder();
+        sb.AppendFormat("ID={0}", _mac.value);
+        if(source==_push) {
+          foreach(var inp in model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
+            string valS=inp.value.ToString(CultureInfo.InvariantCulture);
+            {
+              int i=Math.Max(valS.IndexOf('.'), 6);
+              if(i<valS.Length) {
+                valS=valS.Substring(0, i);
+              }
+            }
+            sb.AppendFormat("&{0}={1}", _mac.value+inp.name, valS);
+          }
+        } else if(source.valueType==typeof(double) && source.name.Length==1 && source.name[0]>='A' && source.name[0]<='G') {
+          string valS=(source as DVar<double>).value.ToString(CultureInfo.InvariantCulture);
+          {
+            int i=Math.Max(valS.IndexOf('.'), 6);
+            if(i<valS.Length) {
+              valS=valS.Substring(0, i);
+            }
+          }
+          sb.AppendFormat("&{0}={1}", _mac.value+source.name, valS);
+        }
+        ThreadPool.QueueUserWorkItem((o) => Send(sb.ToString()));
+      }
+      private void Send(string sample) {
+        try {
+          byte[] buffer = Encoding.UTF8.GetBytes(sample);
+
+          var request = (HttpWebRequest)WebRequest.Create("http://narodmon.ru/post.php");
+          // request line
+          request.Method = "POST";
+
+          // request headers
+          request.ContentLength = buffer.Length;
+          request.ContentType = "application/x-www-form-urlencoded";
+          request.Host="narodmon.ru";
+
+          // request body
+          using(Stream stream = request.GetRequestStream()) {
+            stream.Write(buffer, 0, buffer.Length);
+          }
+
+          request.Timeout = 5000;     // 5 seconds
+          // send request and receive response
+          using(var response =(HttpWebResponse)request.GetResponse()) {
+            if(response.StatusCode!=HttpStatusCode.OK) {
+              Log.Debug("NarodMon({0}) - {1}", _mac.parent.path, response.StatusCode);
+            }
+          }
+          request=null;
+        }
+        catch(Exception ex) {
+          Log.Debug("NarodMon({0}) - {1}", _mac.parent.path, ex.Message);
+        }
+      }
+
+      public void DeInit() {
+      }
+    }
+
+    [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Pile")]
     private class Pile : IStatement {
       public void Load() {
