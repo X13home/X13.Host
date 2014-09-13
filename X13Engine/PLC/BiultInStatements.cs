@@ -31,7 +31,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "NOT")]
-    private class bNot : IStatement {
+    private class bNot: IStatement {
       DVar<bool> _a, _q;
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/NOT");
@@ -59,7 +59,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "DTriger")]
-    private class DTriger : IStatement {
+    private class DTriger: IStatement {
       private bool _st;
       private DVar<bool> _s, _r, _c, _d, _q, _nq;
       public void Load() {
@@ -105,7 +105,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "ANDI")]
-    private class AndI : IStatement {
+    private class AndI: IStatement {
       DVar<long> _q;
       DVar<bool> _nq;
       public void Load() {
@@ -148,7 +148,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "ORI")]
-    private class OrI : IStatement {
+    private class OrI: IStatement {
       DVar<long> _q;
       DVar<bool> _nq;
       public void Load() {
@@ -191,7 +191,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "XORI")]
-    private class XorI : IStatement {
+    private class XorI: IStatement {
       DVar<long> _q;
       DVar<bool> _nq;
       public void Load() {
@@ -234,7 +234,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "SHL")]
-    private class Shl : IStatement {
+    private class Shl: IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/SHL");
         m.value="pack://application:,,/CC;component/Images/bi_shl.png";
@@ -262,7 +262,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "SHR")]
-    private class Shr : IStatement {
+    private class Shr: IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/SHR");
         m.value="pack://application:,,/CC;component/Images/bi_shr.png";
@@ -289,7 +289,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Counter")]
-    private class Counter : IStatement {
+    private class Counter: IStatement {
       private DVar<bool> _inc, _set, _reset, _dec;
       private DVar<long> _val, _out;
 
@@ -333,7 +333,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "comp_eq")]
-    private class ar_comp_eq : IStatement {
+    private class ar_comp_eq: IStatement {
       private DVar<double> _a;
       private DVar<double> _b;
 
@@ -366,7 +366,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "comp_gr")]
-    private class ar_comp_gr : IStatement {
+    private class ar_comp_gr: IStatement {
       private DVar<double> _a;
       private DVar<double> _b;
 
@@ -399,7 +399,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "comp_le")]
-    private class ar_comp_le : IStatement {
+    private class ar_comp_le: IStatement {
       private DVar<double> _a;
       private DVar<double> _b;
 
@@ -432,7 +432,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "MathExpr")]
-    private class MathExpr : IStatement {
+    private class MathExpr: IStatement {
       private DVar<PiStatement> _model;
       private Eval eval;
       private DVar<string> _dFunc;
@@ -595,7 +595,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Switch")]
-    private class Switch : IStatement {
+    private class Switch: IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Switch");
         m.value="pack://application:,,/CC;component/Images/ar_switch.png";
@@ -634,7 +634,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "ZBuffer")]
-    private class ZBuffer : IStatement {
+    private class ZBuffer: IStatement {
       private DVar<bool> _latch;
       private DVar<bool> _oe;
       private DVar<double> _in;
@@ -680,7 +680,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Average")]
-    private class Average : IStatement {
+    private class Average: IStatement {
       private DVar<double> _in, _out;
       private DVar<bool> _strobe;
       private DVar<long> _capacity;
@@ -720,12 +720,15 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "PID")]
-    private class PID : IStatement {
+    private class PID: IStatement {
       private DVar<double> _pv, _sp, _kp, _ki, _kd, _u, _uMax, _uMin;
       private DVar<long> _t;
       private double _sum, _prev;
       private Timer _ct;
       private DateTime _pt;
+      private DateTime _ptI;
+      private int _cnt;
+      private int _cntMax;
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/PID");
@@ -749,7 +752,7 @@ namespace X13.PLC {
         bool t_p=model.Exist("_t");
         _t=AddPin<long>(model, "_t");
         if(!t_p) {
-          _t.value=100;
+          _t.value=1000;
         }
         t_p=model.Exist("_uMax");
         _uMax=AddPin<double>(model, "_uMax");
@@ -763,55 +766,62 @@ namespace X13.PLC {
         }
         _ct=new Timer(Pool);
         if(_t.value>0) {
-          _ct.Change(_t.value*2, _t.value);
+          int t=(int)Math.Sqrt(_t.value/250);
+          _cntMax=t<2?1:t;
+          _ct.Change(_t.value, _t.value/_cntMax);
         }
         _pt=DateTime.Now;
+        _ptI=_pt;
         _sum=0;
-        _prev=_sp.value;
+        _prev=_pv.value;
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        if(source==_t) {
+        if(source==_u  || source==_pv) {
+          return;
+        } else if(source==_t) {
           if(_t.value>0) {
-            _ct.Change(_t.value, _t.value);
+            int t=(int)Math.Sqrt(_t.value/250);
+            _cntMax=t<2?1:t;
+            _ct.Change(50, _t.value/_cntMax);
           } else {
             _ct.Change(Timeout.Infinite, Timeout.Infinite);
           }
-        } else if(source!=_u && _t.value>0) {
-          _ct.Change(1, _t.value);
+        } else if(_t.value>0 && _cntMax>0) {
+          _ct.Change(1, _t.value/_cntMax);
+          _cnt=_cntMax;
         }
       }
       public void DeInit() {
         _ct.Change(Timeout.Infinite, Timeout.Infinite);
       }
       private void Pool(object o) {
+        _cnt++;
         var now=DateTime.Now;
-        var dt=(now-_pt).TotalSeconds;
-        if(dt>_t.value/4000.0) {
-          var e=_sp.value-_pv.value;
-          if(_ki.value!=0) {
-            _sum+=e*dt;
-            //unchecked {
-            if(_sum>_uMax.value/_ki.value) {
-              _sum=_uMax.value/_ki.value;
-            } else if(_sum<_uMin.value/_ki.value) {
-              _sum=_uMin.value/_ki.value;
-            }
-            //}
-          } else {
-            _sum=0;
+        var e=_sp.value-_pv.value;
+        var dtI=(now-_ptI).TotalSeconds;
+        if(_ki.value!=0) {
+          _sum+=e*dtI*_ki.value;
+          if(_sum>_uMax.value) {
+            _sum=_uMax.value;
+          } else if(_sum<_uMin.value) {
+            _sum=_uMin.value;
           }
-          double rez=_kp.value*e+_ki.value*_sum+_kd.value*(e-_prev)/dt;
+
+        } else {
+          _sum=0;
+        }
+        _ptI=now;
+        if(_cnt>=_cntMax) {
+          _cnt=0;
+          var dt=(now-_pt).TotalSeconds;
+          double rez=_kp.value*e+_sum+_kd.value*(_prev-_pv.value)/dt;
           if(rez>_uMax.value) {
             rez=_uMax.value;
           } else if(rez<_uMin.value) {
             rez=_uMin.value;
           }
-          if(_kd.value!=0) {
-            _prev=(_prev+e)/2;
-          } else {
-            _prev=0;
-          }
+          _prev=_pv.value;
           _u.value=rez;
           _pt=now;
         }
@@ -820,7 +830,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Sum")]
-    private class MathOpSum : IStatement {
+    private class MathOpSum: IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Sum");
         m.value="pack://application:,,/CC;component/Images/ar_sum.png";
@@ -866,7 +876,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Sub")]
-    private class MathOpSub : IStatement {
+    private class MathOpSub: IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Sub");
         m.value="pack://application:,,/CC;component/Images/ar_sub.png";
@@ -902,7 +912,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Mul")]
-    private class MathOpMul : IStatement {
+    private class MathOpMul: IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Mul");
         m.value="pack://application:,,/CC;component/Images/ar_mul.png";
@@ -938,7 +948,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Div")]
-    private class MathOpDiv : IStatement {
+    private class MathOpDiv: IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Div");
         m.value="pack://application:,,/CC;component/Images/ar_div.png";
@@ -976,7 +986,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Remainder")]
-    private class MathOpMod : IStatement {
+    private class MathOpMod: IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Remainder");
         m.value="pack://application:,,/CC;component/Images/ar_mod.png";
@@ -1014,7 +1024,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "BreakerO")]
-    private class Breaker : IStatement {
+    private class Breaker: IStatement {
       DVar<object> _in;
       DVar<object> _out;
       DVar<bool> _oe;
@@ -1048,7 +1058,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "StrFormat")]
-    private class StrFormat : IStatement {
+    private class StrFormat: IStatement {
       private DVar<string> _dFmt;
       private DVar<string> _out;
 
@@ -1096,7 +1106,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Pulse")]
-    private class Impuls : IStatement {
+    private class Impuls: IStatement {
       private DVar<bool> _input;
       private DVar<bool> _reset;
       private DVar<bool> _output;
@@ -1180,7 +1190,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "OnOffDelay")]
-    private class OnOffDelay : IStatement {
+    private class OnOffDelay: IStatement {
       private DVar<bool> _input;
       private DVar<bool> _output;
       private DVar<bool> _iOutput;
@@ -1269,7 +1279,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "SqPulse")]
-    private class PulseGenerator : IStatement {
+    private class PulseGenerator: IStatement {
       private DVar<bool> _enable;
       private DVar<bool> _output;
       private DVar<bool> _iOutput;
@@ -1353,7 +1363,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Cosm")]
-    private class Cosm : IStatement {
+    private class Cosm: IStatement {
       private DVar<bool> _push;
       private DVar<string> _feed;
       private DVar<string> _key;
@@ -1444,7 +1454,7 @@ namespace X13.PLC {
 
       public void DeInit() {
       }
-      private class AllowApi : ICertificatePolicy {
+      private class AllowApi: ICertificatePolicy {
         public bool CheckValidationResult(ServicePoint srvPoint, System.Security.Cryptography.X509Certificates.X509Certificate certificate, WebRequest request, int error) {
           if(error == 0)
             return true;
@@ -1461,7 +1471,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "NarodMon")]
-    private class NarodMon : IStatement {
+    private class NarodMon: IStatement {
       private DVar<bool> _push;
       private DVar<string> _mac;
 
@@ -1574,7 +1584,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Pile")]
-    private class Pile : IStatement {
+    private class Pile: IStatement {
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Pile");
         m.value="pack://application:,,/CC;component/Images/ar_pile.png";
@@ -1664,7 +1674,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Execute")]
-    private class Execute : IStatement {
+    private class Execute: IStatement {
       private DVar<string> _proc;
       private DVar<string> _args;
       private DVar<bool> _start;
@@ -1712,7 +1722,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "BAInsertL")]
-    private class BAInsert : IStatement {
+    private class BAInsert: IStatement {
       private DVar<ByteArray> _in;
       private DVar<ByteArray> _out;
       private DVar<long> _val;
@@ -1764,7 +1774,7 @@ namespace X13.PLC {
     }
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "BAInsertS")]
-    private class BAInsertS : IStatement {
+    private class BAInsertS: IStatement {
       private DVar<ByteArray> _in;
       private DVar<ByteArray> _out;
       private DVar<string> _val;
@@ -1801,7 +1811,7 @@ namespace X13.PLC {
         byte[] data=(_val==null || _val.value==null)?new byte[0]:Encoding.Default.GetBytes(_val.value);
         if(cnt<1) {
           cnt=data.Length;
-        } else if(cnt>data.Length){
+        } else if(cnt>data.Length) {
           byte[] d2=new byte[cnt];
           Buffer.BlockCopy(data, 0, d2, 0, data.Length);
           data=d2;
@@ -1817,7 +1827,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "BAGetL")]
-    private class BAGetL : IStatement {
+    private class BAGetL: IStatement {
       private DVar<ByteArray> _in;
       private DVar<long> _pos;
       private DVar<long> _len;
@@ -1885,7 +1895,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "BAGetS")]
-    private class BAGetS : IStatement {
+    private class BAGetS: IStatement {
       private DVar<ByteArray> _in;
       private DVar<long> _pos;
       private DVar<long> _len;
@@ -1942,7 +1952,7 @@ namespace X13.PLC {
 
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "BAGetLength")]
-    private class BAGetLength : IStatement {
+    private class BAGetLength: IStatement {
       private DVar<ByteArray> _in;
       private DVar<long> _out;
 
