@@ -8,7 +8,7 @@ using WebSocketSharp.Net;
 using WebSocketSharp.Server;
 
 namespace X13.Plugins {
-  internal class ApiV03 : WebSocketService {
+  internal class ApiV03 : WebSocketBehavior {
     private static DVar<bool> _verbose;
     private static DVar<bool> _disAnonym;
     private static Timer _pingTimer;
