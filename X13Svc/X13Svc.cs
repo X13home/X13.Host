@@ -104,7 +104,7 @@ namespace X13.Svc {
 #pragma warning restore 0618
             string content=null;
             using(WebClient client = new WebClient()) {
-              content=client.DownloadString(@"http://github.com/X13home/x13home.github.com/raw/master/Download/versions.csv");
+              content=client.DownloadString(@"http://github.com/X13home/x13home.github.io/raw/master/Download/versions.csv");
             }
             if(content==null) {
               Log.Warning("update list is empty");
