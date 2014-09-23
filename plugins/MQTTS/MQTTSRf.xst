@@ -1070,6 +1070,7 @@
     <item name="mqtts_cfg" value="pack://application:,,/CC;component/Images/ty_cfg.png" saved="True" type="System.String" ver="2.6.4">
       <item name="XD_GroupID" value="4i" saved="True" type="System.String" />
       <item name="XD_Channel" value="4i" saved="True" type="System.String" />
+      <item name="XD_DeviceAddr" value="4i" saved="True" type="System.String" />
       <item name="XD_SleepTime" value="4i" saved="True" type="System.String" />
       <item name="Xa_MACAddr" value="4b" saved="True" type="System.String" />
       <item name="Xa_IPAddr" value="4b" saved="True" type="System.String" />

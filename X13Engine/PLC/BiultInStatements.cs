@@ -19,6 +19,7 @@ using System.IO;
 using System.Net;
 using SoftCircuits;
 using System.ComponentModel.Composition;
+using System.Collections;
 
 namespace X13.PLC {
   public class BiultInStatements {
@@ -1474,6 +1475,9 @@ namespace X13.PLC {
     private class NarodMon: IStatement {
       private DVar<bool> _push;
       private DVar<string> _mac;
+      private DateTime _prev;
+      private byte _fl;
+      System.Net.Sockets.UdpClient _udp;
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/NarodMon");
@@ -1492,12 +1496,10 @@ namespace X13.PLC {
       }
 
       public void Init(DVar<PiStatement> model) {
+        _fl=0;
         AddPin<double>(model, "A");
         _push=AddPin<bool>(model, "Push");
         _mac=AddPin<string>(model, "_feed");
-      }
-
-      public void Calculate(DVar<PiStatement> model, Topic source) {
         if(string.IsNullOrEmpty(_mac.value)) {
           string s1=Topic.root.Get<string>("/etc/PLC/default").value.ToUpper();
           string s2=_mac.parent.parent.name.ToUpper();
@@ -1517,61 +1519,44 @@ namespace X13.PLC {
 
           _mac.value=s1+s3;
         }
-        if(!_push.value) {
+        _udp=new System.Net.Sockets.UdpClient("narodmon.ru", 8283);
+        _prev=DateTime.Now.AddMinutes(-6);
+      }
+
+      public void Calculate(DVar<PiStatement> model, Topic source) {
+        if(source==null || !_push.value) {
           return;
         }
-        //ID=MAC&mac1=value1&...&macN=valueN[&time=UnixTime][&name=NAME][&lat=LAT][&lng=LNG]
-        StringBuilder sb=new StringBuilder();
-        sb.AppendFormat("ID={0}", _mac.value);
         if(source==_push) {
-          foreach(var inp in model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
-            string valS=inp.value.ToString(CultureInfo.InvariantCulture);
-            {
-              int i=Math.Max(valS.IndexOf('.'), 6);
-              if(i<valS.Length) {
-                valS=valS.Substring(0, i);
-              }
-            }
-            sb.AppendFormat("&{0}={1}", _mac.value+inp.name, valS);
-          }
-        } else if(source.valueType==typeof(double) && source.name.Length==1 && source.name[0]>='A' && source.name[0]<='G') {
-          string valS=(source as DVar<double>).value.ToString(CultureInfo.InvariantCulture);
-          {
-            int i=Math.Max(valS.IndexOf('.'), 6);
-            if(i<valS.Length) {
-              valS=valS.Substring(0, i);
-            }
-          }
-          sb.AppendFormat("&{0}={1}", _mac.value+source.name, valS);
+          _fl=0xFF;
+        } else if(source.name!=null && source.name.Length==1 && source.name[0]>='A' && source.name[0]<='G') {
+          _fl|=(byte)(1<<(int)(source.name[0]-'A'));
         }
+        if(_fl==0 || (DateTime.Now-_prev).TotalSeconds<299) {
+          return;
+        }
+        _prev=DateTime.Now;
+        //#MAC[#NAME][#LAT][#LNG][#ELE]\n
+        //#mac1#value1[#time1][#name1]\n
+        //...
+        //#macN#valueN[#timeN][#nameN]\n
+        //##
+        StringBuilder sb=new StringBuilder();
+        sb.Append("#");
+        sb.Append(_mac.value);
+        foreach(var inp in model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
+          if((_fl & (1<<(int)(inp.name[0]-'A')))!=0) {
+            sb.AppendFormat("\n#{0}{1}#{2}", _mac.value, inp.name, inp.value.ToString(CultureInfo.InvariantCulture));
+          }
+        }
+        sb.Append("\n##");
+        _fl=0;
         ThreadPool.QueueUserWorkItem((o) => Send(sb.ToString()));
       }
       private void Send(string sample) {
         try {
           byte[] buffer = Encoding.UTF8.GetBytes(sample);
-
-          var request = (HttpWebRequest)WebRequest.Create("http://narodmon.ru/post.php");
-          // request line
-          request.Method = "POST";
-
-          // request headers
-          request.ContentLength = buffer.Length;
-          request.ContentType = "application/x-www-form-urlencoded";
-          request.Host="narodmon.ru";
-
-          // request body
-          using(Stream stream = request.GetRequestStream()) {
-            stream.Write(buffer, 0, buffer.Length);
-          }
-
-          request.Timeout = 5000;     // 5 seconds
-          // send request and receive response
-          using(var response =(HttpWebResponse)request.GetResponse()) {
-            if(response.StatusCode!=HttpStatusCode.OK) {
-              Log.Debug("NarodMon({0}) - {1}", _mac.parent.path, response.StatusCode);
-            }
-          }
-          request=null;
+          _udp.Send(buffer, buffer.Length);
         }
         catch(Exception ex) {
           Log.Debug("NarodMon({0}) - {1}", _mac.parent.path, ex.Message);
@@ -1579,6 +1564,7 @@ namespace X13.PLC {
       }
 
       public void DeInit() {
+        _udp=null;
       }
     }
 
