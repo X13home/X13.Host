@@ -104,14 +104,14 @@ namespace X13.Svc {
 #pragma warning restore 0618
             string content=null;
             using(WebClient client = new WebClient()) {
-              content=client.DownloadString(@"http://github.com/X13home/x13home.github.io/raw/master/Download/versions.csv");
+              content=client.DownloadString(@"http://x13home.github.io/Download/versions.csv");
             }
             if(content==null) {
               Log.Warning("update list is empty");
               return;
             }
             List<string[]> tmp=new List<string[]>();
-            var sa=content.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            var sa=content.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             for(int n=1; n<sa.Length; n++) { // [0] - header
               var it=sa[n].Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
               if(it!=null && it.Length==4) {
