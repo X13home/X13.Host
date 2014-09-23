@@ -30,6 +30,7 @@ namespace X13 {
         Console.ForegroundColor=ConsoleColor.Green;
       }
       Console.WriteLine("Engine running; press Enter to Exit");
+      Console.ResetColor();
       Console.Read();
       eng.Shutdown();
       Console.ForegroundColor=ConsoleColor.Gray;
@@ -89,6 +90,7 @@ namespace X13 {
       }
 
       Topic.brokerMode=true;
+
       _plugins=new Plugins();
       _plugins.Init(true);
 
@@ -99,27 +101,16 @@ namespace X13 {
 
       string dbVersion=Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
       var dbVer=Topic.root.Get<string>("/etc/system/version");
-      if(dbVer.value==null || string.Compare(dbVer.value, dbVersion)<0) {
-        dbVer.saved=true;
+      if(dbVer.value==null || dbVer.value!=dbVersion) {
         dbVer.value=dbVersion;
-        _lHead.saved=true;
         _lHead.Get<string>("A0").saved=false;
-        _lThreshold.saved=true;
 #if DEBUG
         _lThreshold.value=LogLevel.Debug;
 #else
         _lThreshold.value=LogLevel.Info;
 #endif
-        var devDec=Topic.root.Get<string>("/dev/_declarer");
-        devDec.saved=true;
-        devDec.value="DevFolder";
-
-        Log.Info("Load default declarers");
-        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.PLC.types.xst");
-        if(st!=null) {
-          using(var sr=new StreamReader(st)) {
-            Topic.Import(sr, null);
-          }
+        using(var sr=new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.PLC.types.xst"))) {
+          Topic.Import(sr, null);
         }
       }
 
@@ -232,9 +223,9 @@ namespace X13 {
       }
       catch(Exception) {
       }
-      if(!e.IsTerminating) {
-        return;
-      }
+      //if(!e.IsTerminating) {
+      //  return;
+      //}
       try {
         MqBroker.Close();
       }
@@ -247,6 +238,9 @@ namespace X13 {
       catch(Exception) {
       }
       Console.ForegroundColor=ConsoleColor.Gray;
+      if(!e.IsTerminating) {
+        System.Diagnostics.Process.GetCurrentProcess().Kill();
+      }
     }
 
     private void MQTT_Main_changed(Topic sender, TopicChanged param) {

@@ -26,7 +26,7 @@ namespace X13 {
     protected static readonly Topic _mq;
     private static WOUM.BlockingQueue<TopicChanged> _publishQueue;
     private static JsonConverter[] _jcs=new JsonConverter[] { new Newtonsoft.Json.Converters.JavaScriptDateTimeConverter() };
-
+    private static JsonSerializerSettings _parseObj=new JsonSerializerSettings() { MissingMemberHandling=MissingMemberHandling.Ignore };
     static Topic() {
       root=new Topic(null) { _name=string.Empty, path="/" };
       _publishQueue=new WOUM.BlockingQueue<TopicChanged>(PubAction, PqIdle);
@@ -120,20 +120,18 @@ namespace X13 {
       return cur;
     }
     private static void PubAction(TopicChanged tc) {
-        while(tc.Sender!=null) {
-          tc.Sender.onChange(tc.Sender, tc);
-          tc.Sender=tc.Sender.parent;
-        }
+      while(tc.Sender!=null) {
+        tc.Sender.onChange(tc.Sender, tc);
+        tc.Sender=tc.Sender.parent;
+      }
     }
     private static void PqIdle() {
       ready.Set();
     }
     public static void Import(StreamReader reader, string path) {
       XDocument doc=XDocument.Load(reader);
-      bool clear=false;
       if(string.IsNullOrEmpty(path) && doc.Root.Attribute("head")!=null) {
         path=doc.Root.Attribute("head").Value;
-        clear=true;
       }
       Type tp;
       if(doc.Root.Attribute("type")!=null) {
@@ -143,11 +141,6 @@ namespace X13 {
       }
 
       Topic owner=GetP(path, tp, null);
-      if(clear) {
-        //foreach(Topic t in owner.children.Reverse().ToArray()) {
-        //  t.Remove();
-        //}
-      }
       foreach(var xNext in doc.Root.Elements("item")) {
         Import(xNext, owner);
       }
@@ -163,30 +156,50 @@ namespace X13 {
       }
     }
     private static void Import(XElement xElement, Topic owner) {
-      if(xElement==null || owner==null) {
+      if(xElement==null || owner==null || xElement.Attribute("name")==null) {
         return;
       }
-      if(xElement.Attribute("name")!=null) {
-        Type tp;
-        if(xElement.Attribute("type")!=null) {
-          tp=X13.WOUM.ExConverter.FullName2Type(xElement.Attribute("type").Value);
-        } else {
-          tp=null;
-        }
-        Topic cur=GetP(xElement.Attribute("name").Value, tp, null, owner);
-        foreach(var xNext in xElement.Elements("item")) {
-          Import(xNext, cur);
-        }
-        cur.saved=xElement.Attribute("saved")!=null && xElement.Attribute("saved").Value!=bool.FalseString;
-        if(tp!=null && xElement.Attribute("value")!=null) {
-          string json;
-          if(tp==typeof(string)) {
-            json="\""+xElement.Attribute("value").Value+"\"";
+      Type tp;
+      if(xElement.Attribute("type")!=null) {
+        tp=X13.WOUM.ExConverter.FullName2Type(xElement.Attribute("type").Value);
+      } else {
+        tp=null;
+      }
+      Version ver;
+      Topic cur;
+      bool setVersion=false;
+      if(xElement.Attribute("ver")!=null && Version.TryParse(xElement.Attribute("ver").Value, out ver)) {
+        if(owner.Exist(xElement.Attribute("name").Value, out cur)) {
+          Topic tVer;
+          Version oldVer;
+          if(!cur.Exist("_ver", out tVer) || (tVer as DVar<string>)==null || !Version.TryParse((tVer as DVar<string>).value, out oldVer) || oldVer<ver) {
+            setVersion=true;
+            cur.Remove();
           } else {
-            json=""+xElement.Attribute("value").Value+"";
+            return; // don't import older version
           }
-          cur.FromJson(json);
+        } else {
+          setVersion=true;
         }
+      } else {
+        ver=default(Version);
+      }
+      cur=GetP(xElement.Attribute("name").Value, tp, null, owner);
+      foreach(var xNext in xElement.Elements("item")) {
+        Import(xNext, cur);
+      }
+      cur.saved=xElement.Attribute("saved")!=null && xElement.Attribute("saved").Value!=bool.FalseString;
+      if(tp!=null && xElement.Attribute("value")!=null) {
+        string json;
+        if(tp==typeof(string)) {
+          json="\""+xElement.Attribute("value").Value+"\"";
+        } else {
+          json=""+xElement.Attribute("value").Value+"";
+        }
+        cur.FromJson(json);
+      }
+      if(setVersion) {
+        cur.Get<string>("_ver").value=ver.ToString();
       }
     }
     public static void Export(XElement xParent, Topic tCur) {
@@ -288,13 +301,12 @@ namespace X13 {
                     new JProperty("+", "Topic"))).ToString();
                 }
               } else if(valueType.IsArray) {
-                _json=JsonConvert.SerializeObject(GetValue(), _jcs);            
+                _json=JsonConvert.SerializeObject(GetValue(), _jcs);
               } else {
                 object val=GetValue();
                 JObject o;
                 if(val==null) {
-                  o=JObject.Parse("{ }");
-                  o["+"]=WOUM.ExConverter.Type2Name(valueType);
+                  o=new JObject(new JProperty("+", WOUM.ExConverter.Type2Name(valueType)));
                 } else if(valueType==typeof(JObject)) {
                   o=val as JObject;
                 } else {
@@ -374,16 +386,13 @@ namespace X13 {
           this.SetValue(JObject.Parse(json), param);
         } else {
           if(json[0]=='{') {
-            var jo=JObject.Parse(json);
-            jo.Remove("+");
-            if(jo.Count>0) {
-              json=jo.ToString();
+            if(JObject.Parse(json).Count>1) {
               object tmp=this.GetValue();
               if(tmp!=null) {
-                JsonConvert.PopulateObject(json, tmp);
+                JsonConvert.PopulateObject(json, tmp, _parseObj);
                 Publish(this, param);
               } else {
-                this.SetValue(JsonConvert.DeserializeObject(json, valueType), param);
+                this.SetValue(JsonConvert.DeserializeObject(json, valueType, _parseObj), param);
               }
             }
           } else {

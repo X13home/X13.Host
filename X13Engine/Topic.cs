@@ -27,6 +27,7 @@ namespace X13 {
       if(string.IsNullOrEmpty(fileName) || !File.Exists(fileName)) {
         return false;
       }
+      Log.Debug("Import {0}", fileName);
       using(StreamReader reader = File.OpenText(fileName)) {
         Import(reader, path);
       }

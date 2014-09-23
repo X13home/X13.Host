@@ -28,7 +28,6 @@ namespace X13.Periphery {
 
     static MsDevice() {
       _verbose=Topic.root.Get<bool>("/etc/MQTTS/verbose");
-      _verbose.saved=true;
       _gates=new List<IMsGate>();
     }
     internal static void Open() {
@@ -537,7 +536,9 @@ namespace X13.Periphery {
       if(rez==null) {
         return;
       }
-      Log.Debug("{0}.Snd {1}", t.name, BitConverter.ToString(payload));
+      if(_verbose.value) {
+        Log.Debug("{0}.Snd {1}", t.name, BitConverter.ToString(payload));
+      }
       Send(new MsPublish(rez.topic, rez.TopicId, QoS.AtLeastOnce) { Data=payload });
     }
 
@@ -873,11 +874,11 @@ namespace X13.Periphery {
       {".cfg/XD_Channel",    0xFF12},
       {".cfg/XD_RSSI",       0xFF13},
 
-      {".cfg/Xq_MACAddr",    0xFF20},
-      {".cfg/XD_IPAddr",     0xFF21},
-      //{".cfg/XD_IPMask",     0xFF22},
-      //{".cfg/XD_IPRouter",   0xFF23},
-      //{".cfg/XD_IPBroker",    0xFF24},
+      {".cfg/Xa_MACAddr",    0xFF20},
+      {".cfg/Xa_IPAddr",     0xFF21},
+      {".cfg/Xa_IPMask",     0xFF22},
+      {".cfg/Xa_IPRouter",   0xFF23},
+      {".cfg/Xa_IPBroker",   0xFF24},
 
       {"_declarer",          0xFFC0},
       {".cfg/_state",        0xFFC1},

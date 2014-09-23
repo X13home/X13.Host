@@ -24,25 +24,14 @@ namespace X13.Periphery {
   [ExportMetadata("priority", 5)]
   [ExportMetadata("name", "MQTTS.udp")]
   public class MQTTSUdp : IPlugModul {
-    private const long _version=302;
 
     public void Init() {
       Topic.root.Subscribe("/etc/MQTTS/#", Dummy);
       Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
     }
     public void Start() {
-      var ver=Topic.root.Get<long>("/etc/MQTTS/udp/version");
-      if(ver.value<_version) {
-        ver.saved=true;
-        ver.value=_version;
-        Log.Info("Load MQTTS.udp declarers");
-        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTSUdp.xst");
-        if(st!=null) {
-          using(var sr=new StreamReader(st)) {
-            Topic.Import(sr, null);
-          }
-        }
-
+      using(var sr=new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTSUdp.xst"))) {
+        Topic.Import(sr, null);
       }
       MsDevice.MsGUdp.Open();
     }
@@ -65,7 +54,7 @@ namespace X13.Periphery {
       private static IPAddress[] _bcIps;
 
       public static void Open() {
-        _myIps=Dns.GetHostEntry(Dns.GetHostName()).AddressList.Where(z => z.AddressFamily==AddressFamily.InterNetwork).Union(new IPAddress[]{ IPAddress.Loopback}).Select(z=>z.GetAddressBytes()).ToArray();
+        _myIps=Dns.GetHostEntry(Dns.GetHostName()).AddressList.Where(z => z.AddressFamily==AddressFamily.InterNetwork).Union(new IPAddress[] { IPAddress.Loopback }).Select(z => z.GetAddressBytes()).ToArray();
         List<IPAddress> bc=new List<IPAddress>();
         try {
           foreach(var nic in NetworkInterface.GetAllNetworkInterfaces()) {
@@ -127,7 +116,7 @@ namespace X13.Periphery {
             if(_verbose.value) {
               Log.Debug("size mismatch: {0}:{1}", re, BitConverter.ToString(buf));
             }
-          }else if(!_myIps.Any(z => addr.SequenceEqual(z))) {
+          } else if(!_myIps.Any(z => addr.SequenceEqual(z))) {
             ParseInPacket(buf, addr);
           }
         }
@@ -151,7 +140,7 @@ namespace X13.Periphery {
           DVar<MsDevice> dev=devR.Get<MsDevice>(msg.ClientId);
           if(!msg.CleanSession && (dev.value==null || dev.value.Addr!=msg.Addr || dev.value.state==State.Disconnected || dev.value.state==State.Lost)) {
             PrintPacket(dev, msg, buf);
-            Send(new MsConnack(MsReturnCode.InvalidTopicId) { Addr=msg.Addr });
+            Send(new MsConnack(MsReturnCode.NotSupportes) { Addr=msg.Addr });
             return;
           }
           if(dev.value==null) {

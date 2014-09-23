@@ -104,14 +104,14 @@ namespace X13.Svc {
 #pragma warning restore 0618
             string content=null;
             using(WebClient client = new WebClient()) {
-              content=client.DownloadString(@"http://github.com/X13home/x13home.github.com/raw/master/Download/versions.csv");
+              content=client.DownloadString(@"http://x13home.github.io/Download/versions.csv");
             }
             if(content==null) {
               Log.Warning("update list is empty");
               return;
             }
             List<string[]> tmp=new List<string[]>();
-            var sa=content.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
+            var sa=content.Split(new char[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
             for(int n=1; n<sa.Length; n++) { // [0] - header
               var it=sa[n].Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
               if(it!=null && it.Length==4) {
@@ -145,12 +145,16 @@ namespace X13.Svc {
                 client.DownloadFile(list[i][3], tmpfn);
               }
               try {
-                File.Replace(tmpfn, list[i][0], list[i][1]+".bak");
+                if(!Directory.Exists("bak")) {
+                  Directory.CreateDirectory("bak");
+                }
+
+                File.Replace(tmpfn, list[i][0], "bak/"+list[i][1]+".bak");
                 Log.Info("update {0} version: {1} -> {2}", list[i][0], fvi.FileVersion, list[i][2]);
               }
               catch(FileNotFoundException) {
                 Log.Info("update {0}[delayed] version: {1} -> {2}", list[i][0], fvi.FileVersion, list[i][2]);
-                task.Add(new Tuple<string, string, string>(tmpfn, list[i][0], list[i][1]+".bak"));
+                task.Add(new Tuple<string, string, string>(tmpfn, list[i][0], "bak/"+list[i][1]+".bak"));
               }
             }
             catch(Exception ex) {
@@ -171,7 +175,7 @@ namespace X13.Svc {
               shScript.WriteLine("echo update complete. Press any key\n");
               shScript.Flush();
             }
-            Log.Info("update complete[delayed]");
+            Log.Info("update[delayed] complete");
 
             Process shScriptProcess = new Process();
             shScriptProcess.StartInfo = new ProcessStartInfo("/bin/sh", "upd.sh");

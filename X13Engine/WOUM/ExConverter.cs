@@ -8,13 +8,14 @@
 //See LICENSE.txt file for license details.
 #endregion license
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Reflection;
 using System.IO;
-using Newtonsoft.Json.Linq;
+using System.Linq;
+using System.Reflection;
+using System.Text;
 
 namespace X13.WOUM {
   public static class ExConverter {
@@ -97,7 +98,7 @@ namespace X13.WOUM {
       if(type==null) {
         return string.Empty;
       }
-      
+
       string rez=type.FullName;
       switch(rez) {
       case "System.Byte":
@@ -138,45 +139,37 @@ namespace X13.WOUM {
       return rez;
     }
     public static Type Json2Type(string json) {
-      if(string.IsNullOrWhiteSpace(json)) {
-        return null;
-      }
-      if(json[0]=='"') {
-        return typeof(string);
-      }
-      if(json[0]=='{') {
-        JObject o=JObject.Parse(json);
-        JToken jDesc;
-        if(o.TryGetValue("+", out jDesc)) {
-          return FullName2Type(jDesc.ToObject<string>());
-        }
-        return null;
-      }
-      if(json=="true" || json=="false") {
-        return typeof(bool);
-      }
-      if(json.StartsWith("new Date(")) {
-        return typeof(DateTime);
-      }
-      int dotCnt=0;
-      for(int i=json.Length-1; i>=0; i--) {
-        if(char.IsDigit(json, i)) {
-          continue;
-        }
-        if(json[i]=='.') {
-          dotCnt++;
-          if(dotCnt>1) {
-            return null;
-          }
-          continue;
-        }
-        if(i==0 && (json[0]=='-' || json[0]=='+')) {
-          continue;
-        }
-        return null;  // is not number
-      }
-      return dotCnt==0?typeof(Int64):typeof(double);
-    }
+      if(!string.IsNullOrWhiteSpace(json)) {
+        using(JsonTextReader reader = new JsonTextReader(new StringReader(json))) {
+          if(reader.Read()) {
 
+            switch(reader.TokenType) {
+            case JsonToken.Boolean:
+              return typeof(bool);
+            case JsonToken.Float:
+              return typeof(double);
+            case JsonToken.Integer:
+              return typeof(Int64);
+            case JsonToken.Date:
+              return typeof(DateTime);
+            case JsonToken.String:
+              return typeof(string);
+            case JsonToken.StartObject: {
+                while(reader.Read()) {
+                  if(reader.Depth==1 && reader.TokenType==JsonToken.PropertyName && (string)reader.Value=="+") {
+                    if(reader.Read() && reader.TokenType==JsonToken.String) {
+                      return FullName2Type((string)reader.Value);
+                    }
+                  }
+                }
+              }
+              break;
+            }
+
+          }
+        }
+      }
+      return null;
+    }
   }
 }

@@ -1,0 +1,658 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="http://x13home.github.io/" />
+    <title>X13.Home</title>
+    <!--CSS -->
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <link rel="stylesheet" type="text/css" href="rs-carousel-min.css" />
+    <link rel="stylesheet" type="text/css" href="jquery.minicolors.css" />
+</head>
+<body class="offline">
+    <header>
+        <div>
+            <div style="float: left;">
+                <input type="button" id="SkimpyButton" onclick="Lank.f.SwitchSkimpy()" value="<" />
+            </div>
+            <div style="float: right;">
+                <input type="button" id="loginButton" onclick="Lank.f.LoginForm(true)" value="Login" />
+            </div>
+        </div>
+    </header>
+    <div id="rs-carousel">
+    </div>
+    <div id="content">Connecting ...</div>
+    <div id="login_form">
+        <h2>Login</h2>
+        <p>
+            <input type="text" id="userName" name="login" placeholder="Username" />
+        </p>
+        <p>
+            <input type="password" id="userPassword" name="password" placeholder="Password" />
+        </p>
+        <p class="remember_me">
+            <label>
+                <input type="checkbox" id="userRemeber" />
+                Remember me on this computer
+            </label>
+        </p>
+        <input type="submit" onclick="Lank.f.Login()">
+    </div>
+    <!-- lib -->
+    <script type="text/javascript" src="jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="jquery.ui.widget.js"></script>
+    <script type="text/javascript" src="jquery.event.drag.js"></script>
+    <script type="text/javascript" src="jquery.translate3d.js"></script>
+    <script type="text/javascript" src="stringformat.js"></script>
+    <script type="text/javascript" src="modernizr.3dtransforms.touch.js"></script>
+    <script type="text/javascript" src="jquery.minicolors.js"></script>
+    <script type="text/javascript" src="jsviews.min.js"></script>
+    <script type="text/javascript" src="dygraph-combined.js"></script>
+    <!-- carousel -->
+    <script type="text/javascript" src="jquery.rs.carousel-min.js"></script>
+    <script type="text/javascript" src="jquery.rs.carousel-touch-min.js"></script>
+    <!-- X13.Home -->
+    <script type="text/javascript">
+        "use strict";
+        $(window).bind("beforeunload", function () {
+            if (Lank.ws != null && Lank.ws.readyState==Lank.ws.OPEN) {
+                Lank.ws.close(1000);
+            }
+            Lank.ws=null;
+        });
+        $.views.converters({
+            'fmt': function (val, fmt) {
+                if (fmt) {
+                    return String.format(fmt, val)
+                } else {
+                    return val;
+                }
+            },
+        });
+        $.views.tags({
+            'miniColor': {
+                data: null,
+                el: null,
+                init: function (tagCtx, linkCtx) {
+                    if (this._.inline && !tagCtx.content) {
+                        this.template = "<input type='text' class='colorpicker'/>";
+                    }
+                },
+                onAfterLink: function (tagCtx, linkCtx) {
+                    this.data = linkCtx.data;
+                    var tag = this;
+                    this.el = tag.linkedElem == null ? null : tag.linkedElem[0];
+                    if (this.el == null) {
+                        tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
+                        this.el = tag.linkedElem[0];
+                    }
+                    if (this.el == null) {
+                        return;
+                    }
+                    this.el.id = this.data.id;
+                    $(this.el).minicolors({
+                        control: 'wheel',
+                        inline: true,
+                        changeDelay: 200,
+                        change: function (hex, opacity) {
+                            var c;
+                            if ((c = parseInt(hex.substring(1), 16)) != null) {
+                                Lank.publish(this.id, c);
+                            }
+                        },
+                    });
+                    if (tagCtx.args[0] !== undefined) {
+                        tag.setValue(tagCtx.args[0]);
+                    }
+                },
+                setValue: function (c) {
+                    if (c !== undefined) {
+                        var tag = this;
+                        var r = (c >> 16) & 0xFF;
+                        var g = (c >> 8) & 0xFF;
+                        var b = c & 0xFF;
+                        var rgb = '#' + (r < 16 ? '0' : '') + r.toString(16) +
+                               (g < 16 ? '0' : '') + g.toString(16) +
+                               (b < 16 ? '0' : '') + b.toString(16);
+                        $(tag.linkedElem).minicolors('value', rgb);
+                    }
+                },
+            },
+            'dygraph': {
+                data: null,
+                el: null,
+                dyg: null,
+                init: function (tagCtx, linkCtx) {
+                    if (this._.inline && !tagCtx.content) {
+                        this.template = "<div class='dygraph'></div>";
+                    }
+                },
+                onAfterLink: function (tagCtx, linkCtx) {
+                    this.data = linkCtx.data;
+                    var tag = this;
+                    this.el = tag.linkedElem == null ? null : tag.linkedElem[0];
+                    if (this.el == null) {
+                        tag.linkedElem = tag._.inline ? tag.contents("*").first() : $(linkCtx.elem);
+                        this.el = tag.linkedElem[0];
+                    }
+                    if (this.el == null) {
+                        return;
+                    }
+                    this.el.id = this.data.id;
+                    var opt = {};
+                    try {
+                        opt = JSON.parse(this.data._options);
+                    } catch (ex2) {
+                        opt = {};
+                    }
+
+                    opt["drawCallback"] = function (me, initial) {
+                        if (Lank.blockRedraw || initial) return;
+                        Lank.blockRedraw = true;
+                        var range = me.xAxisRange();
+                        for (var j = 0; j < Lank.dygs.length; j++) {
+                            if (Lank.dygs[j] == me) continue;
+                            Lank.dygs[j].updateOptions({ dateWindow: range });
+                        }
+                        Lank.blockRedraw = false;
+                    };
+                    this.el.className = 'dygraph ' + this.data._class;
+                    this.el.style.cssText = this.data._style;
+                    this.dyg = new Dygraph(this.el, this.data.value, opt);
+                    Lank.dygs.push(this.dyg);
+                },
+                onUpdate: function (ev, eventArgs, tagCtxs) {
+                    if (eventArgs.path == 'value') {
+                        this.dyg.updateOptions({ 'file': eventArgs.value });
+                        this.dyg.resetZoom();
+                    } else if (eventArgs.path == '_options') {
+                        try {
+                            var opt = JSON.parse(this.data._options);
+                            this.dyg.updateOptions(opt);
+                        } catch (ex2) {
+                        }
+                    } else if (eventArgs.path == '_class') {
+                        this.el.className = 'dygraph ' + eventArgs.value;
+                    } else if (eventArgs.path == '_style') {
+                        this.el.style.cssText = eventArgs.value;
+                    }
+                    return false;
+                },
+            },
+            'pPslider': {
+                data: null,
+                el: null,
+
+                init: function (tagCtx, linkCtx) {
+                    if (this._.inline && !tagCtx.content) {
+                      this.template = '<div class="ui_range clearfix"><div class="ui_range-scale"><div class="ui_range-divies"></div><div class="ui_range-progress"></div><div class="ui_range-button"></div><div class="ui_range-tooltip"></div></div></div>';
+                    }
+                },
+                onAfterLink: function (tagCtx, linkCtx) {
+                    this.el = this.linkedElem == null ? null : this.linkedElem[0];
+                    if (this.el == null) {
+                        this.linkedElem = this._.inline ? this.contents("*").first() : $(linkCtx.elem);
+                        this.el = this.linkedElem[0];
+                    }
+                    if (this.el == null) {
+                        return;
+                    }
+                    var isMouseDown = false;
+                    var currentVal = 0;
+                    var startMouseX = 0;
+                    var ptr = this;
+                    var lastElemLeft;
+                    var options = {};
+
+                    this.data = linkCtx.data;
+                    var container = $(this.el);
+                    if (typeof (ptr.data._min) == 'undefined') {
+                        ptr.data._min = 0;
+                    }
+                    if (typeof (ptr.data._max) == 'undefined') {
+                        ptr.data._max = 100;
+                    }
+
+                    var startSlide = function (e) {
+
+                        isMouseDown = true;
+                        var pos = getMousePosition(e);
+                        startMouseX = pos.x;
+
+                        lastElemLeft = ($(this).offset().left - $(this).parent().offset().left);
+                        updatePosition(e);
+
+                        $("#content").bind("mousemove", moving);
+                        $("#content").bind("mouseup", dropCallback);
+
+                        return false;
+                    };
+
+                    var getMousePosition = function (e) {
+                        var posx = 0;
+                        var posy = 0;
+
+                        if (!e) var e = window.event;
+
+                        if (e.pageX || e.pageY) {
+                            posx = e.pageX;
+                            posy = e.pageY;
+                        }
+                        else if (e.clientX || e.clientY) {
+                            posx = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+                            posy = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+                        }
+
+                        return { 'x': posx, 'y': posy };
+                    };
+
+                    var updatePosition = function (e) {
+                        var pos = getMousePosition(e);
+
+                        var spanX = (pos.x - startMouseX);
+
+                        var newPos = (lastElemLeft + spanX)
+                        var upperBound = (container.find('.ui_range-scale').width() - container.find('.ui_range-button').width());
+                        newPos = Math.max(0, newPos);
+                        newPos = Math.min(newPos, upperBound);
+                        var curVal = ptr.data._min + (newPos / upperBound) * (ptr.data._max - ptr.data._min);
+                        if (ptr.data._declarer == 'ui_range') {
+                          curVal = Math.round(curVal, 0);
+                        }
+                        ptr.data.value = curVal;
+                        ptr.updValue(container, ptr);
+                    };
+
+                    var moving = function (e) {
+                        if (isMouseDown) {
+                            updatePosition(e);
+                            return false;
+                        }
+                    };
+
+                    var dropCallback = function (e) {
+                        if (isMouseDown) {
+                            isMouseDown = false;
+                            $("#content").unbind("mousemove", moving);
+                            $("#content").unbind("mouseup", dropCallback);
+                            Lank.publish(ptr.data.id, ptr.data.value);
+                        }
+                    };
+                    ptr.updValue(container, ptr);
+                    container.find('.ui_range-button').bind('mousedown', startSlide);
+                },
+                onUpdate: function (ev, eventArgs, tagCtxs) {
+                    var container = $(this.el);
+                    this.updValue(container, this);
+                    return false;
+                },
+                updValue: function (container, ptr) {
+                    var upperBound = (container.find('.ui_range-scale').width() - container.find('.ui_range-button').width());
+                    var newPos = (ptr.data.value - ptr.data._min) / (ptr.data._max - ptr.data._min) * upperBound;
+                    if (ptr.data._readonly == true) {
+                        container.find('.ui_range-button').hide();
+                        container.find('.ui_range-tooltip').hide();
+                    } else {
+                        if (!container.find('.ui_range-button').is(":visible")) {
+                            container.find('.ui_range-button').show();
+                            container.find('.ui_range-tooltip').show();
+                        }
+                        if (newPos < 0) {
+                            newPos = 0;
+                        } else if (newPos > upperBound) {
+                            newPos = upperBound;
+                        }
+                        container.find('.ui_range-button').css("left", newPos);
+                        var tVal;
+                        if (ptr.data._format) {
+                          tVal = String.format(ptr.data._format, ptr.data.value);
+                        } else if (ptr.data._declarer == 'ui_rangeF') {
+                          tVal = String.format('{0:0.0}', ptr.data.value);
+                        } else {
+                          tVal = ptr.data.value;
+                        }
+                        container.find('.ui_range-tooltip').html(tVal);
+                        container.find('.ui_range-tooltip').css('left', newPos - 6);
+                    }
+                    upperBound=container.find('.ui_range-scale').width();
+                    if (typeof (ptr.data.current) != 'undefined') {
+                        newPos = (ptr.data.current - ptr.data._min) / (ptr.data._max - ptr.data._min) * upperBound;
+                    } else {
+                        newPos = (ptr.data.value - ptr.data._min) / (ptr.data._max - ptr.data._min) * upperBound;
+                    }
+                    if (newPos < 0) {
+                        newPos = 0;
+                    } else if (newPos > upperBound) {
+                        newPos = upperBound;
+                    }
+                    container.find('.ui_range-progress').css("width", newPos);
+                }
+            }
+        });
+        var Lank = { 'Tiles': [], 'selected': null, 'dygs': [], 'user': {}, 'blockRedraw': false, 'f': {} };
+        Lank.publish = function (path, val) {
+            if (val == undefined) {
+                for (var i = Lank.Tiles[Lank.selected].body.length - 1; i >= 0; i--) {
+                    if (Lank.Tiles[Lank.selected].body[i].id == path) {
+                        var msg = 'P\t' + path + '\t' + JSON.stringify(Lank.Tiles[Lank.selected].body[i].value);
+                        Lank.ws.send(msg);
+                        break;
+                    }
+                }
+            } else {
+                Lank.ws.send('P\t' + path + '\t' + JSON.stringify(val));
+            }
+        }
+        Lank.f.onMessage = function (evt) {
+            var sa = evt.data.split('\t');
+            if (sa[0] == "P" && sa.length == 3) {
+                var pa = sa[1].split('/');
+                if (pa[1] == 'export' && pa.length > 2) {
+                    var tPath = "/" + pa[1] + "/" + pa[2] + "/";
+                    var tile = null;
+                    for (var tileIdx = 0; tileIdx < Lank.Tiles.length; tileIdx++) {
+                        if (Lank.Tiles[tileIdx]["path"] == tPath) {
+                            tile = Lank.Tiles[tileIdx];
+                            break;
+                        }
+                    }
+                    if (pa[3] == 'header') {  // header
+                        if (tile == null) {
+                            if (sa[2] != 'null') {
+                                tile = { 'id': pa[2], 'path': tPath, 'header': [], 'body': [], '_idx': 9999, 'active': false };
+                                $.observable(Lank.Tiles).insert(Lank.Tiles.length, tile);
+                                $('#rs-carousel').carousel('refresh');
+                                if (Lank.curPage == null) {
+                                    Lank.f.SetPage(0, true);
+                                }
+                            }
+                        } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
+                            $.observable(Lank.Tiles).remove(tileIdx, 1);
+                            tile = null;
+                            $('#rs-carousel').carousel('refresh');
+                        }
+                        if (tile != null && pa.length > 4) {
+                            if (pa.length == 5 && pa[4].substring(0, 1) == '_') {
+                                $.observable(Lank.Tiles[tileIdx]).setProperty(pa[4], JSON.parse(sa[2]));
+                                if (pa[4] == '_idx') {
+                                    var ot = Lank.Tiles[Lank.selected];
+                                    $.observable(Lank.Tiles).refresh(Lank.Tiles.sort(function (a, b) {
+                                        return a._idx - b._idx;
+                                    }));
+                                    if (ot != Lank.Tiles[Lank.selected]) {
+                                        Lank.f.SetPage(Lank.selected, true);
+                                    }
+                                }
+                            } else {
+                                var ui = null;
+                                var uIdx;
+                                var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3] + "/" + pa[4];
+                                for (uIdx = 0; uIdx < tile.header.length; uIdx++) {
+                                    if (tile.header[uIdx]["id"] == uPath) {
+                                        ui = tile.header[uIdx];
+                                        break;
+                                    }
+                                }
+                                if (ui == null) {
+                                    if (sa[2] != 'null') {
+                                        ui = { 'id': uPath, '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
+                                        $.observable(tile.header).insert(uIdx, ui);
+                                    }
+                                } else if ((pa.length == 5 || (pa.length == 6 && pa[4] == '_declarer')) && sa[2] == 'null') {
+                                    $.observable(tile.header).remove(uIdx, 1);
+                                    ui = null;
+                                }
+                                if (ui != null && pa.length == 5) {
+                                    $.observable(ui).setProperty('value', JSON.parse(sa[2]));
+                                } else if (ui != null && pa.length == 6) {
+                                    $.observable(ui).setProperty(pa[5], JSON.parse(sa[2]));
+                                    if (pa[5] == '_idx') {
+                                        $.observable(tile.header).refresh(tile.header.sort(function (a, b) {
+                                            return a._idx - b._idx;
+                                        }));
+                                    }
+                                }
+                            }
+                        }
+                    } else if (tile != null) {  // body
+                        if (pa.length == 4 && pa[3].substring(0, 1) == '_') {
+                            //    $.observable(Lank.Tiles[tileIdx]).setProperty(pa[3], JSON.parse(sa[2]));
+                        } else {
+                            var ui = null;
+                            var uIdx;
+                            var uPath = "/" + pa[1] + "/" + pa[2] + "/" + pa[3];
+                            for (uIdx = 0; uIdx < tile.body.length; uIdx++) {
+                                if (tile.body[uIdx]["id"] == uPath) {
+                                    ui = tile.body[uIdx];
+                                    break;
+                                }
+                            }
+                            if (ui == null) {
+                                if (sa[2] != 'null') {
+                                    ui = { 'id': uPath, 'name': pa[3], '_declarer': '', '_idx': 9999, '_style': '', '_class': '' };
+                                    $.observable(tile.body).insert(uIdx, ui);
+                                }
+                            } else if ((pa.length == 4 || (pa.length == 5 && pa[4] == '_declarer')) && sa[2] == 'null') {
+                                $.observable(tile.body).remove(uIdx, 1);
+                                ui = null;
+                            }
+                            if (ui != null && pa.length == 4) {
+                                $.observable(ui).setProperty('value', JSON.parse(sa[2]));
+                            } else if (ui != null && pa.length == 5) {
+                                $.observable(ui).setProperty(pa[4], JSON.parse(sa[2]));
+                                if (pa[4] == '_idx') {
+                                    $.observable(tile.body).refresh(tile.body.sort(function (a, b) { return a._idx - b._idx; }));
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (sa[0] == 'I' && sa.length == 3) {
+                document.cookie = 'sessionId=' + sa[1];
+                if (sa[2] == 'true' || (sa[2] == 'null' && localStorage.getItem("userName") == null)) {
+                    Lank.user.userName = localStorage.getItem('userName');
+                    Lank.ws.send("S\t/export/+/header/#");
+                    if (Lank.selected != null) {
+                        Lank.ws.send("S\t" + Lank.selected.path + "#");
+                    }
+                    $(document.body).removeClass('offline');
+                    var b = $('#loginButton').prop('value', Lank.user.userName ? Lank.user.userName : 'anonymous');
+                } else if (localStorage.getItem("userName") != null) {
+                    Lank.user.userName = localStorage.getItem('userName');
+                    Lank.user.userPass = localStorage.getItem('password');
+                    Lank.user.userSave = true;
+                    Lank.ws.send('C\t' + localStorage.getItem('userName') + '\t' + localStorage.getItem('password'));
+                } else {
+                    Lank.f.LoginForm(true);
+                }
+            } else if (sa[0] == 'C' && sa.length == 2) {
+                if (sa[1] == 'true') {
+                    Lank.ws.send("S\t/export/+/header/#");
+                    if (Lank.selected != null) {
+                        Lank.ws.send("S\t" + Lank.selected.path + "#");
+                    }
+                    $(document.body).removeClass('offline');
+                    if (Lank.user.userSave) {
+                        localStorage.setItem('userName', Lank.user.userName);
+                        localStorage.setItem('password', Lank.user.userPass);
+                    } else {
+                        localStorage.removeItem('userName');
+                        localStorage.removeItem('password');
+                    }
+                    Lank.f.LoginForm(false);
+                    $('#loginButton').prop('value', 'Logged on: ' + (Lank.user.userName ? Lank.user.userName : 'anonymous'));
+                }
+            }
+        };
+        Lank.f.createWS = function () {
+            if (Lank.ws == null || Lank.ws.readyState == Lank.ws.CLOSED) {
+                if (Lank.ws != null) {
+                    Lank.ws.close();
+                    $(document.body).addClass('offline');
+                }
+                Lank.ws = new WebSocket("ws://" + window.location.host + "/api/v03");
+                Lank.ws.onopen = function (evt) {
+                    Lank.ws.onmessage = Lank.f.onMessage;
+                    Lank.ws.onclose = function (evt) {
+                        $(document.body).addClass('offline');
+                        setTimeout(Lank.f.createWS, 1500);
+                    };
+                    Lank.ws.onerror = function (evt) {
+                        $(document.body).addClass('offline');
+                        setTimeout(Lank.f.createWS, 1500);
+                    };
+                };
+                setTimeout(Lank.f.createWS, 15000);
+            }
+        };
+        Lank.f.SetPage = function (idx, init) {
+            if (Lank.selected != null) {
+                $.observable(Lank.selected).setProperty('active', false);
+            }
+            if (idx >= 0 && idx < Lank.Tiles.length) {
+                var cur = Lank.Tiles[idx];
+                $.observable(Lank).setProperty('selected', cur);
+                Lank.ws.send("S\t" + cur.path + "#");
+                $.observable(Lank.selected).setProperty('active', true);
+            }
+        };
+        Lank.f.hClick = function (p) {
+            if (p != null && typeof (p) === "string") {
+                if (p.substring(0, 8) == "/export/") {
+                    for (var i = Lank.Tiles.length - 1; i >= 0; i--) {
+                        if (Lank.Tiles[i]['path'] == p) {
+                            Lank.f.SetPage(i, false);
+                            break;
+                        }
+                    }
+                }
+            }
+        };
+        Lank.f.LoginForm = function (show) {
+            if (show && !$('#login_form').is(":visible")) {
+                if (localStorage.getItem("userName") != null) {
+                    $('#userName').val(localStorage.getItem('userName'));
+                    $('#userPassword').val(localStorage.getItem('password'));
+                    $('#userRemeber').prop('checked', true);
+                } else {
+                    $('#userName').val("");
+                    $('#userPassword').val("");
+                    $('#userRemeber').prop('checked', false);
+                }
+                $('#login_form').show();
+            } else {
+                $('#login_form').hide();
+            }
+        }
+        Lank.f.Login = function () {
+            Lank.user.userName = $('#userName').val();
+            Lank.user.userPass = $('#userPassword').val();
+            Lank.user.userSave = $('#userRemeber').prop('checked');
+            if (Lank.ws != null) {
+                Lank.ws.send('C\t' + Lank.user.userName + '\t' + Lank.user.userPass);
+            }
+        }
+        Lank.f.SwitchSkimpy = function () {
+            if ($('header').hasClass('skimpy')) {
+                $('header').removeClass('skimpy');
+                $('#rs-carousel').removeClass('skimpy');
+                $('#content').removeClass('skimpy');
+                $('#SkimpyButton').prop('value', '<');
+            } else {
+                $('header').addClass('skimpy');
+                $('#rs-carousel').addClass('skimpy');
+                $('#content').addClass('skimpy');
+                $('#SkimpyButton').prop('value', '>');
+            }
+        }
+
+        $(document).ready(function () {
+            Lank.f.createWS();
+
+            $.templates("#HeaderTmpl").link("#rs-carousel", Lank);
+            $.templates("#ContentTmpl").link("#content", Lank);
+            $('#rs-carousel').carousel({
+                'orientation': 'vertical',
+                'pagination': false,
+                'nextPrevActions': false,
+                'touch': true,
+            });
+        });
+    </script>
+    <script id="HeaderTmpl" type="text/x-jsrender">
+    <ul>
+      {^{for Tiles}}
+        <li data-page="{{>path}}" data-link="class{:active?'active rs-carousel-item rs-carousel-item-active  bg_nav_{{:#index%5+1}}':'rs-carousel-item rs-carousel-item-active  bg_nav_{{:#index%5+1}}'}" onclick="Lank.f.hClick('{{>path}}')">
+          <span class="nav_head">{{>id}}</span>
+          {^{for header}}
+            {^{if _declarer=='ui_var'}}
+              <div data-link="class{:_class} style{:_style}">
+                <var data-link="{fmt:value _format}"></var>
+              </div>
+          {{else _declarer=='ui_checkbox'}}
+              <div data-link="class{:_class} style{:_style}">
+                <div class='checkbox readonly'>
+                  <input type="checkbox" id="{{>id}}" disabled="disabled" data-link="{:value}" />
+                  <label for="{{>id}}"></label>
+                </div>
+              </div>
+          {{/if}}
+          {{/for}}
+        </li>
+      {{/for}}
+    </ul>
+    </script>
+    <script id="ContentTmpl" type="text/x-jsrender">
+    {^{if selected==null}}
+        <div><span>Loading ...</span></div>
+    {{else}}
+        {^{for selected}}
+          {^{for body }}
+            {^{if _declarer=='ui_var'}}
+              <div data-link="class{:_class+' str_in'} style{:_style}">
+                <var data-link="{fmt:value _format}"></var>
+              </div>
+    {{else _declarer=='ui_checkbox'}}
+              <div data-link="class{:_class+' str_in'} style{:_style}">
+                <label style="float:left; width:49%; margin-top:28px;">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</label>
+                <div data-link="class{:_readonly?'readonly checkbox':'checkbox'}">
+                  <input type="checkbox" id="{{>id}}" data-link="{:value} disabled{:_readonly}" onchange="Lank.publish('{{>id}}', checked)" />
+                  <label for="{{>id}}"></label>
+                </div>
+              </div>
+    {{else _declarer=='ui_button'}}
+              <div data-link="class{:_class+' str_in'} style{:_style}">
+                <button onmousedown="Lank.publish('{{>id}}', true)" onmouseup="Lank.publish('{{>id}}', false)" onmouseout="Lank.publish('{{>id}}', false)">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</button>
+              </div>
+    {{else _declarer=='ui_range'}}
+              <div data-link="class{:_class} style{:_style}">
+                <span style="float:left; width:24%; margin-top:13px;">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</span>
+                {^{pPslider value _min _max _readonly current _style _format /}}
+              </div>
+    {{else _declarer=='ui_rangeF'}}
+              <div data-link="class{:_class} style{:_style}">
+                <span style="float:left; width:24%; margin-top:13px;">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</span>
+                {^{pPslider value _min _max _readonly current _style _format /}}
+              </div>
+    {{else _declarer=='ui_link'}}
+              <div data-link="class{:_class+' str_in'} style{:_style}">
+                <a data-link="href{:value}">{^{if _text}}{^{:_text}}{{else}}{{:name}}{{/if}}</a>
+              </div>
+    {{else _declarer=='ui_img'}}
+              <div data-link="class{:_class} style{:_style}">
+                <img data-link="src{:value} height{:_hsize} width{:_vsize}" />
+              </div>
+    {{else _declarer=='ui_colorpicker'}}
+              <div data-link="class{:_class} style{:_style}">
+                {^{miniColor value /}}
+              </div>
+    {{else _declarer=='ui_dygraph'}}
+                {^{dygraph value _options _class _style /}}
+            {{/if}}
+          {{/for}}
+        {{/for}}
+      {{/if}}
+    </script>
+</body>
+</html>

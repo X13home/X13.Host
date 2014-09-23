@@ -1,0 +1,266 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root head="/etc/declarers">
+  <item name="dev">
+    <item name="Gpio" value="pack://application:,,/Gpio;component/Images/rpi.png" saved="True" type="System.String" ver="0.3.1426.1">
+      <!--V2_Pin_P1_03 = 2-->
+      <item name="P1-03">
+        <item name="Op02" value="CzX2" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 3" saved="True" type="System.String" />
+        </item>
+        <item name="Ip02" value="AzX2" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 3" saved="True" type="System.String" />
+        </item>
+        <item name="In02" value="BzX2" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 3" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_05 = 3,-->
+      <item name="P1-05">
+        <item name="Op03" value="CzX3" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 5" saved="True" type="System.String" />
+        </item>
+        <item name="Ip03" value="AzX3" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 5" saved="True" type="System.String" />
+        </item>
+        <item name="In03" value="BzX3" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 5" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_07 = 4,-->
+      <item name="P1-07">
+        <item name="Op04" value="CzX4" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 7" saved="True" type="System.String" />
+        </item>
+        <item name="Ip04" value="AzX4" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 7" saved="True" type="System.String" />
+        </item>
+        <item name="In04" value="BzX4" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 7" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_08 = 14,-->
+      <item name="P1-08">
+        <item name="Op14" value="CzX14" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 08" saved="True" type="System.String" />
+        </item>
+        <item name="Ip14" value="AzX14" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 08" saved="True" type="System.String" />
+        </item>
+        <item name="In14" value="BzX14" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 08" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_10 = 15,-->
+      <item name="P1-10">
+        <item name="Op15" value="CzX15" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 10" saved="True" type="System.String" />
+        </item>
+        <item name="Ip15" value="AzX15" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 10" saved="True" type="System.String" />
+        </item>
+        <item name="In15" value="BzX15" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 10" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_11 = 17,-->
+      <item name="P1-11">
+        <item name="Op17" value="CzX17" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 11" saved="True" type="System.String" />
+        </item>
+        <item name="Ip17" value="AzX17" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 11" saved="True" type="System.String" />
+        </item>
+        <item name="In17" value="BzX17" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 11" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_12 = 18,-->
+      <item name="P1-12">
+        <item name="Op18" value="CzX18" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 12" saved="True" type="System.String" />
+        </item>
+        <item name="Ip18" value="AzX18" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 12" saved="True" type="System.String" />
+        </item>
+        <item name="In18" value="BzX18" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 12" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_13 = 27,-->
+      <item name="P1-13">
+        <item name="Op27" value="CzX27" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 13" saved="True" type="System.String" />
+        </item>
+        <item name="Ip27" value="AzX27" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 13" saved="True" type="System.String" />
+        </item>
+        <item name="In27" value="BzX27" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 13" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_15 = 22,-->
+      <item name="P1-15">
+        <item name="Op22" value="CzX22" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 15" saved="True" type="System.String" />
+        </item>
+        <item name="Ip22" value="AzX22" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 15" saved="True" type="System.String" />
+        </item>
+        <item name="In22" value="BzX22" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 15" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_16 = 23,-->
+      <item name="P1-16">
+        <item name="Op23" value="CzX23" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 16" saved="True" type="System.String" />
+        </item>
+        <item name="Ip23" value="AzX23" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 16" saved="True" type="System.String" />
+        </item>
+        <item name="In23" value="BzX23" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 16" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_18 = 24,-->
+      <item name="P1-18">
+        <item name="Op24" value="CzX24" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 18" saved="True" type="System.String" />
+        </item>
+        <item name="Ip24" value="AzX24" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 18" saved="True" type="System.String" />
+        </item>
+        <item name="In24" value="BzX24" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 18" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_19 = 10,-->
+      <item name="P1-19">
+        <item name="Op10" value="CzX10" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 19" saved="True" type="System.String" />
+        </item>
+        <item name="Ip10" value="AzX10" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 19" saved="True" type="System.String" />
+        </item>
+        <item name="In10" value="BzX10" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 19" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_21 = 9,-->
+      <item name="P1-21">
+        <item name="Op09" value="CzX9" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 21" saved="True" type="System.String" />
+        </item>
+        <item name="Ip09" value="AzX9" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 21" saved="True" type="System.String" />
+        </item>
+        <item name="In09" value="BzX9" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 21" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_22 = 25,-->
+      <item name="P1-22">
+        <item name="Op25" value="CzX25" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 22" saved="True" type="System.String" />
+        </item>
+        <item name="Ip25" value="AzX25" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 22" saved="True" type="System.String" />
+        </item>
+        <item name="In25" value="BzX25" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 22" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_23 = 11,-->
+      <item name="P1-23">
+        <item name="Op11" value="CzX11" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 23" saved="True" type="System.String" />
+        </item>
+        <item name="Ip11" value="AzX11" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 23" saved="True" type="System.String" />
+        </item>
+        <item name="In11" value="BzX11" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 23" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_24 = 8,-->
+      <item name="P1-24">
+        <item name="Op08" value="CzX8" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 24" saved="True" type="System.String" />
+        </item>
+        <item name="Ip08" value="AzX8" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 24" saved="True" type="System.String" />
+        </item>
+        <item name="In08" value="BzX8" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 24" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P1_26 = 7,-->
+      <item name="P1-26">
+        <item name="Op07" value="CzX7" saved="True" type="System.String">
+          <item name="_description" value="Digital output, Pin 26" saved="True" type="System.String" />
+        </item>
+        <item name="Ip07" value="AzX7" saved="True" type="System.String">
+          <item name="_description" value="Digital input, Pin 26" saved="True" type="System.String" />
+        </item>
+        <item name="In07" value="BzX7" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, Pin 26" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_LED = 16,
+      <item name="LED">
+        <item name="Op16" value="CzX16" saved="True" type="System.String">
+          <item name="_description" value="Digital output, LED " saved="True" type="System.String" />
+        </item>
+      </item>-->
+      <!--V2_Pin_P5_03 = 28,-->
+      <item name="P5-03">
+        <item name="Op28" value="CzX28" saved="True" type="System.String">
+          <item name="_description" value="Digital output, P5-03 " saved="True" type="System.String" />
+        </item>
+        <item name="Ip28" value="AzX28" saved="True" type="System.String">
+          <item name="_description" value="Digital input, P5-03 " saved="True" type="System.String" />
+        </item>
+        <item name="In28" value="BzX28" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, P5-03" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P5_04 = 29,-->
+      <item name="P5-04">
+        <item name="Op29" value="CzX29" saved="True" type="System.String">
+          <item name="_description" value="Digital output, P5-04 " saved="True" type="System.String" />
+        </item>
+        <item name="Ip29" value="AzX29" saved="True" type="System.String">
+          <item name="_description" value="Digital input, P5-04 " saved="True" type="System.String" />
+        </item>
+        <item name="In29" value="BzX29" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, P5-04" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P5_05 = 30,-->
+      <item name="P5-05">
+        <item name="Op30" value="CzX30" saved="True" type="System.String">
+          <item name="_description" value="Digital output, P5-05 " saved="True" type="System.String" />
+        </item>
+        <item name="Ip30" value="AzX30" saved="True" type="System.String">
+          <item name="_description" value="Digital input, P5-05 " saved="True" type="System.String" />
+        </item>
+        <item name="In30" value="BzX30" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, P5-05" saved="True" type="System.String" />
+        </item>
+      </item>
+      <!--V2_Pin_P5_06 = 31,-->
+      <item name="P5-06">
+        <item name="Op31" value="CzX31" saved="True" type="System.String">
+          <item name="_description" value="Digital output, P5-06 " saved="True" type="System.String" />
+        </item>
+        <item name="Ip31" value="AzX31" saved="True" type="System.String">
+          <item name="_description" value="Digital input, P5-06 " saved="True" type="System.String" />
+        </item>
+        <item name="In31" value="BzX31" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted input, P5-06" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="remove" value="ZD" saved="True" type="System.String" />
+    </item>
+  </item>
+</root>

@@ -87,6 +87,12 @@ namespace X13.PLC {
     }
     public void Start() {
       Topic.paused=false;
+      if(!Directory.Exists("../data/import")) {
+        Directory.CreateDirectory("../data/import");
+      }
+      foreach(string f in Directory.GetFiles("../data/import/", "*.xst", SearchOption.TopDirectoryOnly)) {
+        Topic.Import(f);
+      }
     }
     public void Stop() {
       if(_file!=null) {
@@ -305,7 +311,7 @@ namespace X13.PLC {
             } else {
               if(dataModified) {
                 CopyBytes(6+r.data_size, dBuf, 0);
-                if(Write(ref r.data_pos, dBuf, oldDataSize, r.data_size+6)) {
+                if(Write(ref r.data_pos, dBuf, oldDataSize, r.data_size+6, r.pos)) {
                   recModified=true;
                 }
                 signal=true;
@@ -328,7 +334,7 @@ namespace X13.PLC {
             CopyBytes(r.fl_size, rBuf, 0);
             CopyBytes(r.parent, rBuf, 4);
             Encoding.UTF8.GetBytes(r.name).CopyTo(rBuf, 12);
-            if(Write(ref r.pos, rBuf, (int)oldFl_Size & FL_REC_LEN, r.size)) {
+            if(Write(ref r.pos, rBuf, (int)oldFl_Size & FL_REC_LEN, r.size, r.parent)) {
               var ch=r.t.children.ToArray();
               for(int i=ch.Length-1; i>=0; i--) {
                 if(!ch[i].path.StartsWith("/local") && ch[i].path!="/var/log/A0") {
@@ -385,6 +391,9 @@ namespace X13.PLC {
     }
     private Record GetRecord(Topic t) {
       Record rec;
+      if(t==null) {
+        return null;
+      }
       if(!_tr.TryGetValue(t, out rec)) {
         if(t.disposed) {
           return null;
@@ -412,7 +421,7 @@ namespace X13.PLC {
         Log.Warning("PersistentStorage.Backup - "+ex.Message);
       }
     }
-    private bool Write(ref uint pos, byte[] buf, int oldSize, int curSize) {
+    private bool Write(ref uint pos, byte[] buf, int oldSize, int curSize, uint pPos=0) {
       int bufSize=((curSize+15)&FL_LEN_MASK);
       if(buf==null || curSize<6 || buf.Length<bufSize) {
         throw new ArgumentException("curSize");
@@ -422,7 +431,7 @@ namespace X13.PLC {
       CopyBytes(Crc16.ComputeChecksum(buf, curSize-2), buf, curSize-2);
       if(bufSize!=oldSize) {
         AddFree(pos, oldSize);
-        pos=FindFree(curSize);
+        pos=FindFree(curSize, pPos);
       }
       for(int i=curSize; i<bufSize; i++) {
         buf[i]=0;
@@ -439,7 +448,13 @@ namespace X13.PLC {
           t=Topic.root;
         }
       } else {
-        t=Topic.GetP(r.name, r.type, _sign, parent);
+        try {
+          t=Topic.GetP(r.name, r.type, _sign, parent);
+        }
+        catch(ArgumentException ex) {
+          Log.Warning("PersistentStorage.AddTopic - {0}", ex.Message);
+          t=null;
+        }
       }
       if(t!=null) {
         r.t=t;
@@ -504,10 +519,10 @@ namespace X13.PLC {
         Log.Debug("F [{0:X4}]({1}/{2})", pos<<4, size&FL_LEN_MASK, sz);
       }
     }
-    private uint FindFree(int size) {
+    private uint FindFree(int size, uint sPos=0) {
       size=(size+15)&FL_LEN_MASK;
       uint rez;
-      ulong p=_freeBlocks.GetViewBetween((ulong)size<<32, (ulong)(size+1)<<32).FirstOrDefault();
+      ulong p=_freeBlocks.GetViewBetween(((ulong)size<<32 | sPos), (ulong)(size+1)<<32).FirstOrDefault();
       if((int)(p>>32)==size) {
         _freeBlocks.Remove(p);
         rez=(uint)p;
