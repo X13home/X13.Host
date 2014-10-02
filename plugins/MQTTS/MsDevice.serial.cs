@@ -281,6 +281,7 @@ namespace X13.Periphery {
       private byte _gwAddr;
       private Queue<MsMessage> _sendQueue;
       private DVar<MsDevice> _gwTopic;
+      private DateTime _advTick;
 
       public MsGSerial(SerialPort port, byte addr) {
         _port=port;
@@ -293,6 +294,7 @@ namespace X13.Periphery {
         _sendQueue=new Queue<MsMessage>();
         ThreadPool.QueueUserWorkItem(CommThread);
         Send(new MsDisconnect() { Addr=new byte[] { addr } });
+        _advTick=DateTime.Now.AddSeconds(2.6);
       }
       public void Send(MsMessage msg) {
         lock(_sendQueue) {
@@ -316,14 +318,18 @@ namespace X13.Periphery {
               cnt=-1;
               ParseInPacket(rezAddr, rezBuf);
               continue;
-            } else {
-              msg=null;
-              lock(_sendQueue) {
-                if(_sendQueue.Count>0) {
-                  msg=_sendQueue.Dequeue();
-                }
+            }
+            msg=null;
+            lock(_sendQueue) {
+              if(_sendQueue.Count>0) {
+                msg=_sendQueue.Dequeue();
               }
-              SendRaw(this, msg);
+            }
+            SendRaw(this, msg);
+
+            if(msg==null && _advTick<DateTime.Now) {
+              SendRaw(this, new MsAdvertise(gwIdx, 900) { Addr=new byte[] { 0 } });
+              _advTick=DateTime.Now.AddMinutes(15);
             }
             Thread.Sleep(15);
             if(msg==null && _gwTopic!=null && _gwTopic.value!=null && (_gwTopic.value.state==State.Disconnected || _gwTopic.value.state==State.Lost)) {
@@ -362,6 +368,9 @@ namespace X13.Periphery {
           this.Send(new MsGwInfo(_gwAddr) { Addr=new byte[] { 0 } });
         } else if(msgTyp==MsMessageType.CONNECT) {
           var msg=new MsConnect(buf) { Addr=addr };
+          if(addr[0]==_gwAddr) {
+            _advTick=DateTime.Now.AddSeconds(2.6);  // Send Advertise in 2.6 sec.
+          }
           if(addr[0]==0xFF) {
             PrintPacket(null, msg, buf);
             Send(new MsConnack(MsReturnCode.Accepted) { Addr=msg.Addr });
