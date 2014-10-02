@@ -750,7 +750,7 @@ namespace X13.CC {
       double wo=0;
       foreach(var p in _pins) {
         DVar<string> pinDecl=declarer.all.FirstOrDefault(z => z.name==p.GetModel().name) as DVar<string>;
-        if(pinDecl==null) {
+        if(pinDecl==null || string.IsNullOrEmpty(pinDecl.value)) {
           continue;
         }
         char pc=pinDecl.value[0];

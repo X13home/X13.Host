@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root head="/etc/declarers/func">
+    <item name="jsFunc" value="pack://application:,,,/JsFunc;component/Images/jsFunc.png" saved="True" type="System.String" ver="0.3.1440.12">
+      <item name="_description" value="o JavaScript" saved="True" type="System.String" />
+      <item name="long">
+        <item name="A" value="AiX1" saved="True" type="System.String" />
+        <item name="B" value="BiX2" saved="True" type="System.String" />
+        <item name="C" value="CiX3" saved="True" type="System.String" />
+        <item name="D" value="DiX4" saved="True" type="System.String" />
+        <item name="E" value="EiX5" saved="True" type="System.String" />
+        <item name="F" value="FiX6" saved="True" type="System.String" />
+        <item name="G" value="GiX7" saved="True" type="System.String" />
+        <item name="H" value="HiX8" saved="True" type="System.String" />
+      </item>
+      <item name="double">
+        <item name="A" value="AgX1" saved="True" type="System.String" />
+        <item name="B" value="BgX2" saved="True" type="System.String" />
+        <item name="C" value="CgX3" saved="True" type="System.String" />
+        <item name="D" value="DgX4" saved="True" type="System.String" />
+        <item name="E" value="EgX5" saved="True" type="System.String" />
+        <item name="F" value="FgX6" saved="True" type="System.String" />
+        <item name="G" value="GgX7" saved="True" type="System.String" />
+        <item name="H" value="HgX8" saved="True" type="System.String" />
+        <item name="Q" value="agX10" saved="True" type="System.String" />
+      </item>
+      <item name="string">
+        <item name="A" value="AsX1" saved="True" type="System.String" />
+        <item name="B" value="BsX2" saved="True" type="System.String" />
+        <item name="C" value="CsX3" saved="True" type="System.String" />
+        <item name="D" value="DsX4" saved="True" type="System.String" />
+        <item name="E" value="EsX5" saved="True" type="System.String" />
+        <item name="F" value="FsX6" saved="True" type="System.String" />
+        <item name="G" value="GsX7" saved="True" type="System.String" />
+        <item name="H" value="HsX8" saved="True" type="System.String" />
+        <item name="Q" value="asX10" saved="True" type="System.String" />
+      </item>
+      <item name="rename" value="|R" saved="True" type="System.String" />
+      <item name="remove" value="}D" saved="True" type="System.String" />
+    </item>
+</root>
