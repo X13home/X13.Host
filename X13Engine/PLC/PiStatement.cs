@@ -167,7 +167,7 @@ namespace X13.PLC {
     private void _owner_changed(Topic sender, TopicChanged param) {
       if(_initDelay!=null) {
         _initDelay.Change(100, Timeout.Infinite);
-      } else if(param.Art==TopicChanged.ChangeArt.Value && _st!=null) {
+      } else if(param.Art==TopicChanged.ChangeArt.Value && param.Initiator!=_owner && _st!=null) {
         if(_st!=null) {
           try {
             _st.Calculate(_owner, param.Source);
