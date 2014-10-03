@@ -91,6 +91,7 @@ namespace X13.PLC.jsFunc {
           if(_owner!=null && _owner.Exist(propertyName, out p)) {
             var ts=TopicSetter.Get(Engine, propertyName);
             var d=new PropertyDescriptor(ts, ts.ro?null:ts, Jurassic.Library.PropertyAttributes.IsAccessorProperty);
+            p.SetValue(value, new TopicChanged(TopicChanged.ChangeArt.Value, _owner));
             return base.AddProperty(propertyName, d.Value, d.Attributes, throwOnError);
           } else {
             return false;
@@ -139,11 +140,16 @@ namespace X13.PLC.jsFunc {
       }
       public override object CallLateBound(object thisObject, params object[] argumentValues) {
         var t=thisObject as TInst;
+        object v;
         Topic o, r;
         if(t!=null && (o=t._owner)!=null) {
           if(!ro && argumentValues.Length==1) {
+            v=argumentValues[0];
+            if(v is ConcatenatedString) {
+              v=v.ToString();
+            }
             r=o.Get(_name);
-            r.SetValue(argumentValues[0], new TopicChanged(TopicChanged.ChangeArt.Value, o));
+            r.SetValue(v, new TopicChanged(TopicChanged.ChangeArt.Value, o));
           } else if(argumentValues.Length==0) {
             if(o.Exist(_name, out r)) {
               return r.GetValue();
