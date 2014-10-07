@@ -680,11 +680,22 @@ namespace X13.CC {
       model.changed+=model_changed;
       model.Subscribe("+", PinChanged);
       _owner.AddVisual(this);
-      foreach(Topic mp in model.children.Where(z => !z.name.StartsWith("_"))) {
-        uiPin p=new uiPin(this, mp);
-        _pins.Add(p);
-        _owner.AddVisual(p);
+
+      DVar<string> declarer;
+      Topic fd=Topic.root.Get("/etc/declarers/func/");
+      Topic dt;
+      Topic tmp;
+      if(model.Exist("_declarer", out dt) && fd.Exist((dt as DVar<string>).value, out tmp) && ((declarer=tmp as DVar<string>)!=null)) {
+        foreach(Topic mp in model.children) {
+          DVar<string> pinDecl=declarer.all.FirstOrDefault(z => z.name==mp.name) as DVar<string>;
+          if(pinDecl!=null) {
+            uiPin p=new uiPin(this, mp);
+            _pins.Add(p);
+            _owner.AddVisual(p);
+          }
+        }
       }
+
       Render(3);
     }
 
@@ -701,18 +712,33 @@ namespace X13.CC {
       }
     }
     private void PinChanged(Topic sender, TopicChanged param) {
-      if(!sender.name.StartsWith("_")) {
+      if(sender.parent==model && sender.name=="_location") {
+        this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);
+      } else {
         this.Dispatcher.BeginInvoke(new Action(() => {
           uiPin p=_pins.FirstOrDefault(z => z.GetModel()==sender);
           if(param.Art!=TopicChanged.ChangeArt.Remove) {
             if(p==null) {
-              sender.saved=true;
-              p=new uiPin(this, sender);
-              _pins.Add(p);
-              _owner.AddVisual(p);
-              Render(1);
+              DVar<string> declarer;
+              Topic fd=Topic.root.Get("/etc/declarers/func/");
+              Topic dt;
+              Topic tmp;
+              if(!model.Exist("_declarer", out dt) || !fd.Exist((dt as DVar<string>).value, out tmp) || ((declarer=tmp as DVar<string>)==null)) {
+                return;
+              }
+              DVar<string> pinDecl=declarer.all.FirstOrDefault(z => z.name==sender.name) as DVar<string>;
+
+              if(pinDecl!=null) {
+                sender.saved=true;
+                p=new uiPin(this, sender);
+                _pins.Add(p);
+                _owner.AddVisual(p);
+                Render(1);
+              }
             }
-            p.Render(1);
+            if(p!=null) {
+              p.Render(1);
+            }
           } else {
             if(p!=null) {
               _owner.DeleteVisual(p);
@@ -721,8 +747,6 @@ namespace X13.CC {
             }
           }
         }));
-      } else if(sender.parent==model && sender.name=="_location") {
-        this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);
       }
     }
     public override void Render(int chLevel) {
