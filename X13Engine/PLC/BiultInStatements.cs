@@ -781,6 +781,9 @@ namespace X13.PLC {
         _ptI=_pt;
         _sum=0;
         _prev=_pv.value;
+        for(int i=0; i<9; i++) {
+          _hist[i]=_pv.value;
+        }
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
@@ -794,13 +797,14 @@ namespace X13.PLC {
           } else {
             _ct.Change(Timeout.Infinite, Timeout.Infinite);
           }
-        } else if(_t.value>0 && _cntMax>0) {
+        } else if(_t.value>0 && _cntMax>0 && (source==_sp || source==_kp || source==_ki || source==_kd)) {
+          _ct.Change(1, _t.value/_cntMax);
+          _cnt=_cntMax;
+        } else {
           Topic tt;
           DVar<bool> bt;
           _gt=model.Exist("Top", out tt) && (bt=tt as DVar<bool>)!=null && bt.value;
           _gb=model.Exist("Bottom", out tt) && (bt=tt as DVar<bool>)!=null && bt.value;
-          _ct.Change(1, _t.value/_cntMax);
-          _cnt=_cntMax;
         }
       }
       public void DeInit() {
@@ -834,7 +838,7 @@ namespace X13.PLC {
         if(_cnt>=_cntMax) {
           _cnt=0;
           var dt=(now-_pt).TotalSeconds;
-          double d=(_hist[0]+_hist[1]+_hist[2])/1.5 - (_hist[3]+_hist[4]+_hist[5])/4.5 + (_hist[6]+_hist[7]+_hist[8])/6;
+          double d=(_hist[0]+_hist[1]+_hist[2])/2 - (_hist[3]+_hist[4]+_hist[5])/4.5 + (_hist[6]+_hist[7]+_hist[8])/18;
           e=_sp.value-d;
           double rez=_kp.value*e+_sum+_kd.value*(_prev-d)/dt;
           if(rez>_uMax.value) {
