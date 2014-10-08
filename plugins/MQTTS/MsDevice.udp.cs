@@ -101,7 +101,7 @@ namespace X13.Periphery {
           _udp.EnableBroadcast=true;
           _udp.BeginReceive(new AsyncCallback(ReceiveCallback), null);
           _gates.Insert(0, this);
-          _advTick=new Timer(SendAdv, null, 4500, 90000);
+          _advTick=new Timer(SendAdv, null, 4500, 900000);
         }
         catch(Exception ex) {
           Log.Error("MsGUdp.ctor() {0}", ex.Message);
@@ -173,7 +173,7 @@ namespace X13.Periphery {
         }
       }
       private void SendAdv(object o) {
-        Send(new MsAdvertise(0, 90) { Addr=IPAddress.Broadcast.GetAddressBytes() });
+        Send(new MsAdvertise(0, 900) { Addr=IPAddress.Broadcast.GetAddressBytes() });
       }
 
       public void Send(MsMessage msg) {
