@@ -53,7 +53,8 @@ namespace X13.Periphery {
   internal enum TopicIdType {
     Normal=0,
     PreDefined=1,
-    ShortName=2
+    ShortName=2,
+    NotUsed=3
   }
 
   internal class MsMessage {

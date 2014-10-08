@@ -274,8 +274,9 @@ namespace X13.Periphery {
             }
           } else {
             Log.Warning("{0} registred failed: {1}", ti.path, msg.RetCode.ToString());
-            _topics.Remove(ti);
-            ti.topic.Remove();
+            ti.it=TopicIdType.NotUsed;
+            //_topics.Remove(ti);
+            //ti.topic.Remove();
           }
         }
         break;
@@ -512,7 +513,7 @@ namespace X13.Periphery {
       if(rez==null && param.Art==TopicChanged.ChangeArt.Value) {
         rez=GetTopicInfo(topic, true);
       }
-      if(rez==null || rez.TopicId>=0xFFC0 || !rez.registred) {
+      if(rez==null || rez.it==TopicIdType.NotUsed || rez.TopicId>=0xFFC0 || !rez.registred) {
         return;
       }
       if(param.Art==TopicChanged.ChangeArt.Value) {
