@@ -88,6 +88,7 @@ namespace X13.Periphery {
     private int _messageIdGen=0;
     private DVar<bool> _present;
     private IMsGate _gate;
+    private bool _waitAck;
 
     private MsDevice() {
       if(Topic.brokerMode) {
@@ -381,6 +382,7 @@ namespace X13.Periphery {
         lock(_sendQueue) {
           _sendQueue.Clear();
         }
+        _waitAck=false;
       }
       _duration=msg.Duration*1100;
       ResetTimer();
@@ -471,6 +473,7 @@ namespace X13.Periphery {
         }
         _activeTimer.Change(Timeout.Infinite, Timeout.Infinite);
       }
+      _waitAck=false;
     }
     private void OwnerChanged(Topic topic, TopicChanged param) {
       if(param.Art==TopicChanged.ChangeArt.Remove) {
@@ -655,6 +658,7 @@ namespace X13.Periphery {
         MsMessage reqMsg;
         if(_sendQueue.Count>0 && (reqMsg=_sendQueue.Peek()).MsgTyp==rMsg.ReqTyp && reqMsg.MessageId==rMsg.MessageId) {
           _sendQueue.Dequeue();
+          _waitAck=false;
           if(_sendQueue.Count>0 && !(msg=_sendQueue.Peek()).IsRequest) {
             _sendQueue.Dequeue();
           }
@@ -671,7 +675,7 @@ namespace X13.Periphery {
       if(state!=State.Disconnected && state!=State.Lost) {
         msg.Addr=this.Addr;
         bool send=true;
-        if(msg.MessageId==0 && (msg.MsgTyp==MsMessageType.PUBLISH?(msg as MsPublish).qualityOfService!=QoS.AtMostOnce:msg.IsRequest)) {
+        if(msg.MessageId==0 && msg.IsRequest) {
           msg.MessageId=NextMsgId();
           lock(_sendQueue) {
             if(_sendQueue.Count>0 || state==State.ASleep) {
@@ -697,6 +701,10 @@ namespace X13.Periphery {
           }
           if(msg.IsRequest) {
             ResetTimer(ACK_TIMEOUT);
+            _waitAck=true;
+            break;
+          }
+          if(_waitAck) {
             break;
           }
         }
@@ -718,6 +726,9 @@ namespace X13.Periphery {
     }
     private void ResetTimer(int period=0) {
       if(period==0) {
+        if(_waitAck) {
+          return;
+        }
         if(_sendQueue.Count>0) {
           period=ACK_TIMEOUT;
         } else if(_duration>0) {
@@ -737,6 +748,7 @@ namespace X13.Periphery {
             msg=_sendQueue.Peek();
           }
         }
+        _waitAck=false;
         if(msg!=null) {
           SendIntern(msg);
           _tryCounter--;
