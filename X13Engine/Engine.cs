@@ -79,6 +79,7 @@ namespace X13 {
       Topic.Import(_cfgPath, "/local/cfg");
 
       _lHead=root.Get<long>("/var/log");
+      _lHead.saved=false;
       _lThreshold=root.Get<LogLevel>("/etc/log/threshold");
 
       Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
@@ -156,15 +157,17 @@ namespace X13 {
         rez=string.Format("{0:HH:mm:ss.ff}[D] {1}", en.dt, en.msg);
         break;
       }
-      if(en.ll!=LogLevel.Debug) {
-        var dMsg=_lHead.Get<string>((_lHead.value).ToString("D2"));
-        dMsg.saved=true;
+      {
+        DVar<string> dMsg;
+        if(en.ll!=LogLevel.Debug) {
+          dMsg=_lHead.Get<string>((_lHead.value).ToString("D2"));
+          _lHead.value=(_lHead.value+1)%100;
+        } else {
+          dMsg=_lHead.Get<string>("A0");
+        }
+        dMsg.saved=false;
         dMsg.value=string.Format("{0:dd} {1}", en.dt, rez);
-        _lHead.value=(_lHead.value+1)%100;
-      } else {
-        _lHead.Get<string>("A0").value=string.Format("{0:dd} {1}", en.dt, rez);
       }
-
       //Console.WriteLine(rez);
       LogLevel lt=LogLevel.Info;
       if(_lThreshold!=null) {
