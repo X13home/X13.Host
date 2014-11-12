@@ -1,0 +1,1082 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root head="/etc/declarers">
+  <item name="dev">
+    <item name="GWUN10" value="pack://application:,,/CC;component/Images/ty_ugate.png" saved="True" type="System.String" ver="2.6.4">
+      <item name="Add">
+        <item name="bool" value="1Z" saved="True" type="System.String" />
+        <item name="long" value="4I" saved="True" type="System.String" />
+        <item name="string" value="5S" saved="True" type="System.String" />
+      </item>
+      <item name="remove" value="ZD" saved="True" type="System.String" />
+      <item name="SV1-01">
+        <item name="Ai7" value="6iX6" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-01" saved="True" type="System.String" />
+        </item>
+        <item name="Av7" value="7iX6" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-01" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-03">
+        <item name="Ai0" value="AiX1" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="Av0" value="BiX1" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="In16" value="7zX1" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="Ip16" value="6zX1" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="On16" value="9zX1" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="Op16" value="8zX1" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-03" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-04">
+        <item name="Ai1" value="AiX2" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="Av1" value="BiX2" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="In17" value="7zX2" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="Ip17" value="6zX2" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="On17" value="9zX2" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="Op17" value="8zX2" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-04" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-05">
+        <item name="Ai2" value="AiX3" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="Av2" value="BiX3" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="In18" value="7zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="Ip18" value="6zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="On18" value="9zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="Op18" value="8zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-05" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-06">
+        <item name="Ai3" value="AiX4" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="Av3" value="BiX4" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="In19" value="7zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="Ip19" value="6zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="On19" value="9zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="Op19" value="8zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-06" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-13">
+        <item name="In26" value="7zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-13" saved="True" type="System.String" />
+        </item>
+        <item name="Ip26" value="6zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-13" saved="True" type="System.String" />
+        </item>
+        <item name="On26" value="9zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-13" saved="True" type="System.String" />
+        </item>
+        <item name="Op26" value="8zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-13" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-14">
+        <item name="In27" value="7zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-14" saved="True" type="System.String" />
+        </item>
+        <item name="Ip27" value="6zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-14" saved="True" type="System.String" />
+        </item>
+        <item name="On27" value="9zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-14" saved="True" type="System.String" />
+        </item>
+        <item name="Op27" value="8zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-14" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-15">
+        <item name="In28" value="7zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Ip28" value="6zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="On28" value="9zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Op28" value="8zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-15" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-16">
+        <item name="In29" value="7zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Ip29" value="6zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="On29" value="9zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Op29" value="8zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Pn29" value="9iX12" saved="True" type="System.String">
+          <item name="_description" value="PWM negative, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Pp29" value="8iX12" saved="True" type="System.String">
+          <item name="_description" value="PWM positive, SV1-16" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-17">
+        <item name="In30" value="7zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Ip30" value="6zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="On30" value="9zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Op30" value="8zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Pn30" value="9iX13" saved="True" type="System.String">
+          <item name="_description" value="PWM negative, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Pp30" value="8iX13" saved="True" type="System.String">
+          <item name="_description" value="PWM positive, SV1-17" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-18">
+        <item name="In31" value="7zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Ip31" value="6zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="On31" value="9zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Op31" value="8zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-18" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Vcc">
+        <item name="Av14" value="BiX15" saved="True" type="System.String">
+          <item name="_description" value="Analog value, Vcc=1.1*1024/Av14" saved="True" type="System.String" />
+        </item>
+      </item>
+    </item>
+    <item name="NDUN10" value="pack://application:,,/CC;component/Images/ty_unode.png" saved="True" type="System.String" ver="2.6.4">
+      <item name="Add">
+        <item name="bool" value="2Z" saved="True" type="System.String" />
+        <item name="long" value="4I" saved="True" type="System.String" />
+        <item name="string" value="5S" saved="True" type="System.String" />
+      </item>
+      <item name="remove" value="ZD" saved="True" type="System.String" />
+      <item name="SV1-01">
+        <item name="Ai7" value="6iX6" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-01" saved="True" type="System.String" />
+        </item>
+        <item name="Av7" value="7iX6" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-01" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-03">
+        <item name="Ai0" value="AiX1" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="Av0" value="BiX1" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="In16" value="7zX1" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="Ip16" value="6zX1" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="On16" value="9zX1" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="Op16" value="8zX1" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="OA16" value="EzX12" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-03" saved="True" type="System.String" />
+        </item>
+        <item name="Oa16" value="FzX12" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-03" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-04">
+        <item name="Ai1" value="AiX2" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="Av1" value="BiX2" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="In17" value="7zX2" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="Ip17" value="6zX2" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="On17" value="9zX2" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="Op17" value="8zX2" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="OA17" value="EzX2" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-04" saved="True" type="System.String" />
+        </item>
+        <item name="Oa17" value="FzX2" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-04" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-05">
+        <item name="Ai2" value="AiX3" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="Av2" value="BiX3" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="In18" value="7zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="Ip18" value="6zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="On18" value="9zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="Op18" value="8zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="OA18" value="EzX3" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-05" saved="True" type="System.String" />
+        </item>
+        <item name="Oa18" value="FzX3" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-05" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-06">
+        <item name="Ai3" value="AiX4" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="Av3" value="BiX4" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="In19" value="7zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="Ip19" value="6zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="On19" value="9zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="Op19" value="8zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="OA19" value="EzX4" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-06" saved="True" type="System.String" />
+        </item>
+        <item name="Oa19" value="FzX4" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-06" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-11">
+        <item name="In24" value="7zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-11" saved="True" type="System.String" />
+        </item>
+        <item name="Ip24" value="6zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-11" saved="True" type="System.String" />
+        </item>
+        <item name="On24" value="9zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-11" saved="True" type="System.String" />
+        </item>
+        <item name="Op24" value="8zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-11" saved="True" type="System.String" />
+        </item>
+        <item name="Sr0" value="AbX7,S20,B21,B22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="RxD 2400, RX" saved="True" type="System.String" />
+        </item>
+        <item name="Sr1" value="AbX7,B20,S21,B22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="RxD 4800, RX" saved="True" type="System.String" />
+        </item>
+        <item name="Sr2" value="AbX7,B20,B21,S22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="RxD 9600, RX" saved="True" type="System.String" />
+        </item>
+        <item name="Sr3" value="AbX7,B20,B21,B22,S23,B24" saved="True" type="System.String">
+          <item name="_description" value="RxD 19200, RX" saved="True" type="System.String" />
+        </item>
+        <item name="Sr4" value="AbX7,B20,B21,B22,B23,S24" saved="True" type="System.String">
+          <item name="_description" value="RxD 38400, RX" saved="True" type="System.String" />
+        </item>
+        <item name="OA24" value="EzX7" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-11" saved="True" type="System.String" />
+        </item>
+        <item name="Oa24" value="FzX7" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-11" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-12">
+        <item name="In25" value="7zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-12" saved="True" type="System.String" />
+        </item>
+        <item name="Ip25" value="6zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-12" saved="True" type="System.String" />
+        </item>
+        <item name="On25" value="9zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-12" saved="True" type="System.String" />
+        </item>
+        <item name="Op25" value="8zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-12" saved="True" type="System.String" />
+        </item>
+        <item name="St0" value="AbX8,S20,B21,B22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="TxD 2400, TX" saved="True" type="System.String" />
+        </item>
+        <item name="St1" value="AbX8,B20,S21,B22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="TxD 4800, TX" saved="True" type="System.String" />
+        </item>
+        <item name="St2" value="AbX8,B20,B21,S22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="TxD 9600, TX" saved="True" type="System.String" />
+        </item>
+        <item name="St3" value="AbX8,B20,B21,B22,S23,B24" saved="True" type="System.String">
+          <item name="_description" value="TxD 19200, TX" saved="True" type="System.String" />
+        </item>
+        <item name="St4" value="AbX8,B20,B21,B22,B23,S24" saved="True" type="System.String">
+          <item name="_description" value="TxD 38400, TX" saved="True" type="System.String" />
+        </item>
+        <item name="OA25" value="EzX8" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-12" saved="True" type="System.String" />
+        </item>
+        <item name="Oa25" value="FzX8" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-12" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-13">
+        <item name="In26" value="7zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-13" saved="True" type="System.String" />
+        </item>
+        <item name="Ip26" value="6zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-13" saved="True" type="System.String" />
+        </item>
+        <item name="On26" value="9zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-13" saved="True" type="System.String" />
+        </item>
+        <item name="Op26" value="8zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-13" saved="True" type="System.String" />
+        </item>
+        <item name="OA26" value="EzX9" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-13" saved="True" type="System.String" />
+        </item>
+        <item name="Oa26" value="FzX9" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-13" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-14">
+        <item name="In27" value="7zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-14" saved="True" type="System.String" />
+        </item>
+        <item name="Ip27" value="6zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-14" saved="True" type="System.String" />
+        </item>
+        <item name="On27" value="9zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-14" saved="True" type="System.String" />
+        </item>
+        <item name="Op27" value="8zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-14" saved="True" type="System.String" />
+        </item>
+        <item name="OA27" value="EzX10" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-14" saved="True" type="System.String" />
+        </item>
+        <item name="Oa27" value="FzX10" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-14" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-15">
+        <item name="In28" value="7zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Ip28" value="6zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="On28" value="9zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Op28" value="8zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="OA28" value="EzX11" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Oa28" value="FzX11" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-15" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-16">
+        <item name="In29" value="7zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Ip29" value="6zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="On29" value="9zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Op29" value="8zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Pn29" value="9iX12" saved="True" type="System.String">
+          <item name="_description" value="PWM negative, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Pp29" value="8iX12" saved="True" type="System.String">
+          <item name="_description" value="PWM positive, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="OA29" value="EzX12" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Oa29" value="FzX12" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-16" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-17">
+        <item name="In30" value="7zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Ip30" value="6zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="On30" value="9zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Op30" value="8zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Pn30" value="9iX13" saved="True" type="System.String">
+          <item name="_description" value="PWM negative, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Pp30" value="8iX13" saved="True" type="System.String">
+          <item name="_description" value="PWM positive, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="OA30" value="EzX13" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Oa30" value="FzX13" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-17" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-18">
+        <item name="In31" value="7zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Ip31" value="6zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="On31" value="9zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Op31" value="8zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="OA31" value="EzX14" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Oa31" value="FzX14" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-18" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Vcc">
+        <item name="Av14" value="BiX15" saved="True" type="System.String">
+          <item name="_description" value="Analog value, Vcc=1.1*1024/Av14" saved="True" type="System.String" />
+        </item>
+      </item>
+    </item>
+    <item name="GWUP20" value="pack://application:,,/CC;component/Images/ty_ugate.png" saved="True" type="System.String" ver="2.6.4">
+      <item name="Add">
+        <item name="bool" value="1Z" saved="True" type="System.String" />
+        <item name="long" value="4I" saved="True" type="System.String" />
+        <item name="string" value="5S" saved="True" type="System.String" />
+      </item>
+      <item name="remove" value="ZD" saved="True" type="System.String" />
+      <item name="SV1-20">
+        <item name="Ai6" value="6iX1" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-20" saved="True" type="System.String" />
+        </item>
+        <item name="Av6" value="7iX1" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-20" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-19">
+        <item name="Ai7" value="6iX2" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-19" saved="True" type="System.String" />
+        </item>
+        <item name="Av7" value="7iX2" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-19" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-18">
+        <item name="Ai0" value="AiX3" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Av0" value="BiX3" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="In16" value="7zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Ip16" value="6zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="On16" value="9zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Op16" value="8zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-18" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-17">
+        <item name="Ai1" value="AiX4" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Av1" value="BiX4" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="In17" value="7zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Ip17" value="6zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="On17" value="9zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Op17" value="8zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-17" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-16">
+        <item name="Ai2" value="AiX5" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Av2" value="BiX5" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="In18" value="7zX5" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Ip18" value="6zX5" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="On18" value="9zX5" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Op18" value="8zX5" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-16" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-15">
+        <item name="Ai3" value="AiX6" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Av3" value="BiX6" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="In19" value="7zX6" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Ip19" value="6zX6" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="On19" value="9zX6" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Op19" value="8zX6" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-15" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-8">
+        <item name="In26" value="7zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-8" saved="True" type="System.String" />
+        </item>
+        <item name="Ip26" value="6zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-8" saved="True" type="System.String" />
+        </item>
+        <item name="On26" value="9zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-8" saved="True" type="System.String" />
+        </item>
+        <item name="Op26" value="8zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-8" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-7">
+        <item name="In27" value="7zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-7" saved="True" type="System.String" />
+        </item>
+        <item name="Ip27" value="6zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-7" saved="True" type="System.String" />
+        </item>
+        <item name="On27" value="9zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-7" saved="True" type="System.String" />
+        </item>
+        <item name="Op27" value="8zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-7" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-6">
+        <item name="In28" value="7zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-6" saved="True" type="System.String" />
+        </item>
+        <item name="Ip28" value="6zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-6" saved="True" type="System.String" />
+        </item>
+        <item name="On28" value="9zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-6" saved="True" type="System.String" />
+        </item>
+        <item name="Op28" value="8zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-6" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-5">
+        <item name="In29" value="7zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="Ip29" value="6zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="On29" value="9zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="Op29" value="8zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="Pn29" value="9iX10" saved="True" type="System.String">
+          <item name="_description" value="PWM negative, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="Pp29" value="8iX10" saved="True" type="System.String">
+          <item name="_description" value="PWM positive, SV1-5" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-4">
+        <item name="In30" value="7zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="Ip30" value="6zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="On30" value="9zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="Op30" value="8zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="Pn30" value="9iX11" saved="True" type="System.String">
+          <item name="_description" value="PWM negative, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="Pp30" value="8iX11" saved="True" type="System.String">
+          <item name="_description" value="PWM positive, SV1-4" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-3">
+        <item name="In31" value="7zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-3" saved="True" type="System.String" />
+        </item>
+        <item name="Ip31" value="6zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-3" saved="True" type="System.String" />
+        </item>
+        <item name="On31" value="9zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-3" saved="True" type="System.String" />
+        </item>
+        <item name="Op31" value="8zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-3" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Vcc">
+        <item name="Av14" value="BiX13" saved="True" type="System.String">
+          <item name="_description" value="Analog value, Vcc=1.1*1024/Av14" saved="True" type="System.String" />
+        </item>
+      </item>
+    </item>
+    <item name="NDUP20" value="pack://application:,,/CC;component/Images/ty_unode.png" saved="True" type="System.String" ver="2.6.4">
+      <item name="Add">
+        <item name="bool" value="2Z" saved="True" type="System.String" />
+        <item name="long" value="4I" saved="True" type="System.String" />
+        <item name="string" value="5S" saved="True" type="System.String" />
+      </item>
+      <item name="remove" value="ZD" saved="True" type="System.String" />
+      <item name="SV1-20">
+        <item name="Ai6" value="6iX1" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-20" saved="True" type="System.String" />
+        </item>
+        <item name="Av6" value="7iX1" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-20" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-19">
+        <item name="Ai7" value="6iX2" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-19" saved="True" type="System.String" />
+        </item>
+        <item name="Av7" value="7iX2" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-19" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-18">
+        <item name="Ai0" value="AiX3" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Av0" value="BiX3" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="In16" value="7zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Ip16" value="6zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="On16" value="9zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Op16" value="8zX3" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="OA16" value="EzX3" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-18" saved="True" type="System.String" />
+        </item>
+        <item name="Oa16" value="FzX3" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-18" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-17">
+        <item name="Ai1" value="AiX4" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Av1" value="BiX4" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="In17" value="7zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Ip17" value="6zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="On17" value="9zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Op17" value="8zX4" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="OA17" value="EzX4" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-17" saved="True" type="System.String" />
+        </item>
+        <item name="Oa17" value="FzX4" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-17" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-16">
+        <item name="Ai2" value="AiX5" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Av2" value="BiX5" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="In18" value="7zX5" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Ip18" value="6zX5" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="On18" value="9zX5" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Op18" value="8zX5" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="OA18" value="EzX5" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-16" saved="True" type="System.String" />
+        </item>
+        <item name="Oa18" value="FzX5" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-16" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-15">
+        <item name="Ai3" value="AiX6" saved="True" type="System.String">
+          <item name="_description" value="Analog input, internal reference, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Av3" value="BiX6" saved="True" type="System.String">
+          <item name="_description" value="Analog input, AVcc reference, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="In19" value="7zX6" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Ip19" value="6zX6" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="On19" value="9zX6" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Op19" value="8zX6" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="OA19" value="EzX6" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-15" saved="True" type="System.String" />
+        </item>
+        <item name="Oa19" value="FzX6" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-15" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-10">
+        <item name="In24" value="7zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-10" saved="True" type="System.String" />
+        </item>
+        <item name="Ip24" value="6zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-10" saved="True" type="System.String" />
+        </item>
+        <item name="On24" value="9zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-10" saved="True" type="System.String" />
+        </item>
+        <item name="Op24" value="8zX7" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-10" saved="True" type="System.String" />
+        </item>
+        <item name="Sr0" value="AbX7,S20,B21,B22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="RxD 2400, RX, SV1-10" saved="True" type="System.String" />
+        </item>
+        <item name="Sr1" value="AbX7,B20,S21,B22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="RxD 4800, RX, SV1-10" saved="True" type="System.String" />
+        </item>
+        <item name="Sr2" value="AbX7,B20,B21,S22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="RxD 9600, RX, SV1-10" saved="True" type="System.String" />
+        </item>
+        <item name="Sr3" value="AbX7,B20,B21,B22,S23,B24" saved="True" type="System.String">
+          <item name="_description" value="RxD 19200, RX, SV1-10" saved="True" type="System.String" />
+        </item>
+        <item name="Sr4" value="AbX7,B20,B21,B22,B23,S24" saved="True" type="System.String">
+          <item name="_description" value="RxD 38400, RX, SV1-10" saved="True" type="System.String" />
+        </item>
+        <item name="OA24" value="EzX7" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-10" saved="True" type="System.String" />
+        </item>
+        <item name="Oa24" value="FzX7" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-10" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-9">
+        <item name="In25" value="7zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-9" saved="True" type="System.String" />
+        </item>
+        <item name="Ip25" value="6zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-9" saved="True" type="System.String" />
+        </item>
+        <item name="On25" value="9zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-9" saved="True" type="System.String" />
+        </item>
+        <item name="Op25" value="8zX8" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-9" saved="True" type="System.String" />
+        </item>
+        <item name="St0" value="AbX8,S20,B21,B22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="TxD 2400, TX, SV1-9" saved="True" type="System.String" />
+        </item>
+        <item name="St1" value="AbX8,B20,S21,B22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="TxD 4800, TX, SV1-9" saved="True" type="System.String" />
+        </item>
+        <item name="St2" value="AbX8,B20,B21,S22,B23,B24" saved="True" type="System.String">
+          <item name="_description" value="TxD 9600, TX, SV1-9" saved="True" type="System.String" />
+        </item>
+        <item name="St3" value="AbX8,B20,B21,B22,S23,B24" saved="True" type="System.String">
+          <item name="_description" value="TxD 19200, TX, SV1-9" saved="True" type="System.String" />
+        </item>
+        <item name="St4" value="AbX8,B20,B21,B22,B23,S24" saved="True" type="System.String">
+          <item name="_description" value="TxD 38400, TX, SV1-9" saved="True" type="System.String" />
+        </item>
+        <item name="OA25" value="EzX8" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-9" saved="True" type="System.String" />
+        </item>
+        <item name="Oa25" value="FzX8" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-9" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-8">
+        <item name="In26" value="7zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-8" saved="True" type="System.String" />
+        </item>
+        <item name="Ip26" value="6zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-8" saved="True" type="System.String" />
+        </item>
+        <item name="On26" value="9zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-8" saved="True" type="System.String" />
+        </item>
+        <item name="Op26" value="8zX9" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-8" saved="True" type="System.String" />
+        </item>
+        <item name="OA26" value="EzX9" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-8" saved="True" type="System.String" />
+        </item>
+        <item name="Oa26" value="FzX9" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-8" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-7">
+        <item name="In27" value="7zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-7" saved="True" type="System.String" />
+        </item>
+        <item name="Ip27" value="6zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-7" saved="True" type="System.String" />
+        </item>
+        <item name="On27" value="9zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-7" saved="True" type="System.String" />
+        </item>
+        <item name="Op27" value="8zX10" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-7" saved="True" type="System.String" />
+        </item>
+        <item name="OA27" value="EzX10" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-7" saved="True" type="System.String" />
+        </item>
+        <item name="Oa27" value="FzX10" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-7" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-6">
+        <item name="In28" value="7zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-6" saved="True" type="System.String" />
+        </item>
+        <item name="Ip28" value="6zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-6" saved="True" type="System.String" />
+        </item>
+        <item name="On28" value="9zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-6" saved="True" type="System.String" />
+        </item>
+        <item name="Op28" value="8zX11" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-6" saved="True" type="System.String" />
+        </item>
+        <item name="OA28" value="EzX11" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-6" saved="True" type="System.String" />
+        </item>
+        <item name="Oa28" value="FzX11" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-6" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-5">
+        <item name="In29" value="7zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="Ip29" value="6zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="On29" value="9zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="Op29" value="8zX12" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="Pn29" value="9iX12" saved="True" type="System.String">
+          <item name="_description" value="PWM negative, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="Pp29" value="8iX12" saved="True" type="System.String">
+          <item name="_description" value="PWM positive, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="OA29" value="EzX12" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-5" saved="True" type="System.String" />
+        </item>
+        <item name="Oa29" value="FzX12" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-5" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-4">
+        <item name="In30" value="7zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="Ip30" value="6zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="On30" value="9zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="Op30" value="8zX13" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="Pn30" value="9iX13" saved="True" type="System.String">
+          <item name="_description" value="PWM negative, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="Pp30" value="8iX13" saved="True" type="System.String">
+          <item name="_description" value="PWM positive, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="OA30" value="EzX13" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-4" saved="True" type="System.String" />
+        </item>
+        <item name="Oa30" value="FzX13" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-4" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="SV1-3">
+        <item name="In31" value="7zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital Pull-Up inverted input, SV1-3" saved="True" type="System.String" />
+        </item>
+        <item name="Ip31" value="6zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital input, SV1-3" saved="True" type="System.String" />
+        </item>
+        <item name="On31" value="9zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital inverted output, SV1-3" saved="True" type="System.String" />
+        </item>
+        <item name="Op31" value="8zX14" saved="True" type="System.String">
+          <item name="_description" value="Digital output, SV1-3" saved="True" type="System.String" />
+        </item>
+        <item name="OA31" value="EzX14" saved="True" type="System.String">
+          <item name="_description" value="High if active, low if sleep, SV1-3" saved="True" type="System.String" />
+        </item>
+        <item name="Oa31" value="FzX14" saved="True" type="System.String">
+          <item name="_description" value="Low if active, low if sleep, SV1-3" saved="True" type="System.String" />
+        </item>
+      </item>
+      <item name="Vcc">
+        <item name="Av14" value="BiX15" saved="True" type="System.String">
+          <item name="_description" value="Analog value, Vcc=1.1*1024/Av14" saved="True" type="System.String" />
+        </item>
+      </item>
+    </item>
+  </item>
+  <item name="type">
+    <item name="mqtts_cfg" value="pack://application:,,/CC;component/Images/ty_cfg.png" saved="True" type="System.String" ver="0.3.1443.8">
+      <item name="XD_GroupID" value="4i" saved="True" type="System.String" />
+      <item name="XD_Channel" value="4i" saved="True" type="System.String" />
+      <item name="XD_SleepTime" value="4i" saved="True" type="System.String" />
+      <item name="XD_ADCintegrate" value="4i" saved="True" type="System.String" />
+      <item name="Xa_MACAddr" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPAddr" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPMask" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPRouter" value="4b" saved="True" type="System.String" />
+      <item name="Xa_IPBroker" value="4b" saved="True" type="System.String" />
+    </item>
+  </item>
+</root>

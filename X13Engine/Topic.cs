@@ -400,9 +400,10 @@ l1: { }
 
   /// <summary>Quality of service levels</summary>
   public enum QoS : byte {
-    ExactlyOnce = 2,
+    AtMostOnce  = 0,
     AtLeastOnce = 1,
-    AtMostOnce  = 0
+    ExactlyOnce = 2,
+    MinusOne    = 3
   }
 
 }

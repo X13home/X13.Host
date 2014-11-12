@@ -22,17 +22,23 @@ using System.Collections.Generic;
 namespace X13.Periphery {
   [Export(typeof(IPlugModul))]
   [ExportMetadata("priority", 5)]
-  [ExportMetadata("name", "MQTTS.udp")]
+  [ExportMetadata("name", "MQTT-SN.udp")]
   public class MQTTSUdp : IPlugModul {
 
     public void Init() {
-      Topic.root.Subscribe("/etc/MQTTS/#", Dummy);
+      Topic old;
+      if(Topic.root.Exist("/local/cfg/MQTTS.udp/enable", out old) && old.valueType==typeof(bool)) {
+        (old as DVar<bool>).value=false;
+      }
+
+      Topic.root.Subscribe("/etc/MQTT-SN/#", Dummy);
       Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
     }
     public void Start() {
       using(var sr=new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTSUdp.xst"))) {
         Topic.Import(sr, null);
       }
+      TWIDriver.Load();
       MsDevice.MsGUdp.Open();
     }
 
@@ -40,7 +46,7 @@ namespace X13.Periphery {
     }
 
     public void Stop() {
-      Topic.root.Unsubscribe("/etc/MQTTS/#", Dummy);
+      Topic.root.Unsubscribe("/etc/MQTT-SN/#", Dummy);
       Topic.root.Unsubscribe("/etc/declarers/#", Dummy);
       //TODO: Close
     }
@@ -113,13 +119,10 @@ namespace X13.Periphery {
         try {
           buf = _udp.EndReceive(ar, ref re);
           byte[] addr=re.Address.GetAddressBytes();
-          int len=buf[0]==1?((buf[1]<<8) | buf[2]):buf[0];
-          if(len!=buf.Length) {
-            if(_verbose.value) {
-              Log.Debug("size mismatch: {0}:{1}", re, BitConverter.ToString(buf));
+          if(!_myIps.Any(z => addr.SequenceEqual(z))) {
+            if(buf.Length>1) {
+              MsDevice.ProcessInPacket(this, addr, buf, 0, buf.Length);
             }
-          } else if(!_myIps.Any(z => addr.SequenceEqual(z))) {
-            ParseInPacket(buf, addr);
           }
         }
         catch(Exception ex) {
@@ -129,75 +132,37 @@ namespace X13.Periphery {
           _udp.BeginReceive(new AsyncCallback(ReceiveCallback), null);
         }
       }
-      private void ParseInPacket(byte[] buf, byte[] addr) {
-        Topic devR=Topic.root.Get("/dev");
-        var msgTyp=(MsMessageType)(buf[0]>1?buf[1]:buf[3]);
-        if(msgTyp==MsMessageType.GWINFO || msgTyp==MsMessageType.ADVERTISE) {
-          return;
-        } else if(msgTyp==MsMessageType.SEARCHGW) {
-          PrintPacket(null, new MsSearchGW(buf) { Addr=addr }, buf);
-          this.Send(new MsGwInfo(gwIdx) { Addr=IPAddress.Broadcast.GetAddressBytes() });
-        } else if(msgTyp==MsMessageType.CONNECT) {
-          var msg=new MsConnect(buf) { Addr=addr };
-          DVar<MsDevice> dev=devR.Get<MsDevice>(msg.ClientId);
-          if(!msg.CleanSession && (dev.value==null || dev.value.Addr!=msg.Addr || dev.value.state==State.Disconnected || dev.value.state==State.Lost)) {
-            PrintPacket(dev, msg, buf);
-            Send(new MsConnack(MsReturnCode.NotSupportes) { Addr=msg.Addr });
-            return;
-          }
-          if(dev.value==null) {
-            dev.value=new MsDevice();
-          }
-          dev.value._gate=this;
-          if(dev.value.Addr==null || !msg.Addr.SequenceEqual(dev.value.Addr)) {
-            dev.value.Addr=msg.Addr;
-          }
-          PrintPacket(dev, msg, buf);
-          Thread.Sleep(0);
-          dev.value.Connect(msg);
-          dev.value.via="UDP";
-        } else { // msgType==Connect
-          MsDevice dev=devR.children.Select(z => z.GetValue() as MsDevice).FirstOrDefault(z => z!=null && z.Addr!=null && addr.SequenceEqual(z.Addr) && z._gate==this);
-          if(dev!=null && dev.state!=State.Disconnected && dev.state!=State.Lost) {
-            dev.ParseInPacket(buf);
-          } else {
-            if(_verbose.value) {
-              if(dev==null || dev.Owner==null) {
-                Log.Debug("unknown device: {0}:{1}", BitConverter.ToString(addr), BitConverter.ToString(buf));
-              } else {
-                Log.Debug("inactive device: [{0}] {1}:{2}", dev.Owner.name, BitConverter.ToString(addr), BitConverter.ToString(buf));
-              }
-            }
-            Send(new MsDisconnect() { Addr=addr });
-          }
-        }
-      }
       private void SendAdv(object o) {
-        Send(new MsAdvertise(0, 900) { Addr=IPAddress.Broadcast.GetAddressBytes() });
+        SendGw(null, new MsAdvertise(0, 900));
       }
-
-      public void Send(MsMessage msg) {
-        if(_udp==null || msg==null || msg.Addr==null || msg.Addr.Length!=4) {
+      public void SendGw(MsDevice dev, MsMessage msg) {
+        if(_udp==null || msg==null) {
           return;
         }
 
         byte[] buf=msg.GetBytes();
-
-        if(IPAddress.Broadcast.GetAddressBytes().SequenceEqual(msg.Addr)) {
+        IPAddress addr;
+        if(dev==null) {
+          addr=IPAddress.Broadcast;
           foreach(var bc in _bcIps) {
             _udp.Send(buf, buf.Length, new IPEndPoint(bc, 1883));
           }
+        } else if(dev.Addr!=null && dev.Addr.Length==4) {
+          addr=new IPAddress(dev.Addr);
+          _udp.Send(buf, buf.Length, new IPEndPoint(addr, 1883));
         } else {
-          _udp.Send(buf, buf.Length, new IPEndPoint(new IPAddress(msg.Addr), 1883));
+          return;
         }
         if(_verbose.value) {
-          Log.Debug("s {0:X2}:{1}:{2} \t{3}", gwIdx, BitConverter.ToString(msg.Addr), BitConverter.ToString(buf), msg.ToString());
+          Log.Debug("s  {0}: {1}  {2}", addr, BitConverter.ToString(buf), msg.ToString());
         }
       }
+      public string name { get { return "UDP"; } }
+      public string Addr2If(byte[] addr) {
+        return (new IPAddress(addr)).ToString();
+      }
       public byte gwIdx { get { return 0; } }
-
       #endregion instance
-
     }
   }
 }

@@ -58,10 +58,14 @@ namespace X13.Plugins {
           if((sa[1]!="local" || _ses.ip.IsLocal()) && MQTT.MqBroker.CheckAuth(sa[1], sa[2])) {
             _ses.userName=sa[1];
             Send("C\ttrue");
-            X13.Log.Info("{0} logon as {1} success", _ses.owner.name, _ses.ToString());
+            if(_verbose.value) {
+              X13.Log.Info("{0} logon as {1} success", _ses.owner.name, _ses.ToString());
+            }
           } else {
             Send("C\tfalse");
-            X13.Log.Warning("{0}@{2} logon  as {1} fail", _ses.owner.name, sa[1], _ses.owner.value);
+            if(_verbose.value) {
+              X13.Log.Warning("{0}@{2} logon  as {1} fail", _ses.owner.name, sa[1], _ses.owner.value);
+            }
             Sessions.CloseSession(base.ID);
           }
         } else if(!_disAnonym.value || (_ses!=null && !string.IsNullOrEmpty(_ses.userName))) {
@@ -88,8 +92,10 @@ namespace X13.Plugins {
     }
     protected override void OnClose(CloseEventArgs e) {
       if(_ses!=null) {
-        X13.Log.Info("{0} Disconnect: [{1}]{2}", _ses.owner.name, e.Code, e.Reason);
         _ses.Close();
+        if(_verbose.value) {
+          X13.Log.Info("{0} Disconnect: [{1}]{2}", _ses.owner.name, e.Code, e.Reason);
+        }
         _ses=null;
       }
       foreach(var s in _subscriptions) {
@@ -145,7 +151,9 @@ namespace X13.Plugins {
         _host=string.Format("[{0}]", this.ip.ToString());
       }
       this.owner.value=_host;
-      Log.Info("{0} session[{2}] - {1}", owner.name, this._host, this.id);
+      if(_verbose.value) {
+        Log.Info("{0} session[{2}] - {1}", owner.name, this._host, this.id);
+      }
     }
     private string _host;
     private DVar<string> _owner;
