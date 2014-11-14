@@ -1,0 +1,91 @@
+﻿<Window x:Class="X13.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock" 
+        xmlns:x13="clr-namespace:X13"
+        Title="X13.Dashboard" Height="350" Width="525" Loaded="Window_Loaded" Closing="Window_Closing">
+  <Window.Resources>
+    <x13:ActiveDocumentConverter x:Key="ActiveDocumentConverter"/>
+  </Window.Resources>
+  <Grid>
+    <avalonDock:DockingManager x:Name="dockManager" AllowMixedOrientation="True" 
+                               ActiveContent="{Binding ActiveDocument, Mode=TwoWay, Converter={StaticResource ActiveDocumentConverter}}"
+                               DocumentsSource="{Binding Files}">
+      <avalonDock:DockingManager.DocumentHeaderTemplate>
+        <DataTemplate>
+          <Grid MaxWidth="120">
+            <TextBlock Text="{Binding Title}" HorizontalAlignment="Right" />
+          </Grid>
+        </DataTemplate>
+      </avalonDock:DockingManager.DocumentHeaderTemplate>
+
+      <avalonDock:DockingManager.LayoutItemTemplateSelector>
+        <x13:PanesTemplateSelector>
+          <x13:PanesTemplateSelector.InTemplate>
+            <DataTemplate>
+              <x13:InspectorView />
+            </DataTemplate>
+          </x13:PanesTemplateSelector.InTemplate>
+          <x13:PanesTemplateSelector.LoTemplate>
+            <DataTemplate>
+              <Grid ClipToBounds="True">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto"/>
+                  <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ContextMenu>
+                  <ContextMenu>
+                    <!-- used in LogramView-->
+                  </ContextMenu>
+                </Grid.ContextMenu>
+                <ItemsControl Name="statemebtsList" Panel.ZIndex="1">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <WrapPanel Orientation="Horizontal" ItemHeight="24" ItemWidth="24" Margin="8" PreviewMouseLeftButtonDown="BlocksPanel_MLD" PreviewMouseLeftButtonUp="BlocksPanel_MLU" PreviewMouseMove="BlocksPanel_MM">
+                        <WrapPanel.Background>
+                          <SolidColorBrush Color="#54C0C0C0"/>
+                        </WrapPanel.Background>
+                      </WrapPanel>
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Image Tag="{Binding name}" ToolTip="{Binding info}" Source="{Binding image}" Margin="4" Stretch="None" />
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <x13:LogramView HorizontalAlignment="Center" VerticalAlignment="Center" Background="White" Grid.Row="1" Panel.ZIndex="0" Focusable="True" UseLayoutRounding="True" />
+              </Grid>
+            </DataTemplate>
+          </x13:PanesTemplateSelector.LoTemplate>
+        </x13:PanesTemplateSelector>
+      </avalonDock:DockingManager.LayoutItemTemplateSelector>
+
+      <avalonDock:DockingManager.LayoutItemContainerStyleSelector>
+        <x13:PanesStyleSelector>
+          <x13:PanesStyleSelector.LoStyle>
+            <Style TargetType="{x:Type avalonDock:LayoutItem}">
+              <Setter Property="Title" Value="{Binding Model.path}"/>
+              <Setter Property="ContentId" Value="{Binding Model.contentId}"/>
+              <Setter Property="ToolTip" Value="{Binding Model.path}" />
+            </Style>
+          </x13:PanesStyleSelector.LoStyle>
+          <x13:PanesStyleSelector.InStyle>
+            <Style TargetType="{x:Type avalonDock:LayoutItem}">
+              <Setter Property="Title" Value="{Binding Model.path}"/>
+              <Setter Property="ContentId" Value="{Binding Model.contentId}"/>
+              <Setter Property="ToolTip" Value="{Binding Model.path}" />
+            </Style>
+          </x13:PanesStyleSelector.InStyle>
+        </x13:PanesStyleSelector>
+      </avalonDock:DockingManager.LayoutItemContainerStyleSelector>
+
+      <avalonDock:LayoutRoot>
+        <avalonDock:LayoutPanel Orientation="Horizontal">
+          <avalonDock:LayoutDocumentPane />
+        </avalonDock:LayoutPanel>
+      </avalonDock:LayoutRoot>
+    </avalonDock:DockingManager>
+
+  </Grid>
+</Window>

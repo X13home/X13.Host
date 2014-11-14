@@ -1,0 +1,226 @@
+﻿<UserControl x:Class="X13.InspectorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:my="clr-namespace:X13"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+  <Grid>
+    <Grid.Resources>
+      <my:IVColorConverter x:Key="colorConverter"/>
+      <my:IVColorConverter x:Key="colorConverter2"/>
+      
+      <!--Converter for Indentation of items-->
+      <my:TreeListViewConverter x:Key="TreeListViewConverter"/>
+
+      <!--Control Template for TreeViewItem's.-->
+      <ControlTemplate TargetType="TreeViewItem" x:Key="TreeListViewItem">
+        <!--Grid containing the current information and the subnodes.-->
+        <StackPanel Background="{Binding Path=., Converter={StaticResource colorConverter}}">
+          <!--Border wrapping the content presenter.-->
+          <Border x:Name="Border" BorderThickness="0,0.5" BorderBrush="Gainsboro">
+            <!--GridViewRowPrsenter containing the current information.-->
+            <GridViewRowPresenter Content="{TemplateBinding Header}"
+                    Columns="{Binding Columns, 
+                    RelativeSource={RelativeSource Mode=FindAncestor, 
+                    AncestorType=my:TreeListView}}"/>
+          </Border>
+          <!--ItemsPresenter containing the subnodes-->
+          <ItemsPresenter x:Name="ItemsPresenter" Visibility="Collapsed"/>
+        </StackPanel>
+        <ControlTemplate.Triggers>
+          <!--Trigger used to show the sub items-->
+          <Trigger Property="IsExpanded" Value="True">
+            <Setter TargetName="ItemsPresenter" Property="Visibility" Value="Visible"/>
+          </Trigger>
+          <!--Trigger used to change the color based on selection-->
+          <Trigger Property="IsSelected" Value="true">
+            <!--Change the background color-->
+            <Setter TargetName="Border" Property="Background"
+                    Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+            <!--Change the foreground color-->
+            <Setter Property="Foreground" 
+                    Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"/>
+          </Trigger>
+          <!--Trigger used to change the color based on selection-->
+          <MultiTrigger>
+            <MultiTrigger.Conditions>
+              <Condition Property="IsSelected" Value="true"/>
+              <Condition Property="IsSelectionActive" Value="false"/>
+            </MultiTrigger.Conditions>
+            <!--Change the background color-->
+            <Setter TargetName="Border" Property="Background"
+                    Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
+            <!--Change the foreground color-->
+            <Setter Property="Foreground" 
+                    Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}"/>
+          </MultiTrigger>
+          <!--Trigger used to change the color based on the status of the item-->
+          <Trigger Property="IsEnabled" Value="false">
+            <!--Change the foreground color-->
+            <Setter Property="Foreground" 
+                    Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"/>
+          </Trigger>
+        </ControlTemplate.Triggers>
+      </ControlTemplate>
+
+      <!--Control Template for TreeListViewExpander's.-->
+      <ControlTemplate TargetType="{x:Type my:TreeListViewExpander}" x:Key="TreeListViewExpander">
+        <StackPanel Orientation="Horizontal" x:Name="ContainerElement">
+          <!--Use a FrameworkElement to indent the button-->
+          <FrameworkElement Width="{Binding RelativeSource={x:Static RelativeSource.Self}, 
+                Converter={StaticResource TreeListViewConverter}}"/>
+          <!--Use a standard toggle button     Images/TreeCl.png       Images/TreeOp.png     -->
+          <ToggleButton x:Name="pbState" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource Mode=FindAncestor,
+                AncestorType=TreeViewItem}}" Width="18" Height="18" VerticalAlignment="Center" Margin="2,3,4,3">
+            <ToggleButton.Style>
+              <Style TargetType="{x:Type ToggleButton}">
+                <Setter Property="Template">
+                  <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                      <Border BorderThickness="0" Width="20" Height="20">
+                        <ContentPresenter/>
+                      </Border>
+                    </ControlTemplate>
+                  </Setter.Value>
+                </Setter>
+              </Style>
+            </ToggleButton.Style>
+            <Image Margin="2"
+               Stretch="Uniform"
+               x:Name="img">
+              <Image.Style>
+                <Style TargetType="Image">
+                  <Style.Triggers>
+                    <DataTrigger 
+                    Binding="{Binding ElementName=pbState, Path=IsChecked}"
+                    Value="True">
+                      <Setter Property="Source"
+                        Value="Images/TreeOp.png" />
+                    </DataTrigger>
+                    <DataTrigger 
+                    Binding="{Binding ElementName=pbState, Path=IsChecked}"
+                    Value="False">
+                      <Setter Property="Source"
+                        Value="Images/TreeCl.png" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </Image.Style>
+            </Image>
+          </ToggleButton>
+        </StackPanel>
+        <ControlTemplate.Triggers>
+          <!--Trigger used to show/hide the expand button-->
+          <DataTrigger Binding="{Binding HasItems, RelativeSource={RelativeSource Mode=FindAncestor,
+                AncestorType=TreeViewItem}}" Value="False">
+            <Setter TargetName="ContainerElement" Property="Visibility" Value="Hidden"/>
+          </DataTrigger>
+        </ControlTemplate.Triggers>
+      </ControlTemplate>
+
+      <!--Apply this style to all controls of type 'TreeListView'.-->
+      <Style TargetType="{x:Type my:TreeListView}">
+        <!--Set the control template.-->
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="{x:Type my:TreeListView}">
+              <ControlTemplate.Resources>
+                <!--Apply this style to all 'TreeViewItem's.-->
+                <Style TargetType="TreeViewItem">
+                  <Setter Property="Template" Value="{StaticResource TreeListViewItem}"/>
+                </Style>
+                <!--Apply this style to all 'TreeListViewExpander's.-->
+                <Style TargetType="my:TreeListViewExpander">
+                  <Setter Property="Template" Value="{StaticResource TreeListViewExpander}"/>
+                </Style>
+              </ControlTemplate.Resources>
+              <!--Create a standard border around the 'TreeListView'.-->
+              <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                <!--ScrollViewer providing horizontal scrolling functionality 
+                        for both, content and headers.-->
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Disabled">
+                  <!--Grid containing the header row and all the content rows.-->
+                  <Grid>
+                    <Grid.RowDefinitions>
+                      <!--The header row.-->
+                      <RowDefinition Height="Auto"/>
+                      <!--The content row.-->
+                      <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <!--The header row.-->
+                    <GridViewHeaderRowPresenter Columns="{TemplateBinding Columns}"
+                                    AllowsColumnReorder="{TemplateBinding AllowsColumnReorder}"/>
+                    <!--ScrollViewer providing vertical scrolling
+                                functionality for the content.-->
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                                              VerticalScrollBarVisibility="Auto"
+                                              Grid.Row="1">
+                      <!--ItemsPresenter containg the content.-->
+                      <ItemsPresenter/>
+                    </ScrollViewer>
+                  </Grid>
+                </ScrollViewer>
+              </Border>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
+      </Style>
+      <my:GridColumnSpringConverter x:Key="ColumnSpringConverter"/>
+    </Grid.Resources>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition/>
+    </Grid.RowDefinitions>
+    <TextBlock Grid.Row="0" Text="{Binding path}" />
+    <my:TreeListView Grid.Row="1" x:Name="tlInspector" AllowsColumnReorder="False" ItemsSource="{Binding children}">
+      <!--Create an item template to specify the ItemsSource-->
+      <my:TreeListView.ItemTemplate>
+        <HierarchicalDataTemplate ItemsSource="{Binding children}" />
+      </my:TreeListView.ItemTemplate>
+      <my:TreeListView.Columns>
+        <!--Create the first column containing the expand button and the type name.-->
+        <GridViewColumn x:Name="gcName" Header="Name" Width="200">
+          <GridViewColumn.CellTemplate>
+            <DataTemplate>
+              <StackPanel Orientation="Horizontal">
+                <!--The Expander Button (can be used in any column (typically the first one))-->
+                <my:TreeListViewExpander/>
+                <!--Display the name of the DataElement-->
+                <TextBlock Text="{Binding name}" VerticalAlignment="Center"/>
+              </StackPanel>
+            </DataTemplate>
+          </GridViewColumn.CellTemplate>
+        </GridViewColumn>
+        <!--Create a second column containing the number of children.-->
+        <GridViewColumn x:Name="gc2" Header="Children" Width="100">
+          <GridViewColumn.CellTemplate>
+            <DataTemplate>
+              <!--Display the size of the DataElement-->
+              <TextBlock Text="{Binding children.Count}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+            </DataTemplate>
+          </GridViewColumn.CellTemplate>
+        </GridViewColumn>
+        <!--Create a third column containing the brush of the material.-->
+        <GridViewColumn Header="Value">
+          <GridViewColumn.Width>
+            <MultiBinding Converter="{StaticResource ColumnSpringConverter}">
+              <Binding ElementName="tlInspector" Path="ActualWidth" Mode="OneWay"/>
+              <Binding ElementName="gcName" Path="ActualWidth" Mode="OneWay"/>
+              <Binding ElementName="gc2" Path="ActualWidth" Mode="OneWay"/>
+            </MultiBinding>
+          </GridViewColumn.Width>
+          <GridViewColumn.CellTemplate>
+            <DataTemplate>
+              <TextBlock Text="{Binding json}" VerticalAlignment="Center"/>
+            </DataTemplate>
+          </GridViewColumn.CellTemplate>
+        </GridViewColumn>
+      </my:TreeListView.Columns>
+    </my:TreeListView>
+  </Grid>
+</UserControl>
