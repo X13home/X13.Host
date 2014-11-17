@@ -23,8 +23,8 @@ namespace X13 {
     /// where 'this' is derived from <seealso cref="BaseViewModel"/>
     /// and IsSelected is a property.
     /// </summary>
-    /// <typeparam name="TProperty"></typeparam>
-    /// <param name="property"></param>
+    /// <typeparam Name="TProperty"></typeparam>
+    /// <param Name="property"></param>
     public void NotifyPropertyChanged<TProperty>(Expression<Func<TProperty>> property) {
       var lambda = (LambdaExpression)property;
       MemberExpression memberExpression;

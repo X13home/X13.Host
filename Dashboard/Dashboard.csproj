@@ -105,7 +105,12 @@
     </EmbeddedResource>
     <AppDesigner Include="Properties\" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\external\Jurassic\Jurassic.csproj">
+      <Project>{2ce5502d-8710-4be3-9d90-201d526904b3}</Project>
+      <Name>Jurassic</Name>
+    </ProjectReference>
+  </ItemGroup>
   <ItemGroup>
     <Content Include="external\Xceed.Wpf.AvalonDock.dll" />
     <Resource Include="Images\TreeOp.png" />

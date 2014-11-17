@@ -25,7 +25,7 @@ namespace X13{
       int gs=LogramView.CellSize;
 
       this.Offset=new Vector((1.0+_model.posX)*gs, (0.5+_model.posY)*gs);
-      FormattedText head=new FormattedText(_model.name, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, FtFont, gs*0.6, Brushes.Black);
+      FormattedText head=new FormattedText(_model.Name, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, FtFont, gs*0.6, Brushes.Black);
       double width=Math.Round(1+(head.WidthIncludingTrailingWhitespace*2-gs/2)/gs, 0)*gs;
       double height=3*gs;
 

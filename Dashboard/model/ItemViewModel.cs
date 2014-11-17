@@ -7,17 +7,27 @@ using System.Text;
 namespace X13 {
   internal class ItemViewModel : ViewModelBase {
     private static char[] _delmiter=new char[] { '/' };
+    private static Jurassic.ScriptEngine _engine;
     public static readonly ItemViewModel root;
+
     static ItemViewModel() {
+      _engine=new Jurassic.ScriptEngine();
       root=new ItemViewModel(null, "/") { posX=0, posY=0, sizeX=25, sizeY=20, view=Projection.LO };
     }
+
     private string _name;
     private ObservableCollection<ItemViewModel> _children;
-
     private ItemViewModel _parent;
+    private object _obj;
+
     private ItemViewModel(ItemViewModel parent, string name) {
       _name=name;
       _parent=parent;
+      if(name!="Alpha") {
+        _obj=Jurassic.Library.JSONObject.Parse(_engine, "{ \"A\": 5, \"B\": 13.4, \"C\": { \"CA\" : \"test\", \"CB\" : null } }");
+      } else {
+        _obj=(DateTime.Now.Ticks&0x7FFF)/100.0;
+      }
     }
 
     public IEnumerable<ItemViewModel> children {
@@ -34,8 +44,16 @@ namespace X13 {
         return _children;
       }
     }
+    
+    public IEnumerable<Jurassic.Library.PropertyNameAndValue> Properties {
+      get {
+        var ob=_obj as Jurassic.Library.ObjectInstance;
+        return ob==null?null:ob.Properties;
+      }
+    }
 
-    public string name { get { return _name; } }
+    public string Name { get { return _name; } }
+    public object Value { get { return _obj; } set { _obj=value; } }
     public string path { get { return _parent==null?"/":(_parent==root?"/"+_name:_parent.path+"/"+_name); } }
     public string contentId { get { return view.ToString()+":"+path; } }
     public Projection view { get; set; }

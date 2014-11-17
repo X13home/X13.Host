@@ -180,10 +180,9 @@
     <my:TreeListView Grid.Row="1" x:Name="tlInspector" AllowsColumnReorder="False" ItemsSource="{Binding children}">
       <!--Create an item template to specify the ItemsSource-->
       <my:TreeListView.ItemTemplate>
-        <HierarchicalDataTemplate ItemsSource="{Binding children}" />
+        <HierarchicalDataTemplate ItemsSource="{Binding Value.Properties}" />
       </my:TreeListView.ItemTemplate>
       <my:TreeListView.Columns>
-        <!--Create the first column containing the expand button and the type name.-->
         <GridViewColumn x:Name="gcName" Header="Name" Width="200">
           <GridViewColumn.CellTemplate>
             <DataTemplate>
@@ -191,32 +190,21 @@
                 <!--The Expander Button (can be used in any column (typically the first one))-->
                 <my:TreeListViewExpander/>
                 <!--Display the name of the DataElement-->
-                <TextBlock Text="{Binding name}" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
               </StackPanel>
             </DataTemplate>
           </GridViewColumn.CellTemplate>
         </GridViewColumn>
-        <!--Create a second column containing the number of children.-->
-        <GridViewColumn x:Name="gc2" Header="Children" Width="100">
-          <GridViewColumn.CellTemplate>
-            <DataTemplate>
-              <!--Display the size of the DataElement-->
-              <TextBlock Text="{Binding children.Count}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-            </DataTemplate>
-          </GridViewColumn.CellTemplate>
-        </GridViewColumn>
-        <!--Create a third column containing the brush of the material.-->
         <GridViewColumn Header="Value">
           <GridViewColumn.Width>
             <MultiBinding Converter="{StaticResource ColumnSpringConverter}">
               <Binding ElementName="tlInspector" Path="ActualWidth" Mode="OneWay"/>
               <Binding ElementName="gcName" Path="ActualWidth" Mode="OneWay"/>
-              <Binding ElementName="gc2" Path="ActualWidth" Mode="OneWay"/>
             </MultiBinding>
           </GridViewColumn.Width>
           <GridViewColumn.CellTemplate>
             <DataTemplate>
-              <TextBlock Text="{Binding json}" VerticalAlignment="Center"/>
+              <TextBlock Text="{Binding Value}" VerticalAlignment="Center"/>
             </DataTemplate>
           </GridViewColumn.CellTemplate>
         </GridViewColumn>
