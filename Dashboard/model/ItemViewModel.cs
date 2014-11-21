@@ -12,7 +12,7 @@ namespace X13 {
 
     static ItemViewModel() {
       _engine=new Jurassic.ScriptEngine();
-      root=new ItemViewModel(null, "/") { posX=0, posY=0, sizeX=25, sizeY=20, view=Projection.LO };
+      root=new ItemViewModel(null, "/") { posX=0, posY=0, sizeX=25, sizeY=20, view=Projection.IN };
     }
 
     private string _name;
@@ -34,12 +34,12 @@ namespace X13 {
       get {
         if(_children==null) {
           _children=new ObservableCollection<ItemViewModel>();
-          _children.Add(new ItemViewModel(this, "Alpha") { posX=5, posY=3, sizeX=25, sizeY=20, view=Projection.LO, json="1" });
-          _children.Add(new ItemViewModel(this, "Beta") { posX=15, posY=3, sizeX=25, sizeY=20, view=Projection.IN, json="0x97" });
+          _children.Add(new ItemViewModel(this, "Alpha") { posX=5, posY=3, sizeX=25, sizeY=20, view=Projection.IN});
+          _children.Add(new ItemViewModel(this, "Beta") { posX=15, posY=3, sizeX=25, sizeY=20, view=Projection.IN });
           if(_name!="Delta") {
-            _children.Add(new ItemViewModel(this, "Gamma") { posX=5, posY=12, sizeX=25, sizeY=20, view=Projection.LO, json="Hello "+_name+"!!!" });
+            _children.Add(new ItemViewModel(this, "Gamma") { posX=5, posY=12, sizeX=25, sizeY=20, view=Projection.IN });
           }
-          _children.Add(new ItemViewModel(this, "Delta") { posX=15, posY=12, sizeX=25, sizeY=20, view=Projection.LO, json=null });
+          _children.Add(new ItemViewModel(this, "Delta") { posX=15, posY=12, sizeX=25, sizeY=20, view=Projection.IN });
         }
         return _children;
       }
@@ -57,7 +57,6 @@ namespace X13 {
     public string path { get { return _parent==null?"/":(_parent==root?"/"+_name:_parent.path+"/"+_name); } }
     public string contentId { get { return view.ToString()+":"+path; } }
     public Projection view { get; set; }
-    public string json { get; set; }
     public int posX { get; set; }
     public int posY { get; set; }
     public int sizeX { get; set; }

@@ -10,7 +10,7 @@
     <Grid.Resources>
       <my:IVColorConverter x:Key="colorConverter"/>
       <my:IVColorConverter x:Key="colorConverter2"/>
-      
+
       <!--Converter for Indentation of items-->
       <my:TreeListViewConverter x:Key="TreeListViewConverter"/>
 
@@ -71,7 +71,7 @@
           <!--Use a FrameworkElement to indent the button-->
           <FrameworkElement Width="{Binding RelativeSource={x:Static RelativeSource.Self}, 
                 Converter={StaticResource TreeListViewConverter}}"/>
-          <!--Use a standard toggle button     Images/TreeCl.png       Images/TreeOp.png     -->
+          <!--Use a standard toggle button-->
           <ToggleButton x:Name="pbState" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource Mode=FindAncestor,
                 AncestorType=TreeViewItem}}" Width="18" Height="18" VerticalAlignment="Center" Margin="2,3,4,3">
             <ToggleButton.Style>
@@ -87,9 +87,7 @@
                 </Setter>
               </Style>
             </ToggleButton.Style>
-            <Image Margin="2"
-               Stretch="Uniform"
-               x:Name="img">
+            <Image Stretch="None" x:Name="img">
               <Image.Style>
                 <Style TargetType="Image">
                   <Style.Triggers>
@@ -97,13 +95,13 @@
                     Binding="{Binding ElementName=pbState, Path=IsChecked}"
                     Value="True">
                       <Setter Property="Source"
-                        Value="Images/TreeOp.png" />
+                        Value="/Dashboard;component/Images/TreeOp.png" />
                     </DataTrigger>
                     <DataTrigger 
                     Binding="{Binding ElementName=pbState, Path=IsChecked}"
                     Value="False">
                       <Setter Property="Source"
-                        Value="Images/TreeCl.png" />
+                        Value="/Dashboard;component/Images/TreeCl.png" />
                     </DataTrigger>
                   </Style.Triggers>
                 </Style>
@@ -176,7 +174,7 @@
       <RowDefinition Height="Auto"/>
       <RowDefinition/>
     </Grid.RowDefinitions>
-    <TextBlock Grid.Row="0" Text="{Binding path}" />
+    <TextBlock Grid.Row="0" Text="{Binding path}" Background="White" Height="24" FontSize="15" />
     <my:TreeListView Grid.Row="1" x:Name="tlInspector" AllowsColumnReorder="False" ItemsSource="{Binding children}">
       <!--Create an item template to specify the ItemsSource-->
       <my:TreeListView.ItemTemplate>
@@ -186,12 +184,18 @@
         <GridViewColumn x:Name="gcName" Header="Name" Width="200">
           <GridViewColumn.CellTemplate>
             <DataTemplate>
-              <StackPanel Orientation="Horizontal">
-                <!--The Expander Button (can be used in any column (typically the first one))-->
-                <my:TreeListViewExpander/>
+              <Grid MouseLeftButtonDown="StackPanel_MouseLeftButtonDown" >
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="24"/>
+                  </Grid.ColumnDefinitions>
+                  <!--The Expander Button (can be used in any column (typically the first one))-->
+                <my:TreeListViewExpander Grid.Column="0" />
                 <!--Display the name of the DataElement-->
-                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
-              </StackPanel>
+                <TextBlock Text="{Binding Name}" Grid.Column="1" VerticalAlignment="Center"/>
+                <Image Grid.Column="2" Stretch="None" Source="/Dashboard;component/Images/ty_obj.png" />
+                </Grid>
             </DataTemplate>
           </GridViewColumn.CellTemplate>
         </GridViewColumn>

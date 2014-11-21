@@ -20,6 +20,17 @@ namespace X13 {
     public InspectorView() {
       InitializeComponent();
     }
+
+    private void StackPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+      if(e.ClickCount==2) {
+        var sp=sender as StackPanel;
+        ItemViewModel m;
+        if(sp!=null && (m=sp.DataContext as ItemViewModel)!=null) {
+          e.Handled=true;
+          Workspace.This.AddFile(m);
+        }
+      }
+    }
   }
   class IVColorConverter : IValueConverter {
     private static int count;
