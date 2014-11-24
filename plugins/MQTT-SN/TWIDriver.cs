@@ -245,14 +245,14 @@ namespace X13.Periphery {
       }
       public override bool Poll(out byte[] buf) {
         if(_busy) {
-          if(_pt<DateTime.Now) {
-            _busy=false;
-            if(_verbose) {
-              Log.Warning("{0}.poll({1}) - timeot", _T, _busy?1:0);
-            }
-            _present.value=false;
-            _pt=DateTime.Now.AddSeconds(_rand.Next(100, 200));
-          }
+          //if(_pt<DateTime.Now) {
+          //  _busy=false;
+          //  if(_verbose) {
+          //    Log.Warning("{0}.poll({1}) - timeot", _T, _busy?1:0);
+          //  }
+          //  _present.value=false;
+          //  _pt=DateTime.Now.AddSeconds(_rand.Next(100, 200));
+          //}
           buf=null;
           return true;
         }
@@ -353,12 +353,13 @@ namespace X13.Periphery {
             _st=3;
             busy=true;
           } else {
-            _present.value=false;
-            if(_verbose) {
-              Log.Warning("{0}.poll({1}) - timeot", _T, _st);
-            }
-            _pt=DateTime.Now.AddSeconds(_rand.Next(100, 200));
-            _st=0;
+            busy=true;
+            //_present.value=false;
+            //if(_verbose) {
+            //  Log.Warning("{0}.poll({1}) - timeot", _T, _st);
+            //}
+            //_pt=DateTime.Now.AddSeconds(_rand.Next(100, 200));
+            //_st=0;
           }
         } else {
           busy=_st>0;
@@ -455,12 +456,13 @@ namespace X13.Periphery {
             _st=3;
             busy=true;
           } else {
-            _present.value=false;
-            if(_verbose) {
-              Log.Warning("{0}.poll({1}) - timeot", _T, _st);
-            }
-            _pt=DateTime.Now.AddSeconds(_rand.Next(100, 200));
-            _st=0;
+            busy=true;
+            //_present.value=false;
+            //if(_verbose) {
+            //  Log.Warning("{0}.poll({1}) - timeot", _T, _st);
+            //}
+            //_pt=DateTime.Now.AddSeconds(_rand.Next(100, 200));
+            //_st=0;
           }
         } else {
           busy=_st>0;
@@ -533,7 +535,6 @@ namespace X13.Periphery {
         }
         return false;
       }
-
       public override bool Recv(byte[] buf) {
         if(buf.Length>=4 && buf[0]==ADDR) {
           if(buf[1]==0x10) {
@@ -609,7 +610,6 @@ namespace X13.Periphery {
         }
         return false;
       }
-
       public override bool Poll(out byte[] buf) {
         buf=null;
         bool busy=false;
@@ -640,12 +640,13 @@ namespace X13.Periphery {
             _st=5;
             busy=true;
           } else {
-            _present.value=false;
-            if(_verbose) {
-              Log.Warning("{0}.poll({1}) - timeot", _T, _st);
-            }
-            _pt=DateTime.Now.AddSeconds(_rand.Next(150, 210));
-            _st=-2;
+            busy=true;
+            //_present.value=false;
+            //if(_verbose) {
+            //  Log.Warning("{0}.poll({1}) - timeot", _T, _st);
+            //}
+            //_pt=DateTime.Now.AddSeconds(_rand.Next(150, 210));
+            //_st=-2;
           }
         } else {
           busy=_st!=0;

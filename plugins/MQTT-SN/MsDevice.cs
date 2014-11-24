@@ -910,7 +910,6 @@ namespace X13.Periphery {
     }
 
     private void ProccessAcknoledge(MsMessage rMsg) {
-      ResetTimer();
       MsMessage msg=null;
       lock(_sendQueue) {
         MsMessage reqMsg;
@@ -927,6 +926,8 @@ namespace X13.Periphery {
           _tryCounter=2;
         }
         SendIntern(msg);
+      } else if(!_waitAck) {
+        ResetTimer();
       }
     }
     private void Send(MsMessage msg) {
@@ -957,7 +958,7 @@ namespace X13.Periphery {
             _gate.SendGw(this, msg);
           }
           if(msg.IsRequest) {
-            ResetTimer(_tryCounter==2?_rand.Next(ACK_TIMEOUT/4, ACK_TIMEOUT/2):_rand.Next(ACK_TIMEOUT/2, ACK_TIMEOUT));
+            ResetTimer(_rand.Next(ACK_TIMEOUT, ACK_TIMEOUT*5/3)/(_tryCounter+1));  // 600, 1000
             _waitAck=true;
             break;
           }
@@ -987,7 +988,7 @@ namespace X13.Periphery {
           return;
         }
         if(_sendQueue.Count>0) {
-          period=_rand.Next(ACK_TIMEOUT*3/4, ACK_TIMEOUT*3/2);
+          period=_rand.Next(ACK_TIMEOUT*3/4, ACK_TIMEOUT);  // 450, 600
         } else if(_duration>0) {
           period=_duration;
           _tryCounter=1;
@@ -1007,8 +1008,8 @@ namespace X13.Periphery {
         }
         _waitAck=false;
         if(msg!=null) {
-          SendIntern(msg);
           _tryCounter--;
+          SendIntern(msg);
         } else {
           ResetTimer();
           _tryCounter=0;
