@@ -116,11 +116,11 @@ namespace Jurassic.Library
 
             // Check if the identifier is boolean literal or null literal.
             string keyword = name.ToString();
-            if (keyword == "null")
+            if (keyword == Null.NullString)
                 return LiteralToken.Null;
-            else if (keyword == "false")
+            else if (keyword == BooleanConstructor.FalseString)
                 return LiteralToken.False;
-            else if (keyword == "true")
+            else if (keyword == BooleanConstructor.TrueString)
                 return LiteralToken.True;
             else
                 throw new JavaScriptException(this.engine, "SyntaxError", string.Format("Unexpected keyword '{0}'", keyword));

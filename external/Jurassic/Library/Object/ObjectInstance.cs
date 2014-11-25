@@ -866,7 +866,7 @@ namespace Jurassic.Library
         /// <param name="throwOnError"> <c>true</c> to throw an exception if the property could not
         /// be added (i.e. if the object is not extensible). </param>
         /// <returns> <c>true</c> if the property was successfully added; <c>false</c> otherwise. </returns>
-        protected virtual bool AddProperty(string propertyName, object value, PropertyAttributes attributes, bool throwOnError)
+        private bool AddProperty(string propertyName, object value, PropertyAttributes attributes, bool throwOnError)
         {
             // Make sure adding a property is allowed.
             if (this.IsExtensible == false)

@@ -52,9 +52,6 @@
     </Reference>
     <Reference Include="UIAutomationProvider" />
     <Reference Include="UIAutomationTypes" />
-    <Reference Include="websocket-sharp">
-      <HintPath>..\plugins\HttpServerWS\bin\websocket-sharp.dll</HintPath>
-    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -79,6 +76,8 @@
     <Compile Include="ui\PanesStyleSelector.cs" />
     <Compile Include="ui\PanesTemplateSelector.cs" />
     <Compile Include="ui\TreeListView.cs" />
+    <Compile Include="Wamp\WampClient.cs" />
+    <Compile Include="Wamp\WampCommon.cs" />
     <Page Include="ui\InspectorView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -117,6 +116,10 @@
     <ProjectReference Include="..\external\Jurassic\Jurassic.csproj">
       <Project>{2ce5502d-8710-4be3-9d90-201d526904b3}</Project>
       <Name>Jurassic</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\external\websocket-sharp\websocket-sharp.csproj">
+      <Project>{b357bac7-529e-4d81-a0d2-71041b19c8de}</Project>
+      <Name>websocket-sharp</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

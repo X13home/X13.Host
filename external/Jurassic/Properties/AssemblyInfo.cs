@@ -36,6 +36,7 @@ using System.Runtime.InteropServices;
 
 // Unit tests and performance tests need access to internal members.
 [assembly: InternalsVisibleTo("Unit Tests")]
+[assembly: InternalsVisibleTo("Engine")]
 //[assembly: InternalsVisibleTo("Performance")]
 //[assembly: InternalsVisibleTo("JavaScript")]
 //[assembly: InternalsVisibleTo("DebuggerTest")]

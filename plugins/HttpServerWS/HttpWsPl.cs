@@ -107,7 +107,7 @@ namespace X13.Plugins {
       }
       _sv.OnGet+=OnGet;
       _sv.AddWebSocketService<ApiV03>("/api/v03");
-      _sv.AddWebSocketService<X13.Server.ApiV04>("/api/v04");
+      _sv.AddWebSocketService<X13.WAMP.WampServer>("/api/v04");
       _sv.Start();
       if(_sv.IsListening) {
         Log.Info("HttpServer started on {0}:{1} ", Environment.MachineName, _sv.Port.ToString());

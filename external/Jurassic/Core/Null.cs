@@ -25,7 +25,7 @@ namespace Jurassic
         /// Gets the one and only "null" instance.
         /// </summary>
         public static readonly Null Value = new Null();
-
+        public const string NullString = "null";
 
 
         //     SERIALIZATION
@@ -65,7 +65,7 @@ namespace Jurassic
         /// <returns> A string representing the current object. </returns>
         public override string ToString()
         {
-            return "null";
+            return NullString;
         }
     }
 

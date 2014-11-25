@@ -17,7 +17,7 @@ using X13.lib;
 
 namespace X13 {
   public partial class MainWindow : Window {
-    //private Client.Client _client;
+    private WAMP.WampClient _client;
     private string _cfgPath;
     private string _connectionUrl;
 
@@ -39,7 +39,7 @@ namespace X13 {
           if(conn!=null) {
             _connectionUrl=conn.InnerText;
           } else {
-            _connectionUrl="localhost:8080";
+            _connectionUrl="ws://localhost:80/";
           }
           var window=xd.SelectSingleNode("/Config/Window");
           if(window!=null) {
@@ -66,10 +66,10 @@ namespace X13 {
             layoutS=xlay.OuterXml;
           }
         }
-        //if(!string.IsNullOrWhiteSpace(_connectionUrl)) {
-        //  _client=new Client.Client(_connectionUrl);
-        //  _client.Start();
-        //}
+        if(!string.IsNullOrWhiteSpace(_connectionUrl)) {
+          _client=new WAMP.WampClient(_connectionUrl);
+          _client.Open();
+        }
         if(layoutS!=null) {
           var layoutSerializer = new Xceed.Wpf.AvalonDock.Layout.Serialization.XmlLayoutSerializer(dockManager);
           layoutSerializer.LayoutSerializationCallback += (s, e1) => {
@@ -105,10 +105,10 @@ namespace X13 {
       }
     }
     private void Window_Closing(object sender, CancelEventArgs e) {
-      //if(_client!=null) {
-      //  _client.Stop();
-      //  _client=null;
-      //}
+      if(_client!=null) {
+        _client.Close();
+        _client=null;
+      }
       var layoutSerializer = new Xceed.Wpf.AvalonDock.Layout.Serialization.XmlLayoutSerializer(dockManager);
       try {
         var lDoc=new XmlDocument();

@@ -72,7 +72,7 @@ namespace Jurassic.Library
         [JSInternalFunction(Name = "toString")]
         public string ToStringJS()
         {
-            return this.value ? "true" : "false";
+            return this.value ? BooleanConstructor.TrueString : BooleanConstructor.FalseString;
         }
     }
 }

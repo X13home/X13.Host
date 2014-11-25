@@ -74,27 +74,29 @@ namespace Jurassic
         /// <returns> The value as a standard .NET type. </returns>
         internal static object NormalizeValue(object obj)
         {
-            if (obj == null)
-                return Undefined.Value;
-            else if (obj is double)
-            {
-                var numericResult = (double)obj;
-                if ((double)((int)numericResult) == numericResult)
-                    return (int)numericResult;
+          if(obj == null) {
+            return Undefined.Value;
+          } else if(obj is uint) {
+            if((uint)obj>(uint)int.MaxValue) {
+              return Convert.ChangeType(obj, typeof(long));
+            } else {
+              return Convert.ChangeType(obj, typeof(int));
             }
-            else if (obj is uint)
-            {
-                var uintValue = (uint)obj;
-                if ((int)uintValue >= 0)
-                    return (int)uintValue;
-                return (double)uintValue;
+          } else if(obj is byte || obj is short || obj is ushort){
+            return Convert.ChangeType(obj, typeof(int));
+          } else if(obj is ulong){
+            if((ulong)obj>(ulong)long.MaxValue) {
+              return Convert.ChangeType(obj, typeof(double));
+            } else {
+              return Convert.ChangeType(obj, typeof(long));
             }
-            else if (obj is ConcatenatedString)
-                obj = ((ConcatenatedString)obj).ToString();
-            else if (obj is ClrInstanceWrapper)
-                obj = ((ClrInstanceWrapper)obj).WrappedInstance;
-            else if (obj is ClrStaticTypeWrapper)
-                obj = ((ClrStaticTypeWrapper)obj).WrappedType;
+          } else if(obj is ConcatenatedString) {
+            obj = ((ConcatenatedString)obj).ToString();
+          } else if(obj is ClrInstanceWrapper) {
+            obj = ((ClrInstanceWrapper)obj).WrappedInstance;
+          } else if(obj is ClrStaticTypeWrapper) {
+            obj = ((ClrStaticTypeWrapper)obj).WrappedType;
+          }
             return obj;
         }
 
