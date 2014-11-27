@@ -443,6 +443,7 @@ namespace X13.CC {
             case ItemAction.createLongMask:
             case ItemAction.createNodeMask:
             case ItemAction.createStringMask:
+            case ItemAction.createByteArrMask:
             case ItemAction.open:
               continue;
             }
