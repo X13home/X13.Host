@@ -8,6 +8,8 @@
 //See LICENSE.txt file for license details.
 #endregion license
 
+#define UART_RAW_MQTTSN
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -17,13 +19,11 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 
-
 namespace X13.Periphery {
   [Export(typeof(IPlugModul))]
   [ExportMetadata("priority", 5)]
   [ExportMetadata("name", "MQTT-SN.Serial")]
   public class MQTTSGate : IPlugModul {
-
     public void Init() {
       Topic old;
       if(Topic.root.Exist("/local/cfg/MQTTS.Gate/enable", out old) && old.valueType==typeof(bool)) {
@@ -130,7 +130,7 @@ namespace X13.Periphery {
             port.Open();
             port.DiscardInBuffer();
             SendRaw(port, disconnectAll, tmpBuf); // Send Disconnect
-            Thread.Sleep(70);
+            Thread.Sleep(500);
             cnt=-1;
             tryCnt=6;
             escChar=false;
@@ -189,6 +189,7 @@ namespace X13.Periphery {
           if(b<0) {
             break;
           }
+#if !UART_RAW_MQTTSN
           if(b==0xC0) {
             escChar=false;
             if(cnt>1 && cnt==length) {
@@ -213,9 +214,25 @@ namespace X13.Periphery {
             cnt=-1;
             continue;
           }
+#endif
           if(cnt>=0) {
             buf[cnt++]=(byte)b;
+#if UART_RAW_MQTTSN
+            if(cnt==length) {
+              return true;
+            }
+#endif
           } else {
+#if UART_RAW_MQTTSN
+            if(b<2 && b>MsMessage.MSG_MAX_LENGTH) {
+              if(_verbose.value) {
+                Log.Warning("r 0x{0:X2} wrong length of the packet: {1}", port.PortName, b);
+              }
+              cnt=-1;
+              port.DiscardInBuffer();
+              return false;
+            }
+#endif
             length=b;
             cnt++;
           }
@@ -228,8 +245,14 @@ namespace X13.Periphery {
         }
         int i, j=0;
         byte b;
-        tmp[j++]=0xC0;
         b=(byte)buf.Length;
+#if UART_RAW_MQTTSN
+        tmp[j++]=b;
+        for(i=0; i<buf.Length; i++) {
+          tmp[j++]=buf[i];
+        }
+#else
+        tmp[j++]=0xC0;
         if(b==0xC0 || b==0xDB) {
           tmp[j++]=0xDB;
           tmp[j++]=(byte)(b ^ 0x20);
@@ -245,6 +268,7 @@ namespace X13.Periphery {
           }
         }
         tmp[j++]=0xC0;
+#endif
         port.Write(tmp, 0, j);
         if(_verbose.value) {
           Log.Debug("s  {0}: {1}  {2}", port.PortName, BitConverter.ToString(buf, 0, buf.Length), MsMessage.Parse(buf, 0, buf.Length));
@@ -257,8 +281,14 @@ namespace X13.Periphery {
         byte[] buf=msg.GetBytes();
         int i, j=0;
         byte b;
-        tmp[j++]=0xC0;
         b=(byte)buf.Length;
+#if UART_RAW_MQTTSN
+        tmp[j++]=b;
+        for(i=0; i<buf.Length; i++) {
+          tmp[j++]=buf[i];
+        }
+#else
+        tmp[j++]=0xC0;
         if(b==0xC0 || b==0xDB) {
           tmp[j++]=0xDB;
           tmp[j++]=(byte)(b ^ 0x20);
@@ -274,10 +304,11 @@ namespace X13.Periphery {
           }
         }
         tmp[j++]=0xC0;
+#endif
         g._port.Write(tmp, 0, j);
 
         if(_verbose.value) {
-          Log.Debug("s  {0}: {1}  {2}", g._port.PortName, BitConverter.ToString(buf), msg.ToString());
+          Log.Debug("s {0}: {1}  {2}", g._port.PortName, BitConverter.ToString(buf), msg.ToString());
         }
       }
       #endregion static
@@ -308,6 +339,7 @@ namespace X13.Periphery {
         _advTick=DateTime.Now.AddSeconds(15.6);
       }
       public void SendGw(MsDevice dev, MsMessage msg) {
+        msg.GetBytes();
         lock(_sendQueue) {
           _sendQueue.Enqueue(msg);
         }
@@ -342,7 +374,13 @@ namespace X13.Periphery {
               }
             }
             if(msg!=null) {
-              SendRaw(this, msg, _sndBuf);
+              try {
+                SendRaw(this, msg, _sndBuf);
+                Thread.Sleep(15);
+              }
+              catch(ArgumentOutOfRangeException) {
+                
+              }
               continue;
             }
             Thread.Sleep(15);

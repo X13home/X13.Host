@@ -873,7 +873,7 @@ namespace X13.Periphery {
     private ushort NextMsgId() {
       int rez=Interlocked.Increment(ref _messageIdGen);
       Interlocked.CompareExchange(ref _messageIdGen, 1, 0xFFFF);
-      //Log.Debug("{0}.MsgId={1:X4}", Owner.name, rez);
+      //Log.Debug("{0}.MsgId={1:X4}", Owner.name, _sendBuf);
       return (ushort)rez;
     }
     private void SyncMsgId(ushort p) {
@@ -955,9 +955,23 @@ namespace X13.Periphery {
         if(msg!=null) {
           if(_gate!=null) {
             Stat(true, msg.MsgTyp, ((msg is MsPublish && (msg as MsPublish).Dup) || (msg is MsSubscribe && (msg as MsSubscribe).dup)));
-            _gate.SendGw(this, msg);
+            try {
+              _gate.SendGw(this, msg);
+            }
+            catch(ArgumentOutOfRangeException ex) {
+              Log.Warning("{0} - {1}", this.name, ex.Message);
+              if(msg.IsRequest) {
+                lock(_sendQueue) {
+                  if(_sendQueue.Count>0 && _sendQueue.Peek()==msg) {
+                    _sendQueue.Dequeue();
+                    _waitAck=false;
+                  }
+                }
+              }
+              msg=null;
+            }
           }
-          if(msg.IsRequest) {
+          if(msg!=null && msg.IsRequest) {
             ResetTimer(_rand.Next(ACK_TIMEOUT, ACK_TIMEOUT*5/3)/(_tryCounter+1));  // 600, 1000
             _waitAck=true;
             break;

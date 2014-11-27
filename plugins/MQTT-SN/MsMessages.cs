@@ -59,6 +59,8 @@ namespace X13.Periphery {
   }
 
   public class MsMessage {
+    public const int MSG_MAX_LENGTH=50;
+
     public static MsMessage Parse(byte[] buf, int start, int end) {
       if(start+1>end) {
         return null;
@@ -105,7 +107,7 @@ namespace X13.Periphery {
     protected static UTF8Encoding enc = new UTF8Encoding();
 
     protected ushort _length;
-
+    private byte[] _sendBuf;
     public readonly MsMessageType MsgTyp;
     public bool IsRequest { get; protected set; }        // response is required 
     public MsMessageType ReqTyp { get; protected set; }  // message is a response to
@@ -121,6 +123,7 @@ namespace X13.Periphery {
         throw new ArgumentException("length is too small");
       }
       MsgTyp=(MsMessageType)(buf[start+0]>1?buf[start+1]:buf[start+3]);
+      _sendBuf=null;
     }
     public MsMessage(MsMessageType type) {
       MsgTyp=type;
@@ -131,23 +134,30 @@ namespace X13.Periphery {
         this.IsRequest=true;
         break;
       }
+      _sendBuf=null;
     }
     public virtual byte[] GetBytes() {
-      if(_length>255) {
-        _length+=2;
-      }
-      byte[] rez=new byte[_length];
-      int ptr=0;
-      if(_length>255) {
-        rez[ptr++]=1;
-        rez[ptr++]=(byte)(_length>>8);
-        rez[ptr++]=(byte)(_length);
-      } else {
-        rez[ptr++]=(byte)(_length);
-      }
-      rez[ptr]=(byte)MsgTyp;
+      if(_sendBuf==null) {
+        if(_length>MSG_MAX_LENGTH) {
+          throw new ArgumentOutOfRangeException(string.Format("Msg is too long {0}", this.ToString()));
+        }
 
-      return rez;
+        if(_length>255) {
+          _length+=2;
+        }
+        _sendBuf=new byte[_length];
+        int ptr=0;
+        if(_length>255) {
+          _sendBuf[ptr++]=1;
+          _sendBuf[ptr++]=(byte)(_length>>8);
+          _sendBuf[ptr++]=(byte)(_length);
+        } else {
+          _sendBuf[ptr++]=(byte)(_length);
+        }
+        _sendBuf[ptr]=(byte)MsgTyp;
+
+      }
+      return _sendBuf;
     }
 
     public override string ToString() {
