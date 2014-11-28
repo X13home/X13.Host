@@ -356,10 +356,11 @@ namespace X13.Periphery {
         int cnt=-1;
         int len=-1;
         MsMessage msg;
+        DateTime busyTime=DateTime.Now;
         try {
           while(_port!=null && _port.IsOpen) {
             if(GetPacket(_port, ref len, buf, ref cnt, ref escChar)) {
-              if(len==5 && buf[0]==(byte)MsMessageType.SUBSCRIBE) {
+              if(len==5 && buf[1]==(byte)MsMessageType.SUBSCRIBE) {
                 _advTick=DateTime.Now.AddMilliseconds(100);   // Send Advertise
               }
               MsDevice.ProcessInPacket(this, _gateAddr, buf, 0, len);
@@ -368,22 +369,20 @@ namespace X13.Periphery {
               continue;
             }
             msg=null;
+            if(busyTime>DateTime.Now) {
+              Thread.Sleep(0);
+              continue;
+            }
             lock(_sendQueue) {
               if(_sendQueue.Count>0) {
                 msg=_sendQueue.Dequeue();
               }
             }
             if(msg!=null) {
-              try {
-                SendRaw(this, msg, _sndBuf);
-                Thread.Sleep(15);
-              }
-              catch(ArgumentOutOfRangeException) {
-                
-              }
+              SendRaw(this, msg, _sndBuf);
+              busyTime=DateTime.Now.AddMilliseconds(msg.IsRequest?20:5);
               continue;
             }
-            Thread.Sleep(15);
             if(_gwTopic!=null && _gwTopic.value!=null && (_gwTopic.value.state==State.Disconnected || _gwTopic.value.state==State.Lost)) {
               _gwTopic=null;
               Thread.Sleep(500);
@@ -396,6 +395,7 @@ namespace X13.Periphery {
               SendRaw(this, new MsAdvertise(gwIdx, 900), _sndBuf);
               _advTick=DateTime.Now.AddMinutes(15);
             }
+            Thread.Sleep(15);
           }
         }
         catch(IOException) {
