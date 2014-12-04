@@ -522,7 +522,7 @@ namespace X13.Periphery {
       if(param.Art==TopicChanged.ChangeArt.Value) {
         Send(new MsPublish(rez.topic, rez.TopicId, param.Subscription.qos));
       } else {          // Remove by device
-        Send(new MsRegister(0, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
+        Send(new MsRegister(0xFFFF, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
         _topics.Remove(rez);
       }
     }

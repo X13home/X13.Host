@@ -510,20 +510,32 @@ namespace X13.Periphery {
           } else {
             if(fm.msg.MsgTyp==MsMessageType.CONNECT) {
               var cm=fm.msg as MsConnect;
-              DVar<MsDevice> dDev=devR.Get<MsDevice>(cm.ClientId);
-              if(dDev.value==null) {
-                dDev.value=new MsDevice(this, fm.addr);
-                Thread.Sleep(0);
-                dDev.value.Owner=dDev;
+              if(fm.addr!=null && fm.addr.Length==2 && fm.addr[1]==0xFF) {    // DHCP V<0.3
+                _gate.SendGw(this, new MsForward(fm.addr, new MsConnack(MsReturnCode.Accepted) ) );
+
+                byte[] nAddr=new byte[1];
+                var r=new Random(DateTime.Now.Millisecond);
+                do {
+                  nAddr[0]=(byte)(8+r.Next(0xF6));  //0x08 .. 0xFE
+                } while(!devR.children.Select(z => z as DVar<MsDevice>).Where(z => z!=null && z.value!=null).All(z => !z.value.CheckAddr(nAddr)));
+                Log.Info("{0} new addr={1:X2}", cm.ClientId, nAddr[0]);
+                _gate.SendGw(this, new MsForward(fm.addr, new MsPublish(null, PredefinedTopics[".cfg/XD_DeviceAddr"], QoS.AtLeastOnce) { MessageId=1, Data=nAddr }) );
               } else {
-                dDev.value._gate=this;
-                dDev.value.Addr=fm.addr;
-              }
-              dDev.value.Connect(cm);
-              foreach(var dub in devR.children.Select(z => z.GetValue() as MsDevice).Where(z => z!=null && z!=dDev.value && z.Addr!=null && z.Addr.SequenceEqual(fm.addr) && z._gate==this).ToArray()) {
-                dub.Addr=null;
-                dub._gate=null;
-                dub.state=State.Disconnected;
+                DVar<MsDevice> dDev=devR.Get<MsDevice>(cm.ClientId);
+                if(dDev.value==null) {
+                  dDev.value=new MsDevice(this, fm.addr);
+                  Thread.Sleep(0);
+                  dDev.value.Owner=dDev;
+                } else {
+                  dDev.value._gate=this;
+                  dDev.value.Addr=fm.addr;
+                }
+                dDev.value.Connect(cm);
+                foreach(var dub in devR.children.Select(z => z.GetValue() as MsDevice).Where(z => z!=null && z!=dDev.value && z.Addr!=null && z.Addr.SequenceEqual(fm.addr) && z._gate==this).ToArray()) {
+                  dub.Addr=null;
+                  dub._gate=null;
+                  dub.state=State.Disconnected;
+                }
               }
             } else {
               MsDevice dev=devR.children.Select(z => z.GetValue() as MsDevice).FirstOrDefault(z => z!=null && z.Addr!=null && z.Addr.SequenceEqual(fm.addr) && z._gate==this);
