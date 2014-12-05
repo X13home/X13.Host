@@ -66,7 +66,7 @@ namespace X13.Periphery {
     }
 
     public void Recv(byte[] msgData) {
-      if(msgData==null) {
+      if(msgData==null || msgData.Length<4) {
         return;
       }
       for(int i=_drivers.Count-1; i>=0; i--) {
@@ -145,6 +145,11 @@ namespace X13.Periphery {
       case "BLINKM_F10":
         drv=new Blinky(snd);
         break;
+      default:
+        if(snd.name.Length>2 && snd.name.Length<6 && (snd.name.StartsWith("Sa") || snd.name.StartsWith("Ra"))) {
+          drv=new RawDevice(snd);
+        }
+        break;
       }
       if(drv!=null) {
         lock(_drivers) {
@@ -204,6 +209,87 @@ namespace X13.Periphery {
       public abstract bool Recv(byte[] buf);
       public abstract bool Poll(out byte[] buf);
       public abstract void Reset();
+    }
+    private class RawDevice : TWICommon {
+      private byte _addr;
+      private bool _snd;
+      private DVar<X13.PLC.ByteArray> _sa;
+      private DVar<X13.PLC.ByteArray> _ra;
+
+      public RawDevice(Topic pin) {
+        if(pin==null) {
+          throw new ArgumentNullException();
+        }
+        if(pin.name.Length<3 || !byte.TryParse(pin.name.Substring(2), out _addr) || _addr==0 || _addr>127) {
+          pin.Remove();
+          throw new ArgumentException("bad pin name: "+pin.name);
+        }
+        if(pin.name.StartsWith("Sa")) {
+          _sa=pin as DVar<X13.PLC.ByteArray>;
+          if(_sa==null) {
+            throw new ArgumentException();
+          }
+          _ra=_sa.parent.Get<X13.PLC.ByteArray>(string.Format("Ra{0}", _addr));
+        } else if(pin.name.StartsWith("Ra")) {
+          _ra=pin as DVar<X13.PLC.ByteArray>;
+          if(_ra==null) {
+            throw new ArgumentException();
+          }
+          _sa=_ra.parent.Get<X13.PLC.ByteArray>(string.Format("Sa{0}", _addr));
+        } else {
+          throw new ArgumentException();
+        }
+        Reset();
+      }
+      public override bool VarChanged(Topic snd, bool delete) {
+        if(snd==_sa) {
+          if(delete) {
+            if(_ra!=null) {
+              _ra.Remove(_ra.parent);
+            }
+          } else {
+            _snd=true;
+          }
+          return true;
+        } else if(snd==_ra) {
+          if(delete && _sa!=null) {
+            _sa.Remove(_sa.parent);
+          }
+          return true;
+        }
+        return false;
+      }
+
+      public override bool Recv(byte[] buf) {
+        if(buf[0]==_addr) {
+          if(_ra!=null) {
+            _ra.value=new PLC.ByteArray(buf.Skip(1).ToArray());
+          }
+          return true;
+        }
+        return false;
+      }
+
+      public override bool Poll(out byte[] buf) {
+        if(_snd) {
+          _snd=false;
+          if(_sa.value!=null) {
+            var tmp=_sa.value.GetBytes();
+            if(tmp!=null && tmp.Length>2){
+              buf=new byte[tmp.Length+1];
+              buf[0]=_addr;
+              Buffer.BlockCopy(tmp, 0, buf, 1, tmp.Length);
+              return true;
+            }
+          }
+        }
+        buf=null;
+        return false;
+      }
+
+      public override void Reset() {
+        _snd=false;
+      }
     }
     private class LM75 : TWICommon {
       private DVar<double> _T;
@@ -317,7 +403,7 @@ namespace X13.Periphery {
         return false;
       }
       public override bool Recv(byte[] buf) {
-        if(buf.Length>=4 && buf[0]==ADDR) {
+        if(buf[0]==ADDR) {
           if(buf[1]==0x10) {
             if(buf.Length==8) {
               _T.value=Math.Round(((buf[6]<<6) | (buf[7]>>2))*165.0/16384-40, 2);
@@ -418,7 +504,7 @@ namespace X13.Periphery {
         return false;
       }
       public override bool Recv(byte[] buf) {
-        if(buf.Length>=4 && buf[0]==ADDR) {
+        if(buf[0]==ADDR) {
           if(buf[1]==0x10) {
             if(buf.Length==8) {
               if((buf[4] & 0xC0)==0) {
@@ -536,7 +622,7 @@ namespace X13.Periphery {
         return false;
       }
       public override bool Recv(byte[] buf) {
-        if(buf.Length>=4 && buf[0]==ADDR) {
+        if(buf[0]==ADDR) {
           if(buf[1]==0x10) {
             if(_st==-1 && buf.Length==26) {
               _pt=DateTime.Now;
@@ -710,7 +796,7 @@ namespace X13.Periphery {
         }
       }
       public override bool Recv(byte[] buf) {
-        if(buf.Length>=4 && buf[0]==_addr) {
+        if(buf[0]==_addr) {
           if(buf[1]!=0x10) {
             if(TWIDriver._verbose) {
               Log.Error("{0}.recv - {1}", _RGB.path, (AckFlags)buf[1]);
