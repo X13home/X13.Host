@@ -466,7 +466,6 @@ namespace X13.Periphery {
           } else if(fm.msg.MsgTyp==MsMessageType.DHCP_REQ) {
             var dr=fm.msg as MsDhcpReq;
             //******************************
-            var r=new Random((int)DateTime.Now.Ticks);
             List<byte> ackAddr=new List<byte>();
             byte[] respPrev=null;
 
@@ -482,7 +481,7 @@ namespace X13.Periphery {
 
                   for(int i=0; i<5; i++) {
                     for(int j=0; j<resp.Length; j++) {
-                      resp[j]=(byte)r.Next((i<3 && hLen==1)?32:1, (i<3 && hLen==1)?126:(j==0?254:255));
+                      resp[j]=(byte)_rand.Next((i<3 && hLen==1)?32:1, (i<3 && hLen==1)?126:(j==0?254:255));
                     }
                     if(devR.children.Select(z => z as DVar<MsDevice>).Where(z => z!=null && z.value!=null).All(z => !z.value.CheckAddr(resp))) {
                       break;
@@ -514,9 +513,8 @@ namespace X13.Periphery {
                 _gate.SendGw(this, new MsForward(fm.addr, new MsConnack(MsReturnCode.Accepted) ) );
 
                 byte[] nAddr=new byte[1];
-                var r=new Random(DateTime.Now.Millisecond);
                 do {
-                  nAddr[0]=(byte)(8+r.Next(0xF6));  //0x08 .. 0xFE
+                  nAddr[0]=(byte)(_rand.Next(32, 254));
                 } while(!devR.children.Select(z => z as DVar<MsDevice>).Where(z => z!=null && z.value!=null).All(z => !z.value.CheckAddr(nAddr)));
                 Log.Info("{0} new addr={1:X2}", cm.ClientId, nAddr[0]);
                 _gate.SendGw(this, new MsForward(fm.addr, new MsPublish(null, PredefinedTopics[".cfg/XD_DeviceAddr"], QoS.AtLeastOnce) { MessageId=1, Data=nAddr }) );
