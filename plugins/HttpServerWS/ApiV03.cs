@@ -54,6 +54,9 @@ namespace X13.Plugins {
     protected override void OnMessage(MessageEventArgs e) {
       string[] sa;
       if(e.Type==Opcode.Text && !string.IsNullOrEmpty(e.Data) && (sa=e.Data.Split('\t'))!=null && sa.Length>0) {
+        if(_verbose.value) {
+          X13.Log.Debug("ws.msg({0})", string.Join(", ", sa));
+        }
         if(sa[0]=="C" && sa.Length==3) {  // Connect, username, password
           if((sa[1]!="local" || _ses.ip.IsLocal()) && MQTT.MqBroker.CheckAuth(sa[1], sa[2])) {
             _ses.userName=sa[1];
@@ -80,12 +83,21 @@ namespace X13.Plugins {
 
     private void SubChanged(Topic t, TopicChanged a) {
       if(t.path.StartsWith("/local") || a.Visited(_ses.owner, true) || !MQTT.MqBroker.CheckAcl(_ses.userName, t, TopicAcl.Subscribe)) {
+        if(_verbose.value) {
+          X13.Log.Debug("ws.snd({0}) - access denied", t.path);
+        }
         return;
       }
       if(a.Art==TopicChanged.ChangeArt.Remove) {
         Send(string.Concat("P\t", t.path, "\tnull"));
+        if(_verbose.value) {
+          X13.Log.Debug("ws.snd({0}) - remove", t.path);
+        }
       } else if(a.Art==TopicChanged.ChangeArt.Value) {
         Send(string.Concat("P\t", t.path, "\t", t.ToJson()));
+        if(_verbose.value) {
+          X13.Log.Debug("ws.snd({0}, {1})", t.path, t.ToJson());
+        }
       } else {
         return;
       }
