@@ -110,6 +110,15 @@ namespace X13.Plugins {
       _present=_val.Get<bool>("_present");
       _present.value=false;
       Connect();
+      _reconn=new Timer(o => {
+        if(_st==State.NoAnswer) {
+          if(_rccnt<120) {
+            _rccnt++;
+          }
+          Connect();
+        }
+      });
+
     }
     public void ChangeUri(Uri uri) {
       _st=State.Connecting;
@@ -167,18 +176,11 @@ namespace X13.Plugins {
     }
     private void _ws_OnClose(object sender, CloseEventArgs e) {
       if(_verbose.value) {
-        Log.Debug("{0}.disconnected - {1}", name, e.Code);
+        Log.Debug("WsSync/{0} - disconnected[{1}]", name, e.Code);
       }
       _present.value=false;
       if(_st==State.Ready) {
-        _reconn=new Timer(o => {
-          if(_st==State.NoAnswer) {
-            if(_rccnt<120) {
-              _rccnt++;
-            }
-            Connect();
-          }
-        }, null, _rccnt*15000, -1);
+        _reconn.Change(_rccnt*15000, _rccnt*30000);
       } else if(_st==State.Dispose) {
         _ws=null;
       }
@@ -188,14 +190,7 @@ namespace X13.Plugins {
       if(_verbose.value) {
         Log.Debug(name + " - " +e.Message);
       }
-      _reconn=new Timer(o => {
-        if(_st==State.NoAnswer) {
-          if(_rccnt<120) {
-            _rccnt++;
-          }
-          Connect();
-        }
-      }, null, _rccnt*15000, -1);
+      _reconn.Change(_rccnt*15000, _rccnt*30000);
     }
     private void WsLog(LogData d, string f) {
       if(_verbose.value) {
@@ -206,13 +201,13 @@ namespace X13.Plugins {
       string[] sa;
       if(e.Type==Opcode.Text && !string.IsNullOrEmpty(e.Data) && (sa=e.Data.Split('\t'))!=null && sa.Length>0) {
         if(_verbose.value) {
-          Log.Debug("WsSync/{0} << {1}", name, e.Data);
+          Log.Debug("R WsSync/{0} {1}", name, e.Data);
         }
         if(sa[0]=="P" && sa.Length==3) {
           Parse(sa[1], sa[2]);
         } else if(sa[0]=="C" && sa.Length==2) {  // Connect, username, password
           if(sa[1]=="true") {
-            _ws.Send("S\t"+_remotePath);
+            Send("S\t"+_remotePath);
             _val.Subscribe("#", _local_changed);
             _st=State.Ready;
             _present.value=true;
@@ -224,12 +219,12 @@ namespace X13.Plugins {
         } else if(sa[0]=="I" && sa.Length==3) {
           _clientId=sa[1];
           if(sa[2]=="true" || (sa[2]=="null" && string.IsNullOrEmpty(_uName))) {
-            _ws.Send("S\t"+_remotePath);
+            Send("S\t"+_remotePath);
             _val.Subscribe("#", _local_changed);
             _st=State.Ready;
             _present.value=true;
           } else if(!string.IsNullOrEmpty(_uName)) {
-            _ws.Send("C\t"+_uName+"\t"+_uPass);
+            Send("C\t"+_uName+"\t"+_uPass);
           } else {
             Log.Warning("WsSync/"+name+" anonymous user is disabled");
             _st=State.BadAuth;
@@ -240,9 +235,10 @@ namespace X13.Plugins {
     }
     private void _ws_OnOpen(object sender, EventArgs e) {
       if(_verbose.value) {
-        Log.Debug("WsSync/"+name+" connected");
+        Log.Debug("WsSync/{0} connected to {1}://{2}{3}", name, _ws.Url.Scheme, _ws.Url.DnsSafeHost, _remotePath);
       }
       _rccnt=0;
+      _reconn.Change(-1, -1);
     }
     private void _local_changed(Topic sender, TopicChanged p) {
       if(_val==null || sender==null || sender==_present || _val==null || p.Initiator==_val || sender.path==null || !sender.path.StartsWith(_val.path) || p.Art==TopicChanged.ChangeArt.Add) {
@@ -260,8 +256,14 @@ namespace X13.Plugins {
       } else {
         content="null";
       }
+        Send("P\t"+path+"\t"+content);
+    }
+    private void Send(string msg) {
       if(_ws!=null && _ws.ReadyState==WebSocketState.Open) {
-        _ws.Send("P\t"+path+"\t"+content);
+        if(_verbose.value) {
+          Log.Debug("S WsSync/{0} {1}", name, msg);
+        }
+        _ws.Send(msg);
       }
     }
     private void Parse(string rp, string json) {
