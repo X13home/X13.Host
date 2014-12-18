@@ -760,7 +760,9 @@ namespace X13.Periphery {
       if(param.Art==TopicChanged.ChangeArt.Value) {
         Send(new MsPublish(rez.topic, rez.TopicId, param.Subscription.qos));
       } else {          // Remove by device
-        Send(new MsRegister(0xFFFF, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
+        if(rez.it==TopicIdType.Normal) {
+          Send(new MsRegister(0xFFFF, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
+        }
         _topics.Remove(rez);
       }
     }
@@ -1168,10 +1170,38 @@ namespace X13.Periphery {
       new NTRecord("Xq", typeof(long)),   //int64
       new NTRecord("Xs", typeof(string)),
       new NTRecord("Xa", typeof(PLC.ByteArray)),
+      new NTRecord("Mz", typeof(bool)),   // user defined
+      new NTRecord("Mb", typeof(long)),   //int8
+      new NTRecord("MB", typeof(long)),   //uint8
+      new NTRecord("Mw", typeof(long)),   //int16
+      new NTRecord("MW", typeof(long)),   //uint16
+      new NTRecord("Md", typeof(long)),   //int32
+      new NTRecord("MD", typeof(long)),   //uint32
+      new NTRecord("Mq", typeof(long)),   //int64
+      new NTRecord("Ms", typeof(string)),
+      new NTRecord("Ma", typeof(PLC.ByteArray)),
+      new NTRecord("Pa", typeof(PLC.ByteArray)),    // Program
       new NTRecord("_declarer", typeof(string)),
       new NTRecord("present", typeof(bool)),
     };
     internal static Dictionary<string, ushort> PredefinedTopics=new Dictionary<string, ushort>(){
+      {"Pa0000",        0x0000},
+      {"Pa0001",        0x0001},
+      {"Pa0002",        0x0002},
+      {"Pa0003",        0x0003},
+      {"Pa0004",        0x0004},
+      {"Pa0005",        0x0005},
+      {"Pa0006",        0x0006},
+      {"Pa0007",        0x0007},
+      {"Pa0008",        0x0008},
+      {"Pa0009",        0x0009},
+      {"Pa000A",        0x000A},
+      {"Pa000B",        0x000B},
+      {"Pa000C",        0x000C},
+      {"Pa000D",        0x000D},
+      {"Pa000E",        0x000E},
+      {"Pa000F",        0x000F},
+
       {"_sName",             0xFF00},
       {".cfg/XD_SleepTime",  0xFF01},
       {".cfg/XD_ADCintegrate",   0xFF08},
