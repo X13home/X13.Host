@@ -1,5 +1,5 @@
 ﻿#region license
-//Copyright (c) 2011-2013 <comparator@gmx.de>; Wassili Hense
+//Copyright (c) 2011-2015 <comparator@gmx.de>; Wassili Hense
 
 //This file is part of the X13.Home project.
 //https://github.com/X13home
@@ -197,34 +197,36 @@ namespace X13.CC {
       Render(2);
     }
     public void SetFinish(uiPin finish) {
+      Topic tA, tB;
+      byte tDir;
       B=finish;
       A.AddConnection(this);
       B.AddConnection(this);
       string name;
       for(int i=1; _owner.model.Exist(name=string.Format("W{0:X3}", i)); i++)
         ;
-      model=_owner.model.Get<PiWire>(name);
-      model.saved=true;
-      model.value=new PiWire();
       if(B.Direction==1) {
-        model.value.Direction=1;
+        tDir=1;
       } else if(A.Direction==1) {
-        model.value.Direction=2;
+        tDir = 2;
       } else {
-        model.value.Direction=0;
+        tDir = 0;
       }
       uiAlias al=A.owner as uiAlias;
       if(al!=null) {
-        model.value.A=al.model;
+        tA=al.model;
       } else {
-        model.value.A=A.GetModel();
+        tA = A.GetModel();
       }
       al=B.owner as uiAlias;
       if(al!=null) {
-        model.value.B=al.model;
+        tB = al.model;
       } else {
-        model.value.B=B.GetModel();
+        tB = B.GetModel();
       }
+      model = _owner.model.Get<PiWire>(name);
+      model.saved = true;
+      model.value = new PiWire(tA, tB, tDir);
       model.changed+=model_changed;
       Render(3);
     }

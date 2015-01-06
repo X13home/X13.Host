@@ -1,5 +1,5 @@
 ﻿#region license
-//Copyright (c) 2011-2013 <comparator@gmx.de>; Wassili Hense
+//Copyright (c) 2011-2015 <comparator@gmx.de>; Wassili Hense
 
 //This file is part of the X13.Home project.
 //https://github.com/X13home

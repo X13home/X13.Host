@@ -1,5 +1,5 @@
 ﻿#region license
-//Copyright (c) 2011-2014 <comparator@gmx.de>; Wassili Hense
+//Copyright (c) 2011-2015 <comparator@gmx.de>; Wassili Hense
 
 //This file is part of the X13.Home project.
 //https://github.com/X13home
@@ -109,16 +109,22 @@ namespace X13.Plugins {
       _val=_var.Get(name);
       _present=_val.Get<bool>("_present");
       _present.value=false;
+      _reconn = new Timer(CheckState);
+      _rccnt = 1;
       Connect();
-      _reconn=new Timer(o => {
-        if(_st==State.NoAnswer) {
-          if(_rccnt<120) {
-            _rccnt++;
-          }
-          Connect();
+    }
+    private void CheckState(object o) {
+      if (_st == State.Ready && (_ws == null || _ws.ReadyState != WebSocketState.Open)) {
+        _rccnt = 1;
+      } else if (_st == State.NoAnswer) {
+        if (_rccnt < 120) {
+          _rccnt++;
         }
-      });
-
+      } else {
+        _rccnt = 1;
+        return;
+      }
+      Connect();
     }
     public void ChangeUri(Uri uri) {
       _st=State.Connecting;
@@ -173,15 +179,15 @@ namespace X13.Plugins {
       _ws.OnError+=_ws_OnError;
       _ws.OnClose+=_ws_OnClose;
       _ws.ConnectAsync();
+      _reconn.Change(_rccnt * 15000, _rccnt * 30000);
     }
     private void _ws_OnClose(object sender, CloseEventArgs e) {
       if(_verbose.value) {
         Log.Debug("WsSync/{0} - disconnected[{1}]", name, e.Code);
       }
       _present.value=false;
-      if(_st==State.Ready) {
-        _reconn.Change(_rccnt*15000, _rccnt*30000);
-      } else if(_st==State.Dispose) {
+      if(_st==State.Dispose) {
+        _reconn.Change(-1, -1);
         _ws=null;
       }
     }
@@ -215,6 +221,7 @@ namespace X13.Plugins {
             Log.Warning("WsSync/"+name+" wrong username or password");
             _st=State.BadAuth;
             _ws.Close(CloseStatusCode.Normal);
+            _reconn.Change(-1, -1);
           }
         } else if(sa[0]=="I" && sa.Length==3) {
           _clientId=sa[1];
@@ -237,8 +244,6 @@ namespace X13.Plugins {
       if(_verbose.value) {
         Log.Debug("WsSync/{0} connected to {1}://{2}{3}", name, _ws.Url.Scheme, _ws.Url.DnsSafeHost, _remotePath);
       }
-      _rccnt=0;
-      _reconn.Change(-1, -1);
     }
     private void _local_changed(Topic sender, TopicChanged p) {
       if(_val==null || sender==null || sender==_present || _val==null || p.Initiator==_val || sender.path==null || !sender.path.StartsWith(_val.path) || p.Art==TopicChanged.ChangeArt.Add) {
