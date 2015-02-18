@@ -92,6 +92,7 @@ namespace X13.View {
 
     private const int wtsCount=140;
     private void GetWeatherForecast(object o) {
+      double xMax=0;
       for(int tr=0; tr<3; tr++) {
         try {
           HttpWebRequest myHttpWebRequest = (HttpWebRequest)HttpWebRequest.Create("http://informer.gismeteo.ru/xml/10865_1.xml");
@@ -138,7 +139,7 @@ namespace X13.View {
             }
             n1=n.SelectSingleNode("WIND");
             _lv.Get<string>(string.Format("weather/wf{0}w", i)).value=string.Format(dictWind[int.Parse(n1.Attributes["direction"].Value)], (int.Parse(n1.Attributes["max"].Value)+int.Parse(n1.Attributes["min"].Value))/2);
-
+            xMax=x;
             i++;
           }
           string wlPath=Topic.root.Get<string>("/local/cfg/Broker/_path");
@@ -163,11 +164,11 @@ namespace X13.View {
               }
             }
           }
+          int cnt=(int)(xMax*2)-1;
+          double[] t_v=new double[cnt];
+          double[] p_v=new double[cnt];
 
-          double[] t_v=new double[wtsCount];
-          double[] p_v=new double[wtsCount];
-
-          for(i=0; i<wtsCount; i++) {
+          for(i=0; i<cnt; i++) {
             t_v[i]=t.Func(i/2.0);
             p_v[i]=pr.Func(i/2.0);
           }
@@ -181,6 +182,7 @@ namespace X13.View {
     }
 
     private void DrawT_Pr(double[] t, double[] p) {
+      int cnt=t.Length;
       int i=0;
       double tMin=t.Skip(i).Min();
       double tMax=t.Skip(i).Max();
@@ -220,7 +222,7 @@ namespace X13.View {
       this.wtDiagram.Children.Add(new Line() { X1=40, Y1=56, X2=wtDiagram.ActualWidth-40, Y2=56, Stroke=Brushes.Black, StrokeThickness=1.5 });
       this.wtDiagram.Children.Add(new Line() { X1=40, Y1=106, X2=wtDiagram.ActualWidth-40, Y2=106, Stroke=Brushes.Black, StrokeThickness=1.5 });
 
-      for(; i<wtsCount-1; i++) {
+      for(;i<cnt-1;i++) {
         AddSegment(t, tMin, xStep, tStep, yOffset, tPathFigureCollection, i);
         AddSegment(p, pMin, xStep, pStep, yOffset, pPathFigureCollection, i);
       }

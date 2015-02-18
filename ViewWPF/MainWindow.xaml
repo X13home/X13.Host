@@ -256,8 +256,8 @@
                   <GradientStop Color="#FFC7E4EB" Offset="0.33333" />
                   <GradientStop Color="#FF038CFC" Offset="0.6" />
                   <GradientStop Color="#FF038CFC" Offset="0.66665" />
-                  <GradientStop Color="#FF578CFC" Offset="0.66666" />
-                  <GradientStop Color="#FFF5FDFF" Offset="1" />
+                  <GradientStop Color="#FFF5FDFF" Offset="0.66666" />
+                  <GradientStop Color="#FF578CFC" Offset="0.85" />
                 </LinearGradientBrush>
               </Canvas.Background>
             </Canvas>
