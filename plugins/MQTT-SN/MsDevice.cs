@@ -15,23 +15,24 @@ using System.Text;
 using System.Threading;
 
 namespace X13.Periphery {
-
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
-  public partial class MsDevice : ITopicOwned {
-    private const int ACK_TIMEOUT=550;
+  public partial class MsDevice : ITopicOwned, IMsGate {
+    private const int ACK_TIMEOUT=600;
     private const ushort LOG_D_ID=0xFFE0;
     private const ushort LOG_I_ID=0xFFE1;
     private const ushort LOG_W_ID=0xFFE2;
     private const ushort LOG_E_ID=0xFFE3;
     private static DVar<bool> _verbose;
     private static List<IMsGate> _gates;
+    private static Random _rand;
 
     static MsDevice() {
-      _verbose=Topic.root.Get<bool>("/etc/MQTTS/verbose");
+      _verbose=Topic.root.Get<bool>("/etc/MQTT-SN/verbose");
       _gates=new List<IMsGate>();
+      _rand=new Random((int)DateTime.Now.Ticks);
     }
     internal static void Open() {
-      MsGUdp.Open();
+      //MsGUdp.Open();
     }
     internal static byte[] Serialize(Topic t) {
       List<byte> ret=new List<byte>();
@@ -64,15 +65,102 @@ namespace X13.Periphery {
       }
       return ret.ToArray();
     }
-    private static void PrintPacket(MsDevice dev, MsMessage msg, byte[] buf) {
+    public static void ProcessInPacket(IMsGate gate, byte[] addr, byte[] buf, int start, int end) {
+      var msg=MsMessage.Parse(buf, start, end);
+      if(msg==null) {
+        if(_verbose.value) {
+          Log.Warning("r  {0}: {1}  bad message", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start));
+        }
+        return;
+      }
+      if(msg.MsgTyp==MsMessageType.ADVERTISE || msg.MsgTyp==MsMessageType.GWINFO) {
+        return;
+      }
       if(_verbose.value) {
-        Log.Debug("r {4:X2}:{0}:{1} \t{2}:{3}", BitConverter.ToString(msg.Addr??new byte[0]), BitConverter.ToString(buf??new byte[0]), (dev!=null && dev.Owner!=null)?dev.Owner.name:string.Empty, msg.ToString(), (dev!=null && dev._gate!=null)?dev._gate.gwIdx:0xFF);
+        Log.Debug("r  {0}: {1}  {2}", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start), msg.ToString());
+      }
+      if(msg.MsgTyp==MsMessageType.SEARCHGW && ((msg as MsSearchGW).radius==0 || (msg as MsSearchGW).radius==1)) {
+        gate.SendGw(null, new MsGwInfo(gate.gwIdx));
+        return;
+      }
+      Topic devR=Topic.root.Get("/dev");
+      if(msg.MsgTyp==MsMessageType.DHCP_REQ) {
+        var dr=msg as MsDhcpReq;
+        if((dr.radius==0 || dr.radius==1)) {
+          var r=new Random((int)DateTime.Now.Ticks);
+          List<byte> ackAddr=new List<byte>();
+          byte[] respPrev=null;
+          foreach(byte hLen in dr.hLen) {
+            if(hLen==0) {
+              continue;
+            } else if(hLen<=8) {
+              byte[] resp;
+              if(respPrev!=null && respPrev.Length==hLen) {
+                resp=respPrev;
+              } else {
+                resp=new byte[hLen];
+                for(int i=0; i<5; i++) {
+                  for(int j=0; j<resp.Length; j++) {
+                    resp[j]=(byte)r.Next(j==0?4:0, (i<3 && hLen==1)?31:(j==0?254:255));
+                  }
+                  if(devR.children.Select(z => z as DVar<MsDevice>).Where(z => z!=null && z.value!=null).All(z => !z.value.CheckAddr(resp))) {
+                    break;
+                  } else if(i==4) {
+                    for(int j=0; j<resp.Length; j++) {
+                      resp[j]=0xFF;
+                    }
+                  }
+                }
+                respPrev=resp;
+              }
+              ackAddr.AddRange(resp);
+            } else {
+              if(_verbose.value) {
+                Log.Warning("r  {0}: {1}  DhcpReq.hLen is too high", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start));
+              }
+              ackAddr=null;
+              break;
+            }
+          }
+          if(ackAddr!=null) {
+            gate.SendGw(null, new MsDhcpAck(gate.gwIdx, dr.xId, ackAddr.ToArray()));
+          }
+        }
+        return;
+      }
+      if(msg.MsgTyp==MsMessageType.CONNECT) {
+        var cm=msg as MsConnect;
+        DVar<MsDevice> dDev=devR.Get<MsDevice>(cm.ClientId);
+        if(dDev.value==null) {
+          dDev.value=new MsDevice(gate, addr);
+          Thread.Sleep(0);
+          dDev.value.Owner=dDev;
+        } else {
+          dDev.value._gate=gate;
+          dDev.value.Addr=addr;
+        }
+        dDev.value.Connect(cm);
+        foreach(var dub in devR.children.Select(z => z.GetValue() as MsDevice).Where(z => z!=null && z!=dDev.value && z.Addr!=null && z.Addr.SequenceEqual(addr) && z._gate==gate).ToArray()) {
+          dub.Addr=null;
+          dub._gate=null;
+          dub.state=State.Disconnected;
+        }
+      } else {
+        MsDevice dev=devR.children.Select(z => z.GetValue() as MsDevice).FirstOrDefault(z => z!=null && z.Addr!=null && z.Addr.SequenceEqual(addr) && z._gate==gate);
+        if(dev!=null && ((dev.state!=State.Disconnected && dev.state!=State.Lost) || msg.MsgTyp==MsMessageType.CONNECT)) {
+          dev.ProcessInPacket(msg);
+        } else {
+          if(dev==null || dev.Owner==null) {
+            Log.Debug("{0} unknown device", gate.Addr2If(addr));
+          } else {
+            Log.Debug("{0} inactive device: {1}", gate.Addr2If(addr), dev.Owner.path);
+            gate.SendGw(dev, new MsDisconnect());
+          }
+        }
       }
     }
 
-
     private int _duration=3000;
-    //private int _reconnectCnt=0;
     private DVar<State> _stateVar;
 
     private string _willPath;
@@ -97,6 +185,12 @@ namespace X13.Periphery {
         _subsscriptions=new List<Topic.Subscription>(4);
         _sendQueue=new Queue<MsMessage>();
       }
+    }
+
+    internal MsDevice(IMsGate gate, byte[] addr)
+      : this() {
+      _gate=gate;
+      Addr=addr;
     }
 
     public State state {
@@ -125,7 +219,10 @@ namespace X13.Periphery {
       }
     }
     public Topic Owner { get; private set; }
-
+    public string name { get { return Owner!=null?Owner.name:string.Empty; } }
+    public string Addr2If(byte[] addr) {
+      return _gate!=null?_gate.Addr2If(addr):string.Concat(BitConverter.ToString(addr), " via ", this.name);
+    }
     private string via {
       get { return Owner!=null?Owner.Get<string>(".cfg/_via").value:string.Empty; }
       set {
@@ -167,41 +264,43 @@ namespace X13.Periphery {
       case MsMessageType.PINGRESP:
         n2="h_PingResp";
         break;
+      case MsMessageType.EncapsulatedMessage:
+        return;
       default:
         n2=send?"o_sOther":"o_rOther";
         break;
       }
-      if(Owner==null){
+      if(Owner==null) {
         return;
       }
-      string p=string.Concat("/etc/MQTTS/stat/", Owner.name, "/", n2);
-      DVar<long> d=Topic.root.Get<long>(p);
+      string p=string.Concat("/etc/MQTT-SN/stat/", Owner.name);
+      Topic pa=Topic.root.Get(p);
+      pa.saved=false;
+      DVar<long> d=pa.Get<long>(n2);
       d.saved=false;
       d.value++;
 #endif
     }
 
-    private void ParseInPacket(byte[] buf) {
-      var msgTyp=(MsMessageType)(buf[0]>1?buf[1]:buf[2]);
-      switch(msgTyp) {
+    internal void ProcessInPacket(MsMessage msg) {
+      if(msg.MsgTyp!=MsMessageType.EncapsulatedMessage && msg.MsgTyp!=MsMessageType.PUBLISH) {
+        Stat(false, msg.MsgTyp);
+      }
+      switch(msg.MsgTyp) {
       case MsMessageType.WILLTOPIC: {
-          var msg=new MsWillTopic(buf) { Addr=this.Addr };
-          Stat(false, msgTyp);
-          PrintPacket(this, msg, buf);
+          var tmp=msg as MsWillTopic;
           if(state==State.WillTopic) {
-            _willPath=msg.Path;
-            _willRetain=msg.Retain;
+            _willPath=tmp.Path;
+            _willRetain=tmp.Retain;
             state=State.WillMsg;
             ProccessAcknoledge(msg);
           }
         }
         break;
       case MsMessageType.WILLMSG: {
-          Stat(false, msgTyp);
-          var msg=new MsWillMsg(buf) { Addr=this.Addr };
-          PrintPacket(this, msg, buf);
+          var tmp=msg as MsWillMsg;
           if(state==State.WillMsg) {
-            _wilMsg=msg.Payload;
+            _wilMsg=tmp.Payload;
             state=State.PreConnect;
             ProccessAcknoledge(msg);
             Send(new MsConnack(MsReturnCode.Accepted));
@@ -210,100 +309,101 @@ namespace X13.Periphery {
         }
         break;
       case MsMessageType.SUBSCRIBE: {
-          var msg=new MsSubscribe(buf) { Addr=this.Addr };
-          Stat(false, msgTyp, msg.dup);
-          PrintPacket(this, msg, buf);
+          var tmp=msg as MsSubscribe;
 
           SyncMsgId(msg.MessageId);
           Topic.Subscription s=null;
-          ushort topicId=msg.topicId;
-          if(msg.topicIdType!=TopicIdType.Normal || msg.path.IndexOfAny(new[] { '+', '#' })<0) {
+          ushort topicId=tmp.topicId;
+          if(tmp.topicIdType!=TopicIdType.Normal || tmp.path.IndexOfAny(new[] { '+', '#' })<0) {
             TopicInfo ti=null;
-            if(msg.topicIdType==TopicIdType.Normal) {
-              ti=GetTopicInfo(msg.path, false);
+            if(tmp.topicIdType==TopicIdType.Normal) {
+              ti=GetTopicInfo(tmp.path, false);
             } else {
-              ti=GetTopicInfo(msg.topicId, msg.topicIdType);
+              ti=GetTopicInfo(tmp.topicId, tmp.topicIdType);
             }
             topicId=ti.TopicId;
           }
-          Send(new MsSuback(msg.qualityOfService, topicId, msg.MessageId, MsReturnCode.Accepted));
+          Send(new MsSuback(tmp.qualityOfService, topicId, msg.MessageId, MsReturnCode.Accepted));
           if(state==State.PreConnect) {
             state=State.Connected;
           }
-          s=Owner.Subscribe(msg.path, PublishTopic, msg.qualityOfService);
+          s=Owner.Subscribe(tmp.path, PublishTopic, tmp.qualityOfService);
           _subsscriptions.Add(s);
         }
         break;
       case MsMessageType.REGISTER: {
-          var msg=new MsRegister(buf) { Addr=this.Addr };
-          Stat(false, msgTyp);
-          PrintPacket(this, msg, buf);
+          var  tmp=msg as MsRegister;
           ResetTimer();
           try {
-            TopicInfo ti = GetTopicInfo(msg.TopicPath, false);
-            if(ti.topic!=null && ti.topic.valueType==typeof(SmartTwi)) {
-              if(ti.topic.GetValue()==null) {
-                ti.topic.SetValue(new SmartTwi(ti.topic), new TopicChanged(TopicChanged.ChangeArt.Value, Owner));
-              } else {
-                (ti.topic as DVar<SmartTwi>).value.Reset();
+            TopicInfo ti = GetTopicInfo(tmp.TopicPath, false);
+            if(ti.topic!=null) {
+              if(ti.topic.valueType==typeof(SmartTwi)) {
+                if(ti.topic.GetValue()==null) {
+                  ti.topic.SetValue(new SmartTwi(ti.topic), new TopicChanged(TopicChanged.ChangeArt.Value, Owner));
+                } else {
+                  (ti.topic as DVar<SmartTwi>).value.Reset();
+                }
+              } else if(ti.topic.valueType==typeof(TWIDriver)) {
+                if(ti.topic.GetValue()==null) {
+                  ti.topic.SetValue(new TWIDriver(ti.topic), new TopicChanged(TopicChanged.ChangeArt.Value, Owner));
+                } else {
+                  (ti.topic as DVar<TWIDriver>).value.Reset();
+                }
+
               }
             }
-            Send(new MsRegAck(ti.TopicId, msg.MessageId, MsReturnCode.Accepted));
+            Send(new MsRegAck(ti.TopicId, tmp.MessageId, MsReturnCode.Accepted));
           }
           catch(Exception) {
-            Send(new MsRegAck(0, msg.MessageId, MsReturnCode.NotSupportes));
-            Log.Warning("Unknown variable type by register {0}, {1}", Owner.path, msg.TopicPath);
+            Send(new MsRegAck(0, tmp.MessageId, MsReturnCode.NotSupportes));
+            Log.Warning("Unknown variable type by register {0}, {1}", Owner.path, tmp.TopicPath);
           }
         }
         break;
       case MsMessageType.REGACK: {
-          var msg=new MsRegAck(buf) { Addr=this.Addr };
-          Stat(false, msgTyp);
-          PrintPacket(this, msg, buf);
-          ProccessAcknoledge(msg);
-          TopicInfo ti=_topics.FirstOrDefault(z => z.TopicId==msg.TopicId);
+          var  tmp=msg as MsRegAck;
+          ProccessAcknoledge(tmp);
+          TopicInfo ti=_topics.FirstOrDefault(z => z.TopicId==tmp.TopicId);
           if(ti==null) {
-            if(msg.TopicId!=0) {
-              Log.Warning("{0} RegAck({1:X4}) for unknown variable", Owner.path, msg.TopicId);
+            if(tmp.TopicId!=0xFFFF) { // 0xFFFF - remove variable
+              Log.Warning("{0} RegAck({1:X4}) for unknown variable", Owner.path, tmp.TopicId);
             }
             return;
           }
-          if(msg.RetCode==MsReturnCode.Accepted) {
+          if(tmp.RetCode==MsReturnCode.Accepted) {
             ti.registred=true;
             if(ti.it!=TopicIdType.PreDefined) {
               Send(new MsPublish(ti.topic, ti.TopicId, QoS.AtLeastOnce));
             }
           } else {
-            Log.Warning("{0} registred failed: {1}", ti.path, msg.RetCode.ToString());
-            ti.it=TopicIdType.NotUsed;
-            //_topics.Remove(ti);
-            //ti.topic.Remove();
+            Log.Warning("{0} registred failed: {1}", ti.path, tmp.RetCode.ToString());
+            _topics.Remove(ti);
+            ti.topic.Remove();
           }
         }
         break;
       case MsMessageType.PUBLISH: {
-          var msg=new MsPublish(buf) { Addr=this.Addr };
-          Stat(false, msgTyp, msg.Dup);
-          PrintPacket(this, msg, buf);
-          TopicInfo ti=_topics.Find(z => z.TopicId==msg.TopicId && z.it==msg.topicIdType);
-          if(ti==null && msg.topicIdType!=TopicIdType.Normal) {
-            ti=GetTopicInfo(msg.TopicId, msg.topicIdType, false);
+          var tmp=msg as MsPublish;
+          Stat(false, msg.MsgTyp, tmp.Dup);
+          TopicInfo ti=_topics.Find(z => z.TopicId==tmp.TopicId && z.it==tmp.topicIdType);
+          if(ti==null && tmp.topicIdType!=TopicIdType.Normal) {
+            ti=GetTopicInfo(tmp.TopicId, tmp.topicIdType, false);
           }
-          if(msg.qualityOfService==QoS.AtMostOnce) {
+          if(tmp.qualityOfService==QoS.AtMostOnce || (tmp.qualityOfService==QoS.MinusOne && (tmp.topicIdType==TopicIdType.PreDefined || tmp.topicIdType==TopicIdType.ShortName))) {
             ResetTimer();
-          } else if(msg.qualityOfService==QoS.AtLeastOnce) {
-            SyncMsgId(msg.MessageId);
-            Send(new MsPubAck(msg.TopicId, msg.MessageId, ti!=null?MsReturnCode.Accepted:MsReturnCode.InvalidTopicId));
-          } else if(msg.qualityOfService==QoS.ExactlyOnce) {
-            SyncMsgId(msg.MessageId);
+          } else if(tmp.qualityOfService==QoS.AtLeastOnce) {
+            SyncMsgId(tmp.MessageId);
+            Send(new MsPubAck(tmp.TopicId, tmp.MessageId, ti!=null?MsReturnCode.Accepted:MsReturnCode.InvalidTopicId));
+          } else if(tmp.qualityOfService==QoS.ExactlyOnce) {
+            SyncMsgId(tmp.MessageId);
             // QoS2 not supported, use QoS1
-            Send(new MsPubAck(msg.TopicId, msg.MessageId, ti!=null?MsReturnCode.Accepted:MsReturnCode.InvalidTopicId));
+            Send(new MsPubAck(tmp.TopicId, tmp.MessageId, ti!=null?MsReturnCode.Accepted:MsReturnCode.InvalidTopicId));
           } else {
             throw new NotSupportedException("QoS -1 not supported "+Owner.path);
           }
-          if(msg.topicIdType==TopicIdType.PreDefined && msg.TopicId>=LOG_D_ID && msg.TopicId<=LOG_E_ID) {
-            string str=string.Format("{0}:{1} msg={2} msgId={3} ", this.Owner.path, BitConverter.ToString(msg.Addr), msg.Data==null?"null":BitConverter.ToString(msg.Data), msg.MessageId);
-            switch(msg.TopicId) {
+          if(tmp.topicIdType==TopicIdType.PreDefined && tmp.TopicId>=LOG_D_ID && tmp.TopicId<=LOG_E_ID) {
+            string str=string.Format("{0} msgId={2:X4}  msg={1}", this.Owner.name, tmp.Data==null?"null":(BitConverter.ToString(tmp.Data)+"["+ Encoding.ASCII.GetString(tmp.Data.Select(z => (z<0x20 || z>0x7E)?(byte)'.':z).ToArray())+"]"), tmp.MessageId);
+            switch(tmp.TopicId) {
             case LOG_D_ID:
               Log.Debug(str);
               break;
@@ -318,61 +418,170 @@ namespace X13.Periphery {
               break;
             }
           } else if(ti!=null) {
-            SetValue(ti, msg.Data);
+            SetValue(ti, tmp.Data, tmp.Retained);
           }
         }
         break;
       case MsMessageType.PUBACK: {
-          var msg=new MsPubAck(buf) { Addr=this.Addr };
-          Stat(false, msgTyp);
-          PrintPacket(this, msg, buf);
           ProccessAcknoledge(msg);
         }
         break;
       case MsMessageType.PINGREQ: {
-          var msg=new MsPingReq(buf) { Addr=this.Addr };
-          Stat(false, msgTyp);
-          PrintPacket(this, msg, buf);
+          var tmp=msg as MsPingReq;
           if(state==State.ASleep) {
-            if(string.IsNullOrEmpty(msg.ClientId) || msg.ClientId==Owner.name) {
-              //if(++_reconnectCnt>1024) {
-              //  _reconnectCnt=0;
-              //  Send(new MsDisconnect());
-              //  state=State.Disconnected;
-              //  Log.Info("{0} refresh connection", Owner.path);
-              //} else {
+            if(string.IsNullOrEmpty(tmp.ClientId) || tmp.ClientId==Owner.name) {
               state=State.AWake;
               ProccessAcknoledge(msg);    // resume send proccess
-              //}
             } else {
-              Send(new MsDisconnect());
+              SendGw(this, new MsDisconnect());
               state=State.Lost;
-              Log.Warning("{0} PingReq from unknown device: {1}", Owner.path, msg.ClientId);
+              Log.Warning("{0} PingReq from unknown device: {1}", Owner.path, tmp.ClientId);
             }
           } else {
             ResetTimer();
             if(_gate!=null) {
-              _gate.Send(new MsMessage(MsMessageType.PINGRESP) { Addr=this.Addr });
+              _gate.SendGw(this, new MsMessage(MsMessageType.PINGRESP));
               Stat(true, MsMessageType.PINGRESP, false);
             }
           }
         }
         break;
-      case MsMessageType.DISCONNECT: {
-          var msg=new MsDisconnect(buf) { Addr=this.Addr };
-          Stat(false, msgTyp);
-          PrintPacket(this, msg, buf);
-          Disconnect(msg.Duration);
-        }
+      case MsMessageType.DISCONNECT:
+        Disconnect((msg as MsDisconnect).Duration);
         break;
-      default:
-        Log.Warning("{0} unknown packet: {1}", Owner!=null?Owner.path:"null", BitConverter.ToString(buf));
+      case MsMessageType.CONNECT:
+        Connect(msg as MsConnect);
+        break;
+      case MsMessageType.EncapsulatedMessage: {
+          Topic devR=Topic.root.Get("/dev");
+          var fm=msg as MsForward;
+          if(fm.msg==null) {
+            if(_verbose.value) {
+              Log.Warning("bad message {0}:{1}", _gate, fm.ToString());
+            }
+            return;
+          }
+          if(fm.msg.MsgTyp==MsMessageType.SEARCHGW) {
+            _gate.SendGw(this, new MsGwInfo(gwIdx));
+          } else if(fm.msg.MsgTyp==MsMessageType.DHCP_REQ) {
+            var dr=fm.msg as MsDhcpReq;
+            //******************************
+            List<byte> ackAddr=new List<byte>();
+            byte[] respPrev=null;
+
+            foreach(byte hLen in dr.hLen) {
+              if(hLen==0) {
+                continue;
+              } else if(hLen<=8) {
+                byte[] resp;
+                if(respPrev!=null && respPrev.Length==hLen) {
+                  resp=respPrev;
+                } else {
+                  resp=new byte[hLen];
+
+                  for(int i=0; i<5; i++) {
+                    for(int j=0; j<resp.Length; j++) {
+                      resp[j]=(byte)_rand.Next((i<3 && hLen==1)?32:1, (i<3 && hLen==1)?126:(j==0?254:255));
+                    }
+                    if(devR.children.Select(z => z as DVar<MsDevice>).Where(z => z!=null && z.value!=null).All(z => !z.value.CheckAddr(resp))) {
+                      break;
+                    } else if(i==4) {
+                      for(int j=0; j<resp.Length; j++) {
+                        resp[j]=0xFF;
+                      }
+                    }
+                  }
+                  respPrev=resp;
+                }
+                ackAddr.AddRange(resp);
+              } else {
+                if(_verbose.value) {
+                  Log.Warning("{0}:{1} DhcpReq.hLen is too high", BitConverter.ToString(fm.addr), fm.msg.ToString());
+                }
+                ackAddr=null;
+                break;
+              }
+            }
+            if(ackAddr!=null) {
+              _gate.SendGw(this, new MsForward(fm.addr, new MsDhcpAck(gwIdx, dr.xId, ackAddr.ToArray())));
+            }
+            //******************************
+          } else {
+            if(fm.msg.MsgTyp==MsMessageType.CONNECT) {
+              var cm=fm.msg as MsConnect;
+              if(fm.addr!=null && fm.addr.Length==2 && fm.addr[1]==0xFF) {    // DHCP V<0.3
+                _gate.SendGw(this, new MsForward(fm.addr, new MsConnack(MsReturnCode.Accepted) ) );
+
+                byte[] nAddr=new byte[1];
+                do {
+                  nAddr[0]=(byte)(_rand.Next(32, 254));
+                } while(!devR.children.Select(z => z as DVar<MsDevice>).Where(z => z!=null && z.value!=null).All(z => !z.value.CheckAddr(nAddr)));
+                Log.Info("{0} new addr={1:X2}", cm.ClientId, nAddr[0]);
+                _gate.SendGw(this, new MsForward(fm.addr, new MsPublish(null, PredefinedTopics[".cfg/XD_DeviceAddr"], QoS.AtLeastOnce) { MessageId=1, Data=nAddr }) );
+              } else {
+                DVar<MsDevice> dDev=devR.Get<MsDevice>(cm.ClientId);
+                if(dDev.value==null) {
+                  dDev.value=new MsDevice(this, fm.addr);
+                  Thread.Sleep(0);
+                  dDev.value.Owner=dDev;
+                } else {
+                  dDev.value._gate=this;
+                  dDev.value.Addr=fm.addr;
+                }
+                dDev.value.Connect(cm);
+                foreach(var dub in devR.children.Select(z => z.GetValue() as MsDevice).Where(z => z!=null && z!=dDev.value && z.Addr!=null && z.Addr.SequenceEqual(fm.addr) && z._gate==this).ToArray()) {
+                  dub.Addr=null;
+                  dub._gate=null;
+                  dub.state=State.Disconnected;
+                }
+              }
+            } else {
+              MsDevice dev=devR.children.Select(z => z.GetValue() as MsDevice).FirstOrDefault(z => z!=null && z.Addr!=null && z.Addr.SequenceEqual(fm.addr) && z._gate==this);
+              if(dev!=null 
+                && ((dev.state!=State.Disconnected && dev.state!=State.Lost) 
+                  || fm.msg.MsgTyp==MsMessageType.CONNECT 
+                  || (fm.msg.MsgTyp==MsMessageType.PUBLISH && (fm.msg as MsPublish).qualityOfService==QoS.MinusOne))) {
+                dev.ProcessInPacket(fm.msg);
+              } else if(fm.msg.MsgTyp==MsMessageType.PUBLISH && (fm.msg as MsPublish).qualityOfService==QoS.MinusOne) {
+                var tmp=fm.msg as MsPublish;
+                if(tmp.topicIdType==TopicIdType.PreDefined && tmp.TopicId>=LOG_D_ID && tmp.TopicId<=LOG_E_ID) {
+                  string str=string.Format("{0}: msgId={2:X4} msg={1}", BitConverter.ToString(this.Addr), tmp.Data==null?"null":(BitConverter.ToString(tmp.Data)+"["+ Encoding.ASCII.GetString(tmp.Data.Select(z => (z<0x20 || z>0x7E)?(byte)'.':z).ToArray())+"]"), tmp.MessageId);
+                  switch(tmp.TopicId) {
+                  case LOG_D_ID:
+                    Log.Debug(str);
+                    break;
+                  case LOG_I_ID:
+                    Log.Info(str);
+                    break;
+                  case LOG_W_ID:
+                    Log.Warning(str);
+                    break;
+                  case LOG_E_ID:
+                    Log.Error(str);
+                    break;
+                  }
+                }
+              } else {
+                if(_verbose.value) {
+                  if(dev==null || dev.Owner==null) {
+                    Log.Debug("{0} via {1} unknown device", BitConverter.ToString(fm.addr), this.name);
+                  } else {
+                    Log.Debug("{0} via {1} inactive", dev.Owner.name, this.name);
+                  }
+                }
+                _gate.SendGw(this, new MsForward(fm.addr, new MsDisconnect()));
+              }
+            }
+          }
+        }
         break;
       }
     }
 
     private void Connect(MsConnect msg) {
-      Addr=msg.Addr;
+      if(Owner==null) {
+        Thread.Sleep(30);
+      }
       if(msg.CleanSession) {
         foreach(var s in _subsscriptions) {
           Owner.Unsubscribe(s.path, s.func);
@@ -401,12 +610,13 @@ namespace X13.Periphery {
         } else {
           state=State.Connected;
         }
+        via=_gate.name;
         Send(new MsConnack(MsReturnCode.Accepted));
       }
       Stat(false, MsMessageType.CONNECT, msg.CleanSession);
     }
     //TODO: Unsubscribe
-    private void SetValue(TopicInfo ti, byte[] msgData) {
+    private void SetValue(TopicInfo ti, byte[] msgData, bool retained) {
       if(ti!=null) {
         if(!ti.path.StartsWith(Owner.path)) {
           return;     // not allow publish
@@ -423,7 +633,6 @@ namespace X13.Periphery {
               rv|=msgData[i];
             }
             val=rv;
-            //Log.Debug("{0}={1}, {2}", ti.path, rv, BitConverter.ToString(msgData));
           }
           break;
         case TypeCode.String:
@@ -444,19 +653,31 @@ namespace X13.Periphery {
               return;
             }
             break;
+          } else if(ti.topic.valueType==typeof(TWIDriver)) {
+            var twi=(ti.topic.GetValue() as TWIDriver);
+            if(twi==null) {
+              twi=new TWIDriver(ti.topic);
+              twi.Recv(msgData);
+              val=twi;
+            } else {
+              twi.Recv(msgData);
+              return;
+            }
+            break;
           } else {
             return;
           }
         default:
           return;
         }
+        ti.topic.saved=retained;
         ti.topic.SetValue(val, new TopicChanged(TopicChanged.ChangeArt.Value, Owner));
       }
     }
     private void Disconnect(ushort duration=0) {
       if(duration==0 && !string.IsNullOrEmpty(_willPath)) {
         TopicInfo ti = GetTopicInfo(_willPath, false);
-        SetValue(ti, _wilMsg);
+        SetValue(ti, _wilMsg, false);
       }
       if(duration>0) {
         ResetTimer(duration*1550);
@@ -466,12 +687,23 @@ namespace X13.Periphery {
         var st=Owner.Get<long>(".cfg/XD_SleepTime", Owner);
         st.saved=true;
         st.SetValue((short)duration, new TopicChanged(TopicChanged.ChangeArt.Value, Owner) { Source=st });
-      } else if(state!=State.Lost) {
-        state=State.Disconnected;
-        if(Owner!=null) {
-          Log.Info("{0} Disconnected", Owner.path);
-        }
+      } else {
         _activeTimer.Change(Timeout.Infinite, Timeout.Infinite);
+        this._gate=null;
+        if(state!=State.Lost) {
+          state=State.Disconnected;
+          if(Owner!=null) {
+            Log.Info("{0} Disconnected", Owner.path);
+          }
+        }
+        //Topic dev=Topic.root.Get("/dev");
+        //IEnumerable<MsDevice> ifs;
+        //lock(dev) {
+        //  ifs=dev.children.Where(z => z.valueType==typeof(MsDevice)).Cast<DVar<MsDevice>>().Where(z => z.value!=null && z.value._gate==this).Select(z => z.value).ToArray();
+        //}
+        //foreach(var t in ifs) {
+        //  t.Disconnect();
+        //}
       }
       _waitAck=false;
     }
@@ -487,8 +719,11 @@ namespace X13.Periphery {
         return;
       }
       if(param.Art==TopicChanged.ChangeArt.Add) {
-        if(topic.valueType==typeof(SmartTwi) || (topic.parent!=null && topic.parent.valueType==typeof(SmartTwi))) {
+        if(topic.valueType==typeof(SmartTwi)) { // || (topic.parent!=null && topic.parent.valueType==typeof(SmartTwi))
           return;   // processed from SmartTwi
+        }
+        if(topic.valueType==typeof(TWIDriver)) {  //  || (topic.parent!=null && topic.parent.valueType==typeof(TWIDriver))
+          return;   // processed from TWIDriver
         }
         GetTopicInfo(topic);
         return;
@@ -503,8 +738,11 @@ namespace X13.Periphery {
       if(!(state==State.Connected || state==State.ASleep || state==State.AWake) || param.Visited(Owner, true)) {
         return;
       }
-      if(topic.valueType==typeof(SmartTwi) || (topic.parent!=null && topic.parent.valueType==typeof(SmartTwi))) {
+      if(topic.valueType==typeof(SmartTwi)) { // || (topic.parent!=null && topic.parent.valueType==typeof(SmartTwi))
         return;   // processed from SmartTwi
+      }
+      if(topic.valueType==typeof(TWIDriver)) {  //  || (topic.parent!=null && topic.parent.valueType==typeof(TWIDriver))
+        return;   // processed from TWIDriver
       }
       TopicInfo rez=null;
       for(int i=_topics.Count-1; i>=0; i--) {
@@ -516,18 +754,20 @@ namespace X13.Periphery {
       if(rez==null && param.Art==TopicChanged.ChangeArt.Value) {
         rez=GetTopicInfo(topic, true);
       }
-      if(rez==null || rez.it==TopicIdType.NotUsed || rez.TopicId>=0xFFC0 || !rez.registred) {
+      if(rez==null || rez.TopicId>=0xFFC0 || !rez.registred) {
         return;
       }
       if(param.Art==TopicChanged.ChangeArt.Value) {
         Send(new MsPublish(rez.topic, rez.TopicId, param.Subscription.qos));
       } else {          // Remove by device
-        Send(new MsRegister(0xFFFF, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
+        if(rez.it==TopicIdType.Normal) {
+          Send(new MsRegister(0xFFFF, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
+        }
         _topics.Remove(rez);
       }
     }
     internal void PublishWithPayload(Topic t, byte[] payload) {
-      if(state==State.Disconnected || state==State.Lost) {
+      if(state==State.Disconnected || state==State.Lost || _topics==null) {
         return;
       }
       TopicInfo rez=null;
@@ -540,9 +780,9 @@ namespace X13.Periphery {
       if(rez==null) {
         return;
       }
-      if(_verbose.value) {
-        Log.Debug("{0}.Snd {1}", t.name, BitConverter.ToString(payload));
-      }
+      //if(_verbose.value) {
+      //  Log.Debug("{0}.Snd {1}", t.name, BitConverter.ToString(payload));
+      //}
       Send(new MsPublish(rez.topic, rez.TopicId, QoS.AtLeastOnce) { Data=payload });
     }
 
@@ -572,8 +812,23 @@ namespace X13.Periphery {
           rez.it=TopicIdType.PreDefined;
           rez.registred=true;
         } else {
-          rez.TopicId=CalculateTopicId(rez.path);
-          rez.it=TopicIdType.Normal;
+          Topic tmp=tp.parent;
+          bool ignory=false;
+          while(tmp!=null && tmp.valueType!=typeof(MsDevice)) {
+            if(tmp.valueType==typeof(SmartTwi) || tmp.valueType==typeof(TWIDriver)) {
+              ignory=true;
+              break;
+            }
+            tmp=tmp.parent;
+          }
+          if(ignory) {
+            rez.TopicId=0xFFFF;
+            rez.it=TopicIdType.PreDefined;
+            rez.registred=true;
+          } else {
+            rez.TopicId=CalculateTopicId(rez.path);
+            rez.it=TopicIdType.Normal;
+          }
         }
         _topics.Add(rez);
       }
@@ -587,17 +842,12 @@ namespace X13.Periphery {
       return rez;
     }
     private ushort CalculateTopicId(string path) {
-      byte[] buf=Encoding.UTF8.GetBytes(path);
-      ushort id=Crc16.ComputeChecksum(buf);
-      while(id==0 || id==0xF000 || _topics.Any(z => z.it==TopicIdType.Normal && z.TopicId==id)) {
-        if(id==0 || id==0xF000) {
-          Log.Warning("{0} restrickted id={1:X4}", path, id);
-        } else {
-          var dup=_topics.Find(z => z.it==TopicIdType.Normal && z.TopicId==id);
-          Log.Warning("{0} id {1:X4} already used as {2}", path, id, dup.path);
+      ushort id;
+        byte[] buf=Encoding.UTF8.GetBytes(path);
+        id=Crc16.ComputeChecksum(buf);
+        while(id==0 || id==0xF000 || id==0xFFFF || _topics.Any(z => z.it==TopicIdType.Normal && z.TopicId==id)) {
+          id=Crc16.UpdateChecksum(id, (byte)_rand.Next(0, 255));
         }
-        id=Crc16.UpdateChecksum(id, 0);
-      }
       return id;
     }
     private TopicInfo GetTopicInfo(string path, bool sendRegister=true) {
@@ -635,7 +885,7 @@ namespace X13.Periphery {
     private ushort NextMsgId() {
       int rez=Interlocked.Increment(ref _messageIdGen);
       Interlocked.CompareExchange(ref _messageIdGen, 1, 0xFFFF);
-      //Log.Debug("{0}.MsgId={1:X4}", Owner.name, rez);
+      //Log.Debug("{0}.MsgId={1:X4}", Owner.name, _sendBuf);
       return (ushort)rez;
     }
     private void SyncMsgId(ushort p) {
@@ -650,9 +900,28 @@ namespace X13.Periphery {
       }
       //Log.Debug("{0}.MsgIdGen={1:X4}, p={2:X4}", Owner.name, _messageIdGen, p);
     }
+    private bool CheckAddr(byte[] addr) {
+      Topic ta;
+      if(addr==null) {
+        return false;
+      }
+      if(this.Addr!=null && this.Addr.Length-1==addr.Length && this.Addr.Skip(1).SequenceEqual(addr)) {
+        return true;
+      }
+      if(Owner!=null) {
+        for(int i=0; i<3; i++) {
+          if(Owner.Exist(string.Format(".cfg/_a_phy{0}", i), out ta) && ta.valueType==typeof(PLC.ByteArray)) {
+            var act=(ta as DVar<PLC.ByteArray>).value;
+            if(act!=null && act.GetBytes().Length==addr.Length && act.GetBytes().SequenceEqual(addr)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
 
     private void ProccessAcknoledge(MsMessage rMsg) {
-      ResetTimer();
       MsMessage msg=null;
       lock(_sendQueue) {
         MsMessage reqMsg;
@@ -669,11 +938,12 @@ namespace X13.Periphery {
           _tryCounter=2;
         }
         SendIntern(msg);
+      } else if(!_waitAck) {
+        ResetTimer();
       }
     }
     private void Send(MsMessage msg) {
       if(state!=State.Disconnected && state!=State.Lost) {
-        msg.Addr=this.Addr;
         bool send=true;
         if(msg.MessageId==0 && msg.IsRequest) {
           msg.MessageId=NextMsgId();
@@ -697,10 +967,24 @@ namespace X13.Periphery {
         if(msg!=null) {
           if(_gate!=null) {
             Stat(true, msg.MsgTyp, ((msg is MsPublish && (msg as MsPublish).Dup) || (msg is MsSubscribe && (msg as MsSubscribe).dup)));
-            _gate.Send(msg);
+            try {
+              _gate.SendGw(this, msg);
+            }
+            catch(ArgumentOutOfRangeException ex) {
+              Log.Warning("{0} - {1}", this.name, ex.Message);
+              if(msg.IsRequest) {
+                lock(_sendQueue) {
+                  if(_sendQueue.Count>0 && _sendQueue.Peek()==msg) {
+                    _sendQueue.Dequeue();
+                    _waitAck=false;
+                  }
+                }
+              }
+              msg=null;
+            }
           }
-          if(msg.IsRequest) {
-            ResetTimer(ACK_TIMEOUT);
+          if(msg!=null && msg.IsRequest) {
+            ResetTimer(_rand.Next(ACK_TIMEOUT, ACK_TIMEOUT*5/3)/(_tryCounter+1));  // 600, 1000
             _waitAck=true;
             break;
           }
@@ -712,7 +996,7 @@ namespace X13.Periphery {
         lock(_sendQueue) {
           if(_sendQueue.Count==0 && state==State.AWake) {
             if(_gate!=null) {
-              _gate.Send(new MsMessage(MsMessageType.PINGRESP) { Addr=this.Addr });
+              _gate.SendGw(this, new MsMessage(MsMessageType.PINGRESP));
               Stat(true, MsMessageType.PINGRESP, false);
             }
             state=State.ASleep;
@@ -730,7 +1014,7 @@ namespace X13.Periphery {
           return;
         }
         if(_sendQueue.Count>0) {
-          period=ACK_TIMEOUT;
+          period=_rand.Next(ACK_TIMEOUT*3/4, ACK_TIMEOUT);  // 450, 600
         } else if(_duration>0) {
           period=_duration;
           _tryCounter=1;
@@ -750,8 +1034,8 @@ namespace X13.Periphery {
         }
         _waitAck=false;
         if(msg!=null) {
-          SendIntern(msg);
           _tryCounter--;
+          SendIntern(msg);
         } else {
           ResetTimer();
           _tryCounter=0;
@@ -768,7 +1052,7 @@ namespace X13.Periphery {
         _sendQueue.Clear();
       }
       if(_gate!=null) {
-        _gate.Send(new MsDisconnect() { Addr=this.Addr });
+        _gate.SendGw(this, new MsDisconnect());
         Stat(true, MsMessageType.DISCONNECT, false);
       }
     }
@@ -806,7 +1090,7 @@ namespace X13.Periphery {
               MsDevice old=(oldT as DVar<MsDevice>).value;
               if(old!=null) {
                 Addr=old.Addr;
-                old._gate.Send(new MsPublish(null, PredefinedTopics["_sName"], QoS.AtLeastOnce) { Addr=Addr, MessageId=old.NextMsgId(), Data=Encoding.UTF8.GetBytes(Owner.name.Substring(0, Owner.name.Length)) });
+                old._gate.SendGw(this, new MsPublish(null, PredefinedTopics["_sName"], QoS.AtLeastOnce) { MessageId=old.NextMsgId(), Data=Encoding.UTF8.GetBytes(Owner.name.Substring(0, Owner.name.Length)) });
                 this.state=State.Disconnected;
               }
             }
@@ -816,6 +1100,17 @@ namespace X13.Periphery {
       }
     }
     #endregion ITopicOwned Members
+
+    #region IMsGate Members
+    public void SendGw(MsDevice dev, MsMessage msg) {
+      if(_gate!=null) {
+        _gate.SendGw(this, new MsForward(dev.Addr, msg));
+      }
+    }
+
+    public byte gwIdx { get { return (byte)(_gate==null?0xFF:_gate.gwIdx); } }
+    #endregion  IMsGate Members
+
     public override string ToString() {
       if(Owner!=null) {
         if(state==State.Disconnected || state==State.Lost) {
@@ -851,6 +1146,7 @@ namespace X13.Periphery {
       new NTRecord("_D", typeof(long)),   //uint32
       new NTRecord("_q", typeof(long)),   //int64
       new NTRecord("_s", typeof(string)),
+      new NTRecord("_a", typeof(PLC.ByteArray)),
       new NTRecord("St", typeof(PLC.ByteArray)),  // Serial port transmit
       new NTRecord("Sr", typeof(PLC.ByteArray)),  // Serial port recieve
       new NTRecord("Tz", typeof(bool)),
@@ -862,9 +1158,8 @@ namespace X13.Periphery {
       new NTRecord("TD", typeof(long)),   //uint32
       new NTRecord("Tq", typeof(long)),   //int64
       new NTRecord("Ts", typeof(string)),
-      new NTRecord("Ta", typeof(PLC.ByteArray)),
+      new NTRecord("Ta0", typeof(TWIDriver)),   // TWI >= ver 2.7
       new NTRecord("sa", typeof(SmartTwi)),    // Smart TWI
-      //new NTRecord("sa", typeof(PLC.ByteArray)),
       new NTRecord("Xz", typeof(bool)),   // user defined
       new NTRecord("Xb", typeof(long)),   //int8
       new NTRecord("XB", typeof(long)),   //uint8
@@ -875,17 +1170,46 @@ namespace X13.Periphery {
       new NTRecord("Xq", typeof(long)),   //int64
       new NTRecord("Xs", typeof(string)),
       new NTRecord("Xa", typeof(PLC.ByteArray)),
+      new NTRecord("Mz", typeof(bool)),   // user defined
+      new NTRecord("Mb", typeof(long)),   //int8
+      new NTRecord("MB", typeof(long)),   //uint8
+      new NTRecord("Mw", typeof(long)),   //int16
+      new NTRecord("MW", typeof(long)),   //uint16
+      new NTRecord("Md", typeof(long)),   //int32
+      new NTRecord("MD", typeof(long)),   //uint32
+      new NTRecord("Mq", typeof(long)),   //int64
+      new NTRecord("Ms", typeof(string)),
+      new NTRecord("Ma", typeof(PLC.ByteArray)),
+      new NTRecord("Pa", typeof(PLC.ByteArray)),    // Program
       new NTRecord("_declarer", typeof(string)),
       new NTRecord("present", typeof(bool)),
     };
     internal static Dictionary<string, ushort> PredefinedTopics=new Dictionary<string, ushort>(){
-      {"_sName",            0xFF00},
+      {"Pa0000",        0x0000},
+      {"Pa0001",        0x0001},
+      {"Pa0002",        0x0002},
+      {"Pa0003",        0x0003},
+      {"Pa0004",        0x0004},
+      {"Pa0005",        0x0005},
+      {"Pa0006",        0x0006},
+      {"Pa0007",        0x0007},
+      {"Pa0008",        0x0008},
+      {"Pa0009",        0x0009},
+      {"Pa000A",        0x000A},
+      {"Pa000B",        0x000B},
+      {"Pa000C",        0x000C},
+      {"Pa000D",        0x000D},
+      {"Pa000E",        0x000E},
+      {"Pa000F",        0x000F},
+
+      {"_sName",             0xFF00},
       {".cfg/XD_SleepTime",  0xFF01},
+      {".cfg/XD_ADCintegrate",   0xFF08},
 
       {".cfg/XD_DeviceAddr", 0xFF10},
       {".cfg/XD_GroupID",    0xFF11},
       {".cfg/XD_Channel",    0xFF12},
-      {".cfg/XD_RSSI",       0xFF13},
+      {".cfg/XD_GateId",     0xFF14},
 
       {".cfg/Xa_MACAddr",    0xFF20},
       {".cfg/Xa_IPAddr",     0xFF21},
@@ -894,10 +1218,16 @@ namespace X13.Periphery {
       {".cfg/Xa_IPBroker",   0xFF24},
 
       {"_declarer",          0xFFC0},
-      {".cfg/_state",        0xFFC1},
-      {"present",            0xFFC2},
-      {".cfg/_via",          0xFFC3},
+      {".cfg/_a_phy1",       0xFFC1},
+      {".cfg/_a_phy2",       0xFFC2},
+      {".cfg/_a_phy3",       0xFFC3},
+      {".cfg/_a_phy4",       0xFFC4},
+      {".cfg/XD_RSSI",       0xFFC8},
+
       {".cfg/_declarer",     0xFFD0},
+      {".cfg/_state",        0xFFD1},
+      {"present",            0xFFD2},
+      {".cfg/_via",          0xFFD3},
 
       {"_logD",              LOG_D_ID},
       {"_logI",              LOG_I_ID},
@@ -914,11 +1244,7 @@ namespace X13.Periphery {
       public readonly Type type;
     }
 
-    private interface IMsGate {
-      void Send(MsMessage msg);
-      byte gwIdx { get; }
-      //TODO: Stop
-    }
+
     public enum State {
       Disconnected=0,
       WillTopic,
@@ -929,5 +1255,12 @@ namespace X13.Periphery {
       Lost,
       PreConnect,
     }
+  }
+  public interface IMsGate {
+    void SendGw(MsDevice dev, MsMessage msg);
+    byte gwIdx { get; }
+    string name { get; }
+    string Addr2If(byte[] addr);
+    //TODO: Stop
   }
 }

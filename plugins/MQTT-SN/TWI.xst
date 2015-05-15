@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- device configuration file for TWI  -->
+<root head="/etc/declarers/type">
+  <item name="TWI" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.3.1449.4">
+    <item name="Blinky" value="" saved="True" type="System.String">
+      <item name="BLINKM_RGB8" value="ai" saved="True" type="System.String">
+        <item name="_description" value="RGB" saved="True" type="System.String" />
+      </item>
+      <item name="BLINKM_F8" value="ci" saved="True" type="System.String">
+        <item name="_description" value="Fade" saved="True" type="System.String" />
+      </item>
+      <item name="BLINKM_RGB9" value="ai" saved="True" type="System.String">
+        <item name="_description" value="RGB" saved="True" type="System.String" />
+      </item>
+      <item name="BLINKM_F9" value="ci" saved="True" type="System.String">
+        <item name="_description" value="Fade" saved="True" type="System.String" />
+      </item>
+      <item name="BLINKM_RGB10" value="bi" saved="True" type="System.String">
+        <item name="_description" value="RGB" saved="True" type="System.String" />
+      </item>
+      <item name="BLINKM_F10" value="di" saved="True" type="System.String">
+        <item name="_description" value="Fade" saved="True" type="System.String" />
+      </item>
+    </item>
+    <item name="BMP180" value="" saved="True" type="System.String">
+      <item name="BMP180_T" value="0g" saved="True" type="System.String">
+        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      </item>
+      <item name="BMP180_P" value="1i" saved="True" type="System.String">
+        <item name="_description" value="Pressure Pa" saved="True" type="System.String" />
+      </item>
+    </item>
+    <item name="CC2D" value="" saved="True" type="System.String">
+      <item name="CC2D_T" value="0g" saved="True" type="System.String">
+        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      </item>
+      <item name="CC2D_H" value="1g" saved="True" type="System.String">
+        <item name="_description" value="Humidity %" saved="True" type="System.String" />
+      </item>
+    </item>
+    <item name="HIH61xx" value="" saved="True" type="System.String">
+      <item name="HIH61_T" value="0g" saved="True" type="System.String">
+        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      </item>
+      <item name="HIH61_H" value="1g" saved="True" type="System.String">
+        <item name="_description" value="Humidity %" saved="True" type="System.String" />
+      </item>
+    </item>
+    <item name="LM75" value="" saved="True" type="System.String">
+      <item name="LM75_T0" value="Bg" saved="True" type="System.String">
+        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      </item>
+      <item name="LM75_T1" value="Bg" saved="True" type="System.String">
+        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      </item>
+      <item name="LM75_T2" value="Bg" saved="True" type="System.String">
+        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      </item>
+      <item name="LM75_T3" value="Bg" saved="True" type="System.String">
+        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      </item>
+    </item>
+    <item name="Raw" value="GB" saved="True" type="System.String">
+        <item name="_description" value="Sa1 .. Sa127 &amp; Ra1 .. Ra127" saved="True" type="System.String" />
+    </item>
+  </item>
+</root>

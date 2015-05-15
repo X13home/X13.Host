@@ -215,7 +215,7 @@ namespace X13.PLC {
           } else {
             pr=GetRecord(r.t.parent);
             if(pr==null) {
-              Log.Warning("PersistentStaorage: parent for {0} not found", r.t.path);
+              Log.Warning("PersistentStorage: parent for {0} not found", r.t.path);
               continue;
             }
             if(pr.pos==0) {

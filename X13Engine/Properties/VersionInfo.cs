@@ -1,5 +1,5 @@
 #region license
-//Copyright (c) 2011-2014 <comparator@gmx.de>; Wassili Hense
+//Copyright (c) 2011-2015 <comparator@gmx.de>; Wassili Hense
 
 //This file is part of the X13.Home project.
 //https://github.com/X13home
@@ -26,5 +26,5 @@ using System.Reflection;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 
-[assembly: AssemblyVersion("0.3.1439.0")]
-[assembly: AssemblyFileVersion("0.3.1439.0")]
+[assembly: AssemblyVersion("0.3.1520.1")]
+[assembly: AssemblyFileVersion("0.3.1520.1")]

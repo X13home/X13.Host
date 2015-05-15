@@ -166,6 +166,7 @@ namespace X13.CC {
       case ItemAction.createLongMask:
       case ItemAction.createDoubleMask:
       case ItemAction.createStringMask:
+      case ItemAction.createByteArrMask:
       case ItemAction.createLogramMask:
         AddItem(ci.DataContext as StackPanel, ((TopicView.ItemActionStr)ci.Tag));
         break;
@@ -540,7 +541,7 @@ namespace X13.CC {
 
       if(_declarer!=null) {
         List<RcUse> resource=new List<RcUse>();
-        var ar=_declarer.all.Where(z => z!=null && z.name!="_description" && z.valueType==typeof(string)).Cast<DVar<string>>().Where(z => z.value!=null && z.value.Length>=2).OrderBy(z => z.name).OrderBy(z => (ushort)z.value[0]).ToList();
+        var ar=_declarer.all.Where(z => z!=null && z.name!="_description" && z.name!="_ver" && z.valueType==typeof(string)).Cast<DVar<string>>().Where(z => z.value!=null && z.value.Length>=2).OrderBy(z => z.name).OrderBy(z => (ushort)z.value[0]).ToList();
 
         foreach(var ch in ptr.children) {   // check used resources
           var dec=ar.FirstOrDefault(z => z.name==ch.name);
@@ -603,6 +604,7 @@ namespace X13.CC {
         actions.Add(new ItemActionStr("Add/long", ItemAction.createLongMask, null));
         actions.Add(new ItemActionStr("Add/double", ItemAction.createDoubleMask, null));
         actions.Add(new ItemActionStr("Add/string", ItemAction.createStringMask, null));
+        actions.Add(new ItemActionStr("Add/byteArray", ItemAction.createByteArrMask, null));
         if(ptr.valueType!=null && (ptr.valueType==typeof(ByteArray) || Type.GetTypeCode(ptr.valueType)!=TypeCode.Object)) {
           actions.Add(new ItemActionStr("Attach to Logram", ItemAction.addToLogram, null));
         }
@@ -651,6 +653,9 @@ namespace X13.CC {
           break;
         case ItemAction.createStringMask:
           cur=_parent.ptr.Get<string>(name);
+          break;
+        case ItemAction.createByteArrMask:
+          cur=_parent.ptr.Get<ByteArray>(name);
           break;
         case ItemAction.createLogramMask:
           cur=_parent.ptr.Get<PiLogram>(name);
@@ -703,6 +708,7 @@ namespace X13.CC {
     createLongMask='I',
     createDoubleMask='G',
     createStringMask='S',
+    createByteArrMask='B',
     createLogramMask='L',
 
     createNodeDef='n',

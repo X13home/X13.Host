@@ -38,9 +38,8 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="websocket-sharp, Version=1.0.2.14943, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\websocket-sharp.dll</HintPath>
+    <Reference Include="websocket-sharp">
+      <HintPath>..\..\packages\WebSocketSharp.1.0.3-rc7\lib\websocket-sharp.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -59,7 +58,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="bin\websocket-sharp.dll" />
     <EmbeddedResource Include="ui.xst" />
   </ItemGroup>
   <ItemGroup>
@@ -80,7 +78,9 @@
   <ItemGroup>
     <Resource Include="Images\var.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="www\dygraph-combined.js" />
     <EmbeddedResource Include="www\favicon.ico" />
