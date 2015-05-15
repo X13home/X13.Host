@@ -491,7 +491,7 @@
                     Lank.ws.close();
                     $(document.body).addClass('offline');
                 }
-                Lank.ws = new WebSocket("ws://" + window.location.host + "/api/v03");
+                Lank.ws = new WebSocket((window.location.protocol == "https:" ? "wss://" : "ws://") + window.location.host + "/api/v03");
                 Lank.ws.onopen = function (evt) {
                     Lank.ws.onmessage = Lank.f.onMessage;
                     Lank.ws.onclose = function (evt) {
