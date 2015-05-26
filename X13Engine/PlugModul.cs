@@ -62,13 +62,9 @@ namespace X13 {
       try {
         _container.ComposeParts(this);
       }
-      catch(ReflectionTypeLoadException ex) {
-        Log.Error("{0}", string.Join("\n\r", ex.LoaderExceptions.Select(z=>z.Message)));
-        throw new ApplicationException("PlugModul.Load failed");
-      }
       catch(CompositionException ex) {
         Log.Error("Load plugins - {0}", ex.ToString());
-        throw new ApplicationException("PlugModul.Load failed");
+        throw;
       }
       {
         _now=Topic.root.Get<DateTime>("/var/now");

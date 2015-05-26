@@ -47,7 +47,6 @@ namespace Jurassic.Library
         {
             return new BooleanInstance(this.InstancePrototype, value);
         }
-        public const string TrueString="true";
-        public const string FalseString="false";
+
     }
 }
