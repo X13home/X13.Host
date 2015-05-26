@@ -183,7 +183,11 @@ namespace X13.Plugins {
     }
     private void _ws_OnClose(object sender, CloseEventArgs e) {
       if(_verbose.value) {
-        Log.Debug("WsSync/{0} - disconnected[{1}]", name, e.Code);
+        if(e.Code==1000) {
+          Log.Info("WsSync/{0} - disconnected[{1}]", name, e.Code);
+        } else {
+          Log.Warning("WsSync/{0} - disconnected[{1}]", name, e.Code);
+        }
       }
       _present.value=false;
       if(_st==State.Dispose) {
@@ -194,7 +198,7 @@ namespace X13.Plugins {
     private void _ws_OnError(object sender, WebSocketSharp.ErrorEventArgs e) {
       _st=State.NoAnswer;
       if(_verbose.value) {
-        Log.Debug(name + " - " +e.Message);
+        Log.Warning(name + " - " +e.Message);
       }
       _reconn.Change(_rccnt*15000, _rccnt*30000);
     }
@@ -242,7 +246,7 @@ namespace X13.Plugins {
     }
     private void _ws_OnOpen(object sender, EventArgs e) {
       if(_verbose.value) {
-        Log.Debug("WsSync/{0} connected to {1}://{2}{3}", name, _ws.Url.Scheme, _ws.Url.DnsSafeHost, _remotePath);
+        Log.Info("WsSync/{0} connected to {1}://{2}{3}", name, _ws.Url.Scheme, _ws.Url.DnsSafeHost, _remotePath);
       }
     }
     private void _local_changed(Topic sender, TopicChanged p) {

@@ -118,6 +118,25 @@ namespace X13.Periphery {
         } else {
           pns=pns.Intersect(SerialPort.GetPortNames()).ToList();
         }
+        Topic tmp;
+        if(Topic.root.Exist("/local/cfg/MQTT-SN.Serial/whitelist", out tmp)) {
+          var whl=tmp as DVar<string>;
+          if(whl!=null && !string.IsNullOrEmpty(whl.value)) {
+            var wps=whl.value.Split(';', ',');
+            if(wps!=null && wps.Length>0) {
+              pns=pns.Intersect(wps).ToList();
+            }
+          }
+        }
+        if(Topic.root.Exist("/local/cfg/MQTT-SN.Serial/blacklist", out tmp)) {
+          var bll=tmp as DVar<string>;
+          if(bll!=null && !string.IsNullOrEmpty(bll.value)) {
+            var bps=bll.value.Split(';', ',');
+            if(bps!=null && bps.Length>0) {
+              pns=pns.Except(bps).ToList();
+            }
+          }
+        }
         for(int i=0; i<pns.Count; i++) {
           if(_gates.Exists(z => z.name==pns[i])) {
             continue;

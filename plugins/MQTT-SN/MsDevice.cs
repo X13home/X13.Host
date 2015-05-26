@@ -405,16 +405,16 @@ namespace X13.Periphery {
             string str=string.Format("{0} msgId={2:X4}  msg={1}", this.Owner.name, tmp.Data==null?"null":(BitConverter.ToString(tmp.Data)+"["+ Encoding.ASCII.GetString(tmp.Data.Select(z => (z<0x20 || z>0x7E)?(byte)'.':z).ToArray())+"]"), tmp.MessageId);
             switch(tmp.TopicId) {
             case LOG_D_ID:
-              Log.Debug(str);
+              Log.Debug("{0}", str);
               break;
             case LOG_I_ID:
-              Log.Info(str);
+              Log.Info("{0}", str);
               break;
             case LOG_W_ID:
-              Log.Warning(str);
+              Log.Warning("{0}", str);
               break;
             case LOG_E_ID:
-              Log.Error(str);
+              Log.Error("{0}", str);
               break;
             }
           } else if(ti!=null) {
