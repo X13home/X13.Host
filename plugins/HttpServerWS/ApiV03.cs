@@ -67,7 +67,7 @@ namespace X13.Plugins {
           } else {
             Send("C\tfalse");
             if(_verbose.value) {
-              X13.Log.Warning("{0}@{2} logon  as {1} fail", _ses.owner.name, sa[1], _ses.owner.value);
+              X13.Log.Warning("{0}@{2} logon  as {1} failed", _ses.owner.name, sa[1], _ses.owner.value);
             }
             Sessions.CloseSession(base.ID);
           }
@@ -84,7 +84,7 @@ namespace X13.Plugins {
     private void SubChanged(Topic t, TopicChanged a) {
       if(t.path.StartsWith("/local") || a.Visited(_ses.owner, true) || !MQTT.MqBroker.CheckAcl(_ses.userName, t, TopicAcl.Subscribe)) {
         if(_verbose.value) {
-          X13.Log.Debug("ws.snd({0}) - access denied", t.path);
+          X13.Log.Warning("ws.snd({0}) - subscribe:access denied", t.path);
         }
         return;
       }
