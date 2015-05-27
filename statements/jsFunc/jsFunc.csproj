@@ -45,6 +45,7 @@
     </Compile>
     <Compile Include="JsFunc.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WebClientJS.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ext\" />

@@ -25,7 +25,11 @@ namespace X13.PLC.jsFunc {
     private static Lazy<ScriptEngine> _engine;
 
     static JsFunc() {
-      _engine=new Lazy<ScriptEngine>(() => new ScriptEngine());
+      _engine=new Lazy<ScriptEngine>(() => {
+        var eng=new ScriptEngine();
+        eng.SetGlobalValue("WebClient", new WebClientJS(eng));
+        return eng;
+      });
     }
 
     private DVar<string> _dCode;
@@ -79,7 +83,7 @@ namespace X13.PLC.jsFunc {
       }
     }
 
-    private class TInst: ObjectInstance {
+    internal class TInst: ObjectInstance {
       public readonly DVar<PiStatement> _owner;
 
       public TInst(ScriptEngine engine, DVar<PiStatement> owner) :base(engine) {
@@ -159,6 +163,5 @@ namespace X13.PLC.jsFunc {
         return Undefined.Value;
       }
     }
-
   }
 }
