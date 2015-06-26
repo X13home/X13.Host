@@ -137,6 +137,11 @@ namespace X13.Periphery {
       case "BMP180_P":
         drv=new BMP180(snd);
         break;
+      case "BME280_T":
+      case "BME280_P":
+      case "BME280_H":
+        drv=new BME280(snd);
+        break;
       case "BLINKM_RGB8":
       case "BLINKM_F8":
       case "BLINKM_RGB9":
@@ -145,6 +150,9 @@ namespace X13.Periphery {
       case "BLINKM_F10":
         drv=new Blinky(snd);
         break;
+      //case "SI1143":
+      //  drv=new SI1143(snd);
+      //  break;
       default:
         if(snd.name.Length>2 && snd.name.Length<6 && (snd.name.StartsWith("Sa") || snd.name.StartsWith("Ra"))) {
           drv=new RawDevice(snd);
@@ -275,7 +283,7 @@ namespace X13.Periphery {
           _snd=false;
           if(_sa.value!=null) {
             var tmp=_sa.value.GetBytes();
-            if(tmp!=null && tmp.Length>2){
+            if(tmp!=null && tmp.Length>2) {
               buf=new byte[tmp.Length+1];
               buf[0]=_addr;
               Buffer.BlockCopy(tmp, 0, buf, 1, tmp.Length);
@@ -744,6 +752,226 @@ namespace X13.Periphery {
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(800, 2000));
       }
     }
+    private class BME280 : TWICommon {
+      private const byte ADDR=0x76;
+      private DVar<double> _T;
+      private DVar<double> _H;
+      private DVar<long> _P;
+      private DateTime _pt;
+      private DVar<bool> _present;
+      private int _st;
+
+      private UInt16 _dig_T1;
+      private Int16  _dig_T2;
+      private Int16  _dig_T3;
+
+      private UInt16 _dig_P1;
+      private Int16  _dig_P2;
+      private Int16  _dig_P3;
+      private Int16  _dig_P4;
+      private Int16  _dig_P5;
+      private Int16  _dig_P6;
+      private Int16  _dig_P7;
+      private Int16  _dig_P8;
+      private Int16  _dig_P9;
+
+      private byte   _dig_H1;
+      private Int16  _dig_H2;
+      private byte   _dig_H3;
+      private Int16  _dig_H4;
+      private Int16  _dig_H5;
+      private sbyte   _dig_H6;
+
+      public BME280(Topic pin) {
+        if(pin==null) {
+          throw new ArgumentNullException();
+        }
+        if(pin.name=="BME280_T") {
+          _T=pin as DVar<double>;
+          if(_T==null) {
+            throw new ArgumentException();
+          }
+          _P=_T.parent.Get<long>("BME280_P");
+          _H=_T.parent.Get<double>("BME280_H");
+        } else if(pin.name=="BME280_P") {
+          _P=pin as DVar<long>;
+          if(_P==null) {
+            throw new ArgumentException();
+          }
+          _T=_P.parent.Get<double>("BME280_T");
+          _H=_P.parent.Get<double>("BME280_H");
+        } else if(pin.name=="BME280_H") {
+          _H=pin as DVar<double>;
+          if(_H==null) {
+            throw new ArgumentException();
+          }
+          _P=_H.parent.Get<long>("BME280_P");
+          _T=_H.parent.Get<double>("BME280_T");
+        } else {
+          throw new ArgumentException();
+        }
+        _present=_T.Get<bool>("present");
+        _present.saved=false;
+        _present.value=false;
+        Reset();
+      }
+
+      public override bool VarChanged(Topic snd, bool delete) {
+        if(snd==_T) {
+          if(delete && _P!=null) {
+            _P.Remove();
+          }
+          if(delete && _H!=null) {
+            _H.Remove();
+          }
+          return true;
+        } else if(snd==_P) {
+          if(delete && _T!=null) {
+            _T.Remove();
+          }
+          if(delete && _H!=null) {
+            _H.Remove();
+          }
+          return true;
+        } else if(snd==_H) {
+          if(delete && _T!=null) {
+            _T.Remove();
+          }
+          if(delete && _P!=null) {
+            _P.Remove();
+          }
+          return true;
+        }
+        return false;
+      }
+      public override bool Recv(byte[] buf) {
+        int oldSt=_st;
+        if(buf[0]==ADDR) {
+          if(buf[1]==0x10) {
+            if(_st==-3 && buf.Length==30) {
+              _dig_T1=(ushort)(buf[4] | buf[5]<<8);
+              _dig_T2=(short)(buf[6] | buf[7]<<8);
+              _dig_T3=(short)(buf[8] | buf[9]<<8);
+              _dig_P1=(ushort)(buf[10] | buf[11]<<8);
+              _dig_P2=(short)(buf[12] | buf[13]<<8);
+              _dig_P3=(short)(buf[14] | buf[15]<<8);
+              _dig_P4=(short)(buf[16] | buf[17]<<8);
+              _dig_P5=(short)(buf[18] | buf[19]<<8);
+              _dig_P6=(short)(buf[20] | buf[21]<<8);
+              _dig_P7=(short)(buf[22] | buf[23]<<8);
+              _dig_P8=(short)(buf[24] | buf[25]<<8);
+              _dig_P9=(short)(buf[26] | buf[27]<<8);
+              _dig_H1=buf[29];
+              _pt=DateTime.Now;
+              _st=-2;
+            } else if(_st==-1 && buf.Length==11) {
+              _dig_H2=(short)(buf[4] | buf[5]<<8);
+              _dig_H3=buf[6];
+              _dig_H4=(short)((buf[7] << 4) | (buf[8] & 0x0F));
+              _dig_H5=(short)((buf[8] >> 4) | buf[9]<<4);
+              _dig_H6=(sbyte)buf[10];
+              _pt=DateTime.Now;
+              _st=0;
+            } else if(_st==3 && buf.Length==12) {
+              uint adc_H = (uint)(buf[11] | (buf[10] << 8));
+              uint adc_T = (uint)((buf[9]>>4) | (buf[8]<<4) | (buf[7]<<12));
+              uint adc_P=(uint)((buf[6]>>4) | (buf[5]<<4) | (buf[4]<<12));
+
+              double  var1, var2, t_fine;
+
+              var1=(adc_T/16384.0 - _dig_T1/1024.0) * _dig_T2;
+              var2=((adc_T/131072.0 - _dig_T1/8192.0) * (adc_T/131072.0 - _dig_T1/8192.0)) * _dig_T3;
+              t_fine = (int)(var1 + var2);
+              _T.value=(var1 + var2) / 5120.0;
+
+              var1 = t_fine/2.0 - 64000.0;
+              var2 = var1 * var1 * _dig_P6 / 32768.0;
+              var2 = var2 + var1 * _dig_P5 * 2.0;
+              var2 = var2/4.0+_dig_P4 * 65536.0;
+              var1 = (_dig_P3 * var1 * var1 / 524288.0 + _dig_P2 * var1) / 524288.0;
+              var1 = (1.0 + var1 / 32768.0)*_dig_P1;
+              if(var1 != 0.0) {
+                double p = 1048576.0 - (double)adc_P;
+                p = (p - (var2 / 4096.0)) * 6250.0 / var1;
+                var1 = _dig_P9 * p * p / 2147483648.0;
+                var2 = p * _dig_P8 / 32768.0;
+                p = p + (var1 + var2 + _dig_P7) / 16.0;
+                _P.value=(long)p;
+              }
+
+              var1 = t_fine - 76800.0;
+              var1 = (adc_H - (_dig_H4 * 64.0 + _dig_H5 / 16384.0 * var1)) * (_dig_H2 / 65536.0 * (1.0 + _dig_H6 / 67108864.0 * var1 * (1.0 + _dig_H3 / 67108864.0 * var1)));
+              var1 = var1 * (1.0 - _dig_H1 * var1 / 524288.0);
+              if(var1 > 100.0)
+                var1 = 100.0;
+              else if(var1 < 0.0)
+                var1 = 0.0;
+              _H.value=var1;
+
+
+              //Log.Debug("{0} T={1}, H={2}, P={3}", _T.parent.path, _T.value, _H.value, _P.value);
+              _present.value=true;
+              _pt=DateTime.Now.AddSeconds(_rand.Next(90, 120));
+              _st=0;
+            } else {
+              _present.value=false;
+              Reset();
+            }
+          } else {
+            _present.value=false;
+            if(TWIDriver._verbose) {
+              Log.Error("{0}.recv - {1}", _T.path, (AckFlags)buf[1]);
+            }
+            _pt=DateTime.Now.AddSeconds(_rand.Next(15, 30));
+            _st=0;
+          }
+          return true;
+        }
+        return false;
+      }
+      public override bool Poll(out byte[] buf) {
+        int oldSt=_st;
+        buf=null;
+        bool busy=false;
+        if(_pt<DateTime.Now) {
+          if(_st==-4) {
+            _st=-3;
+            buf=new byte[] { ADDR, 0x03, 0x01, 26, 0x88 };
+            _pt=DateTime.Now.AddMilliseconds(500);
+            busy=true;
+          } else if(_st==-2) {
+            _st=-1;
+            buf=new byte[] { ADDR, 0x03, 0x01, 7, 0xE1 };
+            _pt=DateTime.Now.AddMilliseconds(500);
+            busy=true;
+          } else if(_st==0) {
+            buf=new byte[] { ADDR, 0x01, 0x04, 0x00, 0xF2, 0x01, 0x00, 0x24 };  // Pressure oversampling x1, Temperature oversampling x1, Humidity oversampling x1
+            _pt=DateTime.Now.AddMilliseconds(30);
+            _st=1;
+            busy=true;
+          } else if(_st==1) {
+            buf=new byte[] { ADDR, 0x01, 0x01, 0x00, 0xF4, 0x25 };  // forced mode
+            _pt=DateTime.Now.AddMilliseconds(500);
+            _st=2;
+            busy=true;
+          } else if(_st==2) {
+            buf=new byte[] { ADDR, 0x03, 0x01, 0x08, 0xF7 };
+            _pt=DateTime.Now.AddMilliseconds(500);
+            _st=3;
+            busy=true;
+          } else {
+            busy=true;
+          }
+        } else {
+          busy=_st!=0;
+        }
+        return busy;
+      }
+      public override void Reset() {
+        _st=-4;
+        _pt=DateTime.Now.AddMilliseconds(_rand.Next(800, 2000));
+      }
+    }
     private class Blinky : TWICommon {
       private byte _addr;
       private DVar<long> _RGB;
@@ -824,5 +1052,220 @@ namespace X13.Periphery {
         _st=3;
       }
     }
+    /*
+    private class SI1143 : TWICommon {
+      private DVar<long> _var;
+      private byte _addr;
+      private int _st;
+      private DateTime _pt;
+
+      public SI1143(Topic pin) {
+        if(pin==null) {
+          throw new ArgumentNullException();
+        }
+        _var=pin as DVar<long>;
+        _addr=0x5A;
+        _valueCur=new int[3];
+        _valueOld=new int[3];
+        _thresold=new int[3];
+        _thresold[0]=400;
+        _thresold[1]=400;
+        _thresold[2]=400;
+        _edge=new long[6];
+
+      }
+      public override bool VarChanged(Topic snd, bool delete) {
+        if(snd==_var) {
+          return true;
+        }
+        return false;
+      }
+
+      private int[] _valueCur, _valueOld, _thresold;
+      private long[] _edge;
+      private const long TICK_TOLERANCE=20;
+
+      public override bool Recv(byte[] buf) {
+        if(buf==null || buf.Length<4) {
+          return false;
+        }
+        if(buf[0]!=_addr) {
+          return false;
+        }
+        if((buf[1]&0xE0)!=0) {
+          _st=-1;
+          _pt=DateTime.Now.AddSeconds(120);
+          return true;
+        }
+        if(_st==INIT_CMD_COUNTER+1 && (buf[1]&0x10)==0x10) {
+          long startTick, duration, dx, dy, curTick=DateTime.Now.Ticks/100000;  // *10ms
+          int i;
+          Dir rez=Dir.none;
+
+          _valueCur[0]=((buf[9]<<8) | buf[8]);
+          _valueCur[1]=((buf[11]<<8) | buf[10]);
+          _valueCur[2]=((buf[13]<<8) | buf[12]);
+          for(i=0; i<3; i++) {
+            if(_valueOld[i] < _thresold[i] && _valueCur[i]>_thresold[i]) {  // Rising Edge Detection
+              if(_edge[i]==0) {
+                _edge[i]=curTick;
+              }
+            } else if(_valueOld[i] > _thresold[i] && _valueCur[i] < _thresold[i]) {  // Falling Edge Detection
+              if(_edge[i+3]==0) {
+                _edge[i+3]=curTick;
+              }
+            }
+          }
+
+          if(_edge[0]!=0 && _edge[1]!=0 && _edge[2]!=0) {  // Check if rising edge group is ready to be processed:
+            startTick=Math.Min(_edge[0], Math.Min(_edge[1], _edge[2]));
+            duration=Math.Max(_edge[0], Math.Max(_edge[1], _edge[2]))-startTick;
+            // Process rising edge group (this code implements the conditional event/gesture table)
+            dx=_edge[1]-_edge[0];
+            dy=_edge[2]-_edge[0];
+            if(dx>duration/2) {
+              rez|=Dir.enter_left;
+            } else if(dx<-duration/2) {
+              rez|=Dir.enter_right;
+            }
+
+            if(dy>duration/3) {
+              rez|=Dir.enter_bottom;
+            } else if(dy<-duration/3) {
+              rez|=Dir.enter_top;
+            }
+
+            if((rez & Dir.enter_center)==Dir.none) {
+              rez|=Dir.enter_center;
+            }
+
+            Log.Debug("SI1143 dx={0}, dy={1}, rez={2}", dx, dy, rez);
+            _edge[0]=0;
+            _edge[1]=0;
+            _edge[2]=0;
+          }
+
+          if(_edge[3]!=0 && _edge[4]!=0 && _edge[5]!=0) {  // Check if falling edge group is ready to be processed:
+            startTick=Math.Min(_edge[3], Math.Min(_edge[4], _edge[5]));
+            duration=Math.Max(_edge[3], Math.Max(_edge[4], _edge[5]))-startTick;
+            // Process falling edge group (this code implements the conditional event/gesture table)
+            dx=_edge[4]-_edge[3];
+            dy=_edge[5]-_edge[3];
+            if(dx>duration/2) {
+              rez|=Dir.leave_right;
+            } else if(dx<-duration/2) {
+              rez|=Dir.leave_left;
+            }
+
+            if(dy>duration/3) {
+              rez|=Dir.leave_top;
+            } else if(dy<-duration/3) {
+              rez|=Dir.leave_bottom;
+            }
+
+            if((rez & Dir.leave_center)==Dir.none) {
+              rez|=Dir.leave_center;
+            }
+
+            Log.Debug("SI1143 dx={0}, dy={1}, rez={2}", dx, dy, rez);
+            _edge[3]=0;
+            _edge[4]=0;
+            _edge[5]=0;
+          }
+
+          curTick-=50;
+          for(i=0; i<3; i++) {
+            _thresold[i]=(_valueCur[i]*5/4+_thresold[i]*255)/256;
+            _valueOld[i]=_valueCur[i];
+            if(_edge[i]<curTick) {
+              _edge[i]=0;
+            }
+            if(_edge[i+3]<curTick) {
+              _edge[i+3]=0;
+            }
+          }
+          _var.value=((long)buf[7] << 56) | ((long)buf[6] << 48) | ((long)buf[9] << 40) | ((long)buf[8] << 32) | (long)((byte)rez);
+          //_var.value=((long)buf[9] << 40) | ((long)buf[8] << 32) | ((long)buf[11] << 24) | ((long)buf[10] << 16) | ((long)buf[13] << 8) | ((long)buf[12] << 0);
+          //_var.value=((long)buf[7] << 56) | ((long)buf[6] << 48) | ((long)buf[9] << 40) | ((long)buf[8] << 32) | ((long)buf[11] << 24) | ((long)buf[10] << 16) | ((long)buf[13] << 8) | ((long)buf[12] << 0);
+        }
+        _st=INIT_CMD_COUNTER;
+        _pt=DateTime.Now.AddMilliseconds(30);
+        return true;
+      }
+      [Flags]
+      private enum Dir {
+        none=0x00,
+        enter_left=0x01,
+        enter_right=0x02,
+        enter_bottom=0x04,
+        enter_bottom_left=0x05,
+        enter_bottom_right=0x06,
+        enter_top=0x08,
+        enter_top_left=0x09,
+        enter_top_right=0x0A,
+        enter_center=0x0F,
+
+        leave_left=0x10,
+        leave_right=0x20,
+        leave_bottom=0x40,
+        leave_bottom_left=0x50,
+        leave_bottom_right=0x60,
+        leave_top=0x80,
+        leave_top_left=0x90,
+        leave_top_right=0xA0,
+        leave_center=0xF0,
+      }
+
+
+      public override bool Poll(out byte[] buf) {
+        if(_st>=0 && _st<INIT_CMD_COUNTER) {
+          if(DateTime.Now>_pt) {
+            buf=new byte[_initSeq[_st].Length+4];
+            buf[0]=_addr;
+            buf[1]=1;
+            buf[2]=(byte)_initSeq[_st].Length;
+            buf[3]=0;
+            Buffer.BlockCopy(_initSeq[_st], 0, buf, 4, _initSeq[_st].Length);
+            _st++;
+            _pt=DateTime.Now.AddMilliseconds(50);
+            return true;
+          }
+          buf=null;
+          return true;
+        } else if(_st==INIT_CMD_COUNTER && DateTime.Now>_pt) {
+          buf=new byte[] { _addr, 0x03, 0x01, 0x0C, 0x22 };
+          _st=INIT_CMD_COUNTER+1;
+          return true;
+        }
+        buf=null;
+        return false;
+      }
+      private const int INIT_CMD_COUNTER=18;
+      private static byte[][] _initSeq=new byte[][]{ 
+        new byte[]{0x07, 0x17},  //HW_KEY - The system must write the value 0x17 to this register for proper Si114x operation.
+        new byte[]{0x03, 0x03},  // turn on interrupts
+        new byte[]{0x04, 0x10},  // turn on interrupt on PS3
+        new byte[]{0x06, 0x01},  // interrupt on ps3 measurement
+        new byte[]{0x08, 0x96},  // The device wakes up every 30 ms (0x03C0 x 31.25 µs)
+        new byte[]{0x09, 0x32},  // ALS Measurements made every 10 times the device wakes up.
+        new byte[]{0x0A, 0x08},  // PS Measurements made every time the device wakes up 
+        new byte[]{0x0F, 0x55},  // LED current for LEDs 1 (red) & 2 (IR1)
+        new byte[]{0x10, 0x05},  // LED current for LED 3 (IR2)
+        //new byte[]{0x03, 0x03, 0x10, 0x00, 0x01, 0x17, 0x96, 0x32, 0x08, 0xFF, 0xFF, 0xFF, 0xFF, 0x55, 0x05}, 
+        new byte[]{0x17, 0x77, 0xA1},  // PARAM_CH_LIST - all measurements on
+        new byte[]{0x17, 0x00, 0xAB},  // PARAM_PS_ADC_GAIN - 
+        new byte[]{0x17, 0x21, 0xA2},  // PARAM_PSLED12_SELECT - select LEDs on
+        new byte[]{0x17, 0x04, 0xA3},  // PARAM_PSLED3_SELECT - 3 only
+        new byte[]{0x17, 0x03, 0xA7},  // PARAM_PS1_ADCMUX - PS1 photodiode select
+        new byte[]{0x17, 0x03, 0xA8},  // PARAM_PS2_ADCMUX - PS2 photodiode select
+        new byte[]{0x17, 0x03, 0xA9},  // PARAM_PS3_ADCMUX - PS3 photodiode select
+        new byte[]{0x17, 0x70, 0xAA},  // PARAM_PS_ADC_COUNTER - is default
+        new byte[]{0x18, 0x0F},  // starts an autonomous read loop
+      };
+      public override void Reset() {
+        _st=0;
+      }
+    }
+     */
   }
 }

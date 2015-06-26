@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- device configuration file for TWI  -->
 <root head="/etc/declarers/type">
-  <item name="TWI" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.3.1449.4">
+  <item name="TWI" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.3.1526.1">
     <item name="Blinky" value="" saved="True" type="System.String">
       <item name="BLINKM_RGB8" value="ai" saved="True" type="System.String">
         <item name="_description" value="RGB" saved="True" type="System.String" />
@@ -22,11 +22,25 @@
         <item name="_description" value="Fade" saved="True" type="System.String" />
       </item>
     </item>
+    <!--<item name="SI1143" value="ai" saved="True" type="System.String">
+      <item name="_description" value="Sensor SI1143" saved="True" type="System.String" />
+    </item>-->
     <item name="BMP180" value="" saved="True" type="System.String">
       <item name="BMP180_T" value="0g" saved="True" type="System.String">
         <item name="_description" value="Temperature °C" saved="True" type="System.String" />
       </item>
       <item name="BMP180_P" value="1i" saved="True" type="System.String">
+        <item name="_description" value="Pressure Pa" saved="True" type="System.String" />
+      </item>
+    </item>
+    <item name="BME280" value="" saved="True" type="System.String">
+      <item name="BME280_T" value="0g" saved="True" type="System.String">
+        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      </item>
+      <item name="BME280_H" value="1g" saved="True" type="System.String">
+        <item name="_description" value="Humidity %" saved="True" type="System.String" />
+      </item>
+      <item name="BME280_P" value="2i" saved="True" type="System.String">
         <item name="_description" value="Pressure Pa" saved="True" type="System.String" />
       </item>
     </item>
@@ -61,7 +75,7 @@
       </item>
     </item>
     <item name="Raw" value="GB" saved="True" type="System.String">
-        <item name="_description" value="Sa1 .. Sa127 &amp; Ra1 .. Ra127" saved="True" type="System.String" />
+      <item name="_description" value="Sa1 .. Sa127 &amp; Ra1 .. Ra127" saved="True" type="System.String" />
     </item>
   </item>
 </root>
