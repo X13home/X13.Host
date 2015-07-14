@@ -882,7 +882,7 @@ namespace X13.Periphery {
               var1=(adc_T/16384.0 - _dig_T1/1024.0) * _dig_T2;
               var2=((adc_T/131072.0 - _dig_T1/8192.0) * (adc_T/131072.0 - _dig_T1/8192.0)) * _dig_T3;
               t_fine = (int)(var1 + var2);
-              _T.value=(var1 + var2) / 5120.0;
+              _T.value=Math.Round((var1 + var2) / 5120.0, 2);
 
               var1 = t_fine/2.0 - 64000.0;
               var2 = var1 * var1 * _dig_P6 / 32768.0;
@@ -906,7 +906,7 @@ namespace X13.Periphery {
                 var1 = 100.0;
               else if(var1 < 0.0)
                 var1 = 0.0;
-              _H.value=var1;
+              _H.value=Math.Round(var1, 1);
 
 
               //Log.Debug("{0} T={1}, H={2}, P={3}", _T.parent.path, _T.value, _H.value, _P.value);

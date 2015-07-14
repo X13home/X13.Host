@@ -334,7 +334,7 @@ namespace X13.PLC {
             CopyBytes(r.fl_size, rBuf, 0);
             CopyBytes(r.parent, rBuf, 4);
             Encoding.UTF8.GetBytes(r.name).CopyTo(rBuf, 12);
-            if(Write(ref r.pos, rBuf, (int)oldFl_Size & FL_REC_LEN, r.size, r.parent)) {
+            if(Write(ref r.pos, rBuf, (int)oldFl_Size & FL_REC_LEN, r.size, r.t.valueType==typeof(PLC.PiWire)?uint.MaxValue:r.parent)) {
               var ch=r.t.children.ToArray();
               for(int i=ch.Length-1; i>=0; i--) {
                 if(!ch[i].path.StartsWith("/local") && ch[i].path!="/var/log/A0") {
@@ -449,7 +449,7 @@ namespace X13.PLC {
         }
       } else {
         try {
-          t=Topic.GetP(r.name, r.type, _sign, parent);
+            t=Topic.GetP(r.name, r.type, _sign, parent);
         }
         catch(ArgumentException ex) {
           Log.Warning("PersistentStorage.AddTopic - {0}", ex.Message);
