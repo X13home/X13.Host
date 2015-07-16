@@ -156,6 +156,12 @@ namespace X13.PLC {
         }
         _file.Position=curPos+((len+15)&FL_LEN_MASK);
       } while(_file.Position<_file.Length);
+      Record rv;
+      foreach(Topic tv in Topic.root.all){
+        if(_tr.TryGetValue(tv, out rv) && rv.saved && !string.IsNullOrEmpty(rv.payload)) {
+          tv.FromJson(rv.payload, _sign);
+        }
+      }
       foreach(var kv in _refitParent) {
         Log.Warning("! [{1:X4}] {0} ({2:X4})", kv.name, kv.pos<<4, kv.parent<<4);
       }
@@ -334,6 +340,7 @@ namespace X13.PLC {
             CopyBytes(r.fl_size, rBuf, 0);
             CopyBytes(r.parent, rBuf, 4);
             Encoding.UTF8.GetBytes(r.name).CopyTo(rBuf, 12);
+            //if(Write(ref r.pos, rBuf, (int)oldFl_Size & FL_REC_LEN, r.size, r.t.valueType==typeof(PLC.PiWire)?uint.MaxValue:r.parent)) {
             if(Write(ref r.pos, rBuf, (int)oldFl_Size & FL_REC_LEN, r.size, r.parent)) {
               var ch=r.t.children.ToArray();
               for(int i=ch.Length-1; i>=0; i--) {
@@ -449,7 +456,7 @@ namespace X13.PLC {
         }
       } else {
         try {
-          t=Topic.GetP(r.name, r.type, _sign, parent);
+            t=Topic.GetP(r.name, r.type, _sign, parent);
         }
         catch(ArgumentException ex) {
           Log.Warning("PersistentStorage.AddTopic - {0}", ex.Message);
@@ -469,9 +476,9 @@ namespace X13.PLC {
           _refitParent.RemoveAt(idx);
           AddTopic(t, nextR);
         }
-        if(!string.IsNullOrEmpty(r.payload)) {
-          t.FromJson(r.payload, _sign);
-        }
+        //if(!string.IsNullOrEmpty(r.payload)) {
+        //  t.FromJson(r.payload, _sign);
+        //}
       }
       return t;
     }

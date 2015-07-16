@@ -80,7 +80,9 @@
     <EmbeddedResource Include="MQTTSRf.xst" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="TWI.xst" />
+    <EmbeddedResource Include="TWI.xst">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\ty_twi.png" />

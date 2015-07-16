@@ -354,8 +354,8 @@ namespace X13.Periphery {
         _gateAddr=new byte[] { gwIdx, (byte)tmpAddr };
         _sendQueue=new Queue<MsMessage>();
         _sndBuf=new byte[384];
+        _advTick=DateTime.Now.AddSeconds(31.3);
         ThreadPool.QueueUserWorkItem(CommThread);
-        _advTick=DateTime.Now.AddSeconds(15.6);
       }
       public void SendGw(MsDevice dev, MsMessage msg) {
         msg.GetBytes();
