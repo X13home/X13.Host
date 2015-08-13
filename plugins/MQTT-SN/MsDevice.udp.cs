@@ -112,6 +112,7 @@ namespace X13.Periphery {
       private UdpClient _udp;
       private Timer _advTick;
       private List<MsDevice> _nodes;
+      private byte[] _wla_arr, _wlm_arr;  // Whitelist
 
       private MsGUdp() {
         try {
@@ -121,6 +122,17 @@ namespace X13.Periphery {
           _gates.Insert(0, this);
           _advTick=new Timer(SendAdv, null, 4500, 900000);
           _nodes=new List<MsDevice>();
+          IPAddress wla_ip, wlm_ip;
+          Topic wla_t, wlm_t;
+          if(Topic.root.Exist("/local/cfg/MQTT-SN.udp/whitelist_addr", out wla_t) && Topic.root.Exist("/local/cfg/MQTT-SN.udp/whitelist_mask", out wlm_t)
+            && wla_t.valueType==typeof(string) && wlm_t.valueType==typeof(string)
+            && IPAddress.TryParse((wla_t as DVar<string>).value, out wla_ip) && IPAddress.TryParse((wlm_t as DVar<string>).value, out wlm_ip)) {
+            _wla_arr=wla_ip.GetAddressBytes();
+            _wlm_arr=wlm_ip.GetAddressBytes();
+          } else {
+            _wla_arr=new byte[]{ 0, 0, 0, 0 };
+            _wlm_arr=_wla_arr;
+          }
         }
         catch(Exception ex) {
           Log.Error("MsGUdp.ctor() {0}", ex.Message);
@@ -135,9 +147,27 @@ namespace X13.Periphery {
         try {
           buf = _udp.EndReceive(ar, ref re);
           byte[] addr=re.Address.GetAddressBytes();
+          bool allow=true;
           if(!_myIps.Any(z => addr.SequenceEqual(z))) {
             if(buf.Length>1) {
-              MsDevice.ProcessInPacket(this, addr, buf, 0, buf.Length);
+              var mt=(MsMessageType)(buf[0]>1?buf[1]:buf[3]);
+              if((mt==MsMessageType.CONNECT || mt==MsMessageType.SEARCHGW) && addr.Length==_wla_arr.Length) {
+                for(int i=addr.Length-1; i>=0; i--) {
+                  if((addr[i] & _wlm_arr[i])!=_wla_arr[i]) {
+                    allow=false;
+                    break;
+                  }
+                }
+              }
+              if(allow) {
+                MsDevice.ProcessInPacket(this, addr, buf, 0, buf.Length);
+              } else if(_verbose) {
+                var msg=MsMessage.Parse(buf, 0, buf.Length);
+                if(msg!=null) {
+                  Log.Debug("restricted  {0}: {1}  {2}", this.Addr2If(addr), BitConverter.ToString(buf), msg.ToString());
+                }
+
+              }
             }
           }
         }
