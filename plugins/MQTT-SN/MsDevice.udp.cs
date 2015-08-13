@@ -48,7 +48,7 @@ namespace X13.Periphery {
     public void Stop() {
       Topic.root.Unsubscribe("/etc/MQTT-SN/#", Dummy);
       Topic.root.Unsubscribe("/etc/declarers/#", Dummy);
-      //TODO: Close
+      MsDevice.MsGUdp.Close();
     }
   }
 
@@ -95,11 +95,23 @@ namespace X13.Periphery {
           }
         }
       }
+      public static void Close() {
+        MsGUdp ret;
+        if(_gates!=null) {
+          lock(_gates) {
+            if(_gates.Count>0 && (ret=(_gates[0] as MsGUdp))!=null) {
+              ret.Stop();
+            }
+          }
+        }
+
+      }
       #endregion static
 
       #region instance
       private UdpClient _udp;
       private Timer _advTick;
+      private List<MsDevice> _nodes;
 
       private MsGUdp() {
         try {
@@ -108,12 +120,16 @@ namespace X13.Periphery {
           _udp.BeginReceive(new AsyncCallback(ReceiveCallback), null);
           _gates.Insert(0, this);
           _advTick=new Timer(SendAdv, null, 4500, 900000);
+          _nodes=new List<MsDevice>();
         }
         catch(Exception ex) {
           Log.Error("MsGUdp.ctor() {0}", ex.Message);
         }
       }
       private void ReceiveCallback(IAsyncResult ar) {
+        if(_udp==null || _udp.Client==null) {
+          return;
+        }
         IPEndPoint re=new IPEndPoint(IPAddress.Any, 0);
         Byte[] buf=null;
         try {
@@ -125,16 +141,32 @@ namespace X13.Periphery {
             }
           }
         }
-        catch(Exception ex) {
-          Log.Error("ReceiveCallback({0}, {1}) - {2}", re, BitConverter.ToString(buf), ex.ToString());
+        catch(ObjectDisposedException) {
+          return;
         }
-        if(_udp!=null) {
+        catch(Exception ex) {
+          Log.Error("ReceiveCallback({0}, {1}) - {2}", re, buf==null?"null":BitConverter.ToString(buf), ex.ToString());
+        }
+        if(_udp!=null && _udp.Client!=null) {
           _udp.BeginReceive(new AsyncCallback(ReceiveCallback), null);
         }
       }
       private void SendAdv(object o) {
-        SendGw(null, new MsAdvertise(0, 900));
+        SendGw((MsDevice)null, new MsAdvertise(0, 900));
       }
+      public void SendGw(byte[] arr, MsMessage msg) {
+        if(_udp==null || arr==null || arr.Length!=4 || msg==null) {
+          return;
+        }
+        byte[] buf=msg.GetBytes();
+        IPAddress addr=new IPAddress(arr);
+        _udp.Send(buf, buf.Length, new IPEndPoint(addr, 1883));
+        if(_verbose.value) {
+          Log.Debug("s  {0}: {1}  {2}", addr, BitConverter.ToString(buf), msg.ToString());
+        }
+
+      }
+
       public void SendGw(MsDevice dev, MsMessage msg) {
         if(_udp==null || msg==null) {
           return;
@@ -162,6 +194,30 @@ namespace X13.Periphery {
         return (new IPAddress(addr)).ToString();
       }
       public byte gwIdx { get { return 0; } }
+      public void AddNode(MsDevice dev) {
+        _nodes.Add(dev);
+      }
+      public void RemoveNode(MsDevice dev) {
+        if(_nodes!=null) {
+          _nodes.Remove(dev);
+        }
+      }
+      public void Stop() {
+        try {
+          if(_udp!=null) {
+            var nodes=_nodes.ToArray();
+            for(int i=0; i<nodes.Length; i++) {
+              nodes[i].Stop();
+            }
+            _udp.Close();
+            _udp=null;
+          }
+        }
+        catch(Exception ex) {
+          Log.Error("MsGUdp.Close() - {0}", ex.ToString());
+        }
+
+      }
       #endregion instance
     }
   }

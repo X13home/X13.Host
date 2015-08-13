@@ -47,7 +47,8 @@ namespace X13.Periphery {
     public void Stop() {
       Topic.root.Unsubscribe("/etc/MQTT-SN/#", Dummy);
       Topic.root.Unsubscribe("/etc/declarers/#", Dummy);
-      //TODO: Close
+
+      MsDevice.MsGSerial.Close();
     }
   }
 
@@ -76,6 +77,17 @@ namespace X13.Periphery {
         if(_scanBusy==0) {
           _startScan.Set();
         }
+      }
+      public static void Close() {
+        if(_gates!=null) {
+          lock(_gates) {
+            var gates=_gates.Select(z => z as MsGSerial).Where(z => z!=null).ToArray();
+            for(int i=0; i<gates.Length; i++) {
+              gates[i].Stop();
+            }
+          }
+        }
+
       }
 
       private static void ScanPorts(object o, bool b) {
@@ -339,8 +351,10 @@ namespace X13.Periphery {
       private byte[] _sndBuf;
       private byte[] _gateAddr;
       private DateTime _advTick;
+      private List<MsDevice> _nodes;
 
       public MsGSerial(SerialPort port) {
+        _nodes=new List<MsDevice>();
         _port=port;
         byte i=1;
         foreach(var g in _gates) {
@@ -357,6 +371,12 @@ namespace X13.Periphery {
         _advTick=DateTime.Now.AddSeconds(31.3);
         ThreadPool.QueueUserWorkItem(CommThread);
       }
+      public void SendGw(byte[] addr, MsMessage msg) {
+        msg.GetBytes();
+        lock(_sendQueue) {
+          _sendQueue.Enqueue(msg);
+        }
+      }
       public void SendGw(MsDevice dev, MsMessage msg) {
         msg.GetBytes();
         lock(_sendQueue) {
@@ -367,6 +387,29 @@ namespace X13.Periphery {
       public string name { get { return _port!=null?_port.PortName:string.Empty; } }
       public string Addr2If(byte[] addr) {
         return _port!=null?_port.PortName:string.Empty;
+      }
+      public void AddNode(MsDevice dev) {
+        _nodes.Add(dev);
+      }
+      public void RemoveNode(MsDevice dev) {
+        if(_nodes!=null) {
+          _nodes.Remove(dev);
+        }
+      }
+      public void Stop() {
+        try {
+          if(_port!=null && _port.IsOpen) {
+            var nodes=_nodes.ToArray();
+            for(int i=0; i<nodes.Length; i++) {
+              nodes[i].Stop();
+            }
+            _port.Close();
+            _port=null;
+          }
+        }
+        catch(Exception ex) {
+          Log.Error("MsGSerial.Close({0}) - {1}", gwIdx, ex.ToString());
+        }
       }
 
       private void CommThread(object o) {
@@ -440,6 +483,5 @@ namespace X13.Periphery {
       }
       #endregion instance
     }
-
   }
 }

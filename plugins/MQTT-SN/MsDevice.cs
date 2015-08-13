@@ -80,7 +80,7 @@ namespace X13.Periphery {
         Log.Debug("r  {0}: {1}  {2}", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start), msg.ToString());
       }
       if(msg.MsgTyp==MsMessageType.SEARCHGW && ((msg as MsSearchGW).radius==0 || (msg as MsSearchGW).radius==1)) {
-        gate.SendGw(null, new MsGwInfo(gate.gwIdx));
+        gate.SendGw((MsDevice)null, new MsGwInfo(gate.gwIdx));
         return;
       }
       Topic devR=Topic.root.Get("/dev");
@@ -123,7 +123,7 @@ namespace X13.Periphery {
             }
           }
           if(ackAddr!=null) {
-            gate.SendGw(null, new MsDhcpAck(gate.gwIdx, dr.xId, ackAddr.ToArray()));
+            gate.SendGw((MsDevice)null, new MsDhcpAck(gate.gwIdx, dr.xId, ackAddr.ToArray()));
           }
         }
         return;
@@ -136,9 +136,11 @@ namespace X13.Periphery {
           Thread.Sleep(0);
           dDev.value.Owner=dDev;
         } else {
+          gate.RemoveNode(dDev.value);
           dDev.value._gate=gate;
           dDev.value.Addr=addr;
         }
+        gate.AddNode(dDev.value);
         dDev.value.Connect(cm);
         foreach(var dub in devR.children.Select(z => z.GetValue() as MsDevice).Where(z => z!=null && z!=dDev.value && z.Addr!=null && z.Addr.SequenceEqual(addr) && z._gate==gate).ToArray()) {
           dub.Addr=null;
@@ -152,6 +154,7 @@ namespace X13.Periphery {
         } else {
           if(dev==null || dev.Owner==null) {
             Log.Debug("{0} unknown device", gate.Addr2If(addr));
+            gate.SendGw(addr, new MsDisconnect());
           } else {
             Log.Debug("{0} inactive device: {1}", gate.Addr2If(addr), dev.Owner.path);
             gate.SendGw(dev, new MsDisconnect());
@@ -177,6 +180,7 @@ namespace X13.Periphery {
     private DVar<bool> _present;
     private IMsGate _gate;
     private bool _waitAck;
+    private List<MsDevice> _nodes;
 
     private MsDevice() {
       if(Topic.brokerMode) {
@@ -237,6 +241,31 @@ namespace X13.Periphery {
     private byte[] Addr { get; set; }
     [Newtonsoft.Json.JsonProperty]
     private string backName { get; set; }
+    public void AddNode(MsDevice dev) {
+      if(_nodes==null) {
+        _nodes=new List<MsDevice>();
+      }
+      _nodes.Add(dev);
+    }
+    public void RemoveNode(MsDevice dev) {
+      if(_nodes!=null) {
+        _nodes.Remove(dev);
+      }
+    }
+    public void Stop() {
+      if(_nodes==null || !_nodes.Any()) {
+        return;
+      }
+      var nodes=_nodes.ToArray();
+      for(int i=0; i<nodes.Length; i++) {
+        nodes[i].Stop();
+      }
+      if(_gate!=null) {
+        _gate.SendGw(this, new MsDisconnect());
+        Stat(true, MsMessageType.DISCONNECT, false);
+      }
+      state=State.Disconnected;
+    }
 
     private void Stat(bool send, MsMessageType t, bool dub=false) {
 #if DEBUG
@@ -510,14 +539,14 @@ namespace X13.Periphery {
             if(fm.msg.MsgTyp==MsMessageType.CONNECT) {
               var cm=fm.msg as MsConnect;
               if(fm.addr!=null && fm.addr.Length==2 && fm.addr[1]==0xFF) {    // DHCP V<0.3
-                _gate.SendGw(this, new MsForward(fm.addr, new MsConnack(MsReturnCode.Accepted) ) );
+                _gate.SendGw(this, new MsForward(fm.addr, new MsConnack(MsReturnCode.Accepted)));
 
                 byte[] nAddr=new byte[1];
                 do {
                   nAddr[0]=(byte)(_rand.Next(32, 254));
                 } while(!devR.children.Select(z => z as DVar<MsDevice>).Where(z => z!=null && z.value!=null).All(z => !z.value.CheckAddr(nAddr)));
                 Log.Info("{0} new addr={1:X2}", cm.ClientId, nAddr[0]);
-                _gate.SendGw(this, new MsForward(fm.addr, new MsPublish(null, PredefinedTopics[".cfg/XD_DeviceAddr"], QoS.AtLeastOnce) { MessageId=1, Data=nAddr }) );
+                _gate.SendGw(this, new MsForward(fm.addr, new MsPublish(null, PredefinedTopics[".cfg/XD_DeviceAddr"], QoS.AtLeastOnce) { MessageId=1, Data=nAddr }));
               } else {
                 DVar<MsDevice> dDev=devR.Get<MsDevice>(cm.ClientId);
                 if(dDev.value==null) {
@@ -525,9 +554,11 @@ namespace X13.Periphery {
                   Thread.Sleep(0);
                   dDev.value.Owner=dDev;
                 } else {
+                  this.RemoveNode(dDev.value);
                   dDev.value._gate=this;
                   dDev.value.Addr=fm.addr;
                 }
+                this.AddNode(dDev.value);
                 dDev.value.Connect(cm);
                 foreach(var dub in devR.children.Select(z => z.GetValue() as MsDevice).Where(z => z!=null && z!=dDev.value && z.Addr!=null && z.Addr.SequenceEqual(fm.addr) && z._gate==this).ToArray()) {
                   dub.Addr=null;
@@ -562,10 +593,12 @@ namespace X13.Periphery {
                   }
                 }
               } else {
-                if(_verbose.value) {
-                  if(dev==null || dev.Owner==null) {
+                if(dev==null || dev.Owner==null) {
+                  if(_verbose.value) {
                     Log.Debug("{0} via {1} unknown device", BitConverter.ToString(fm.addr), this.name);
-                  } else {
+                  }
+                } else {
+                  if(_verbose.value) {
                     Log.Debug("{0} via {1} inactive", dev.Owner.name, this.name);
                   }
                 }
@@ -696,14 +729,6 @@ namespace X13.Periphery {
             Log.Info("{0} Disconnected", Owner.path);
           }
         }
-        //Topic dev=Topic.root.Get("/dev");
-        //IEnumerable<MsDevice> ifs;
-        //lock(dev) {
-        //  ifs=dev.children.Where(z => z.valueType==typeof(MsDevice)).Cast<DVar<MsDevice>>().Where(z => z.value!=null && z.value._gate==this).Select(z => z.value).ToArray();
-        //}
-        //foreach(var t in ifs) {
-        //  t.Disconnect();
-        //}
       }
       _waitAck=false;
     }
@@ -843,11 +868,11 @@ namespace X13.Periphery {
     }
     private ushort CalculateTopicId(string path) {
       ushort id;
-        byte[] buf=Encoding.UTF8.GetBytes(path);
-        id=Crc16.ComputeChecksum(buf);
-        while(id==0 || id==0xF000 || id==0xFFFF || _topics.Any(z => z.it==TopicIdType.Normal && z.TopicId==id)) {
-          id=Crc16.UpdateChecksum(id, (byte)_rand.Next(0, 255));
-        }
+      byte[] buf=Encoding.UTF8.GetBytes(path);
+      id=Crc16.ComputeChecksum(buf);
+      while(id==0 || id==0xF000 || id==0xFFFF || _topics.Any(z => z.it==TopicIdType.Normal && z.TopicId==id)) {
+        id=Crc16.UpdateChecksum(id, (byte)_rand.Next(0, 255));
+      }
       return id;
     }
     private TopicInfo GetTopicInfo(string path, bool sendRegister=true) {
@@ -1102,12 +1127,16 @@ namespace X13.Periphery {
     #endregion ITopicOwned Members
 
     #region IMsGate Members
+    public void SendGw(byte[] addr, MsMessage msg) {
+      if(_gate!=null && addr!=null) {
+        _gate.SendGw(this, new MsForward(addr, msg));
+      }
+    }
     public void SendGw(MsDevice dev, MsMessage msg) {
       if(_gate!=null) {
         _gate.SendGw(this, new MsForward(dev.Addr, msg));
       }
     }
-
     public byte gwIdx { get { return (byte)(_gate==null?0xFF:_gate.gwIdx); } }
     #endregion  IMsGate Members
 
@@ -1255,12 +1284,16 @@ namespace X13.Periphery {
       Lost,
       PreConnect,
     }
+
   }
   public interface IMsGate {
+    void SendGw(byte[] addr, MsMessage msg);
     void SendGw(MsDevice dev, MsMessage msg);
     byte gwIdx { get; }
     string name { get; }
     string Addr2If(byte[] addr);
-    //TODO: Stop
+    void AddNode(MsDevice dev);
+    void RemoveNode(MsDevice dev);
+    void Stop();
   }
 }
