@@ -23,11 +23,13 @@ namespace X13.Periphery {
     private const ushort LOG_W_ID=0xFFE2;
     private const ushort LOG_E_ID=0xFFE3;
     private static DVar<bool> _verbose;
+    private static DVar<bool> _statistic;
     private static List<IMsGate> _gates;
     private static Random _rand;
 
     static MsDevice() {
       _verbose=Topic.root.Get<bool>("/etc/MQTT-SN/verbose");
+      _statistic=Topic.root.Get<bool>("/etc/MQTT-SN/statistic");
       _gates=new List<IMsGate>();
       _rand=new Random((int)DateTime.Now.Ticks);
     }
@@ -268,7 +270,6 @@ namespace X13.Periphery {
     }
 
     private void Stat(bool send, MsMessageType t, bool dub=false) {
-#if DEBUG
       string n2;
       switch(t) {
       case MsMessageType.CONNECT:
@@ -302,17 +303,16 @@ namespace X13.Periphery {
       if(Owner==null) {
         return;
       }
-      string p=string.Concat("/etc/MQTT-SN/stat/", Owner.name);
+      string p=string.Concat("/var/stat/MQTT-SN/", Owner.name);
       Topic pa=Topic.root.Get(p);
       pa.saved=false;
       DVar<long> d=pa.Get<long>(n2);
       d.saved=false;
       d.value++;
-#endif
     }
 
     internal void ProcessInPacket(MsMessage msg) {
-      if(msg.MsgTyp!=MsMessageType.EncapsulatedMessage && msg.MsgTyp!=MsMessageType.PUBLISH) {
+      if(_statistic.value && msg.MsgTyp!=MsMessageType.EncapsulatedMessage && msg.MsgTyp!=MsMessageType.PUBLISH) {
         Stat(false, msg.MsgTyp);
       }
       switch(msg.MsgTyp) {
@@ -413,7 +413,9 @@ namespace X13.Periphery {
         break;
       case MsMessageType.PUBLISH: {
           var tmp=msg as MsPublish;
-          Stat(false, msg.MsgTyp, tmp.Dup);
+          if(_statistic.value) {
+            Stat(false, msg.MsgTyp, tmp.Dup);
+          }
           TopicInfo ti=_topics.Find(z => z.TopicId==tmp.TopicId && z.it==tmp.topicIdType);
           if(ti==null && tmp.topicIdType!=TopicIdType.Normal) {
             ti=GetTopicInfo(tmp.TopicId, tmp.topicIdType, false);
@@ -470,7 +472,9 @@ namespace X13.Periphery {
             ResetTimer();
             if(_gate!=null) {
               _gate.SendGw(this, new MsMessage(MsMessageType.PINGRESP));
-              Stat(true, MsMessageType.PINGRESP, false);
+              if(_statistic.value) {
+                Stat(true, MsMessageType.PINGRESP, false);
+              }
             }
           }
         }
@@ -646,7 +650,9 @@ namespace X13.Periphery {
         via=_gate.name;
         Send(new MsConnack(MsReturnCode.Accepted));
       }
-      Stat(false, MsMessageType.CONNECT, msg.CleanSession);
+      if(_statistic.value) {
+        Stat(false, MsMessageType.CONNECT, msg.CleanSession);
+      }
     }
     //TODO: Unsubscribe
     private void SetValue(TopicInfo ti, byte[] msgData, bool retained) {
@@ -991,7 +997,9 @@ namespace X13.Periphery {
       while((msg!=null || state==State.AWake) && state!=State.ASleep) {
         if(msg!=null) {
           if(_gate!=null) {
-            Stat(true, msg.MsgTyp, ((msg is MsPublish && (msg as MsPublish).Dup) || (msg is MsSubscribe && (msg as MsSubscribe).dup)));
+            if(_statistic.value) {
+              Stat(true, msg.MsgTyp, ((msg is MsPublish && (msg as MsPublish).Dup) || (msg is MsSubscribe && (msg as MsSubscribe).dup)));
+            }
             try {
               _gate.SendGw(this, msg);
             }
@@ -1022,7 +1030,9 @@ namespace X13.Periphery {
           if(_sendQueue.Count==0 && state==State.AWake) {
             if(_gate!=null) {
               _gate.SendGw(this, new MsMessage(MsMessageType.PINGRESP));
-              Stat(true, MsMessageType.PINGRESP, false);
+              if(_statistic.value) {
+                Stat(true, MsMessageType.PINGRESP, false);
+              }
             }
             state=State.ASleep;
             break;
@@ -1070,7 +1080,9 @@ namespace X13.Periphery {
       state=State.Lost;
       if(Owner!=null) {
         Disconnect();
-        Stat(false, MsMessageType.GWINFO);
+        if(_statistic.value) {
+          Stat(false, MsMessageType.GWINFO);
+        }
         Log.Warning("{0} Lost", Owner.path);
       }
       lock(_sendQueue) {
@@ -1078,7 +1090,9 @@ namespace X13.Periphery {
       }
       if(_gate!=null) {
         _gate.SendGw(this, new MsDisconnect());
-        Stat(true, MsMessageType.DISCONNECT, false);
+        if(_statistic.value) {
+          Stat(true, MsMessageType.DISCONNECT, false);
+        }
       }
     }
 
