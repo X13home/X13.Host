@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root head="/etc/declarers">
   <item name="dev">
-    <item name="A1Cn12" value="pack://application:,,/CC;component/Images/ty_jnode.png" saved="True" type="System.String" ver="3.15.901">
+    <item name="A1Cn12" value="/MQTT-SN;component/Images/ty_unode.png" saved="True" type="System.String" ver="3.15.901">
         <item name="_proto" value="A1SC12" saved="True" type="System.String" />
         <item name="Digital Inputs">
             <item name="Ip24" value="GzX24" saved="True" type="System.String">
                 <item name="_description" value="Digital input, PD0" saved="True" type="System.String" />
             </item>
-            <item name="Ip25" value="HzX25" saved="True" type="System.String">
+            <item name="Ip25" value="GzX25" saved="True" type="System.String">
                 <item name="_description" value="Digital input, PD1" saved="True" type="System.String" />
             </item>
         </item>
@@ -15,7 +15,7 @@
             <item name="In24" value="GzX24" saved="True" type="System.String">
                 <item name="_description" value="Digital Pull-Up inverted input, PD0" saved="True" type="System.String" />
             </item>
-            <item name="In25" value="HzX25" saved="True" type="System.String">
+            <item name="In25" value="GzX25" saved="True" type="System.String">
                 <item name="_description" value="Digital Pull-Up inverted input, PD1" saved="True" type="System.String" />
             </item>
         </item>
@@ -23,7 +23,7 @@
             <item name="Op24" value="GzX24" saved="True" type="System.String">
                 <item name="_description" value="Digital output, PD0" saved="True" type="System.String" />
             </item>
-            <item name="Op25" value="HzX25" saved="True" type="System.String">
+            <item name="Op25" value="GzX25" saved="True" type="System.String">
                 <item name="_description" value="Digital output, PD1" saved="True" type="System.String" />
             </item>
         </item>
@@ -31,7 +31,7 @@
             <item name="On24" value="GzX24" saved="True" type="System.String">
                 <item name="_description" value="Digital inverted output, PD0" saved="True" type="System.String" />
             </item>
-            <item name="On25" value="HzX25" saved="True" type="System.String">
+            <item name="On25" value="GzX25" saved="True" type="System.String">
                 <item name="_description" value="Digital inverted output, PD1" saved="True" type="System.String" />
             </item>
         </item>
@@ -68,7 +68,7 @@
             </item>
         </item>
     </item>
-    <item name="A1SC12" value="pack://application:,,/CC;component/Images/ty_jgate.png" saved="True" type="System.String" ver="3.15.901">
+    <item name="A1SC12" value="/MQTT-SN;component/Images/ty_ugate.png" saved="True" type="System.String" ver="3.15.901">
         <item name="Add">
             <item name="bool" value="1Z" saved="True" type="System.String" />
             <item name="long" value="4I" saved="True" type="System.String" />

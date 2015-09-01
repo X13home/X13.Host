@@ -89,6 +89,14 @@
   <ItemGroup>
     <Resource Include="Images\ty_twi.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\CCWPF\Images\ty_ugate.png">
+      <Link>Images\ty_ugate.png</Link>
+    </Resource>
+    <Resource Include="..\..\CCWPF\Images\ty_unode.png">
+      <Link>Images\ty_unode.png</Link>
+    </Resource>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
