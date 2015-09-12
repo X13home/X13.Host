@@ -163,7 +163,7 @@ namespace X13.Periphery {
             SendRaw(port, disconnectAll, tmpBuf); // Send Disconnect
             Thread.Sleep(500);
             cnt=-1;
-            tryCnt=6;
+            tryCnt=30;
             escChar=false;
             length=-1;
             found=false;
