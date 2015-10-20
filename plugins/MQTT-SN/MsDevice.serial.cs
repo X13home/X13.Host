@@ -460,7 +460,10 @@ namespace X13.Periphery {
             Thread.Sleep(15);
           }
         }
-        catch(IOException) {
+        catch(IOException ex) {
+          if(_verbose.value) {
+            Log.Error("MsGSerial({0}).CommThread() - {1}", gwIdx, ex.ToString());
+          }
         }
         catch(Exception ex) {
           Log.Error("MsGSerial({0}).CommThread() - {1}", gwIdx, ex.ToString());

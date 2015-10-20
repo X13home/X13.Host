@@ -303,9 +303,6 @@
   <ItemGroup>
     <Resource Include="Images\fu_NarodMon.png" />
   </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Images\bi_fade.png" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
