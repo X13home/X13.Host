@@ -79,6 +79,7 @@ namespace X13 {
       Topic.Import(_cfgPath, "/local/cfg");
 
       _lHead=root.Get<long>("/var/log");
+      _lHead.saved=false;
       _lThreshold=root.Get<LogLevel>("/etc/log/threshold");
 
       Log.Write+=new Action<LogLevel, DateTime, string>(Log_Write);
@@ -90,6 +91,7 @@ namespace X13 {
       }
 
       Topic.brokerMode=true;
+
       _plugins=new Plugins();
       _plugins.Init(true);
 
@@ -100,27 +102,16 @@ namespace X13 {
 
       string dbVersion=Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
       var dbVer=Topic.root.Get<string>("/etc/system/version");
-      if(dbVer.value==null || string.Compare(dbVer.value, dbVersion)<0) {
-        dbVer.saved=true;
+      if(dbVer.value==null || dbVer.value!=dbVersion) {
         dbVer.value=dbVersion;
-        _lHead.saved=true;
         _lHead.Get<string>("A0").saved=false;
-        _lThreshold.saved=true;
 #if DEBUG
         _lThreshold.value=LogLevel.Debug;
 #else
         _lThreshold.value=LogLevel.Info;
 #endif
-        var devDec=Topic.root.Get<string>("/dev/_declarer");
-        devDec.saved=true;
-        devDec.value="DevFolder";
-
-        Log.Info("Load default declarers");
-        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.PLC.types.xst");
-        if(st!=null) {
-          using(var sr=new StreamReader(st)) {
-            Topic.Import(sr, null);
-          }
+        using(var sr=new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.PLC.types.xst"))) {
+          Topic.Import(sr, null);
         }
       }
 
@@ -166,15 +157,17 @@ namespace X13 {
         rez=string.Format("{0:HH:mm:ss.ff}[D] {1}", en.dt, en.msg);
         break;
       }
-      if(en.ll!=LogLevel.Debug) {
-        var dMsg=_lHead.Get<string>((_lHead.value).ToString("D2"));
-        dMsg.saved=true;
+      {
+        DVar<string> dMsg;
+        if(en.ll!=LogLevel.Debug) {
+          dMsg=_lHead.Get<string>((_lHead.value).ToString("D2"));
+          _lHead.value=(_lHead.value+1)%100;
+        } else {
+          dMsg=_lHead.Get<string>("A0");
+        }
+        dMsg.saved=false;
         dMsg.value=string.Format("{0:dd} {1}", en.dt, rez);
-        _lHead.value=(_lHead.value+1)%100;
-      } else {
-        _lHead.Get<string>("A0").value=string.Format("{0:dd} {1}", en.dt, rez);
       }
-
       //Console.WriteLine(rez);
       LogLevel lt=LogLevel.Info;
       if(_lThreshold!=null) {
@@ -233,9 +226,9 @@ namespace X13 {
       }
       catch(Exception) {
       }
-      if(!e.IsTerminating) {
-        return;
-      }
+      //if(!e.IsTerminating) {
+      //  return;
+      //}
       try {
         MqBroker.Close();
       }
@@ -248,6 +241,9 @@ namespace X13 {
       catch(Exception) {
       }
       Console.ForegroundColor=ConsoleColor.Gray;
+      if(!e.IsTerminating) {
+        System.Diagnostics.Process.GetCurrentProcess().Kill();
+      }
     }
 
     private void MQTT_Main_changed(Topic sender, TopicChanged param) {

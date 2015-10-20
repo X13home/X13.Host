@@ -1,0 +1,8 @@
+﻿<Window x:Class="X13.Agent2.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="X13.Home user agent" Height="300" Width="300" Loaded="Window_Loaded" Icon="Images/logo64.ico" WindowState="Minimized" Closed="Window_Closed">
+    <Grid>
+        
+    </Grid>
+</Window>

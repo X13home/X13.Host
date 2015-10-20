@@ -1,5 +1,5 @@
 ﻿#region license
-//Copyright (c) 2011-2013 <comparator@gmx.de>; Wassili Hense
+//Copyright (c) 2011-2014 <comparator@gmx.de>; Wassili Hense
 
 //This file is part of the X13.Home project.
 //https://github.com/X13home
@@ -53,7 +53,8 @@ namespace X13.Periphery {
   internal enum TopicIdType {
     Normal=0,
     PreDefined=1,
-    ShortName=2
+    ShortName=2,
+    NotUsed=3
   }
 
   internal class MsMessage {

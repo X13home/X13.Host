@@ -1,5 +1,5 @@
 ﻿#region license
-//Copyright (c) 2011-2013 <comparator@gmx.de>; Wassili Hense
+//Copyright (c) 2011-2015 <comparator@gmx.de>; Wassili Hense
 
 //This file is part of the X13.Home project.
 //https://github.com/X13home
@@ -21,6 +21,25 @@ using System.Windows.Media.Imaging;
 
 namespace X13.CC {
   internal abstract class uiItem : DrawingVisual {
+    public static List<DVar<string>> GetDItems(DVar<string> declarer) {
+      var ar=new List<DVar<string>>();
+      {
+        var tdecl=declarer;
+        DVar<string> tmp;
+        Topic tt;
+        do {
+          ar.AddRange(tdecl.all.Where(z => z!=null && z!=tdecl && z.name!="_description" && z.name!="_ver" && z.name!="_proto" && ar.All(z1 => z1.name!=z.name) && z.valueType==typeof(string)).Cast<DVar<string>>().Where(z => z.value!=null && z.value.Length>=2));
+          if(tdecl.Exist("_proto", out tt) && (tmp = tt as DVar<string>)!=null && !string.IsNullOrEmpty(tmp.value) && tdecl.parent.Exist(tmp.value, out tt)) {
+            tdecl=tt as DVar<string>;
+          } else {
+            break;
+          }
+        } while(tdecl!=null);
+        ar=ar.OrderBy(z => z.name).OrderBy(z => (ushort)z.value[0]).ToList();
+      }
+      return ar;
+    }
+
     protected bool _selected;
     public abstract Topic GetModel();
     public virtual void Select(bool select) {
@@ -197,34 +216,36 @@ namespace X13.CC {
       Render(2);
     }
     public void SetFinish(uiPin finish) {
+      Topic tA, tB;
+      byte tDir;
       B=finish;
       A.AddConnection(this);
       B.AddConnection(this);
       string name;
       for(int i=1; _owner.model.Exist(name=string.Format("W{0:X3}", i)); i++)
         ;
-      model=_owner.model.Get<PiWire>(name);
-      model.saved=true;
-      model.value=new PiWire();
       if(B.Direction==1) {
-        model.value.Direction=1;
+        tDir=1;
       } else if(A.Direction==1) {
-        model.value.Direction=2;
+        tDir = 2;
       } else {
-        model.value.Direction=0;
+        tDir = 0;
       }
       uiAlias al=A.owner as uiAlias;
       if(al!=null) {
-        model.value.A=al.model;
+        tA=al.model;
       } else {
-        model.value.A=A.GetModel();
+        tA = A.GetModel();
       }
       al=B.owner as uiAlias;
       if(al!=null) {
-        model.value.B=al.model;
+        tB = al.model;
       } else {
-        model.value.B=B.GetModel();
+        tB = B.GetModel();
       }
+      model = _owner.model.Get<PiWire>(name);
+      model.saved = true;
+      model.value = new PiWire(tA, tB, tDir);
       model.changed+=model_changed;
       Render(3);
     }
@@ -680,11 +701,24 @@ namespace X13.CC {
       model.changed+=model_changed;
       model.Subscribe("+", PinChanged);
       _owner.AddVisual(this);
-      foreach(Topic mp in model.children.Where(z => !z.name.StartsWith("_"))) {
-        uiPin p=new uiPin(this, mp);
-        _pins.Add(p);
-        _owner.AddVisual(p);
+
+      DVar<string> declarer;
+      Topic fd=Topic.root.Get("/etc/declarers/func/");
+      Topic dt;
+      Topic tmp;
+      if(model.Exist("_declarer", out dt) && fd.Exist((dt as DVar<string>).value, out tmp) && ((declarer=tmp as DVar<string>)!=null)) {
+        var ar = GetDItems(declarer);
+
+        foreach(Topic mp in model.children) {
+          DVar<string> pinDecl=ar.FirstOrDefault(z => z.name==mp.name);
+          if(pinDecl!=null) {
+            uiPin p=new uiPin(this, mp);
+            _pins.Add(p);
+            _owner.AddVisual(p);
+          }
+        }
       }
+
       Render(3);
     }
 
@@ -701,18 +735,34 @@ namespace X13.CC {
       }
     }
     private void PinChanged(Topic sender, TopicChanged param) {
-      if(!sender.name.StartsWith("_")) {
+      if(sender.parent==model && sender.name=="_location") {
+        this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);
+      } else {
         this.Dispatcher.BeginInvoke(new Action(() => {
           uiPin p=_pins.FirstOrDefault(z => z.GetModel()==sender);
           if(param.Art!=TopicChanged.ChangeArt.Remove) {
             if(p==null) {
-              sender.saved=true;
-              p=new uiPin(this, sender);
-              _pins.Add(p);
-              _owner.AddVisual(p);
-              Render(1);
+              DVar<string> declarer;
+              Topic fd=Topic.root.Get("/etc/declarers/func/");
+              Topic dt;
+              Topic tmp;
+              if(!model.Exist("_declarer", out dt) || !fd.Exist((dt as DVar<string>).value, out tmp) || ((declarer=tmp as DVar<string>)==null)) {
+                return;
+              }
+              var ar = GetDItems(declarer);
+              DVar<string> pinDecl=ar.FirstOrDefault(z => z.name==sender.name);
+
+              if(pinDecl!=null) {
+                sender.saved=true;
+                p=new uiPin(this, sender);
+                _pins.Add(p);
+                _owner.AddVisual(p);
+                Render(1);
+              }
             }
-            p.Render(1);
+            if(p!=null) {
+              p.Render(1);
+            }
           } else {
             if(p!=null) {
               _owner.DeleteVisual(p);
@@ -721,8 +771,6 @@ namespace X13.CC {
             }
           }
         }));
-      } else if(sender.parent==model && sender.name=="_location") {
-        this.Dispatcher.BeginInvoke(new Action<int>(this.Render), System.Windows.Threading.DispatcherPriority.DataBind, 3);
       }
     }
     public override void Render(int chLevel) {
@@ -748,8 +796,10 @@ namespace X13.CC {
       int pos=0;
       double wi=0;
       double wo=0;
+
+      var ar = GetDItems(declarer);
       foreach(var p in _pins) {
-        DVar<string> pinDecl=declarer.all.FirstOrDefault(z => z.name==p.GetModel().name) as DVar<string>;
+        DVar<string> pinDecl=ar.FirstOrDefault(z => z.name==p.GetModel().name);
         if(pinDecl==null) {
           continue;
         }

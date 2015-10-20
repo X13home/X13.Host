@@ -24,7 +24,6 @@ namespace X13.Periphery {
   [ExportMetadata("priority", 5)]
   [ExportMetadata("name", "Gpio")]
   public class Gpio : IPlugModul {
-    private const long _version=300;
     private Dictionary<uint, Pin> _pins;
     private Topic _gpio;
     private Timer _poolTimer;
@@ -45,16 +44,8 @@ namespace X13.Periphery {
       Topic.root.Subscribe("/etc/declarers/dev/Gpio/#", Dummy);
     }
     public void Start() {
-      var ver=Topic.root.Get<long>("/etc/Gpio/version");
-      if(ver.value<_version) {
-        ver.value=_version;
-        Log.Info("Load Gpio declarers");
-        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.gpio.xst");
-        if(st!=null) {
-          using(var sr=new StreamReader(st)) {
-            Topic.Import(sr, null);
-          }
-        }
+      using(var sr=new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.gpio.xst"))) {
+        Topic.Import(sr, null);
       }
       _gpio=Topic.root.Get("/dev/Gpio");
       _gpio.Get<string>("_declarer", _gpio).value="Gpio";
@@ -171,7 +162,7 @@ namespace X13.Periphery {
       public bool Process() {
         try {
           if(dir) {
-            bcm2835_gpio_write(idx,neg?!_value:_value);
+            bcm2835_gpio_write(idx, neg?!_value:_value);
           } else {
             bool tmp=bcm2835_gpio_lev(idx);
             if(neg) {

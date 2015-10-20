@@ -19,6 +19,7 @@ using System.IO;
 using System.Net;
 using SoftCircuits;
 using System.ComponentModel.Composition;
+using System.Collections;
 
 namespace X13.PLC {
   public class BiultInStatements {
@@ -155,18 +156,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/ORI");
         m.value="pack://application:,,/CC;component/Images/bi_or.png";
         m.Get<string>("_description").value="c2Bitwise OR";
-        m.Get<string>("A").value="Ai";
-        m.Get<string>("B").value="Bi";
-        m.Get<string>("C").value="Ci";
-        m.Get<string>("D").value="Di";
-        m.Get<string>("E").value="Ei";
-        m.Get<string>("F").value="Fi";
-        m.Get<string>("G").value="Gi";
-        m.Get<string>("H").value="Hi";
-        m.Get<string>("Q").value="ai";
-        m.Get<string>("N").value="bz";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="ANDI";
       }
 
       public void Init(DVar<PiStatement> model) {
@@ -198,18 +188,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/XORI");
         m.value="pack://application:,,/CC;component/Images/bi_xor.png";
         m.Get<string>("_description").value="c3Bitwise XOR";
-        m.Get<string>("A").value="Ai";
-        m.Get<string>("B").value="Bi";
-        m.Get<string>("C").value="Ci";
-        m.Get<string>("D").value="Di";
-        m.Get<string>("E").value="Ei";
-        m.Get<string>("F").value="Fi";
-        m.Get<string>("G").value="Gi";
-        m.Get<string>("H").value="Hi";
-        m.Get<string>("Q").value="ai";
-        m.Get<string>("N").value="bz";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="ANDI";
       }
 
       public void Init(DVar<PiStatement> model) {
@@ -267,11 +246,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/SHR");
         m.value="pack://application:,,/CC;component/Images/bi_shr.png";
         m.Get<string>("_description").value="c5Bitwise right shift";
-        m.Get<string>("A").value="Ai";
-        m.Get<string>("B").value="Bi";
-        m.Get<string>("Q").value="ai";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="SHL";
       }
       public void Init(DVar<PiStatement> model) {
         AddPin<long>(model, "A");
@@ -373,15 +348,8 @@ namespace X13.PLC {
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/comp_gr");
         t1.value="pack://application:,,/CC;component/Images/ar_comp_gr.png";
-        t1.Get<string>("A").value="Ag";
-        t1.Get<string>("B").value="Bb";
-        t1.Get<string>("Q").value="az";
-        t1.Get<string>("!Q").value="bz";
-
         t1.Get<string>("_description").value="f Greater";
-
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
+        t1.Get<string>("_proto").value="comp_eq";
       }
       public void Init(DVar<PiStatement> model) {
         _a=AddPin<double>(model, "A");
@@ -406,15 +374,8 @@ namespace X13.PLC {
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/comp_le");
         t1.value="pack://application:,,/CC;component/Images/ar_comp_le.png";
-        t1.Get<string>("A").value="Ag";
-        t1.Get<string>("B").value="Bb";
-        t1.Get<string>("Q").value="az";
-        t1.Get<string>("!Q").value="bz";
-
         t1.Get<string>("_description").value="f Less";
-
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
+        t1.Get<string>("_proto").value="comp_eq";
       }
       public void Init(DVar<PiStatement> model) {
         _a=AddPin<double>(model, "A");
@@ -724,8 +685,14 @@ namespace X13.PLC {
       private DVar<double> _pv, _sp, _kp, _ki, _kd, _u, _uMax, _uMin;
       private DVar<long> _t;
       private double _sum, _prev;
+      private double[] _hist;
       private Timer _ct;
       private DateTime _pt;
+      private DateTime _ptI;
+      private int _cnt;
+      private int _cntMax;
+      private bool _gt;    // top
+      private bool _gb;    // bottom
 
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/PID");
@@ -733,12 +700,15 @@ namespace X13.PLC {
         m.Get<string>("_description").value="g PID controller";
         m.Get<string>("PV").value="Ag";
         m.Get<string>("SP").value="Bg";
+        m.Get<string>("Top").value="Cz";
+        m.Get<string>("Bottom").value="Dz";
         m.Get<string>("U").value="ag";
         m.Get<string>("rename").value="|R";
         m.Get<string>("remove").value="}D";
       }
 
       public void Init(DVar<PiStatement> model) {
+        _hist=new double[9];
         _pv=AddPin<double>(model, "PV");
         _sp=AddPin<double>(model, "SP");
         _u=AddPin<double>(model, "U");
@@ -749,7 +719,7 @@ namespace X13.PLC {
         bool t_p=model.Exist("_t");
         _t=AddPin<long>(model, "_t");
         if(!t_p) {
-          _t.value=100;
+          _t.value=1000;
         }
         t_p=model.Exist("_uMax");
         _uMax=AddPin<double>(model, "_uMax");
@@ -763,55 +733,80 @@ namespace X13.PLC {
         }
         _ct=new Timer(Pool);
         if(_t.value>0) {
-          _ct.Change(_t.value*2, _t.value);
+          int t=(int)Math.Sqrt(_t.value/250);
+          _cntMax=t<2?1:t;
+          _ct.Change(_t.value, _t.value/_cntMax);
         }
         _pt=DateTime.Now;
+        _ptI=_pt;
         _sum=0;
-        _prev=_sp.value;
+        _prev=_pv.value;
+        for(int i=0; i<9; i++) {
+          _hist[i]=_pv.value;
+        }
       }
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
-        if(source==_t) {
+        if(source==_u  || source==_pv) {
+          return;
+        } else if(source==_t) {
           if(_t.value>0) {
-            _ct.Change(_t.value, _t.value);
+            int t=(int)Math.Sqrt(_t.value/250);
+            _cntMax=t<2?1:t;
+            _ct.Change(50, _t.value/_cntMax);
           } else {
             _ct.Change(Timeout.Infinite, Timeout.Infinite);
           }
-        } else if(source!=_u && _t.value>0) {
-          _ct.Change(1, _t.value);
+        } else if(_t.value>0 && _cntMax>0 && (source==_sp || source==_kp || source==_ki || source==_kd)) {
+          _ct.Change(1, _t.value/_cntMax);
+          _cnt=_cntMax;
+        } else {
+          Topic tt;
+          DVar<bool> bt;
+          _gt=model.Exist("Top", out tt) && (bt=tt as DVar<bool>)!=null && bt.value;
+          _gb=model.Exist("Bottom", out tt) && (bt=tt as DVar<bool>)!=null && bt.value;
         }
       }
       public void DeInit() {
         _ct.Change(Timeout.Infinite, Timeout.Infinite);
       }
       private void Pool(object o) {
+        _cnt++;
         var now=DateTime.Now;
-        var dt=(now-_pt).TotalSeconds;
-        if(dt>_t.value/4000.0) {
-          var e=_sp.value-_pv.value;
-          if(_ki.value!=0) {
-            _sum+=e*dt;
-            //unchecked {
-            if(_sum>_uMax.value/_ki.value) {
-              _sum=_uMax.value/_ki.value;
-            } else if(_sum<_uMin.value/_ki.value) {
-              _sum=_uMin.value/_ki.value;
-            }
-            //}
+        var e=_sp.value-_pv.value;
+        var dtI=(now-_ptI).TotalSeconds;
+        if(_ki.value!=0) {
+          var ic=e*dtI*_ki.value;
+          if((ic>0 && _gt) || (ic<0 && _gb)) {
+            ic=0;
           } else {
-            _sum=0;
+            _sum+=ic;
+            if(_sum>_uMax.value) {
+              _sum=_uMax.value;
+            } else if(_sum<_uMin.value) {
+              _sum=_uMin.value;
+            }
           }
-          double rez=_kp.value*e+_ki.value*_sum+_kd.value*(e-_prev)/dt;
+        } else {
+          _sum=0;
+        }
+        for(int i=1; i<9; i++) {
+          _hist[i]=_hist[i-1];
+        }
+        _hist[0]=_pv.value;
+        _ptI=now;
+        if(_cnt>=_cntMax) {
+          _cnt=0;
+          var dt=(now-_pt).TotalSeconds;
+          double d=(_hist[0]+_hist[1]+_hist[2])/2 - (_hist[3]+_hist[4]+_hist[5])/4.5 + (_hist[6]+_hist[7]+_hist[8])/18;
+          e=_sp.value-d;
+          double rez=_kp.value*e+_sum+_kd.value*(_prev-d)/dt;
           if(rez>_uMax.value) {
             rez=_uMax.value;
           } else if(rez<_uMin.value) {
             rez=_uMin.value;
           }
-          if(_kd.value!=0) {
-            _prev=(_prev+e)/2;
-          } else {
-            _prev=0;
-          }
+          _prev=d;
           _u.value=rez;
           _pt=now;
         }
@@ -871,17 +866,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/Sub");
         m.value="pack://application:,,/CC;component/Images/ar_sub.png";
         m.Get<string>("_description").value="g2Subtraction";
-        m.Get<string>("A").value="Ag";
-        m.Get<string>("B").value="Bg";
-        m.Get<string>("C").value="Cg";
-        m.Get<string>("D").value="Dg";
-        m.Get<string>("E").value="Eg";
-        m.Get<string>("F").value="Fg";
-        m.Get<string>("G").value="Gg";
-        m.Get<string>("H").value="Hg";
-        m.Get<string>("Q").value="ag";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="Sum";
       }
       public void Init(DVar<PiStatement> model) {
         AddPin<double>(model, "A");
@@ -907,17 +892,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/Mul");
         m.value="pack://application:,,/CC;component/Images/ar_mul.png";
         m.Get<string>("_description").value="g3Multiplication";
-        m.Get<string>("A").value="Ag";
-        m.Get<string>("B").value="Bg";
-        m.Get<string>("C").value="Cg";
-        m.Get<string>("D").value="Dg";
-        m.Get<string>("E").value="Eg";
-        m.Get<string>("F").value="Fg";
-        m.Get<string>("G").value="Gg";
-        m.Get<string>("H").value="Hg";
-        m.Get<string>("Q").value="ag";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="Sum";
       }
       public void Init(DVar<PiStatement> model) {
         AddPin<double>(model, "A");
@@ -943,17 +918,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/Div");
         m.value="pack://application:,,/CC;component/Images/ar_div.png";
         m.Get<string>("_description").value="g4Division";
-        m.Get<string>("A").value="Ag";
-        m.Get<string>("B").value="Bg";
-        m.Get<string>("C").value="Cg";
-        m.Get<string>("D").value="Dg";
-        m.Get<string>("E").value="Eg";
-        m.Get<string>("F").value="Fg";
-        m.Get<string>("G").value="Gg";
-        m.Get<string>("H").value="Hg";
-        m.Get<string>("Q").value="ag";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="Sum";
       }
       public void Init(DVar<PiStatement> model) {
         AddPin<double>(model, "A");
@@ -981,17 +946,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/Remainder");
         m.value="pack://application:,,/CC;component/Images/ar_mod.png";
         m.Get<string>("_description").value="g5Modulo";
-        m.Get<string>("A").value="Ag";
-        m.Get<string>("B").value="Bg";
-        m.Get<string>("C").value="Cg";
-        m.Get<string>("D").value="Dg";
-        m.Get<string>("E").value="Eg";
-        m.Get<string>("F").value="Fg";
-        m.Get<string>("G").value="Gg";
-        m.Get<string>("H").value="Hg";
-        m.Get<string>("Q").value="ag";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="Sum";
       }
       public void Init(DVar<PiStatement> model) {
         AddPin<double>(model, "A");
@@ -1362,16 +1317,8 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/Cosm");
         m.value="pack://application:,,/CC;component/Images/fu_cosm.png";
         m.Get<string>("_description").value="v Export to xively.com";
-        m.Get<string>("Push").value="Az";
-        m.Get<string>("A").value="Bg";
-        m.Get<string>("B").value="Cg";
-        m.Get<string>("C").value="Dg";
-        m.Get<string>("D").value="Eg";
-        m.Get<string>("E").value="Fg";
-        m.Get<string>("F").value="Gg";
-        m.Get<string>("G").value="Hg";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="Pile";
+
       }
 
       public void Init(DVar<PiStatement> model) {
@@ -1456,6 +1403,95 @@ namespace X13.PLC {
           }
           return false;
         }
+      }
+    }
+
+    [Export(typeof(IStatement))]
+    [ExportMetadata("declarer", "NarodMon")]
+    private class NarodMon : IStatement {
+      private DVar<bool> _push;
+      private DVar<string> _mac;
+      private DateTime _prev;
+      private byte _fl;
+      System.Net.Sockets.UdpClient _udp;
+
+      public void Load() {
+        var m=Topic.root.Get<string>("/etc/declarers/func/NarodMon");
+        m.value="pack://application:,,/CC;component/Images/fu_NarodMon.png";
+        m.Get<string>("_description").value="v Export to narodmon.ru";
+        m.Get<string>("_proto").value="Pile";
+      }
+
+      public void Init(DVar<PiStatement> model) {
+        _fl=0;
+        AddPin<double>(model, "A");
+        _push=AddPin<bool>(model, "Push");
+        _mac=AddPin<string>(model, "_feed");
+        if(string.IsNullOrEmpty(_mac.value)) {
+          string s1=Topic.root.Get<string>("/etc/PLC/default").value.ToUpper();
+          string s2=_mac.parent.parent.name.ToUpper();
+          string s3=_mac.parent.name.ToUpper();
+          if(s3.Length>2) {
+            s3=s3.Substring(s3.Length-2);
+          }
+          if(s1.Length<6) {
+            s1=s1+"0";
+          }
+          s1=s1+s2;
+          if(s1.Length<12) {
+            s1=s1+"0123456789AB".Substring(0, 12-s1.Length);
+          } else if(s1.Length>12) {
+            s1=s1.Substring(0, 12);
+          }
+
+          _mac.value=s1+s3;
+        }
+        _udp=new System.Net.Sockets.UdpClient("narodmon.ru", 8283);
+        _prev=DateTime.Now.AddMinutes(-6);
+      }
+
+      public void Calculate(DVar<PiStatement> model, Topic source) {
+        if(source==null || !_push.value) {
+          return;
+        }
+        if(source==_push) {
+          _fl=0xFF;
+        } else if(source.name!=null && source.name.Length==1 && source.name[0]>='A' && source.name[0]<='G') {
+          _fl|=(byte)(1<<(int)(source.name[0]-'A'));
+        }
+        if(_fl==0 || (DateTime.Now-_prev).TotalSeconds<299) {
+          return;
+        }
+        _prev=DateTime.Now;
+        //#MAC[#NAME][#LAT][#LNG][#ELE]\n
+        //#mac1#value1[#time1][#name1]\n
+        //...
+        //#macN#valueN[#timeN][#nameN]\n
+        //##
+        StringBuilder sb=new StringBuilder();
+        sb.Append("#");
+        sb.Append(_mac.value);
+        foreach(var inp in model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
+          if((_fl & (1<<(int)(inp.name[0]-'A')))!=0) {
+            sb.AppendFormat("\n#{0}{1}#{2}", _mac.value, inp.name, inp.value.ToString(CultureInfo.InvariantCulture));
+          }
+        }
+        sb.Append("\n##");
+        _fl=0;
+        ThreadPool.QueueUserWorkItem((o) => Send(sb.ToString()));
+      }
+      private void Send(string sample) {
+        try {
+          byte[] buffer = Encoding.UTF8.GetBytes(sample);
+          _udp.Send(buffer, buffer.Length);
+        }
+        catch(Exception ex) {
+          Log.Debug("NarodMon({0}) - {1}", _mac.parent.path, ex.Message);
+        }
+      }
+
+      public void DeInit() {
+        _udp=null;
       }
     }
 
@@ -1661,14 +1697,9 @@ namespace X13.PLC {
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/BAInsertS");
         t1.value="pack://application:,,/CC;component/Images/fu_BAInsertS.png";
-        t1.Get<string>("in").value="Ao";
-        t1.Get<string>("val").value="Bs";
-        t1.Get<string>("pos").value="Ci";
-        t1.Get<string>("len").value="Di";
-        t1.Get<string>("out").value="ao";
         t1.Get<string>("_description").value="pcInsert string to byteArray";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
+        t1.Get<string>("_proto").value="BAInsertL";
+        t1.Get<string>("val").value="Bs";
       }
 
       public void Init(DVar<PiStatement> model) {
@@ -1688,7 +1719,7 @@ namespace X13.PLC {
         byte[] data=(_val==null || _val.value==null)?new byte[0]:Encoding.Default.GetBytes(_val.value);
         if(cnt<1) {
           cnt=data.Length;
-        } else if(cnt>data.Length){
+        } else if(cnt>data.Length) {
           byte[] d2=new byte[cnt];
           Buffer.BlockCopy(data, 0, d2, 0, data.Length);
           data=d2;
@@ -1781,13 +1812,9 @@ namespace X13.PLC {
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/BAGetS");
         t1.value="pack://application:,,/CC;component/Images/fu_BAGetS.png";
-        t1.Get<string>("in").value="Ao";
-        t1.Get<string>("pos").value="Bi";
-        t1.Get<string>("len").value="Ci";
-        t1.Get<string>("out").value="as";
         t1.Get<string>("_description").value="pdGet string from byteArray";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
+        t1.Get<string>("_proto").value="BAGetL";
+        t1.Get<string>("out").value="as";
       }
 
       public void Init(DVar<PiStatement> model) {

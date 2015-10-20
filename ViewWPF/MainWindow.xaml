@@ -7,7 +7,7 @@
   <Grid>
     <Grid.ColumnDefinitions>
       <ColumnDefinition />
-      <ColumnDefinition Width="66px" />
+      <!--<ColumnDefinition Width="66px" />-->
     </Grid.ColumnDefinitions>
     <StackPanel Name="content">
       <StackPanel.Resources>
@@ -310,7 +310,7 @@
         </Grid>
       </Border>
     </StackPanel>
-    <StackPanel Grid.Column="1">
+    <!--<StackPanel Grid.Column="1">
       <Image Name="imLight" Source="/ViewWPF;component/Resources/Images/Light.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" />
       <Image Name="imCamera" Source="/ViewWPF;component/Resources/Images/Camera.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" />
       <Image Name="imTemperature" Source="/ViewWPF;component/Resources/Images/Temperature.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" />
@@ -318,6 +318,6 @@
       <Image Name="imLock" Source="/ViewWPF;component/Resources/Images/Lock.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" />
       <Image Name="imHome" Source="/ViewWPF;component/Resources/Images/Home.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" />
       <Image Name="imOffAll" Source="/ViewWPF;component/Resources/Images/OffAll.png" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,0,0,5" />
-    </StackPanel>
+    </StackPanel>-->
   </Grid>
 </Window>

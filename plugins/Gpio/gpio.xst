@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root head="/etc/declarers">
   <item name="dev">
-    <item name="Gpio" value="pack://application:,,/Gpio;component/Images/rpi.png" saved="True" type="System.String">
+    <item name="Gpio" value="pack://application:,,/Gpio;component/Images/rpi.png" saved="True" type="System.String" ver="0.3.1426.1">
       <!--V2_Pin_P1_03 = 2-->
       <item name="P1-03">
         <item name="Op02" value="CzX2" saved="True" type="System.String">

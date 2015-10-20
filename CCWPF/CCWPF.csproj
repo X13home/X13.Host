@@ -300,6 +300,9 @@
     <None Include="bin\AvalonDock.Themes.dll" />
     <None Include="bin\WPFToolkit.Extended.dll" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\fu_NarodMon.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

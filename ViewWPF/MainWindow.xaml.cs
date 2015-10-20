@@ -28,7 +28,6 @@ namespace X13.View {
     private Timer _1sek;
     private Topic _lv;
     private bool _setted;
-    private SayTimeRu _sayTime;
     private DVar<DateTime> _now;
     private DVar<long> _nowOffset;
 
@@ -82,7 +81,6 @@ namespace X13.View {
             _lv.Get<string>("DateLong").value=nowDT.ToLongDateString();
             this.Dispatcher.Invoke(new Action<DateTime>(this.DrawCalender), nowDT.Date);
             if(!_setted) {
-              _sayTime=new SayTimeRu();
               _setted=true;
             }
           }
@@ -96,7 +94,6 @@ namespace X13.View {
       for(int tr=0; tr<3; tr++) {
         try {
           HttpWebRequest myHttpWebRequest = (HttpWebRequest)HttpWebRequest.Create("http://informer.gismeteo.ru/xml/10865_1.xml");
-          //myHttpWebRequest.Proxy=new WebProxy("euproxy.gunnebo.net", 8080) { UseDefaultCredentials=true };
           HttpWebResponse myHttpWebResponse =  (HttpWebResponse)myHttpWebRequest.GetResponse();
           StreamReader myStreamReader = new StreamReader(myHttpWebResponse.GetResponseStream(), Encoding.GetEncoding(1251));
           XmlDocument doc=new XmlDocument();

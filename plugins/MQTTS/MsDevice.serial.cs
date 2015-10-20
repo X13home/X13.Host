@@ -1,5 +1,5 @@
 ﻿#region license
-//Copyright (c) 2011-2013 <comparator@gmx.de>; Wassili Hense
+//Copyright (c) 2011-2014 <comparator@gmx.de>; Wassili Hense
 
 //This file is part of the X13.Home project.
 //https://github.com/X13home
@@ -23,25 +23,14 @@ namespace X13.Periphery {
   [ExportMetadata("priority", 5)]
   [ExportMetadata("name", "MQTTS.Gate")]
   public class MQTTSGate : IPlugModul {
-    private const long _version=302;
 
     public void Init() {
       Topic.root.Subscribe("/etc/MQTTS/#", Dummy);
       Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
     }
     public void Start() {
-      var ver=Topic.root.Get<long>("/etc/MQTTS/Gate/version");
-      if(ver.value<_version) {
-        ver.saved=true;
-        ver.value=_version;
-        Log.Info("Load MQTTS.Gate declarers");
-        var st=Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTSRf.xst");
-        if(st!=null) {
-          using(var sr=new StreamReader(st)) {
-            Topic.Import(sr, null);
-          }
-        }
-
+      using(var sr=new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTSRf.xst"))) {
+        Topic.Import(sr, null);
       }
       MsDevice.MsGSerial.Open();
     }
@@ -162,8 +151,15 @@ namespace X13.Periphery {
             if(_verbose.value) {
               Log.Debug("MQTTS.Serial search on {0} - {1}", pns[i], ex.Message);
             }
-            if(port!=null && port.IsOpen) {
-              port.Close();
+            try {
+              if(port!=null) {
+                if(port!=null && port.IsOpen) {
+                  port.Close();
+                }
+                port.Dispose();
+              }
+            }
+            catch(Exception) {
             }
           }
           port=null;
@@ -185,7 +181,9 @@ namespace X13.Periphery {
             if(cnt>1 && cnt==buf[0]) {
               return true;
             } else {
-              Log.Warning("size mismatch: {0}", cnt>0?BitConverter.ToString(buf, 0, cnt):"[0]");
+              if(cnt>1) {
+                Log.Warning("size mismatch: {0}", cnt>0?BitConverter.ToString(buf, 0, cnt):"[0]");
+              }
               cnt=-1;
             }
             continue;
@@ -283,6 +281,7 @@ namespace X13.Periphery {
       private byte _gwAddr;
       private Queue<MsMessage> _sendQueue;
       private DVar<MsDevice> _gwTopic;
+      private DateTime _advTick;
 
       public MsGSerial(SerialPort port, byte addr) {
         _port=port;
@@ -295,6 +294,7 @@ namespace X13.Periphery {
         _sendQueue=new Queue<MsMessage>();
         ThreadPool.QueueUserWorkItem(CommThread);
         Send(new MsDisconnect() { Addr=new byte[] { addr } });
+        _advTick=DateTime.Now.AddSeconds(2.6);
       }
       public void Send(MsMessage msg) {
         lock(_sendQueue) {
@@ -318,14 +318,18 @@ namespace X13.Periphery {
               cnt=-1;
               ParseInPacket(rezAddr, rezBuf);
               continue;
-            } else {
-              msg=null;
-              lock(_sendQueue) {
-                if(_sendQueue.Count>0) {
-                  msg=_sendQueue.Dequeue();
-                }
+            }
+            msg=null;
+            lock(_sendQueue) {
+              if(_sendQueue.Count>0) {
+                msg=_sendQueue.Dequeue();
               }
-              SendRaw(this, msg);
+            }
+            SendRaw(this, msg);
+
+            if(msg==null && _advTick<DateTime.Now) {
+              SendRaw(this, new MsAdvertise(gwIdx, 900) { Addr=new byte[] { 0 } });
+              _advTick=DateTime.Now.AddMinutes(15);
             }
             Thread.Sleep(15);
             if(msg==null && _gwTopic!=null && _gwTopic.value!=null && (_gwTopic.value.state==State.Disconnected || _gwTopic.value.state==State.Lost)) {
@@ -346,7 +350,7 @@ namespace X13.Periphery {
         catch(Exception ex) {
           Log.Error("MsGSerial({0}).CommThread() - {1}", gwIdx, ex.ToString());
         }
-        if(_verbose.value){
+        if(_verbose.value) {
           Log.Debug("MsGSerial({0}).CommThread - exit", gwIdx);
         }
         this.Dispose();
@@ -364,6 +368,9 @@ namespace X13.Periphery {
           this.Send(new MsGwInfo(_gwAddr) { Addr=new byte[] { 0 } });
         } else if(msgTyp==MsMessageType.CONNECT) {
           var msg=new MsConnect(buf) { Addr=addr };
+          if(addr[0]==_gwAddr) {
+            _advTick=DateTime.Now.AddSeconds(2.6);  // Send Advertise in 2.6 sec.
+          }
           if(addr[0]==0xFF) {
             PrintPacket(null, msg, buf);
             Send(new MsConnack(MsReturnCode.Accepted) { Addr=msg.Addr });
@@ -418,7 +425,8 @@ namespace X13.Periphery {
           if(_port!=null && _port.IsOpen) {
             _port.Close();
           }
-        }catch(Exception){
+        }
+        catch(Exception) {
         }
         _port=null;
         _gates.Remove(this);

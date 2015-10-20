@@ -1,5 +1,5 @@
 ﻿#region license
-//Copyright (c) 2011-2013 <comparator@gmx.de>; Wassili Hense
+//Copyright (c) 2011-2015 <comparator@gmx.de>; Wassili Hense
 
 //This file is part of the X13.Home project.
 //https://github.com/X13home
@@ -27,6 +27,7 @@ namespace X13 {
       if(string.IsNullOrEmpty(fileName) || !File.Exists(fileName)) {
         return false;
       }
+      Log.Debug("Import {0}", fileName);
       using(StreamReader reader = File.OpenText(fileName)) {
         Import(reader, path);
       }
@@ -399,9 +400,10 @@ l1: { }
 
   /// <summary>Quality of service levels</summary>
   public enum QoS : byte {
-    ExactlyOnce = 2,
+    AtMostOnce  = 0,
     AtLeastOnce = 1,
-    AtMostOnce  = 0
+    ExactlyOnce = 2,
+    MinusOne    = 3
   }
 
 }

@@ -24,7 +24,6 @@ namespace X13.Periphery {
   public class OneWirePlugin : IPlugModul {
     private Topic _dev1w;
     private List<OneWireGate> _gates;
-    private const long  _version=300;
 
     public void Init() {
       _gates=new List<OneWireGate>();
@@ -35,20 +34,9 @@ namespace X13.Periphery {
 
     public void Start() {
       _dev1w=Topic.root.Get("/dev/1Wire");
-      var ver=Topic.root.Get<long>("/etc/1Wire/version");
-      if(ver.value<_version) {
-        ver.saved=true;
-        ver.value=_version;
-        Log.Info("Load 1Wire declarers");
-        var st=System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.OneWire.xst");
-        if(st!=null) {
-          using(var sr=new System.IO.StreamReader(st)) {
-            Topic.Import(sr, null);
-          }
-        }
-
+      using(var sr=new System.IO.StreamReader(System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.OneWire.xst"))) {
+        Topic.Import(sr, null);
       }
-
       foreach(var pnn in new string[] { "USB0", "USB1", "USB2", "USB3", "USB4", "USB5", "USB6", "USB7" }) {
         ConnectAdapter("{DS9490}", pnn);
       }

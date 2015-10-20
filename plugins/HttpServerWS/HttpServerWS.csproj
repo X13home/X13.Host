@@ -38,9 +38,8 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="websocket-sharp, Version=1.0.2.14943, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\websocket-sharp.dll</HintPath>
+    <Reference Include="websocket-sharp">
+      <HintPath>..\..\packages\WebSocketSharp.1.0.3-rc7\lib\websocket-sharp.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -59,30 +58,47 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\HttpServer\ui.xst">
-      <Link>ui.xst</Link>
-    </EmbeddedResource>
-    <None Include="bin\websocket-sharp.dll" />
+    <EmbeddedResource Include="ui.xst" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="..\HttpServer\Images\image.png">
-      <Link>Images\image.png</Link>
-    </Resource>
-    <Resource Include="..\HttpServer\Images\link.png">
-      <Link>Images\link.png</Link>
-    </Resource>
-    <Resource Include="..\HttpServer\Images\page.png">
-      <Link>Images\page.png</Link>
-    </Resource>
-    <Resource Include="..\HttpServer\Images\root.png">
-      <Link>Images\root.png</Link>
-    </Resource>
-    <Resource Include="..\HttpServer\Images\titel.png">
-      <Link>Images\titel.png</Link>
-    </Resource>
-    <Resource Include="..\HttpServer\Images\var.png">
-      <Link>Images\var.png</Link>
-    </Resource>
+    <Resource Include="Images\image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\link.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\page.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\root.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\titel.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\var.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="www\dygraph-combined.js" />
+    <EmbeddedResource Include="www\favicon.ico" />
+    <EmbeddedResource Include="www\index.html" />
+    <EmbeddedResource Include="www\jquery-1.11.1.min.js" />
+    <EmbeddedResource Include="www\jquery.event.drag.js" />
+    <EmbeddedResource Include="www\jquery.minicolors.css" />
+    <EmbeddedResource Include="www\jquery.minicolors.js" />
+    <EmbeddedResource Include="www\jquery.minicolors.png" />
+    <EmbeddedResource Include="www\jquery.rs.carousel-min.js" />
+    <EmbeddedResource Include="www\jquery.rs.carousel-touch-min.js" />
+    <EmbeddedResource Include="www\jquery.translate3d.js" />
+    <EmbeddedResource Include="www\jquery.ui.widget.js" />
+    <EmbeddedResource Include="www\jsviews.min.js" />
+    <EmbeddedResource Include="www\modernizr.3dtransforms.touch.js" />
+    <EmbeddedResource Include="www\rs-carousel-min.css" />
+    <EmbeddedResource Include="www\stringformat.js" />
+    <EmbeddedResource Include="www\style.css" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

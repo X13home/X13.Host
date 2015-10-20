@@ -1,5 +1,5 @@
 ﻿#region license
-//Copyright (c) 2011-2013 <comparator@gmx.de>; Wassili Hense
+//Copyright (c) 2011-2014 <comparator@gmx.de>; Wassili Hense
 
 //This file is part of the X13.Home project.
 //https://github.com/X13home
@@ -88,6 +88,7 @@ namespace X13.Periphery {
     private int _messageIdGen=0;
     private DVar<bool> _present;
     private IMsGate _gate;
+    private bool _waitAck;
 
     private MsDevice() {
       if(Topic.brokerMode) {
@@ -274,8 +275,9 @@ namespace X13.Periphery {
             }
           } else {
             Log.Warning("{0} registred failed: {1}", ti.path, msg.RetCode.ToString());
-            _topics.Remove(ti);
-            ti.topic.Remove();
+            ti.it=TopicIdType.NotUsed;
+            //_topics.Remove(ti);
+            //ti.topic.Remove();
           }
         }
         break;
@@ -380,6 +382,7 @@ namespace X13.Periphery {
         lock(_sendQueue) {
           _sendQueue.Clear();
         }
+        _waitAck=false;
       }
       _duration=msg.Duration*1100;
       ResetTimer();
@@ -470,6 +473,7 @@ namespace X13.Periphery {
         }
         _activeTimer.Change(Timeout.Infinite, Timeout.Infinite);
       }
+      _waitAck=false;
     }
     private void OwnerChanged(Topic topic, TopicChanged param) {
       if(param.Art==TopicChanged.ChangeArt.Remove) {
@@ -512,13 +516,13 @@ namespace X13.Periphery {
       if(rez==null && param.Art==TopicChanged.ChangeArt.Value) {
         rez=GetTopicInfo(topic, true);
       }
-      if(rez==null || rez.TopicId>=0xFFC0 || !rez.registred) {
+      if(rez==null || rez.it==TopicIdType.NotUsed || rez.TopicId>=0xFFC0 || !rez.registred) {
         return;
       }
       if(param.Art==TopicChanged.ChangeArt.Value) {
         Send(new MsPublish(rez.topic, rez.TopicId, param.Subscription.qos));
       } else {          // Remove by device
-        Send(new MsRegister(0, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
+        Send(new MsRegister(0xFFFF, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
         _topics.Remove(rez);
       }
     }
@@ -654,6 +658,7 @@ namespace X13.Periphery {
         MsMessage reqMsg;
         if(_sendQueue.Count>0 && (reqMsg=_sendQueue.Peek()).MsgTyp==rMsg.ReqTyp && reqMsg.MessageId==rMsg.MessageId) {
           _sendQueue.Dequeue();
+          _waitAck=false;
           if(_sendQueue.Count>0 && !(msg=_sendQueue.Peek()).IsRequest) {
             _sendQueue.Dequeue();
           }
@@ -670,7 +675,7 @@ namespace X13.Periphery {
       if(state!=State.Disconnected && state!=State.Lost) {
         msg.Addr=this.Addr;
         bool send=true;
-        if(msg.MessageId==0 && (msg.MsgTyp==MsMessageType.PUBLISH?(msg as MsPublish).qualityOfService!=QoS.AtMostOnce:msg.IsRequest)) {
+        if(msg.MessageId==0 && msg.IsRequest) {
           msg.MessageId=NextMsgId();
           lock(_sendQueue) {
             if(_sendQueue.Count>0 || state==State.ASleep) {
@@ -696,6 +701,10 @@ namespace X13.Periphery {
           }
           if(msg.IsRequest) {
             ResetTimer(ACK_TIMEOUT);
+            _waitAck=true;
+            break;
+          }
+          if(_waitAck) {
             break;
           }
         }
@@ -717,6 +726,9 @@ namespace X13.Periphery {
     }
     private void ResetTimer(int period=0) {
       if(period==0) {
+        if(_waitAck) {
+          return;
+        }
         if(_sendQueue.Count>0) {
           period=ACK_TIMEOUT;
         } else if(_duration>0) {
@@ -736,6 +748,7 @@ namespace X13.Periphery {
             msg=_sendQueue.Peek();
           }
         }
+        _waitAck=false;
         if(msg!=null) {
           SendIntern(msg);
           _tryCounter--;
@@ -874,11 +887,11 @@ namespace X13.Periphery {
       {".cfg/XD_Channel",    0xFF12},
       {".cfg/XD_RSSI",       0xFF13},
 
-      {".cfg/Xq_MACAddr",    0xFF20},
-      {".cfg/XD_IPAddr",     0xFF21},
-      //{".cfg/XD_IPMask",     0xFF22},
-      //{".cfg/XD_IPRouter",   0xFF23},
-      //{".cfg/XD_IPBroker",    0xFF24},
+      {".cfg/Xa_MACAddr",    0xFF20},
+      {".cfg/Xa_IPAddr",     0xFF21},
+      {".cfg/Xa_IPMask",     0xFF22},
+      {".cfg/Xa_IPRouter",   0xFF23},
+      {".cfg/Xa_IPBroker",   0xFF24},
 
       {"_declarer",          0xFFC0},
       {".cfg/_state",        0xFFC1},
