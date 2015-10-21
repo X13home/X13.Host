@@ -18,7 +18,7 @@ namespace X13.Agent2 {
     private Timer _reconn;
     private int _rccnt;
     private bool? _verbose;
-
+    private Dictionary<string, Action<string, string>> _subs;
 
     private enum State {
       Connecting,
@@ -34,8 +34,16 @@ namespace X13.Agent2 {
       _reconn = new Timer(CheckState);
       _rccnt = 1;
       _verbose=true;
+      _subs=new Dictionary<string, Action<string, string>>();
       Connect();
     }
+    public void Subscribe(string path, Action<string, string> func) {
+      _subs[path]=func;
+      if(_st==State.Ready) {
+        Send("S\t"+path);
+      }
+    }
+
     private void CheckState(object o) {
       if(_st == State.Ready && (_ws == null || _ws.ReadyState != WebSocketState.Open)) {
         _rccnt = 1;
@@ -77,7 +85,7 @@ namespace X13.Agent2 {
       _reconn.Change(_rccnt * 15000, _rccnt * 30000);
     }
     private void _ws_OnClose(object sender, CloseEventArgs e) {
-      if(_verbose.value) {
+      if(_verbose.Value) {
         if(e.Code==1000) {
           Log.Info("Client - disconnected[{0}]", e.Code);
         } else {
@@ -91,28 +99,28 @@ namespace X13.Agent2 {
     }
     private void _ws_OnError(object sender, WebSocketSharp.ErrorEventArgs e) {
       _st=State.NoAnswer;
-      if(_verbose.value) {
+      if(_verbose.Value) {
         Log.Warning("client - " +e.Message);
       }
       _reconn.Change(_rccnt*15000, _rccnt*30000);
     }
     private void WsLog(LogData d, string f) {
-      if(_verbose.value) {
+      if(_verbose.Value) {
         Log.Debug("client({0}) - {1}", d.Level, d.Message);
       }
     }
     private void _ws_OnMessage(object sender, MessageEventArgs e) {
       string[] sa;
       if(e.Type==Opcode.Text && !string.IsNullOrEmpty(e.Data) && (sa=e.Data.Split('\t'))!=null && sa.Length>0) {
-        if(_verbose.value) {
-          Log.Debug("R client {0}", e.Data);
+        if(_verbose.Value) {
+          Log.Debug("R {0}", e.Data);
         }
         if(sa[0]=="P" && sa.Length==3) {
           Parse(sa[1], sa[2]);
         } else if(sa[0]=="C" && sa.Length==2) {  // Connect, username, password
           if(sa[1]=="true") {
-            //Send("S\t"+_remotePath);
             _st=State.Ready;
+            SendSubs();
           } else {
             Log.Warning("client: wrong username or password");
             _st=State.BadAuth;
@@ -122,8 +130,8 @@ namespace X13.Agent2 {
         } else if(sa[0]=="I" && sa.Length==3) {
           _clientId=sa[1];
           if(sa[2]=="true" || (sa[2]=="null" && string.IsNullOrEmpty(_uName))) {
-            //Send("S\t"+_remotePath);
             _st=State.Ready;
+            SendSubs();
           } else if(!string.IsNullOrEmpty(_uName)) {
             Send("C\t"+_uName+"\t"+_uPass);
           } else {
@@ -135,20 +143,33 @@ namespace X13.Agent2 {
       }
     }
     private void _ws_OnOpen(object sender, EventArgs e) {
-      if(_verbose.value) {
+      if(_verbose.Value) {
         Log.Info("client connected to {0}://{1}", _ws.Url.Scheme, _ws.Url.DnsSafeHost);
       }
     }
     private void Send(string msg) {
       if(_ws!=null && _ws.ReadyState==WebSocketState.Open) {
-        if(_verbose.value) {
-          Log.Debug("S client {1}", msg);
-        }
         _ws.Send(msg);
+        if(_verbose.Value) {
+          Log.Debug("S {0}", msg);
+        }
       }
     }
     private void Parse(string rp, string json) {
+      Action<string, string> f;
+      if(_subs.TryGetValue(rp, out f) && f!=null) {
+        try {
+          f(rp, json);
+        }
+        catch(Exception ex) {
+          Log.Warning("Parse({0}, {1}) - {2}", rp, json, ex.ToString());
+        }
+      }
     }
-
+    private void SendSubs(){
+      foreach(string key in _subs.Keys){
+        Send("S\t"+key);
+      }
+    }
   }
 }

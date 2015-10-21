@@ -392,5 +392,23 @@ namespace X13.Agent2.Properties {
                 return ResourceManager.GetStream("DingDong", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.IO.UnmanagedMemoryStream ähnlich wie System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream Door41Closed {
+            get {
+                return ResourceManager.GetStream("Door41Closed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.IO.UnmanagedMemoryStream ähnlich wie System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream Door41Opened {
+            get {
+                return ResourceManager.GetStream("Door41Opened", resourceCulture);
+            }
+        }
     }
 }

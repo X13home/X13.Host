@@ -4,9 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Media;
+using System.Runtime.InteropServices;
 
 namespace X13.Agent2 {
   internal class SayTimeRu {
+    [DllImport("winmm.dll")]
+    private static extern int waveOutSetVolume(IntPtr hwo, uint dwVolume);
+
     private System.Threading.Timer t;
     private TimerCallback timeCB;
 
@@ -79,8 +83,10 @@ namespace X13.Agent2 {
         Log.Error(ex.ToString());
       }
     }
-    public void PlayWav(string fname) {
+    public static void PlayWav(string fname) {
       try {
+        int hour=DateTime.Now.Hour;
+        waveOutSetVolume(IntPtr.Zero, (hour>22 || hour<7)?0x7FFFFFFF:uint.MaxValue);
         SoundPlayer payer=new SoundPlayer(Properties.Resources.ResourceManager.GetStream(fname));
         payer.PlaySync();
       }

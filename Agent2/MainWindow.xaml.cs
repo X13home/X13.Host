@@ -28,6 +28,7 @@ namespace X13.Agent2 {
   public partial class MainWindow : Window {
     private System.Windows.Forms.NotifyIcon notifyIcon;
     private SayTimeRu _st;
+    private Client _cl;
 
     public MainWindow() {
       InitializeComponent();
@@ -39,7 +40,11 @@ namespace X13.Agent2 {
     private void Window_Loaded(object sender, RoutedEventArgs e) {
       notifyIcon.Visible = true;
       this.ShowInTaskbar = false;
+      _cl=new Client(new Uri("ws://local@localhost/"));
       _st=new SayTimeRu();
+      _cl.Subscribe("/var/events/saytime", (p, j) => { if(j=="true") { _st.SayTime(); } });
+      _cl.Subscribe("/var/events/door41/opened", (p, j) => { if(j=="true") { SayTimeRu.PlayWav("Door41Opened"); } });
+      _cl.Subscribe("/var/events/door41/closed", (p, j) => { if(j=="true") { SayTimeRu.PlayWav("Door41Closed"); } });
     }
 
     void notifyIcon_Click(object sender, EventArgs e) {
@@ -67,6 +72,7 @@ namespace X13.Agent2 {
       catch(Exception ex) {
         Log.Warning("Window_Closed - {0}", ex);
       }
+      Log.Finish();
     }
   }
 }
