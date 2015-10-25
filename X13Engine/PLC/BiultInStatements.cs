@@ -682,9 +682,9 @@ namespace X13.PLC {
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "PID")]
     private class PID : IStatement {
-      private DVar<double> _pv, _sp, _kp, _ki, _kd, _u, _uMax, _uMin;
+      private DVar<double> _pv, _sp, _kp, _ki, _kd, _ui, _u, _uMax, _uMin;
       private DVar<long> _t;
-      private double _sum, _prev;
+      private double _prev;
       private double[] _hist;
       private Timer _ct;
       private DateTime _pt;
@@ -711,6 +711,8 @@ namespace X13.PLC {
         _hist=new double[9];
         _pv=AddPin<double>(model, "PV");
         _sp=AddPin<double>(model, "SP");
+        _ui=AddPin<double>(model, "_iSum");
+        _ui.saved=true;
         _u=AddPin<double>(model, "U");
         _u.saved=false;
         _kp=AddPin<double>(model, "_Kp");
@@ -739,7 +741,6 @@ namespace X13.PLC {
         }
         _pt=DateTime.Now;
         _ptI=_pt;
-        _sum=0;
         _prev=_pv.value;
         for(int i=0; i<9; i++) {
           _hist[i]=_pv.value;
@@ -775,21 +776,23 @@ namespace X13.PLC {
         var now=DateTime.Now;
         var e=_sp.value-_pv.value;
         var dtI=(now-_ptI).TotalSeconds;
+        double uIntegral=_ui.value;
         if(_ki.value!=0) {
           var ic=e*dtI*_ki.value;
           if((ic>0 && _gt) || (ic<0 && _gb)) {
             ic=0;
           } else {
-            _sum+=ic;
-            if(_sum>_uMax.value) {
-              _sum=_uMax.value;
-            } else if(_sum<_uMin.value) {
-              _sum=_uMin.value;
+            uIntegral+=ic;
+            if(uIntegral>_uMax.value) {
+              uIntegral=_uMax.value;
+            } else if(uIntegral<_uMin.value) {
+              uIntegral=_uMin.value;
             }
           }
         } else {
-          _sum=0;
+          uIntegral=0;
         }
+        _ui.value=uIntegral;
         for(int i=1; i<9; i++) {
           _hist[i]=_hist[i-1];
         }
@@ -800,13 +803,13 @@ namespace X13.PLC {
           var dt=(now-_pt).TotalSeconds;
           double d=(_hist[0]+_hist[1]+_hist[2])/2 - (_hist[3]+_hist[4]+_hist[5])/4.5 + (_hist[6]+_hist[7]+_hist[8])/18;
           e=_sp.value-d;
-          double rez=_kp.value*e+_sum+_kd.value*(_prev-d)/dt;
+          double rez=_kp.value*e+uIntegral+_kd.value*(_prev-d)/dt;
           if(rez>_uMax.value) {
             rez=_uMax.value;
           } else if(rez<_uMin.value) {
             rez=_uMin.value;
           }
-          _prev=d;
+          _prev=(d+_prev)/2;
           _u.value=rez;
           _pt=now;
         }

@@ -415,9 +415,12 @@ namespace X13.Periphery {
           if(buf[1]==0x10) {
             if(buf.Length==8) {
               _T.value=Math.Round(((buf[6]<<6) | (buf[7]>>2))*165.0/16384-40, 2);
-              _H.value=Math.Round(((buf[4]<<8) | buf[5])*25.0/4096, 1);
+              double tmp=Math.Round(((buf[4]<<8) | buf[5])*25.0/4096, 1);
+              if(tmp<=100) {
+                _H.value=tmp;
+              }
               _present.value=true;
-              _pt=DateTime.Now.AddSeconds(_rand.Next(45, 90));
+              _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
               _st=0;
             }
           } else {
