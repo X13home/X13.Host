@@ -149,6 +149,7 @@
     <Content Include="SoundsRu\DingDong.wav" />
     <Content Include="SoundsRu\Door41Closed.wav" />
     <Content Include="SoundsRu\Door41Opened.wav" />
+    <Content Include="SoundsRu\kuranty.wav" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

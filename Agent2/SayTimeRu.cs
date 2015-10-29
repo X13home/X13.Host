@@ -27,7 +27,7 @@ namespace X13.Agent2 {
 
       DateTime DTNow=DateTime.Now;
       if(DTNow.Hour>=7 && DTNow.Hour<22) {
-        SayTime(true);
+        SayTime(false);
       }
       ThreadPool.QueueUserWorkItem(AudioThread);
     }
@@ -36,10 +36,14 @@ namespace X13.Agent2 {
       string[] Hour2= { "_102", "_100", "_101", "_101", "_101", "_102", "_102", "_102", "_102", "_102", "_102", "_102", "_102", "_102", "_102", "_102", "_102", "_102", "_102", "_102", "_102", "_100", "_101", "_101" };
       string[] Min1= { "", "_1001", "_1002", "_3", "_4", "_5", "_6", "_7", "_8", "_9", "_10", "_11", "_12", "_13", "_14", "_15", "_16", "_17", "_18", "_19" };
       string[] Min2= { "_112", "_110", "_111", "_111", "_111", "_112", "_112", "_112", "_112", "_112", "_112", "_112", "_112", "_112", "_112", "_112", "_112", "_112", "_112", "_112" };
-      DateTime DTNow=DateTime.Now.AddSeconds(3);
+      DateTime DTNow=DateTime.Now.AddSeconds(2);
       int hour=DTNow.Hour;
       int min=DTNow.Minute;
-      PlayWav("DingDong");
+      if(fl) {
+        PlayWav("DingDong");
+      } else {
+        PlayWav("kuranty");
+      }
 
       PlayWav(Hour1[hour]);
       PlayWav(Hour2[hour]);
@@ -67,24 +71,17 @@ namespace X13.Agent2 {
     }
     private void AudioThread(object o) {
       string rname;
+      DateTime DTNow;
       while(true) {
         if(!_toPlay.TryPeek(out rname)) {
-          DateTime DTNow=DateTime.Now.AddSeconds(2);
-          int hour=DTNow.Hour;
-          int min=DTNow.Minute;
-
-          double hm=hour+min/60.0+DTNow.Second/3600.0;
-          int Interval;
-          if(hm<7) {    // time of still between 22:01 and 6:59
-            Interval=(int)(3600000*(7-hm));
-          } else if(hm>21) {
-            Interval=(int)(3600000*(31-hm));
-          } else {
-            Interval=(int)(3600000*(hour+1-hm));
-          }
-
-          if(!_pr.WaitOne(Interval)) {
-            SayTime(true);
+          DTNow=DateTime.Now.AddSeconds(2);
+          if(!_pr.WaitOne((3600-DTNow.Minute*60-DTNow.Second)*1000)) {
+            DTNow=DateTime.Now.AddSeconds(2);
+            if(DTNow.Hour>=7 && DTNow.Hour<=22) {
+              SayTime(true);
+            } else {
+              continue;
+            }
           }
         }
         if(!_toPlay.TryDequeue(out rname)) {

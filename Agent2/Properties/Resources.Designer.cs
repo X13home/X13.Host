@@ -410,5 +410,14 @@ namespace X13.Agent2.Properties {
                 return ResourceManager.GetStream("Door41Opened", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Ressource vom Typ System.IO.UnmanagedMemoryStream ähnlich wie System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream kuranty {
+            get {
+                return ResourceManager.GetStream("kuranty", resourceCulture);
+            }
+        }
     }
 }
