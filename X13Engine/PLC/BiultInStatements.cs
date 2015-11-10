@@ -683,6 +683,7 @@ namespace X13.PLC {
     [ExportMetadata("declarer", "PID")]
     private class PID : IStatement {
       private DVar<double> _pv, _sp, _kp, _ki, _kd, _ui, _u, _uMax, _uMin;
+      private DVar<bool> _auto;
       private DVar<long> _t;
       private double _prev;
       private double[] _hist;
@@ -733,6 +734,7 @@ namespace X13.PLC {
         if(!t_p) {
           _uMin.value=-255.0;
         }
+        _auto=AddPin<bool>(model, "_auto");
         _ct=new Timer(Pool);
         if(_t.value>0) {
           int t=(int)Math.Sqrt(_t.value/250);
@@ -761,6 +763,8 @@ namespace X13.PLC {
         } else if(_t.value>0 && _cntMax>0 && (source==_sp || source==_kp || source==_ki || source==_kd)) {
           _ct.Change(1, _t.value/_cntMax);
           _cnt=_cntMax;
+        } else if(source==_auto && _auto.value==true){
+
         } else {
           Topic tt;
           DVar<bool> bt;

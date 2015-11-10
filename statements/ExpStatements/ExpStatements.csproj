@@ -43,7 +43,9 @@
     <Compile Include="..\..\X13Engine\Properties\VersionInfo.cs">
       <Link>VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="CubicSpline.cs" />
     <Compile Include="interpolation3.cs" />
+    <Compile Include="InterpolationAgr.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -52,7 +54,9 @@
       <Name>Engine</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Images\fu_intrA.png" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\fu_intr3.png" />
   </ItemGroup>
