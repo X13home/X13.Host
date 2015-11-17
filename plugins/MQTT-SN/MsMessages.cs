@@ -530,6 +530,13 @@ namespace X13.Periphery {
       }
     }
     public readonly ushort Duration;
+    public override string ToString() {
+      if(Duration==0) {
+        return MsgTyp.ToString();
+      } else {
+        return "DISCONNECT("+Duration.ToString()+")";
+      }
+    }
   }
 
   internal class MsForward : MsMessage {

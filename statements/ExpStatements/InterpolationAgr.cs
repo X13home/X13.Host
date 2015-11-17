@@ -18,6 +18,7 @@ namespace X13.PLC {
   public class InterpolationAgr : IStatement {
     private DVar<double> _x;      //input
     private DVar<double> _yRef;   //input
+    private DVar<bool> _match;
     private DVar<double> _y;      //output
     private DVar<double> _xe, _ye; //epsilon
     private DVar<string> _csv;
@@ -29,7 +30,8 @@ namespace X13.PLC {
       var t1=Topic.root.Get<string>("/etc/declarers/func/InterpolationA");
       t1.value="pack://application:,,/ExpStatements;component/Images/fu_intrA.png";
       t1.Get<string>("X").value="Ag";
-      t1.Get<string>("Ref").value="Bg";
+      t1.Get<string>("YRef").value="Bg";
+      t1.Get<string>("Match").value="Cz";
       t1.Get<string>("Y").value="ag";
       t1.Get<string>("_description").value="g4Agregated interpolation";
 
@@ -45,7 +47,8 @@ namespace X13.PLC {
       if(_xe.value==0) {
         _xe.value=1;
       }
-      _yRef=BiultInStatements.AddPin<double>(model, "Ref");
+      _yRef=BiultInStatements.AddPin<double>(model, "YRef");
+      _match=BiultInStatements.AddPin<bool>(model, "Match");
       _ye=BiultInStatements.AddPin<double>(model, "_yEpsilon");
       if(_ye.value==0) {
         _ye.value=1;
@@ -59,14 +62,14 @@ namespace X13.PLC {
       if(source==_csv) {
         Import();
         Rebuild();
-      } else if(source==_yRef) {
+      } else if((source==_yRef || source==_match) && _match.value) {
         double y2=_cubSpl.Func(_x.value);
         double yo=_yRef.value-y2;
         if(double.IsNaN(y2) || Math.Abs(yo)>_ye.value) {
           double xo=Math.Round(_x.value/_xe.value)*_xe.value;
           double y1;
           if(_data.TryGetValue(xo, out y1) && !double.IsNaN(y2)) {
-              y1+=yo*_ye.value;
+              y1+=yo/10;
           } else {
             y1=_yRef.value;
           }
