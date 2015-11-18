@@ -641,7 +641,7 @@ namespace X13.Periphery {
         state=State.WillTopic;
         Send(new MsMessage(MsMessageType.WILLTOPICREQ));
       } else {
-        if(state!=State.ASleep) {
+        if(state!=State.ASleep && msg.CleanSession) {
           Log.Info("{0}.state {1} => PreConnect", Owner.path, state);
           state=State.PreConnect;
         } else {
@@ -719,7 +719,7 @@ namespace X13.Periphery {
         SetValue(ti, _wilMsg, false);
       }
       if(duration>0) {
-        ResetTimer(duration*1550);
+        ResetTimer(3100+_duration*1550);  // t_wakeup
         this.Send(new MsDisconnect());
         _tryCounter=0;
         state=State.ASleep;
@@ -1034,6 +1034,7 @@ namespace X13.Periphery {
                 Stat(true, MsMessageType.PINGRESP, false);
               }
             }
+            ResetTimer(3100+_duration*1550);  // t_wakeup
             state=State.ASleep;
             break;
           }
