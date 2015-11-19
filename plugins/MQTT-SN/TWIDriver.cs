@@ -179,7 +179,7 @@ namespace X13.Periphery {
           _pollTimer.Change(Timeout.Infinite, Timeout.Infinite);
           return;
         }
-        if(_dev.state!=MsDevice.State.Connected) {
+        if(_dev.state!=MsDevice.State.Connected && _dev.state!=MsDevice.State.AWake && _dev.state!=MsDevice.State.ASleep) {
           return;
         }
         byte[] buf;
@@ -848,7 +848,7 @@ namespace X13.Periphery {
         return false;
       }
       public override bool Recv(byte[] buf) {
-        int oldSt=_st;
+        //int oldSt=_st;
         if(buf[0]==ADDR) {
           if(buf[1]==0x10) {
             if(_st==-3 && buf.Length==30) {
@@ -920,6 +920,9 @@ namespace X13.Periphery {
               _present.value=false;
               Reset();
             }
+            //if(oldSt!=_st) {
+            //  Log.Debug("{0} st={1}", _T.parent.path, _st);
+            //}
           } else {
             _present.value=false;
             if(TWIDriver._verbose) {
@@ -933,7 +936,7 @@ namespace X13.Periphery {
         return false;
       }
       public override bool Poll(out byte[] buf) {
-        int oldSt=_st;
+        //int oldSt=_st;
         buf=null;
         bool busy=false;
         if(_pt<DateTime.Now) {
@@ -965,6 +968,9 @@ namespace X13.Periphery {
           } else {
             busy=true;
           }
+          //if(oldSt!=_st) {
+          //  Log.Debug("{0} st={1}, busy={2}", _T.parent.path, _st, busy);
+          //}
         } else {
           busy=_st!=0;
         }

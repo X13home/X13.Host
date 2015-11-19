@@ -462,6 +462,11 @@ namespace X13.Periphery {
           if(state==State.ASleep) {
             if(string.IsNullOrEmpty(tmp.ClientId) || tmp.ClientId==Owner.name) {
               state=State.AWake;
+              //{   // wake TWI
+              //  foreach(var twi in Owner.children.Where(z => z.valueType==typeof(TWIDriver)).Select(z => z.GetValue() as TWIDriver).Where(z => z!=null)) {
+              //    twi.Wake();
+              //  }
+              //}
               ProccessAcknoledge(msg);    // resume send proccess
             } else {
               SendGw(this, new MsDisconnect());
@@ -641,7 +646,7 @@ namespace X13.Periphery {
         state=State.WillTopic;
         Send(new MsMessage(MsMessageType.WILLTOPICREQ));
       } else {
-        if(state!=State.ASleep && msg.CleanSession) {
+        if(msg.CleanSession) {
           Log.Info("{0}.state {1} => PreConnect", Owner.path, state);
           state=State.PreConnect;
         } else {
