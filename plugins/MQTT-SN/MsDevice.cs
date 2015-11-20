@@ -652,9 +652,9 @@ namespace X13.Periphery {
         } else {
           state=State.Connected;
         }
-        via=_gate.name;
         Send(new MsConnack(MsReturnCode.Accepted));
       }
+      via=_gate.name;
       if(_statistic.value) {
         Stat(false, MsMessageType.CONNECT, msg.CleanSession);
       }
@@ -724,6 +724,9 @@ namespace X13.Periphery {
         SetValue(ti, _wilMsg, false);
       }
       if(duration>0) {
+        if(state==State.ASleep) {
+          state=State.AWake;
+        }
         ResetTimer(3100+_duration*1550);  // t_wakeup
         this.Send(new MsDisconnect());
         _tryCounter=0;
@@ -999,7 +1002,7 @@ namespace X13.Periphery {
       }
     }
     private void SendIntern(MsMessage msg) {
-      while((msg!=null || state==State.AWake) && state!=State.ASleep) {
+      while((msg!=null || state==State.AWake) && (state!=State.ASleep || (msg!=null && msg.MsgTyp==MsMessageType.DISCONNECT))) {
         if(msg!=null) {
           if(_gate!=null) {
             if(_statistic.value) {
