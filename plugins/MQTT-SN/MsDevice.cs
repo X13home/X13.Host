@@ -183,13 +183,21 @@ namespace X13.Periphery {
     private IMsGate _gate;
     private bool _waitAck;
     private List<MsDevice> _nodes;
+    private Timer _poolTimer;
 
     private MsDevice() {
       if(Topic.brokerMode) {
         _activeTimer=new Timer(new TimerCallback(TimeOut));
+        _poolTimer=new Timer(ReisePool);
         _topics=new List<TopicInfo>(16);
         _subsscriptions=new List<Topic.Subscription>(4);
         _sendQueue=new Queue<MsMessage>();
+      }
+    }
+
+    private void ReisePool(object state) {
+      if(Pool!=null) {
+        Pool();
       }
     }
 
@@ -221,6 +229,11 @@ namespace X13.Periphery {
           catch(ObjectDisposedException) {
             _present=null;
           }
+        }
+        if(value==State.Connected) {
+          _poolTimer.Change(300, 100);
+        } else {
+          _poolTimer.Change(-1, -1);
         }
       }
     }
@@ -378,7 +391,6 @@ namespace X13.Periphery {
                 } else {
                   (ti.topic as DVar<TWIDriver>).value.Reset();
                 }
-
               }
             }
             Send(new MsRegAck(ti.TopicId, tmp.MessageId, MsReturnCode.Accepted));
@@ -462,11 +474,6 @@ namespace X13.Periphery {
           if(state==State.ASleep) {
             if(string.IsNullOrEmpty(tmp.ClientId) || tmp.ClientId==Owner.name) {
               state=State.AWake;
-              //{   // wake TWI
-              //  foreach(var twi in Owner.children.Where(z => z.valueType==typeof(TWIDriver)).Select(z => z.GetValue() as TWIDriver).Where(z => z!=null)) {
-              //    twi.Wake();
-              //  }
-              //}
               ProccessAcknoledge(msg);    // resume send proccess
             } else {
               SendGw(this, new MsDisconnect());
@@ -727,7 +734,7 @@ namespace X13.Periphery {
         if(state==State.ASleep) {
           state=State.AWake;
         }
-        ResetTimer(3100+_duration*1550);  // t_wakeup
+        ResetTimer(3100+duration*1550);  // t_wakeup
         this.Send(new MsDisconnect());
         _tryCounter=0;
         state=State.ASleep;
@@ -972,6 +979,12 @@ namespace X13.Periphery {
           }
         }
       }
+      if(msg==null && !_waitAck && state==State.AWake) {
+        ReisePool(null);
+        if(_waitAck) {
+          return; // sended from pool
+        }
+      }
       if(msg!=null || state==State.AWake) {
         if(msg!=null && msg.IsRequest) {
           _tryCounter=2;
@@ -1002,7 +1015,7 @@ namespace X13.Periphery {
       }
     }
     private void SendIntern(MsMessage msg) {
-      while((msg!=null || state==State.AWake) && (state!=State.ASleep || (msg!=null && msg.MsgTyp==MsMessageType.DISCONNECT))) {
+      while(state==State.AWake || (msg!=null && (state!=State.ASleep || msg.MsgTyp==MsMessageType.DISCONNECT))) {
         if(msg!=null) {
           if(_gate!=null) {
             if(_statistic.value) {
@@ -1042,7 +1055,8 @@ namespace X13.Periphery {
                 Stat(true, MsMessageType.PINGRESP, false);
               }
             }
-            ResetTimer(3100+_duration*1550);  // t_wakeup
+            var st=Owner.Get<long>(".cfg/XD_SleepTime", Owner);
+            ResetTimer(st.value>0?(3100+(int)st.value*1550):_duration);  // t_wakeup
             state=State.ASleep;
             break;
           }
@@ -1104,6 +1118,8 @@ namespace X13.Periphery {
         }
       }
     }
+
+    internal event Action Pool;
 
     #region ITopicOwned Members
     void ITopicOwned.SetOwner(Topic owner) {

@@ -38,13 +38,11 @@ namespace X13.Periphery {
     //===================================================
     private Topic _owner;
     private MsDevice _dev;
-    private Timer _pollTimer;
     private List<TWICommon> _drivers;
     private int _pollIdx;
 
     public TWIDriver() {
       _drivers=new List<TWICommon>();
-      _pollTimer=new Timer(Poll);
       _pollIdx=0;
     }
 
@@ -58,7 +56,6 @@ namespace X13.Periphery {
 
     public void Reset() {
       if(Topic.brokerMode) {
-        _pollTimer.Change(300, 100);
         for(int i=_drivers.Count-1; i>=0; i--) {
           _drivers[i].Reset();
         }
@@ -82,6 +79,9 @@ namespace X13.Periphery {
           _owner.Unsubscribe("+", STVarChanged);
         }
       }
+      if(_dev!=null) {
+        _dev.Pool+=_dev_Pool;
+      }
       _owner=owner;
       if(_owner!=null) {
         name=owner.name;
@@ -92,11 +92,34 @@ namespace X13.Periphery {
           _owner.Get<string>("_declarer", _owner).value="TWI";
           _owner.Subscribe("+", STVarChanged);
           if(_dev!=null) {
+            _dev.Pool+=_dev_Pool;
             Reset();
           }
         }
-      } else {
-        _pollTimer.Change(-1, -1);
+      }
+    }
+    private void _dev_Pool() {
+      try {
+        if(_dev==null || _owner==null) {
+          return;
+        }
+        if(_dev.state!=MsDevice.State.Connected && _dev.state!=MsDevice.State.AWake && _dev.state!=MsDevice.State.ASleep) {
+          return;
+        }
+        byte[] buf;
+        if(_pollIdx>=_drivers.Count) {
+          _pollIdx=0;
+        } else {
+          if(!_drivers[_pollIdx].Poll(out buf)) {
+            _pollIdx++;
+          }
+          if(buf!=null) {
+            _dev.PublishWithPayload(_owner, buf);
+          }
+        }
+      }
+      catch(Exception ex) {
+        Log.Warning("{0}.Poll -{1}", _owner!=null?_owner.path:"UNK", ex.Message);
       }
     }
 
@@ -171,31 +194,6 @@ namespace X13.Periphery {
             _drivers.Add(drv);
           }
         }
-      }
-    }
-    private void Poll(object state) {
-      try {
-        if(_dev==null || _owner==null) {
-          _pollTimer.Change(Timeout.Infinite, Timeout.Infinite);
-          return;
-        }
-        if(_dev.state!=MsDevice.State.Connected && _dev.state!=MsDevice.State.AWake && _dev.state!=MsDevice.State.ASleep) {
-          return;
-        }
-        byte[] buf;
-        if(_pollIdx>=_drivers.Count) {
-          _pollIdx=0;
-        } else {
-          if(!_drivers[_pollIdx].Poll(out buf)) {
-            _pollIdx++;
-          }
-          if(buf!=null) {
-            _dev.PublishWithPayload(_owner, buf);
-          }
-        }
-      }
-      catch(Exception ex) {
-        Log.Warning("{0}.Poll -{1}", _owner!=null?_owner.path:"UNK", ex.Message);
       }
     }
     [Flags]
@@ -453,7 +451,7 @@ namespace X13.Periphery {
             busy=true;
             //_present.value=false;
             //if(_verbose) {
-            //  Log.Warning("{0}.poll({1}) - timeot", _T, _st);
+            //  Log.Warning("{0}.poll({1}) - timeout", _T, _st);
             //}
             //_pt=DateTime.Now.AddSeconds(_rand.Next(100, 200));
             //_st=0;
@@ -649,9 +647,10 @@ namespace X13.Periphery {
               _mb=(short)((buf[20]<<8) | buf[21]);
               _mc=(short)((buf[22]<<8) | buf[23]);
               _md=(short)((buf[24]<<8) | buf[25]);
-            } else if(_st==2 && buf.Length==6) {
+            } else if((_st==2 || _st==3) && buf.Length==6) {
               _ut=(buf[4]<<8) | buf[5];
-              _st=3;
+              _pt=DateTime.Now.AddMilliseconds(-1);
+              _st++;
             } else if(_st==5 && buf.Length==7) {
               // Calculate temperature
               int x1 = (((int)_ut - _ac6) * _ac5) >> 15;
@@ -723,13 +722,13 @@ namespace X13.Periphery {
             busy=true;
           } else if(_st==1) {
             buf=new byte[] { ADDR, 0x03, 0x01, 0x02, 0xF6 };
-            _pt=DateTime.Now.AddMilliseconds(500);
+            _pt=DateTime.Now.AddMilliseconds(1);
             _st=2;
             busy=true;
-          } else if(_st==3) {
+          } else if(_st==2 || _st==3) {
             buf=new byte[] { ADDR, 0x01, 0x02, 0x00, 0xF4, (byte)(0x34 | (BMP180_OSS<<6)) };
-            _pt=DateTime.Now.AddMilliseconds(30);
-            _st=4;
+            _pt=DateTime.Now.AddMilliseconds(500);  // Wait ack 
+            _st++;
             busy=true;
           } else if(_st==4) {
             buf=new byte[] { ADDR, 0x03, 0x01, 0x03, 0xF6 };

@@ -180,7 +180,7 @@ namespace X13.Periphery {
                   MsDevice.ProcessInPacket(gw, gw._gateAddr, buf, 0, cnt);
                   break;
                 } else if(_verbose.value) {
-                  Log.Debug("r  {0}: {1}  {2}", pns[i], BitConverter.ToString(buf, 0, cnt), msgTyp);
+                  Log.Debug("r {0}: {1}  {2}", pns[i], BitConverter.ToString(buf, 0, cnt), msgTyp);
                 }
                 SendRaw(port, disconnectAll, tmpBuf); // Send Disconnect
               }
