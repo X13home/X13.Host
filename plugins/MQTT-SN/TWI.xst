@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- device configuration file for TWI  -->
 <root head="/etc/declarers/type">
-  <item name="TWI" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.3.1526.1">
+  <item name="TWI" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.315.1124.20">
     <item name="Blinky" value="" saved="True" type="System.String">
       <item name="BLINKM_RGB8" value="ai" saved="True" type="System.String">
         <item name="_description" value="RGB" saved="True" type="System.String" />
@@ -52,6 +52,14 @@
         <item name="_description" value="Humidity %" saved="True" type="System.String" />
       </item>
     </item>
+    <item name="SHT21" value="" saved="True" type="System.String">
+      <item name="SHT21_T" value="0g" saved="True" type="System.String">
+        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      </item>
+      <item name="SHT21_H" value="1g" saved="True" type="System.String">
+        <item name="_description" value="Humidity %" saved="True" type="System.String" />
+      </item>
+    </item>
     <item name="HIH61xx" value="" saved="True" type="System.String">
       <item name="HIH61_T" value="0g" saved="True" type="System.String">
         <item name="_description" value="Temperature °C" saved="True" type="System.String" />
@@ -60,6 +68,15 @@
         <item name="_description" value="Humidity %" saved="True" type="System.String" />
       </item>
     </item>
+    <item name="BH1750" value="" saved="True" type="System.String">
+      <item name="BH1750_0" value="Ai" saved="True" type="System.String">
+        <item name="_description" value="Ambient Light, lx" saved="True" type="System.String" />
+      </item>
+      <item name="BH1750_1" value="Bi" saved="True" type="System.String">
+        <item name="_description" value="Ambient Light, lx" saved="True" type="System.String" />
+      </item>
+    </item>
+    
     <item name="LM75" value="" saved="True" type="System.String">
       <item name="LM75_T0" value="Bg" saved="True" type="System.String">
         <item name="_description" value="Temperature °C" saved="True" type="System.String" />

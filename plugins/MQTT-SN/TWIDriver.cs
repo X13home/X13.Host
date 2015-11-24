@@ -156,6 +156,10 @@ namespace X13.Periphery {
       case "HIH61_H":
         drv=new HIH61xx(snd);
         break;
+      case "SHT21_T":
+      case "SHT21_H":
+        drv=new SHT21(snd);
+        break;
       case "BMP180_T":
       case "BMP180_P":
         drv=new BMP180(snd);
@@ -172,6 +176,10 @@ namespace X13.Periphery {
       case "BLINKM_RGB10":
       case "BLINKM_F10":
         drv=new Blinky(snd);
+        break;
+      case "BH1750_0":
+      case "1750_1":
+        drv=new BH1750(snd);
         break;
       //case "SI1143":
       //  drv=new SI1143(snd);
@@ -369,6 +377,7 @@ namespace X13.Periphery {
       private DateTime _pt;
       private DVar<bool> _present;
       private int _st;
+      private int _tCnt;
 
       public CC2D(Topic pin) {
         if(pin==null) {
@@ -412,21 +421,33 @@ namespace X13.Periphery {
         if(buf[0]==ADDR) {
           if(buf[1]==0x10) {
             if(buf.Length==8) {
-              _T.value=Math.Round(((buf[6]<<6) | (buf[7]>>2))*165.0/16384-40, 2);
-              double tmp=Math.Round(((buf[4]<<8) | buf[5])*25.0/4096, 1);
-              if(tmp<=100) {
-                _H.value=tmp;
+              if((buf[4] & 0xC0)==0) {
+                _T.value=Math.Round(((buf[6]<<6) | (buf[7]>>2))*165.0/16384-40, 2);
+                double tmp=Math.Round(((buf[4]<<8) | buf[5])*25.0/4096, 1);
+                if(tmp<=100) {
+                  _H.value=tmp;
+                }
+                _present.value=true;
+                _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
+                _st=0;
+                _tCnt=0;
+              } else {
+                if(_tCnt++<3) {
+                  _pt=DateTime.Now.AddMilliseconds(15);
+                  _st=1;
+                } else {
+                  _pt=DateTime.Now.AddSeconds(_rand.Next(15, 30));
+                  _st=0;
+                }
               }
-              _present.value=true;
-              _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
-              _st=0;
             }
           } else {
             _present.value=false;
             if(TWIDriver._verbose) {
               Log.Error("{0}.recv - {1}", _T.path, (AckFlags)buf[1]);
             }
-            _pt=DateTime.Now.AddSeconds(_rand.Next(15, 30));
+            _tCnt++;
+            _pt=DateTime.Now.AddSeconds(1+_rand.Next(15, 30)*_tCnt);
             _st=0;
           }
           return true;
@@ -439,7 +460,7 @@ namespace X13.Periphery {
         if(_pt<DateTime.Now) {
           if(_st==0) {
             buf=new byte[] { ADDR, 0x01, 0x00, 0x00 }; // Write 0 bytes
-            _pt=DateTime.Now.AddMilliseconds(500);
+            _pt=DateTime.Now.AddMilliseconds(15);
             _st=1;
             busy=true;
           } else if(_st==1) {
@@ -449,12 +470,6 @@ namespace X13.Periphery {
             busy=true;
           } else {
             busy=true;
-            //_present.value=false;
-            //if(_verbose) {
-            //  Log.Warning("{0}.poll({1}) - timeout", _T, _st);
-            //}
-            //_pt=DateTime.Now.AddSeconds(_rand.Next(100, 200));
-            //_st=0;
           }
         } else {
           busy=_st>0;
@@ -473,6 +488,7 @@ namespace X13.Periphery {
       private DateTime _pt;
       private DVar<bool> _present;
       private int _st;
+      private int _tCnt;
 
       public HIH61xx(Topic pin) {
         if(pin==null) {
@@ -520,9 +536,129 @@ namespace X13.Periphery {
                 _T.value=Math.Round((((buf[6]<<6) | (buf[7]>>2)) & 0x3FFF) *55.0/5461-40, 2);
                 _H.value=Math.Round(((buf[4]<<2) | (buf[5] >> 6))*20.0/51, 1);
                 _present.value=true;
+                _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
+                _st=0;
+                _tCnt=0;
+              } else {
+                if(_tCnt++<3) {
+                  _pt=DateTime.Now.AddMilliseconds(15);
+                  _st=1;
+                } else {
+                  _pt=DateTime.Now.AddSeconds(_rand.Next(15, 30));
+                  _st=0;
+                }
               }
-              _pt=DateTime.Now.AddSeconds(_rand.Next(45, 90));
+            }
+          } else {
+            _present.value=false;
+            if(TWIDriver._verbose) {
+              Log.Error("{0}.recv - {1}", _T.path, (AckFlags)buf[1]);
+            }
+            _tCnt++;
+            _pt=DateTime.Now.AddSeconds(1+_rand.Next(15, 30)*_tCnt);
+            _st=0;
+          }
+          return true;
+        }
+        return false;
+      }
+      public override bool Poll(out byte[] buf) {
+        buf=null;
+        bool busy=false;
+        if(_pt<DateTime.Now) {
+          if(_st==0) {
+            buf=new byte[] { ADDR, 0x01, 0x00, 0x00 }; // Write 0 bytes
+            _pt=DateTime.Now.AddMilliseconds(15);
+            _st=1;
+            busy=true;
+          } else if(_st==1) {
+            buf=new byte[] { ADDR, 0x02, 0x00, 0x04 }; // Read 4 bytes
+            _pt=DateTime.Now.AddMilliseconds(500);
+            _st=3;
+            busy=true;
+          } else {
+            busy=true;
+          }
+        } else {
+          busy=_st>0;
+        }
+        return busy;
+      }
+      public override void Reset() {
+        _st=0;
+        _pt=DateTime.Now.AddMilliseconds(_rand.Next(800, 2000));
+      }
+    }
+    private class SHT21 : TWICommon {
+      private const byte ADDR=0x40;
+      private DVar<double> _T;
+      private DVar<double> _H;
+      private DateTime _pt;
+      private DVar<bool> _present;
+      private int _st;
+
+      public SHT21(Topic pin) {
+        if(pin==null) {
+          throw new ArgumentNullException();
+        }
+        if(pin.name=="SHT21_T") {
+          _T=pin as DVar<double>;
+          if(_T==null) {
+            throw new ArgumentException();
+          }
+          _H=_T.parent.Get<double>("SHT21_H");
+        } else if(pin.name=="SHT21_H") {
+          _H=pin as DVar<double>;
+          if(_H==null) {
+            throw new ArgumentException();
+          }
+          _T=_H.parent.Get<double>("SHT21_T");
+        } else {
+          throw new ArgumentException();
+        }
+        _present=_T.Get<bool>("present");
+        _present.saved=false;
+        _present.value=false;
+        Reset();
+      }
+      public override bool VarChanged(Topic snd, bool delete) {
+        if(snd==_T) {
+          if(delete && _H!=null) {
+            _H.Remove();
+          }
+          return true;
+        } else if(snd==_H) {
+          if(delete && _T!=null) {
+            _T.Remove();
+          }
+          return true;
+        }
+        return false;
+      }
+      public override bool Recv(byte[] buf) {
+        if(buf[0]==ADDR) {
+          if(buf[1]==0x10 && buf.Length==6) {
+            if(_st==2) {
+              _T.value=Math.Round(((buf[4]<<8) | (buf[5]))*175.72/65536-46.85, 2);
+              _present.value=true;
+              _pt=DateTime.Now.AddMilliseconds(1);
+              _st=3;
+            } else if(_st==5) {
+              _H.value=Math.Round(((buf[4]<<8) | (buf[5]))*125.0/65536-6, 1);
+              _present.value=true;
+              _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
               _st=0;
+            } else {
+              _present.value=false;
+              Reset();
+            }
+          } else if((buf[1] & 0x40)==0x40) {    // Nack received
+            if(_st==2 || _st==5) {
+              _pt=DateTime.Now.AddMilliseconds(80);
+              _st--;
+            } else {
+              _present.value=false;
+              Reset();
             }
           } else {
             _present.value=false;
@@ -538,27 +674,26 @@ namespace X13.Periphery {
       }
       public override bool Poll(out byte[] buf) {
         buf=null;
-        bool busy=false;
+        bool busy;
         if(_pt<DateTime.Now) {
           if(_st==0) {
-            buf=new byte[] { ADDR, 0x01, 0x00, 0x00 }; // Write 0 bytes
-            _pt=DateTime.Now.AddMilliseconds(500);
+            buf=new byte[] { ADDR, 0x01, 0x01, 0x00, 0xF3 }; // Trigger T measurement, no hold master
+            _pt=DateTime.Now.AddMilliseconds(15);
             _st=1;
-            busy=true;
           } else if(_st==1) {
-            buf=new byte[] { ADDR, 0x02, 0x00, 0x04 }; // Read 4 bytes
+            buf=new byte[] { ADDR, 0x02, 0x00, 0x02 }; // Read 2 bytes
             _pt=DateTime.Now.AddMilliseconds(500);
-            _st=3;
-            busy=true;
-          } else {
-            busy=true;
-            //_present.value=false;
-            //if(_verbose) {
-            //  Log.Warning("{0}.poll({1}) - timeot", _T, _st);
-            //}
-            //_pt=DateTime.Now.AddSeconds(_rand.Next(100, 200));
-            //_st=0;
+            _st=2;
+          } else if(_st==3) {
+            buf=new byte[] { ADDR, 0x01, 0x01, 0x00, 0xF5 }; // Trigger RH measurement no hold master
+            _pt=DateTime.Now.AddMilliseconds(15);
+            _st=4;
+          } else if(_st==4) {
+            buf=new byte[] { ADDR, 0x02, 0x00, 0x02 }; // Read 2 bytes
+            _pt=DateTime.Now.AddMilliseconds(500);
+            _st=5;
           }
+          busy=true;
         } else {
           busy=_st>0;
         }
@@ -569,6 +704,7 @@ namespace X13.Periphery {
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(800, 2000));
       }
     }
+
     private class BMP180 : TWICommon {
       private const byte ADDR=0x77;
       private const int BMP180_OSS=3;
@@ -688,7 +824,7 @@ namespace X13.Periphery {
               _P.value=p;
 
               _present.value=true;
-              _pt=DateTime.Now.AddSeconds(_rand.Next(90, 120));
+              _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
               _st=0;
             } else {
               _present.value=false;
@@ -737,12 +873,6 @@ namespace X13.Periphery {
             busy=true;
           } else {
             busy=true;
-            //_present.value=false;
-            //if(_verbose) {
-            //  Log.Warning("{0}.poll({1}) - timeot", _T, _st);
-            //}
-            //_pt=DateTime.Now.AddSeconds(_rand.Next(150, 210));
-            //_st=-2;
           }
         } else {
           busy=_st!=0;
@@ -913,8 +1043,8 @@ namespace X13.Periphery {
 
               //Log.Debug("{0} T={1}, H={2}, P={3}", _T.parent.path, _T.value, _H.value, _P.value);
               _present.value=true;
-              _pt=DateTime.Now.AddSeconds(_rand.Next(90, 120));
-              _st=0;
+              _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
+              _st=1;
             } else {
               _present.value=false;
               Reset();
@@ -956,7 +1086,7 @@ namespace X13.Periphery {
             busy=true;
           } else if(_st==1) {
             buf=new byte[] { ADDR, 0x01, 0x01, 0x00, 0xF4, 0x25 };  // forced mode
-            _pt=DateTime.Now.AddMilliseconds(500);
+            _pt=DateTime.Now.AddMilliseconds(10);
             _st=2;
             busy=true;
           } else if(_st==2) {
@@ -971,13 +1101,89 @@ namespace X13.Periphery {
           //  Log.Debug("{0} st={1}, busy={2}", _T.parent.path, _st, busy);
           //}
         } else {
-          busy=_st!=0;
+          busy=_st!=1;
         }
         return busy;
       }
       public override void Reset() {
         _st=-4;
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(800, 2000));
+      }
+    }
+    private class BH1750 : TWICommon {
+      private byte ADDR;
+      private DVar<long> _val;
+      private DVar<bool> _present;
+      private int _st;
+      private DateTime _pt;
+
+      public BH1750(Topic pin) {
+        if(pin==null) {
+          throw new ArgumentNullException();
+        }
+        if(pin.name=="BH1750_0") {
+          _val=pin as DVar<long>;
+          ADDR=0x23;
+        } else if(pin.name=="BH1750_1") {
+          _val=pin as DVar<long>;
+          ADDR=0x5C;
+        } else {
+          throw new ArgumentException();
+        }
+        _present=_val.Get<bool>("present");
+        _present.saved=false;
+        _present.value=false;
+        Reset();
+      }
+      public override bool VarChanged(Topic snd, bool delete) {
+        if(snd==_val) {
+          return true;
+        }
+        return false;
+      }
+
+      public override bool Recv(byte[] buf) {
+        if(buf[0]==ADDR) {
+          if(buf[1]==0x10 && _st==2 && buf.Length==6) {
+            _val.value=(long)(((buf[4]<<8) | buf[5])/1.2);
+            _present.value=true;
+            _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
+            _st=0;
+          } else {
+            _present.value=false;
+          }
+          return true;
+        }
+        return false;
+      }
+        
+
+      public override bool Poll(out byte[] buf) {
+        buf=null;
+        bool busy=false;
+        if(_pt<DateTime.Now) {
+          if(_st==0) {
+            buf=new byte[] { ADDR, 0x01, 0x01, 0x00, 0x23 };  // One time L-resolution mode
+            _pt=DateTime.Now.AddMilliseconds(20);
+            _st=1;
+            busy=true;
+          } else if(_st==1){
+            buf=new byte[] { ADDR, 0x02, 0x00, 0x02 };  // Read measurement result. 
+            _pt=DateTime.Now.AddMilliseconds(500);
+            _st=2;
+            busy=true;
+          } else {
+            Reset();
+          }
+        } else {
+          busy=_st!=0;
+        }
+        return busy;
+      }
+
+      public override void Reset() {
+        _pt=DateTime.Now.AddSeconds(_rand.Next(15, 30));
+        _st=0;
       }
     }
     private class Blinky : TWICommon {
