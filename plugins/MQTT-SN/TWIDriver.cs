@@ -9,6 +9,7 @@
 #endregion license
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -178,8 +179,18 @@ namespace X13.Periphery {
         drv=new Blinky(snd);
         break;
       case "BH1750_0":
-      case "1750_1":
+      case "BH1750_1":
         drv=new BH1750(snd);
+        break;
+      case "EXP_0":
+      case "EXP_1":
+      case "EXP_2":
+      case "EXP_3":
+      case "EXP_4":
+      case "EXP_5":
+      case "EXP_6":
+      case "EXP_7":
+        drv=new Expander(snd);
         break;
       //case "SI1143":
       //  drv=new SI1143(snd);
@@ -208,6 +219,7 @@ namespace X13.Periphery {
     private enum AckFlags : byte {
       WRITE=0x01,         // Write access
       READ=0x02,          // Read access
+      WD_ARMED=0x04,      // Watchdog started
       Busy=0x08,          // Bus busy
       Ok=0x10,            // Access complete
       Timeout=0x20,       // Timeout
@@ -1258,6 +1270,205 @@ namespace X13.Periphery {
       }
       public override void Reset() {
         _st=3;
+      }
+    }
+    private class Expander : TWICommon {
+      private byte ADDR;
+      private Topic _mnt;
+      private DVar<bool>[] _pins;
+      private ushort _gpo, _ipol, _iodir;
+      private int _flags;       // 1 - _gpo, 2 - _ipol, 4 - _iodir
+      private bool _busy, _waitResp;
+      private DateTime _pt;
+
+      public Expander(Topic pin) {
+        if(pin==null) {
+          throw new ArgumentNullException();
+        }
+        if(pin.name.Length==5 && pin.name.StartsWith("EXP_") && pin.name[4]>='0' && pin.name[4]<='7') {
+          _mnt=pin;
+          ADDR=(byte)(0x20 | (byte)(pin.name[4]-'0'));
+        } else {
+          throw new ArgumentException();
+        }
+
+        var dc=_mnt.Get<string>("_declarer", _mnt);
+        dc.saved=true;
+        dc.value="TWI_Expander";
+        _pins=new DVar<bool>[18]; // 16 - present, 17 - IRQ
+
+        _pins[16]=_mnt.Get<bool>("present");
+        _pins[16].saved=false;
+        _pins[16].value=false;
+        _iodir=0xFFFF;
+        _mnt.Subscribe("+", PinChanged);
+        Reset();
+      }
+      public override bool VarChanged(Topic snd, bool delete) {
+        if(snd==_mnt) {
+          if(delete && _mnt!=null){
+            _mnt.Unsubscribe("+", PinChanged);
+          }
+          return true;
+        }
+        return false;
+      }
+      public override bool Recv(byte[] buf) {
+        if(buf[0]==ADDR) {
+          if(buf[1]==0x10 && buf.Length==6) {
+            ushort n_gpi=(ushort)(buf[4] | (buf[5]<<8));
+            for(int i=0; i<16; i++) {
+              if(_pins[i]!=null && _pins[i].name[0]=='I') {
+                ushort mask=(ushort)(1<<i);
+                _pins[i].value=((n_gpi & mask)!=0);
+              }
+            }
+            _pins[16].value=true;
+            _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
+            _busy=false;
+          } else {
+            _pins[16].value=false;
+            _pt=DateTime.Now.AddSeconds(_rand.Next(135, 165));
+            _busy=false;
+          }
+          _waitResp=false;
+          return true;
+        }
+        return false;
+      }
+      public override bool Poll(out byte[] buf) {
+        buf=null;
+        if(_waitResp) {
+          if(_pt<DateTime.Now) {  // read timeout
+            Reset();
+            _busy=false;
+          }
+          return true;
+        } else if(_pt<DateTime.Now) {
+          if((_flags & 4)!=0) {
+            _flags&=3;
+            buf=new byte[] { ADDR, 0x01, 0x03, 0x00, 0x06, (byte)_iodir, (byte)(_iodir>>8) };  // Access to IODIR
+            _pt=DateTime.Now.AddMilliseconds(30);
+            _busy=true;
+          } else if((_flags & 2)!=0) {
+            _flags&=5;
+            buf=new byte[] { ADDR, 0x01, 0x03, 0x00, 0x04, (byte)_ipol, (byte)(_ipol>>8) };  // Access to IPOL
+            _pt=DateTime.Now.AddMilliseconds(30);
+            _busy=true;
+          } else if((_flags & 1)!=0) {
+            _flags&=6;
+            buf=new byte[] { ADDR, 0x01, 0x03, 0x00, 0x00, (byte)_gpo, (byte)(_gpo>>8) };  // Access to GP
+            _pt=DateTime.Now.AddMilliseconds(30);
+            _busy=true;
+          } else if(_iodir!=0xFFFF) {
+            buf=new byte[] { ADDR, 0x03, 0x01, 0x02, 0x00 };  // Access to GP
+            _pt=DateTime.Now.AddMilliseconds(500);
+            _busy=true;
+            _waitResp=true;
+          } else {
+            _busy=false;
+            _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
+          }
+        }
+        return _busy;
+      }
+      public override void Reset() {
+        _flags=7;
+        _busy=false;
+        _waitResp=false;
+        _pt=DateTime.Now.AddMilliseconds(_rand.Next(850, 1500));
+      }
+      private void PinChanged(Topic src, TopicChanged tc) {
+        DVar<bool> pin=src as DVar<bool>;
+        int idx=-1;
+        if(pin==null || tc.Initiator==_mnt) {
+          return;
+        }
+        if(tc.Art==TopicChanged.ChangeArt.Remove) {
+          for(idx=0; idx<_pins.Length; idx++) {
+            if(_pins[idx]==pin) {
+              _pins[idx]=null;
+              ushort n_ipol=_ipol, n_iodir=_iodir;
+              n_iodir&=(ushort)(~(1<<idx));
+              if(_iodir!=n_iodir) {
+                _iodir=n_iodir;
+                _flags|=4;
+              }
+              n_ipol&=(ushort)(~(1<<idx));
+              if(_ipol!=n_ipol) {
+                _ipol=n_ipol;
+                _flags|=2;
+              }
+              break;
+            }
+          }
+        } else {
+          for(int i=0; i<_pins.Length; i++) {
+            if(_pins[i]==pin) {
+              idx=i;
+              break;
+            }
+          }
+          if(idx==-1) {
+            ushort n_ipol=_ipol, n_iodir=_iodir;
+            if(pin.name.Length==3 
+              && (pin.name[0]=='I' || pin.name[0]=='O') 
+              && (pin.name[1]=='p' || pin.name[1]=='n')
+              && ((pin.name[2]>='0' && pin.name[2]<='9') || (pin.name[2]>='A' && pin.name[2]<='F'))) {
+                idx=pin.name[2]-'0';
+                if(idx>9) {
+                  idx-=7;
+                }
+                if(pin.name[0]=='I') {
+                  n_iodir|=(ushort)(1<<idx);
+                } else {
+                  n_iodir&=(ushort)(~(1<<idx));
+                }
+                if(_iodir!=n_iodir) {
+                  _iodir=n_iodir;
+                  _flags|=4;
+                }
+                if(pin.name[1]=='p') {
+                  n_ipol&=(ushort)(~(1<<idx));
+                } else {
+                  n_ipol|=(ushort)(1<<idx);
+                }
+                if(_ipol!=n_ipol) {
+                  _ipol=n_ipol;
+                  _flags|=2;
+                }
+            } else if(pin.name=="IRQ") {
+              if(pin.value && !_busy && _flags==0) {
+                _pt=DateTime.Now.AddMilliseconds(1);
+              }
+              return;
+            } else {
+              return; // unknown variable
+            }
+            if(_pins[idx]!=pin) {
+              if(_pins[idx]!=null) {
+                _pins[idx].Remove(tc.Initiator);
+              }
+              _pins[idx]=pin;
+            }
+          }
+        }
+        if(pin.name[0]=='O') {
+          ushort n_gpo=_gpo;
+          bool val=((_ipol & (1<<idx))==0)?pin.value:!pin.value;
+          if(val) {
+            n_gpo|=(ushort)(1<<idx);
+          } else {
+            n_gpo&=(ushort)(~(1<<idx));
+          }
+          if(_gpo!=n_gpo) {
+            _gpo=n_gpo;
+            _flags|=1;
+          }
+        }
+        if(!_busy && _flags!=0) {
+          _pt=DateTime.Now.AddMilliseconds(1);
+        }
       }
     }
     /*
