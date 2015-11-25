@@ -327,8 +327,8 @@ namespace X13.Periphery {
         return (snd==_T);
       }
       public override bool Recv(byte[] buf) {
-        if(buf.Length==6 && buf[0]==addr) {
-          if(buf[1]==0x10) {
+        if(buf[0]==addr) {
+          if(buf[1]==0x10 && buf.Length==6) {
             _T.value=(short)((buf[4]<<8) | buf[5])/256.0;
             _present.value=true;
           } else {
@@ -337,7 +337,7 @@ namespace X13.Periphery {
               Log.Error("{0}.recv - {1}", _T.path, (AckFlags)buf[1]);
             }
           }
-          _pt=DateTime.Now.AddSeconds(_rand.Next(45, 90));
+          _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
           _busy=false;
           return true;
         }
@@ -345,15 +345,12 @@ namespace X13.Periphery {
       }
       public override bool Poll(out byte[] buf) {
         if(_busy) {
-          //if(_pt<DateTime.Now) {
-          //  _busy=false;
-          //  if(_verbose) {
-          //    Log.Warning("{0}.poll({1}) - timeot", _T, _busy?1:0);
-          //  }
-          //  _present.value=false;
-          //  _pt=DateTime.Now.AddSeconds(_rand.Next(100, 200));
-          //}
           buf=null;
+          if(_pt<DateTime.Now) {    // Timeout
+            _present.value=false;
+            _pt=DateTime.Now.AddSeconds(_rand.Next(135, 165));
+            _busy=false;
+          }
           return true;
         }
         if(_pt<DateTime.Now) {
@@ -367,7 +364,7 @@ namespace X13.Periphery {
       }
       public override void Reset() {
         _busy=false;
-        _pt=DateTime.Now.AddMilliseconds(_rand.Next(800, 2000));
+        _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
       }
     }
     private class CC2D : TWICommon {
@@ -478,7 +475,7 @@ namespace X13.Periphery {
       }
       public override void Reset() {
         _st=0;
-        _pt=DateTime.Now.AddMilliseconds(_rand.Next(800, 2000));
+        _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
       }
     }
     private class HIH61xx : TWICommon {
@@ -586,7 +583,7 @@ namespace X13.Periphery {
       }
       public override void Reset() {
         _st=0;
-        _pt=DateTime.Now.AddMilliseconds(_rand.Next(800, 2000));
+        _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
       }
     }
     private class SHT21 : TWICommon {
@@ -665,7 +662,7 @@ namespace X13.Periphery {
             if(TWIDriver._verbose) {
               Log.Error("{0}.recv - {1}", _T.path, (AckFlags)buf[1]);
             }
-            _pt=DateTime.Now.AddSeconds(_rand.Next(15, 30));
+            _pt=DateTime.Now.AddSeconds(_rand.Next(135, 165));
             _st=0;
           }
           return true;
@@ -701,10 +698,9 @@ namespace X13.Periphery {
       }
       public override void Reset() {
         _st=0;
-        _pt=DateTime.Now.AddMilliseconds(_rand.Next(800, 2000));
+        _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
       }
     }
-
     private class BMP180 : TWICommon {
       private const byte ADDR=0x77;
       private const int BMP180_OSS=3;
@@ -835,7 +831,7 @@ namespace X13.Periphery {
             if(TWIDriver._verbose) {
               Log.Error("{0}.recv - {1}", _T.path, (AckFlags)buf[1]);
             }
-            _pt=DateTime.Now.AddSeconds(_rand.Next(15, 30));
+            _pt=DateTime.Now.AddSeconds(_rand.Next(135, 165));
             _st=0;
           }
           return true;
@@ -881,7 +877,7 @@ namespace X13.Periphery {
       }
       public override void Reset() {
         _st=-2;
-        _pt=DateTime.Now.AddMilliseconds(_rand.Next(800, 2000));
+        _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
       }
     }
     private class BME280 : TWICommon {
@@ -1057,7 +1053,7 @@ namespace X13.Periphery {
             if(TWIDriver._verbose) {
               Log.Error("{0}.recv - {1}", _T.path, (AckFlags)buf[1]);
             }
-            _pt=DateTime.Now.AddSeconds(_rand.Next(15, 30));
+            _pt=DateTime.Now.AddSeconds(_rand.Next(135, 165));
             _st=0;
           }
           return true;
@@ -1107,7 +1103,7 @@ namespace X13.Periphery {
       }
       public override void Reset() {
         _st=-4;
-        _pt=DateTime.Now.AddMilliseconds(_rand.Next(800, 2000));
+        _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
       }
     }
     private class BH1750 : TWICommon {
@@ -1141,7 +1137,6 @@ namespace X13.Periphery {
         }
         return false;
       }
-
       public override bool Recv(byte[] buf) {
         if(buf[0]==ADDR) {
           if(buf[1]==0x10 && _st==2 && buf.Length==6) {
@@ -1151,13 +1146,13 @@ namespace X13.Periphery {
             _st=0;
           } else {
             _present.value=false;
+            _pt=DateTime.Now.AddSeconds(_rand.Next(135, 165));
+            _st=0;
           }
           return true;
         }
         return false;
       }
-        
-
       public override bool Poll(out byte[] buf) {
         buf=null;
         bool busy=false;
@@ -1180,7 +1175,6 @@ namespace X13.Periphery {
         }
         return busy;
       }
-
       public override void Reset() {
         _pt=DateTime.Now.AddSeconds(_rand.Next(15, 30));
         _st=0;
