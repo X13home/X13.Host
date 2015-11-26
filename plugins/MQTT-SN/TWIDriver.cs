@@ -157,9 +157,9 @@ namespace X13.Periphery {
       case "HIH61_H":
         drv=new HIH61xx(snd);
         break;
-      case "SHT21_T":
-      case "SHT21_H":
-        drv=new SHT21(snd);
+      case "SI7020_T":
+      case "SI7020_H":
+        drv=new SI7020(snd);
         break;
       case "BMP180_T":
       case "BMP180_P":
@@ -598,7 +598,7 @@ namespace X13.Periphery {
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
       }
     }
-    private class SHT21 : TWICommon {
+    private class SI7020 : TWICommon {
       private const byte ADDR=0x40;
       private DVar<double> _T;
       private DVar<double> _H;
@@ -606,22 +606,22 @@ namespace X13.Periphery {
       private DVar<bool> _present;
       private int _st;
 
-      public SHT21(Topic pin) {
+      public SI7020(Topic pin) {
         if(pin==null) {
           throw new ArgumentNullException();
         }
-        if(pin.name=="SHT21_T") {
+        if(pin.name=="SI7020_T") {
           _T=pin as DVar<double>;
           if(_T==null) {
             throw new ArgumentException();
           }
-          _H=_T.parent.Get<double>("SHT21_H");
-        } else if(pin.name=="SHT21_H") {
+          _H=_T.parent.Get<double>("SI7020_H");
+        } else if(pin.name=="SI7020_H") {
           _H=pin as DVar<double>;
           if(_H==null) {
             throw new ArgumentException();
           }
-          _T=_H.parent.Get<double>("SHT21_T");
+          _T=_H.parent.Get<double>("SI7020_T");
         } else {
           throw new ArgumentException();
         }

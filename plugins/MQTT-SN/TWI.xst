@@ -1,183 +1,187 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- device configuration file for TWI  -->
-<root head="/etc/declarers/type">
-  <item name="TWI" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.315.1125.10">
-    <item name="Blinky" value="" saved="True" type="System.String">
-      <item name="BLINKM_RGB8" value="ai" saved="True" type="System.String">
-        <item name="_description" value="RGB" saved="True" type="System.String" />
+<root head="/etc/declarers">
+  <item name="type">
+    <item name="TWI" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.315.1126.5">
+      <item name="Blinky" value="" saved="True" type="System.String">
+        <item name="BLINKM_RGB8" value="ai" saved="True" type="System.String">
+          <item name="_description" value="RGB" saved="True" type="System.String" />
+        </item>
+        <item name="BLINKM_F8" value="ci" saved="True" type="System.String">
+          <item name="_description" value="Fade" saved="True" type="System.String" />
+        </item>
+        <item name="BLINKM_RGB9" value="ai" saved="True" type="System.String">
+          <item name="_description" value="RGB" saved="True" type="System.String" />
+        </item>
+        <item name="BLINKM_F9" value="ci" saved="True" type="System.String">
+          <item name="_description" value="Fade" saved="True" type="System.String" />
+        </item>
+        <item name="BLINKM_RGB10" value="bi" saved="True" type="System.String">
+          <item name="_description" value="RGB" saved="True" type="System.String" />
+        </item>
+        <item name="BLINKM_F10" value="di" saved="True" type="System.String">
+          <item name="_description" value="Fade" saved="True" type="System.String" />
+        </item>
       </item>
-      <item name="BLINKM_F8" value="ci" saved="True" type="System.String">
-        <item name="_description" value="Fade" saved="True" type="System.String" />
-      </item>
-      <item name="BLINKM_RGB9" value="ai" saved="True" type="System.String">
-        <item name="_description" value="RGB" saved="True" type="System.String" />
-      </item>
-      <item name="BLINKM_F9" value="ci" saved="True" type="System.String">
-        <item name="_description" value="Fade" saved="True" type="System.String" />
-      </item>
-      <item name="BLINKM_RGB10" value="bi" saved="True" type="System.String">
-        <item name="_description" value="RGB" saved="True" type="System.String" />
-      </item>
-      <item name="BLINKM_F10" value="di" saved="True" type="System.String">
-        <item name="_description" value="Fade" saved="True" type="System.String" />
-      </item>
-    </item>
-    <!--<item name="SI1143" value="ai" saved="True" type="System.String">
+      <!--<item name="SI1143" value="ai" saved="True" type="System.String">
       <item name="_description" value="Sensor SI1143" saved="True" type="System.String" />
     </item>-->
-    <item name="BMP180" value="" saved="True" type="System.String">
-      <item name="BMP180_T" value="0g" saved="True" type="System.String">
-        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      <item name="BMP180" value="" saved="True" type="System.String">
+        <item name="BMP180_T" value="0g" saved="True" type="System.String">
+          <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+        </item>
+        <item name="BMP180_P" value="1i" saved="True" type="System.String">
+          <item name="_description" value="Pressure Pa" saved="True" type="System.String" />
+        </item>
       </item>
-      <item name="BMP180_P" value="1i" saved="True" type="System.String">
-        <item name="_description" value="Pressure Pa" saved="True" type="System.String" />
+      <item name="BME280" value="" saved="True" type="System.String">
+        <item name="BME280_T" value="0g" saved="True" type="System.String">
+          <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+        </item>
+        <item name="BME280_H" value="1g" saved="True" type="System.String">
+          <item name="_description" value="Humidity %" saved="True" type="System.String" />
+        </item>
+        <item name="BME280_P" value="2i" saved="True" type="System.String">
+          <item name="_description" value="Pressure Pa" saved="True" type="System.String" />
+        </item>
       </item>
-    </item>
-    <item name="BME280" value="" saved="True" type="System.String">
-      <item name="BME280_T" value="0g" saved="True" type="System.String">
-        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      <item name="CC2D" value="" saved="True" type="System.String">
+        <item name="CC2D_T" value="0g" saved="True" type="System.String">
+          <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+        </item>
+        <item name="CC2D_H" value="1g" saved="True" type="System.String">
+          <item name="_description" value="Humidity %" saved="True" type="System.String" />
+        </item>
       </item>
-      <item name="BME280_H" value="1g" saved="True" type="System.String">
-        <item name="_description" value="Humidity %" saved="True" type="System.String" />
+      <item name="SI7020" value="" saved="True" type="System.String">
+        <item name="SI7020_T" value="0g" saved="True" type="System.String">
+          <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+        </item>
+        <item name="SI7020_H" value="1g" saved="True" type="System.String">
+          <item name="_description" value="Humidity %" saved="True" type="System.String" />
+        </item>
       </item>
-      <item name="BME280_P" value="2i" saved="True" type="System.String">
-        <item name="_description" value="Pressure Pa" saved="True" type="System.String" />
+      <item name="HIH61xx" value="" saved="True" type="System.String">
+        <item name="HIH61_T" value="0g" saved="True" type="System.String">
+          <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+        </item>
+        <item name="HIH61_H" value="1g" saved="True" type="System.String">
+          <item name="_description" value="Humidity %" saved="True" type="System.String" />
+        </item>
       </item>
-    </item>
-    <item name="CC2D" value="" saved="True" type="System.String">
-      <item name="CC2D_T" value="0g" saved="True" type="System.String">
-        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      <item name="BH1750" value="" saved="True" type="System.String">
+        <item name="BH1750_0" value="Ai" saved="True" type="System.String">
+          <item name="_description" value="Ambient Light, lx" saved="True" type="System.String" />
+        </item>
+        <item name="BH1750_1" value="Bi" saved="True" type="System.String">
+          <item name="_description" value="Ambient Light, lx" saved="True" type="System.String" />
+        </item>
       </item>
-      <item name="CC2D_H" value="1g" saved="True" type="System.String">
-        <item name="_description" value="Humidity %" saved="True" type="System.String" />
+      <item name="Expander" value="" saved="True" type="System.String">
+        <item name="EXP_0" value="En" saved="True" type="System.String" />
+        <item name="EXP_1" value="En" saved="True" type="System.String" />
+        <item name="EXP_2" value="En" saved="True" type="System.String" />
+        <item name="EXP_3" value="En" saved="True" type="System.String" />
+        <item name="EXP_4" value="En" saved="True" type="System.String" />
+        <item name="EXP_5" value="En" saved="True" type="System.String" />
+        <item name="EXP_6" value="En" saved="True" type="System.String" />
+        <item name="EXP_7" value="En" saved="True" type="System.String" />
       </item>
-    </item>
-    <item name="SHT21" value="" saved="True" type="System.String">
-      <item name="SHT21_T" value="0g" saved="True" type="System.String">
-        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+      <item name="LM75" value="" saved="True" type="System.String">
+        <item name="LM75_T0" value="Bg" saved="True" type="System.String">
+          <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+        </item>
+        <item name="LM75_T1" value="Bg" saved="True" type="System.String">
+          <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+        </item>
+        <item name="LM75_T2" value="Bg" saved="True" type="System.String">
+          <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+        </item>
+        <item name="LM75_T3" value="Bg" saved="True" type="System.String">
+          <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+        </item>
       </item>
-      <item name="SHT21_H" value="1g" saved="True" type="System.String">
-        <item name="_description" value="Humidity %" saved="True" type="System.String" />
+      <item name="Raw" value="GB" saved="True" type="System.String">
+        <item name="_description" value="Sa1 .. Sa127 &amp; Ra1 .. Ra127" saved="True" type="System.String" />
       </item>
-    </item>
-    <item name="HIH61xx" value="" saved="True" type="System.String">
-      <item name="HIH61_T" value="0g" saved="True" type="System.String">
-        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
-      </item>
-      <item name="HIH61_H" value="1g" saved="True" type="System.String">
-        <item name="_description" value="Humidity %" saved="True" type="System.String" />
-      </item>
-    </item>
-    <item name="BH1750" value="" saved="True" type="System.String">
-      <item name="BH1750_0" value="Ai" saved="True" type="System.String">
-        <item name="_description" value="Ambient Light, lx" saved="True" type="System.String" />
-      </item>
-      <item name="BH1750_1" value="Bi" saved="True" type="System.String">
-        <item name="_description" value="Ambient Light, lx" saved="True" type="System.String" />
-      </item>
-    </item>
-    <item name="Expander" value="" saved="True" type="System.String">
-      <item name="EXP_0" value="En" saved="True" type="System.String" />
-      <item name="EXP_1" value="En" saved="True" type="System.String" />
-      <item name="EXP_2" value="En" saved="True" type="System.String" />
-      <item name="EXP_3" value="En" saved="True" type="System.String" />
-      <item name="EXP_4" value="En" saved="True" type="System.String" />
-      <item name="EXP_5" value="En" saved="True" type="System.String" />
-      <item name="EXP_6" value="En" saved="True" type="System.String" />
-      <item name="EXP_7" value="En" saved="True" type="System.String" />
-    </item>
-    <item name="LM75" value="" saved="True" type="System.String">
-      <item name="LM75_T0" value="Bg" saved="True" type="System.String">
-        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
-      </item>
-      <item name="LM75_T1" value="Bg" saved="True" type="System.String">
-        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
-      </item>
-      <item name="LM75_T2" value="Bg" saved="True" type="System.String">
-        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
-      </item>
-      <item name="LM75_T3" value="Bg" saved="True" type="System.String">
-        <item name="_description" value="Temperature °C" saved="True" type="System.String" />
-      </item>
-    </item>
-    <item name="Raw" value="GB" saved="True" type="System.String">
-      <item name="_description" value="Sa1 .. Sa127 &amp; Ra1 .. Ra127" saved="True" type="System.String" />
     </item>
   </item>
-  <item name="TWI_Expander" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.315.1125.20">
-    <item name="Digital inputs">
-      <item name="Ip0" value="0zX0" saved="True" type="System.String" />
-      <item name="Ip1" value="0zX1" saved="True" type="System.String" />
-      <item name="Ip2" value="0zX2" saved="True" type="System.String" />
-      <item name="Ip3" value="0zX3" saved="True" type="System.String" />
-      <item name="Ip4" value="0zX4" saved="True" type="System.String" />
-      <item name="Ip5" value="0zX5" saved="True" type="System.String" />
-      <item name="Ip6" value="0zX6" saved="True" type="System.String" />
-      <item name="Ip7" value="0zX7" saved="True" type="System.String" />
-      <item name="Ip8" value="0zX8" saved="True" type="System.String" />
-      <item name="Ip9" value="0zX9" saved="True" type="System.String" />
-      <item name="IpA" value="0zX10" saved="True" type="System.String" />
-      <item name="IpB" value="0zX11" saved="True" type="System.String" />
-      <item name="IpC" value="0zX12" saved="True" type="System.String" />
-      <item name="IpD" value="0zX13" saved="True" type="System.String" />
-      <item name="IpE" value="0zX14" saved="True" type="System.String" />
-      <item name="IpF" value="0zX15" saved="True" type="System.String" />
+  <item name="TWI_Bus">
+    <item name="TWI_Expander" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.315.1126.5">
+      <item name="Digital inputs">
+        <item name="Ip0" value="0zX0" saved="True" type="System.String" />
+        <item name="Ip1" value="0zX1" saved="True" type="System.String" />
+        <item name="Ip2" value="0zX2" saved="True" type="System.String" />
+        <item name="Ip3" value="0zX3" saved="True" type="System.String" />
+        <item name="Ip4" value="0zX4" saved="True" type="System.String" />
+        <item name="Ip5" value="0zX5" saved="True" type="System.String" />
+        <item name="Ip6" value="0zX6" saved="True" type="System.String" />
+        <item name="Ip7" value="0zX7" saved="True" type="System.String" />
+        <item name="Ip8" value="0zX8" saved="True" type="System.String" />
+        <item name="Ip9" value="0zX9" saved="True" type="System.String" />
+        <item name="IpA" value="0zX10" saved="True" type="System.String" />
+        <item name="IpB" value="0zX11" saved="True" type="System.String" />
+        <item name="IpC" value="0zX12" saved="True" type="System.String" />
+        <item name="IpD" value="0zX13" saved="True" type="System.String" />
+        <item name="IpE" value="0zX14" saved="True" type="System.String" />
+        <item name="IpF" value="0zX15" saved="True" type="System.String" />
+      </item>
+      <item name="Digital inverted inputs">
+        <item name="In0" value="1zX0" saved="True" type="System.String" />
+        <item name="In1" value="1zX1" saved="True" type="System.String" />
+        <item name="In2" value="1zX2" saved="True" type="System.String" />
+        <item name="In3" value="1zX3" saved="True" type="System.String" />
+        <item name="In4" value="1zX4" saved="True" type="System.String" />
+        <item name="In5" value="1zX5" saved="True" type="System.String" />
+        <item name="In6" value="1zX6" saved="True" type="System.String" />
+        <item name="In7" value="1zX7" saved="True" type="System.String" />
+        <item name="In8" value="1zX8" saved="True" type="System.String" />
+        <item name="In9" value="1zX9" saved="True" type="System.String" />
+        <item name="InA" value="1zX10" saved="True" type="System.String" />
+        <item name="InB" value="1zX11" saved="True" type="System.String" />
+        <item name="InC" value="1zX12" saved="True" type="System.String" />
+        <item name="InD" value="1zX13" saved="True" type="System.String" />
+        <item name="InE" value="1zX14" saved="True" type="System.String" />
+        <item name="InF" value="1zX15" saved="True" type="System.String" />
+      </item>
+      <item name="Digital outputs">
+        <item name="Op0" value="2zX0" saved="True" type="System.String" />
+        <item name="Op1" value="2zX1" saved="True" type="System.String" />
+        <item name="Op2" value="2zX2" saved="True" type="System.String" />
+        <item name="Op3" value="2zX3" saved="True" type="System.String" />
+        <item name="Op4" value="2zX4" saved="True" type="System.String" />
+        <item name="Op5" value="2zX5" saved="True" type="System.String" />
+        <item name="Op6" value="2zX6" saved="True" type="System.String" />
+        <item name="Op7" value="2zX7" saved="True" type="System.String" />
+        <item name="Op8" value="2zX8" saved="True" type="System.String" />
+        <item name="Op9" value="2zX9" saved="True" type="System.String" />
+        <item name="OpA" value="2zX10" saved="True" type="System.String" />
+        <item name="OpB" value="2zX11" saved="True" type="System.String" />
+        <item name="OpC" value="2zX12" saved="True" type="System.String" />
+        <item name="OpD" value="2zX13" saved="True" type="System.String" />
+        <item name="OpE" value="2zX14" saved="True" type="System.String" />
+        <item name="OpF" value="2zX15" saved="True" type="System.String" />
+      </item>
+      <item name="Digital inverted outputs">
+        <item name="On0" value="3zX0" saved="True" type="System.String" />
+        <item name="On1" value="3zX1" saved="True" type="System.String" />
+        <item name="On2" value="3zX2" saved="True" type="System.String" />
+        <item name="On3" value="3zX3" saved="True" type="System.String" />
+        <item name="On4" value="3zX4" saved="True" type="System.String" />
+        <item name="On5" value="3zX5" saved="True" type="System.String" />
+        <item name="On6" value="3zX6" saved="True" type="System.String" />
+        <item name="On7" value="3zX7" saved="True" type="System.String" />
+        <item name="On8" value="3zX8" saved="True" type="System.String" />
+        <item name="On9" value="3zX9" saved="True" type="System.String" />
+        <item name="OnA" value="3zX10" saved="True" type="System.String" />
+        <item name="OnB" value="3zX11" saved="True" type="System.String" />
+        <item name="OnC" value="3zX12" saved="True" type="System.String" />
+        <item name="OnD" value="3zX13" saved="True" type="System.String" />
+        <item name="OnE" value="3zX14" saved="True" type="System.String" />
+        <item name="OnF" value="3zX15" saved="True" type="System.String" />
+      </item>
+      <item name="IRQ" value="HzX0" saved="True" type="System.String" />
+      <item name="remove" value="ZD" saved="True" type="System.String" />
     </item>
-    <item name="Digital inverted inputs">
-      <item name="In0" value="1zX0" saved="True" type="System.String" />
-      <item name="In1" value="1zX1" saved="True" type="System.String" />
-      <item name="In2" value="1zX2" saved="True" type="System.String" />
-      <item name="In3" value="1zX3" saved="True" type="System.String" />
-      <item name="In4" value="1zX4" saved="True" type="System.String" />
-      <item name="In5" value="1zX5" saved="True" type="System.String" />
-      <item name="In6" value="1zX6" saved="True" type="System.String" />
-      <item name="In7" value="1zX7" saved="True" type="System.String" />
-      <item name="In8" value="1zX8" saved="True" type="System.String" />
-      <item name="In9" value="1zX9" saved="True" type="System.String" />
-      <item name="InA" value="1zX10" saved="True" type="System.String" />
-      <item name="InB" value="1zX11" saved="True" type="System.String" />
-      <item name="InC" value="1zX12" saved="True" type="System.String" />
-      <item name="InD" value="1zX13" saved="True" type="System.String" />
-      <item name="InE" value="1zX14" saved="True" type="System.String" />
-      <item name="InF" value="1zX15" saved="True" type="System.String" />
-    </item>
-    <item name="Digital outputs">
-      <item name="Op0" value="2zX0" saved="True" type="System.String" />
-      <item name="Op1" value="2zX1" saved="True" type="System.String" />
-      <item name="Op2" value="2zX2" saved="True" type="System.String" />
-      <item name="Op3" value="2zX3" saved="True" type="System.String" />
-      <item name="Op4" value="2zX4" saved="True" type="System.String" />
-      <item name="Op5" value="2zX5" saved="True" type="System.String" />
-      <item name="Op6" value="2zX6" saved="True" type="System.String" />
-      <item name="Op7" value="2zX7" saved="True" type="System.String" />
-      <item name="Op8" value="2zX8" saved="True" type="System.String" />
-      <item name="Op9" value="2zX9" saved="True" type="System.String" />
-      <item name="OpA" value="2zX10" saved="True" type="System.String" />
-      <item name="OpB" value="2zX11" saved="True" type="System.String" />
-      <item name="OpC" value="2zX12" saved="True" type="System.String" />
-      <item name="OpD" value="2zX13" saved="True" type="System.String" />
-      <item name="OpE" value="2zX14" saved="True" type="System.String" />
-      <item name="OpF" value="2zX15" saved="True" type="System.String" />
-    </item>
-    <item name="Digital inverted outputs">
-      <item name="On0" value="3zX0" saved="True" type="System.String" />
-      <item name="On1" value="3zX1" saved="True" type="System.String" />
-      <item name="On2" value="3zX2" saved="True" type="System.String" />
-      <item name="On3" value="3zX3" saved="True" type="System.String" />
-      <item name="On4" value="3zX4" saved="True" type="System.String" />
-      <item name="On5" value="3zX5" saved="True" type="System.String" />
-      <item name="On6" value="3zX6" saved="True" type="System.String" />
-      <item name="On7" value="3zX7" saved="True" type="System.String" />
-      <item name="On8" value="3zX8" saved="True" type="System.String" />
-      <item name="On9" value="3zX9" saved="True" type="System.String" />
-      <item name="OnA" value="3zX10" saved="True" type="System.String" />
-      <item name="OnB" value="3zX11" saved="True" type="System.String" />
-      <item name="OnC" value="3zX12" saved="True" type="System.String" />
-      <item name="OnD" value="3zX13" saved="True" type="System.String" />
-      <item name="OnE" value="3zX14" saved="True" type="System.String" />
-      <item name="OnF" value="3zX15" saved="True" type="System.String" />
-    </item>
-    <item name="IRQ" value="HzX0" saved="True" type="System.String" />
-    <item name="remove" value="ZD" saved="True" type="System.String" />
   </item>
 </root>
