@@ -1505,6 +1505,11 @@ namespace X13.PLC {
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Pile")]
     private class Pile : IStatement {
+      private Timer _saveT;
+      private DVar<PiStatement> _model;
+      public Pile() {
+        _saveT=new Timer(Save);
+      }
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Pile");
         m.value="pack://application:,,/CC;component/Images/ar_pile.png";
@@ -1522,6 +1527,7 @@ namespace X13.PLC {
       }
 
       public void Init(DVar<PiStatement> model) {
+        _model=model;
         AddPin<double>(model, "A");
         AddPin<bool>(model, "Push");
         AddPin<string>(model, "_id_A");
@@ -1541,53 +1547,56 @@ namespace X13.PLC {
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
         var push=model.Get<bool>("Push");
-        if(source==push && push.value) {
-          string path=model.Get<string>("_fileName").value;
-          string[] old=null;
-          if(File.Exists(path)) {
-            try {
-              old=File.ReadAllLines(path);
-            }
-            catch(Exception) {
-            }
-          }
-          if(old==null) {
-            old=new string[] { string.Empty };
-          }
-
-          long cap=model.Get<long>("_capacity").value;
-          string header="DT";
-          string cur=DateTime.Now.ToString(model.Get<string>("_XFormat").value);
-          string valS;
-          foreach(var inp in model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
-            var id=model.Get<string>(string.Format("_id_{0}", inp.name)).value;
-            if(string.IsNullOrEmpty(id)) {
-              id=inp.name;
-            }
-            header=header+","+id;
-            valS=inp.value.ToString(CultureInfo.InvariantCulture);
-            {
-              int i=Math.Max(valS.IndexOf('.'), 6);
-              if(i<valS.Length) {
-                valS=valS.Substring(0, i);
-              }
-            }
-            cur=cur+","+valS;
-          }
-          using(StreamWriter file = new StreamWriter(path, false)) {
-            file.WriteLine(header);
-            int stIndex=old.Length-(int)cap+1;
-            if(cap<1 || stIndex<1) {
-              stIndex=1;
-            }
-            foreach(var l in old.Skip(stIndex)) {
-              file.WriteLine(l);
-            }
-            file.WriteLine(cur);
-          }
+        if(push.value && _saveT!=null) {
+          _saveT.Change(100, -1);
         }
       }
 
+      private void Save(object o) {
+        string path=_model.Get<string>("_fileName").value;
+        string[] old=null;
+        if(File.Exists(path)) {
+          try {
+            old=File.ReadAllLines(path);
+          }
+          catch(Exception) {
+          }
+        }
+        if(old==null) {
+          old=new string[] { string.Empty };
+        }
+
+        long cap=_model.Get<long>("_capacity").value;
+        string header="DT";
+        string cur=DateTime.Now.ToString(_model.Get<string>("_XFormat").value);
+        string valS;
+        foreach(var inp in _model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
+          var id=_model.Get<string>(string.Format("_id_{0}", inp.name)).value;
+          if(string.IsNullOrEmpty(id)) {
+            id=inp.name;
+          }
+          header=header+","+id;
+          valS=inp.value.ToString(CultureInfo.InvariantCulture);
+          {
+            int i=Math.Max(valS.IndexOf('.'), 6);
+            if(i<valS.Length) {
+              valS=valS.Substring(0, i);
+            }
+          }
+          cur=cur+","+valS;
+        }
+        using(StreamWriter file = new StreamWriter(path, false)) {
+          file.WriteLine(header);
+          int stIndex=old.Length-(int)cap+1;
+          if(cap<1 || stIndex<1) {
+            stIndex=1;
+          }
+          foreach(var l in old.Skip(stIndex)) {
+            file.WriteLine(l);
+          }
+          file.WriteLine(cur);
+        }
+      }
       public void DeInit() {
       }
     }

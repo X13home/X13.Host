@@ -184,6 +184,7 @@ namespace X13.Periphery {
     private bool _waitAck;
     private List<MsDevice> _nodes;
     private Timer _poolTimer;
+    private MsPublish _lastInPub;
 
     private MsDevice() {
       if(Topic.brokerMode) {
@@ -234,6 +235,11 @@ namespace X13.Periphery {
           _poolTimer.Change(300, 100);
         } else {
           _poolTimer.Change(-1, -1);
+          if(!_present.value) {
+            foreach(var t in Owner.children.Where(z => z.valueType==typeof(TWIDriver)).Select(z => z.GetValue() as TWIDriver).Where(z => z!=null)) {
+              t.Reset();
+            }
+          }
         }
       }
     }
@@ -461,7 +467,11 @@ namespace X13.Periphery {
               break;
             }
           } else if(ti!=null) {
-            SetValue(ti, tmp.Data, tmp.Retained);
+            if(tmp.Dup && _lastInPub!=null && tmp.MessageId==_lastInPub.MessageId) {  // arready recieved
+            } else {
+              SetValue(ti, tmp.Data, tmp.Retained);
+            }
+            _lastInPub=tmp;
           }
         }
         break;

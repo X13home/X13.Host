@@ -377,6 +377,7 @@ namespace X13.Periphery {
       public override void Reset() {
         _busy=false;
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
+        _present.value=false;
       }
     }
     private class CC2D : TWICommon {
@@ -488,6 +489,7 @@ namespace X13.Periphery {
       public override void Reset() {
         _st=0;
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
+        _present.value=false;
       }
     }
     private class HIH61xx : TWICommon {
@@ -596,6 +598,7 @@ namespace X13.Periphery {
       public override void Reset() {
         _st=0;
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
+        _present.value=false;
       }
     }
     private class SI7020 : TWICommon {
@@ -647,16 +650,16 @@ namespace X13.Periphery {
       public override bool Recv(byte[] buf) {
         if(buf[0]==ADDR) {
           if(buf[1]==0x10 && buf.Length==6) {
-            if(_st==2) {
+            if(_st==5) {
               _T.value=Math.Round(((buf[4]<<8) | (buf[5]))*175.72/65536-46.85, 2);
               _present.value=true;
               _pt=DateTime.Now.AddMilliseconds(1);
-              _st=3;
-            } else if(_st==5) {
+              _st=0;
+            } else if(_st==2) {
               _H.value=Math.Round(((buf[4]<<8) | (buf[5]))*125.0/65536-6, 1);
               _present.value=true;
               _pt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
-              _st=0;
+              _st=3;
             } else {
               _present.value=false;
               Reset();
@@ -685,22 +688,22 @@ namespace X13.Periphery {
         buf=null;
         bool busy;
         if(_pt<DateTime.Now) {
-          if(_st==0) {
+          if(_st==3) {
             buf=new byte[] { ADDR, 0x01, 0x01, 0x00, 0xF3 }; // Trigger T measurement, no hold master
-            _pt=DateTime.Now.AddMilliseconds(15);
-            _st=1;
-          } else if(_st==1) {
-            buf=new byte[] { ADDR, 0x02, 0x00, 0x02 }; // Read 2 bytes
-            _pt=DateTime.Now.AddMilliseconds(500);
-            _st=2;
-          } else if(_st==3) {
-            buf=new byte[] { ADDR, 0x01, 0x01, 0x00, 0xF5 }; // Trigger RH measurement no hold master
             _pt=DateTime.Now.AddMilliseconds(15);
             _st=4;
           } else if(_st==4) {
             buf=new byte[] { ADDR, 0x02, 0x00, 0x02 }; // Read 2 bytes
             _pt=DateTime.Now.AddMilliseconds(500);
             _st=5;
+          } else if(_st==0) {
+            buf=new byte[] { ADDR, 0x01, 0x01, 0x00, 0xF5 }; // Trigger RH measurement no hold master
+            _pt=DateTime.Now.AddMilliseconds(15);
+            _st=1;
+          } else if(_st==1) {
+            buf=new byte[] { ADDR, 0x02, 0x00, 0x02 }; // Read 2 bytes
+            _pt=DateTime.Now.AddMilliseconds(500);
+            _st=2;
           }
           busy=true;
         } else {
@@ -711,6 +714,7 @@ namespace X13.Periphery {
       public override void Reset() {
         _st=0;
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
+        _present.value=false;
       }
     }
     private class BMP180 : TWICommon {
@@ -890,6 +894,7 @@ namespace X13.Periphery {
       public override void Reset() {
         _st=-2;
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
+        _present.value=false;
       }
     }
     private class BME280 : TWICommon {
@@ -1066,7 +1071,7 @@ namespace X13.Periphery {
               Log.Error("{0}.recv - {1}", _T.path, (AckFlags)buf[1]);
             }
             _pt=DateTime.Now.AddSeconds(_rand.Next(135, 165));
-            _st=0;
+            _st=-4;
           }
           return true;
         }
@@ -1116,6 +1121,7 @@ namespace X13.Periphery {
       public override void Reset() {
         _st=-4;
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(2800, 4000));
+        _present.value=false;
       }
     }
     private class BH1750 : TWICommon {
@@ -1190,6 +1196,7 @@ namespace X13.Periphery {
       public override void Reset() {
         _pt=DateTime.Now.AddSeconds(_rand.Next(15, 30));
         _st=0;
+        _present.value=false;
       }
     }
     private class Blinky : TWICommon {
@@ -1377,6 +1384,7 @@ namespace X13.Periphery {
         _busy=false;
         _waitResp=false;
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(850, 1500));
+        _pins[16].value=false;
       }
       private void PinChanged(Topic src, TopicChanged tc) {
         DVar<bool> pin=src as DVar<bool>;
