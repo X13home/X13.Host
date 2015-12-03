@@ -2,26 +2,11 @@
 <!-- device configuration file for TWI  -->
 <root head="/etc/declarers">
   <item name="type">
-    <item name="TWI" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.315.1126.5">
+    <item name="TWI" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.315.1203.11">
       <item name="Blinky" value="" saved="True" type="System.String">
-        <item name="BLINKM_RGB8" value="ai" saved="True" type="System.String">
-          <item name="_description" value="RGB" saved="True" type="System.String" />
-        </item>
-        <item name="BLINKM_F8" value="ci" saved="True" type="System.String">
-          <item name="_description" value="Fade" saved="True" type="System.String" />
-        </item>
-        <item name="BLINKM_RGB9" value="ai" saved="True" type="System.String">
-          <item name="_description" value="RGB" saved="True" type="System.String" />
-        </item>
-        <item name="BLINKM_F9" value="ci" saved="True" type="System.String">
-          <item name="_description" value="Fade" saved="True" type="System.String" />
-        </item>
-        <item name="BLINKM_RGB10" value="bi" saved="True" type="System.String">
-          <item name="_description" value="RGB" saved="True" type="System.String" />
-        </item>
-        <item name="BLINKM_F10" value="di" saved="True" type="System.String">
-          <item name="_description" value="Fade" saved="True" type="System.String" />
-        </item>
+        <item name="BLINKM_8" value="an" saved="True" type="System.String" />
+        <item name="BLINKM_9" value="an" saved="True" type="System.String" />
+        <item name="BLINKM_10" value="an" saved="True" type="System.String" />
       </item>
       <!--<item name="SI1143" value="ai" saved="True" type="System.String">
       <item name="_description" value="Sensor SI1143" saved="True" type="System.String" />
@@ -107,6 +92,21 @@
     </item>
   </item>
   <item name="TWI_Bus">
+    <item name="TWI_BLINKM" value="pack://application:,,/MQTT-SN;component/Images/ty_blinkm.png" saved="True" type="System.String" ver="0.315.1203.10">
+      <item name="Red" value="ai" saved="True" type="System.String">
+        <item name="_description" value="Red chanel [0..255]" saved="True" type="System.String" />
+      </item>
+      <item name="Green" value="bi" saved="True" type="System.String">
+        <item name="_description" value="Green chanel [0..255]" saved="True" type="System.String" />
+      </item>
+      <item name="Blue" value="ai" saved="True" type="System.String">
+        <item name="_description" value="Blue chanel [0..255]" saved="True" type="System.String" />
+      </item>
+      <item name="Fade" value="ci" saved="True" type="System.String">
+        <item name="_description" value="Fade for all chanels, 0-slowest, 255-fastest" saved="True" type="System.String" />
+      </item>
+      <item name="remove" value="ZD" saved="True" type="System.String" />
+    </item>
     <item name="TWI_Expander" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.315.1126.5">
       <item name="Digital inputs">
         <item name="Ip0" value="0zX0" saved="True" type="System.String" />

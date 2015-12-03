@@ -170,12 +170,9 @@ namespace X13.Periphery {
       case "BME280_H":
         drv=new BME280(snd);
         break;
-      case "BLINKM_RGB8":
-      case "BLINKM_F8":
-      case "BLINKM_RGB9":
-      case "BLINKM_F9":
-      case "BLINKM_RGB10":
-      case "BLINKM_F10":
+      case "BLINKM_8":
+      case "BLINKM_9":
+      case "BLINKM_10":
         drv=new Blinky(snd);
         break;
       case "BH1750_0":
@@ -994,26 +991,26 @@ namespace X13.Periphery {
         if(buf[0]==ADDR) {
           if(buf[1]==0x10) {
             if(_st==-3 && buf.Length==30) {
-              _dig_T1=(ushort)(buf[4] | buf[5]<<8);
-              _dig_T2=(short)(buf[6] | buf[7]<<8);
-              _dig_T3=(short)(buf[8] | buf[9]<<8);
-              _dig_P1=(ushort)(buf[10] | buf[11]<<8);
-              _dig_P2=(short)(buf[12] | buf[13]<<8);
-              _dig_P3=(short)(buf[14] | buf[15]<<8);
-              _dig_P4=(short)(buf[16] | buf[17]<<8);
-              _dig_P5=(short)(buf[18] | buf[19]<<8);
-              _dig_P6=(short)(buf[20] | buf[21]<<8);
-              _dig_P7=(short)(buf[22] | buf[23]<<8);
-              _dig_P8=(short)(buf[24] | buf[25]<<8);
-              _dig_P9=(short)(buf[26] | buf[27]<<8);
+              _dig_T1=(ushort)(buf[4] | (buf[5]<<8));
+              _dig_T2=(short)(buf[6] | (buf[7]<<8));
+              _dig_T3=(short)(buf[8] | (buf[9]<<8));
+              _dig_P1=(ushort)(buf[10] | (buf[11]<<8));
+              _dig_P2=(short)(buf[12] | (buf[13]<<8));
+              _dig_P3=(short)(buf[14] | (buf[15]<<8));
+              _dig_P4=(short)(buf[16] | (buf[17]<<8));
+              _dig_P5=(short)(buf[18] | (buf[19]<<8));
+              _dig_P6=(short)(buf[20] | (buf[21]<<8));
+              _dig_P7=(short)(buf[22] | (buf[23]<<8));
+              _dig_P8=(short)(buf[24] | (buf[25]<<8));
+              _dig_P9=(short)(buf[26] | (buf[27]<<8));
               _dig_H1=buf[29];
               _pt=DateTime.Now;
               _st=-2;
             } else if(_st==-1 && buf.Length==11) {
-              _dig_H2=(short)(buf[4] | buf[5]<<8);
+              _dig_H2=(short)(buf[4] | (buf[5]<<8));
               _dig_H3=buf[6];
               _dig_H4=(short)((buf[7] << 4) | (buf[8] & 0x0F));
-              _dig_H5=(short)((buf[8] >> 4) | buf[9]<<4);
+              _dig_H5=(short)((buf[8] >> 4) | (buf[9]<<4));
               _dig_H6=(sbyte)buf[10];
               _pt=DateTime.Now;
               _st=0;
@@ -1180,7 +1177,7 @@ namespace X13.Periphery {
             _pt=DateTime.Now.AddMilliseconds(20);
             _st=1;
             busy=true;
-          } else if(_st==1){
+          } else if(_st==1) {
             buf=new byte[] { ADDR, 0x02, 0x00, 0x02 };  // Read measurement result. 
             _pt=DateTime.Now.AddMilliseconds(500);
             _st=2;
@@ -1201,62 +1198,66 @@ namespace X13.Periphery {
     }
     private class Blinky : TWICommon {
       private byte _addr;
-      private DVar<long> _RGB;
+      private Topic _owner;
+      private DVar<long> _R;
+      private DVar<long> _G;
+      private DVar<long> _B;
       private DVar<long> _fade;
+      private DVar<bool> _present;
       private int _st;
+      private DateTime _rt;  // Wait TWI error timer
+      private bool _waitError;
 
       public Blinky(Topic pin) {
         if(pin==null) {
           throw new ArgumentNullException();
         }
-        if(pin.name.StartsWith("BLINKM_RGB")) {
-          _RGB=pin as DVar<long>;
-          if(_RGB==null) {
-            throw new ArgumentException();
-          }
-          _addr=byte.Parse(pin.name.Substring(10));
-          _fade=_RGB.parent.Get<long>(string.Format("BLINKM_F{0}", _addr));
-        } else if(pin.name.StartsWith("BLINKM_F")) {
-          _fade=pin as DVar<long>;
-          if(_fade==null) {
-            throw new ArgumentException();
-          }
-          _addr=byte.Parse(pin.name.Substring(8));
-          _RGB=_fade.parent.Get<long>(string.Format("BLINKM_RGB{0}", _addr));
+        if(pin.name.StartsWith("BLINKM_") && byte.TryParse(pin.name.Substring(7), out _addr) && _addr>7) {
+          _owner=pin;
         } else {
           throw new ArgumentException();
         }
-        //_present=_RGB.Get<bool>("present");
-        //_present.saved=false;
-        //_present.value=false;
+
+        var dc=_owner.Get<string>("_declarer", _owner);
+        dc.saved=true;
+        dc.value="TWI_BLINKM";
+        _R=_owner.Get<long>("Red");
+        _G=_owner.Get<long>("Green");
+        _B=_owner.Get<long>("Blue");
+        _fade=_owner.Get<long>("Fade");
+        _present=_owner.Get<bool>("present");
+        _present.saved=false;
+        _present.value=false;
+        _owner.Subscribe("+", PinChanged);
         Reset();
       }
       public override bool VarChanged(Topic snd, bool delete) {
-        if(snd==_RGB) {
-          if(delete && _fade!=null) {
-            _fade.Remove();
-          } else {
-            _st|=1;
+        if(snd==_owner) {
+          if(delete && _owner!=null) {
+            _owner.Unsubscribe("+", PinChanged);
           }
           return true;
+        }
+        return false;
+      }
+      private void PinChanged(Topic snd, TopicChanged tc) {
+        if(snd==_R || snd==_B || snd==_G) {
+          _st|=1;
         } else if(snd==_fade) {
-          if(delete && _RGB!=null) {
-            _RGB.Remove();
-          } else {
-            _st|=2;
-          }
-          return true;
-        } else {
-          return false;
+          _st|=2;
         }
       }
       public override bool Recv(byte[] buf) {
         if(buf[0]==_addr) {
           if(buf[1]!=0x10) {
             if(TWIDriver._verbose) {
-              Log.Error("{0}.recv - {1}", _RGB.path, (AckFlags)buf[1]);
+              Log.Error("{0}.recv - {1}", _owner.path, (AckFlags)buf[1]);
             }
+            _st=3;
+            _present.value=false;
+            _rt=DateTime.Now.AddSeconds(_rand.Next(45, 75));
           }
+          _waitError=false;
           return true;
         }
         return false;
@@ -1264,29 +1265,47 @@ namespace X13.Periphery {
       public override bool Poll(out byte[] buf) {
         buf=null;
         bool busy=false;
-        if((_st & 2)!=0) {
-          _st&=1;
-          buf=new byte[] { _addr, 0x01, 0x02, 0x00, 0x66, (byte)(_fade.value) };
-          busy=true;
-        } else if((_st & 1)!=0) {
-          _st&=2;
-          buf=new byte[] { _addr, 0x01, 0x04, 0x00, 0x63, (byte)(_RGB.value>>16), (byte)(_RGB.value >> 8), (byte)(_RGB.value) };
-          busy=true;
+        var now=DateTime.Now;
+        if(_waitError && _rt<now) {
+          _present.value=true;
+          _waitError=false;
+        }
+        if(_present.value || _rt<now) {
+          if((_st & 2)!=0) {
+            _st&=1;
+            buf=new byte[] { _addr, 0x01, 0x02, 0x00, 0x66, (byte)(_fade.value) };
+            busy=true;
+            if(!_waitError) {
+              _rt=now.AddMilliseconds(500);
+              _waitError=true;
+            }
+          } else if((_st & 1)!=0) {
+            _st&=2;
+            buf=new byte[] { _addr, 0x01, 0x04, 0x00, 0x63, (byte)(_R.value), (byte)(_G.value), (byte)(_B.value) };
+            busy=true;
+            if(!_waitError) {
+              _rt=now.AddMilliseconds(500);
+              _waitError=true;
+            }
+          }
         }
         return busy;
       }
       public override void Reset() {
         _st=3;
+        _present.value=false;
+        _waitError=false;
       }
     }
     private class Expander : TWICommon {
       private byte ADDR;
       private Topic _mnt;
       private DVar<bool>[] _pins;
-      private ushort _gpo, _ipol, _iodir;
+      private ushort _gpo, _ipol, _iodir, _inps;
       private int _flags;       // 1 - _gpo, 2 - _ipol, 4 - _iodir
-      private bool _busy, _waitResp;
+      private bool _busy, _waitResp, _waitError;
       private DateTime _pt;
+      private DateTime _rt;  // Wait TWI error timer
 
       public Expander(Topic pin) {
         if(pin==null) {
@@ -1313,7 +1332,7 @@ namespace X13.Periphery {
       }
       public override bool VarChanged(Topic snd, bool delete) {
         if(snd==_mnt) {
-          if(delete && _mnt!=null){
+          if(delete && _mnt!=null) {
             _mnt.Unsubscribe("+", PinChanged);
           }
           return true;
@@ -1338,6 +1357,7 @@ namespace X13.Periphery {
             _pt=DateTime.Now.AddSeconds(_rand.Next(135, 165));
             _busy=false;
           }
+          _waitError=false;
           _waitResp=false;
           return true;
         }
@@ -1345,29 +1365,46 @@ namespace X13.Periphery {
       }
       public override bool Poll(out byte[] buf) {
         buf=null;
+        var now=DateTime.Now;
+        if(_waitError && _rt<now) {
+          _pins[16].value=true;
+          _waitError=false;
+        }
         if(_waitResp) {
-          if(_pt<DateTime.Now) {  // read timeout
+          if(_pt<now) {  // read timeout
             Reset();
             _busy=false;
           }
           return true;
-        } else if(_pt<DateTime.Now) {
+        } else if(_pt<now && (_pins[16].value || _rt<now)) {
           if((_flags & 4)!=0) {
             _flags&=3;
             buf=new byte[] { ADDR, 0x01, 0x03, 0x00, 0x06, (byte)_iodir, (byte)(_iodir>>8) };  // Access to IODIR
-            _pt=DateTime.Now.AddMilliseconds(30);
+            _pt=now.AddMilliseconds(30);
             _busy=true;
+            if(!_waitError) {
+              _rt=now.AddMilliseconds(500);
+              _waitError=true;
+            }
           } else if((_flags & 2)!=0) {
             _flags&=5;
             buf=new byte[] { ADDR, 0x01, 0x03, 0x00, 0x04, (byte)_ipol, (byte)(_ipol>>8) };  // Access to IPOL
-            _pt=DateTime.Now.AddMilliseconds(30);
+            _pt=now.AddMilliseconds(30);
             _busy=true;
+            if(!_waitError) {
+              _rt=now.AddMilliseconds(500);
+              _waitError=true;
+            }
           } else if((_flags & 1)!=0) {
             _flags&=6;
             buf=new byte[] { ADDR, 0x01, 0x03, 0x00, 0x00, (byte)_gpo, (byte)(_gpo>>8) };  // Access to GP
-            _pt=DateTime.Now.AddMilliseconds(30);
+            _pt=now.AddMilliseconds(30);
             _busy=true;
-          } else if(_iodir!=0xFFFF) {
+            if(!_waitError) {
+              _rt=now.AddMilliseconds(500);
+              _waitError=true;
+            }
+          } else if(_inps!=0) {
             buf=new byte[] { ADDR, 0x03, 0x01, 0x02, 0x00 };  // Access to GP
             _pt=DateTime.Now.AddMilliseconds(500);
             _busy=true;
@@ -1383,6 +1420,7 @@ namespace X13.Periphery {
         _flags=7;
         _busy=false;
         _waitResp=false;
+        _waitError=false;
         _pt=DateTime.Now.AddMilliseconds(_rand.Next(850, 1500));
         _pins[16].value=false;
       }
@@ -1398,6 +1436,7 @@ namespace X13.Periphery {
               _pins[idx]=null;
               ushort n_ipol=_ipol, n_iodir=_iodir;
               n_iodir&=(ushort)(~(1<<idx));
+              _inps&=(ushort)(~(1<<idx));
               if(_iodir!=n_iodir) {
                 _iodir=n_iodir;
                 _flags|=4;
@@ -1423,28 +1462,29 @@ namespace X13.Periphery {
               && (pin.name[0]=='I' || pin.name[0]=='O') 
               && (pin.name[1]=='p' || pin.name[1]=='n')
               && ((pin.name[2]>='0' && pin.name[2]<='9') || (pin.name[2]>='A' && pin.name[2]<='F'))) {
-                idx=pin.name[2]-'0';
-                if(idx>9) {
-                  idx-=7;
-                }
-                if(pin.name[0]=='I') {
-                  n_iodir|=(ushort)(1<<idx);
-                } else {
-                  n_iodir&=(ushort)(~(1<<idx));
-                }
-                if(_iodir!=n_iodir) {
-                  _iodir=n_iodir;
-                  _flags|=4;
-                }
-                if(pin.name[1]=='p') {
-                  n_ipol&=(ushort)(~(1<<idx));
-                } else {
-                  n_ipol|=(ushort)(1<<idx);
-                }
-                if(_ipol!=n_ipol) {
-                  _ipol=n_ipol;
-                  _flags|=2;
-                }
+              idx=pin.name[2]-'0';
+              if(idx>9) {
+                idx-=7;
+              }
+              if(pin.name[0]=='I') {
+                n_iodir|=(ushort)(1<<idx);
+                _inps|=(ushort)(1<<idx);
+              } else {
+                n_iodir&=(ushort)(~(1<<idx));
+              }
+              if(_iodir!=n_iodir) {
+                _iodir=n_iodir;
+                _flags|=4;
+              }
+              if(pin.name[1]=='p') {
+                n_ipol&=(ushort)(~(1<<idx));
+              } else {
+                n_ipol|=(ushort)(1<<idx);
+              }
+              if(_ipol!=n_ipol) {
+                _ipol=n_ipol;
+                _flags|=2;
+              }
             } else if(pin.name=="IRQ") {
               if(pin.value && !_busy && _flags==0) {
                 _pt=DateTime.Now.AddMilliseconds(1);

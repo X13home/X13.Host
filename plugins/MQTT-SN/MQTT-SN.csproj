@@ -97,6 +97,9 @@
       <Link>Images\ty_unode.png</Link>
     </Resource>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\ty_blinkm.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
