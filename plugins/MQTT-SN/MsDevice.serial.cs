@@ -193,7 +193,7 @@ namespace X13.Periphery {
           }
           catch(Exception ex) {
             if(_verbose.value) {
-              Log.Debug("MQTTS.Serial search on {0} - {1}", pns[i], ex.Message);
+              Log.Debug("MQTT-SN.Serial search on {0} - {1}", pns[i], ex.Message);
             }
             try {
               if(port!=null) {
@@ -257,7 +257,7 @@ namespace X13.Periphery {
 #if UART_RAW_MQTTSN
             if(b<2 && b>MsMessage.MSG_MAX_LENGTH) {
               if(_verbose.value) {
-                Log.Warning("r 0x{0:X2} wrong length of the packet: {1}", port.PortName, b);
+                Log.Warning("r {0}:0x{1:X2} wrong length of the packet", port.PortName, b);
               }
               cnt=-1;
               port.DiscardInBuffer();
@@ -302,7 +302,7 @@ namespace X13.Periphery {
 #endif
         port.Write(tmp, 0, j);
         if(_verbose.value) {
-          Log.Debug("s  {0}: {1}  {2}", port.PortName, BitConverter.ToString(buf, 0, buf.Length), MsMessage.Parse(buf, 0, buf.Length));
+          Log.Debug("s {0}: {1}  {2}", port.PortName, BitConverter.ToString(buf, 0, buf.Length), MsMessage.Parse(buf, 0, buf.Length));
         }
       }
       private static void SendRaw(MsGSerial g, MsMessage msg, byte[] tmp) {

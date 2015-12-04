@@ -71,7 +71,7 @@ namespace X13.Periphery {
       var msg=MsMessage.Parse(buf, start, end);
       if(msg==null) {
         if(_verbose.value) {
-          Log.Warning("r  {0}: {1}  bad message", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start));
+          Log.Warning("r {0}: {1}  bad message", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start));
         }
         return;
       }
@@ -79,7 +79,7 @@ namespace X13.Periphery {
         return;
       }
       if(_verbose.value) {
-        Log.Debug("r  {0}: {1}  {2}", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start), msg.ToString());
+        Log.Debug("r {0}: {1}  {2}", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start), msg.ToString());
       }
       if(msg.MsgTyp==MsMessageType.SEARCHGW && ((msg as MsSearchGW).radius==0 || (msg as MsSearchGW).radius==1)) {
         gate.SendGw((MsDevice)null, new MsGwInfo(gate.gwIdx));
@@ -118,7 +118,7 @@ namespace X13.Periphery {
               ackAddr.AddRange(resp);
             } else {
               if(_verbose.value) {
-                Log.Warning("r  {0}: {1}  DhcpReq.hLen is too high", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start));
+                Log.Warning("r {0}: {1}  DhcpReq.hLen is too high", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start));
               }
               ackAddr=null;
               break;
@@ -349,10 +349,10 @@ namespace X13.Periphery {
           var tmp=msg as MsWillMsg;
           if(state==State.WillMsg) {
             _wilMsg=tmp.Payload;
+            Log.Info("{0}.state {1} => WILLTOPICREQ", Owner.path, state);
             state=State.PreConnect;
             ProccessAcknoledge(msg);
             Send(new MsConnack(MsReturnCode.Accepted));
-            Log.Info("{0} connected", Owner.path);
           }
         }
         break;
@@ -657,7 +657,7 @@ namespace X13.Periphery {
       if(msg.Will) {
         _willPath=string.Empty;
         _wilMsg=null;
-        if(state!=State.ASleep) {
+        if(msg.CleanSession) {
           Log.Info("{0}.state {1} => WILLTOPICREQ", Owner.path, state);
         }
         state=State.WillTopic;
