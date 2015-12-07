@@ -1560,6 +1560,8 @@ namespace X13.PLC {
             old=File.ReadAllLines(path);
           }
           catch(Exception) {
+            _saveT.Change(100, -1);
+            return;
           }
         }
         if(old==null) {
@@ -1586,15 +1588,20 @@ namespace X13.PLC {
           cur=cur+","+valS;
         }
         using(StreamWriter file = new StreamWriter(path, false)) {
-          file.WriteLine(header);
-          int stIndex=old.Length-(int)cap+1;
-          if(cap<1 || stIndex<1) {
-            stIndex=1;
+          try {
+            file.WriteLine(header);
+            int stIndex=old.Length-(int)cap+1;
+            if(cap<1 || stIndex<1) {
+              stIndex=1;
+            }
+            foreach(var l in old.Skip(stIndex)) {
+              file.WriteLine(l);
+            }
+            file.WriteLine(cur);
           }
-          foreach(var l in old.Skip(stIndex)) {
-            file.WriteLine(l);
+          catch(Exception) {
+            _saveT.Change(100, -1);
           }
-          file.WriteLine(cur);
         }
       }
       public void DeInit() {
