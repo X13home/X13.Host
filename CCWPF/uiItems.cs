@@ -21,6 +21,25 @@ using System.Windows.Media.Imaging;
 
 namespace X13.CC {
   internal abstract class uiItem : DrawingVisual {
+    public static List<DVar<string>> GetDItems(DVar<string> declarer) {
+      var ar=new List<DVar<string>>();
+      {
+        var tdecl=declarer;
+        DVar<string> tmp;
+        Topic tt;
+        do {
+          ar.AddRange(tdecl.all.Where(z => z!=null && z!=tdecl && z.name!="_description" && z.name!="_ver" && z.name!="_proto" && ar.All(z1 => z1.name!=z.name) && z.valueType==typeof(string)).Cast<DVar<string>>().Where(z => z.value!=null && z.value.Length>=2));
+          if(tdecl.Exist("_proto", out tt) && (tmp = tt as DVar<string>)!=null && !string.IsNullOrEmpty(tmp.value) && tdecl.parent.Exist(tmp.value, out tt)) {
+            tdecl=tt as DVar<string>;
+          } else {
+            break;
+          }
+        } while(tdecl!=null);
+        ar=ar.OrderBy(z => z.name).OrderBy(z => (ushort)z.value[0]).ToList();
+      }
+      return ar;
+    }
+
     protected bool _selected;
     public abstract Topic GetModel();
     public virtual void Select(bool select) {
@@ -688,8 +707,10 @@ namespace X13.CC {
       Topic dt;
       Topic tmp;
       if(model.Exist("_declarer", out dt) && fd.Exist((dt as DVar<string>).value, out tmp) && ((declarer=tmp as DVar<string>)!=null)) {
+        var ar = GetDItems(declarer);
+
         foreach(Topic mp in model.children) {
-          DVar<string> pinDecl=declarer.all.FirstOrDefault(z => z.name==mp.name) as DVar<string>;
+          DVar<string> pinDecl=ar.FirstOrDefault(z => z.name==mp.name);
           if(pinDecl!=null) {
             uiPin p=new uiPin(this, mp);
             _pins.Add(p);
@@ -728,7 +749,8 @@ namespace X13.CC {
               if(!model.Exist("_declarer", out dt) || !fd.Exist((dt as DVar<string>).value, out tmp) || ((declarer=tmp as DVar<string>)==null)) {
                 return;
               }
-              DVar<string> pinDecl=declarer.all.FirstOrDefault(z => z.name==sender.name) as DVar<string>;
+              var ar = GetDItems(declarer);
+              DVar<string> pinDecl=ar.FirstOrDefault(z => z.name==sender.name);
 
               if(pinDecl!=null) {
                 sender.saved=true;
@@ -774,8 +796,10 @@ namespace X13.CC {
       int pos=0;
       double wi=0;
       double wo=0;
+
+      var ar = GetDItems(declarer);
       foreach(var p in _pins) {
-        DVar<string> pinDecl=declarer.all.FirstOrDefault(z => z.name==p.GetModel().name) as DVar<string>;
+        DVar<string> pinDecl=ar.FirstOrDefault(z => z.name==p.GetModel().name);
         if(pinDecl==null) {
           continue;
         }

@@ -156,18 +156,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/ORI");
         m.value="pack://application:,,/CC;component/Images/bi_or.png";
         m.Get<string>("_description").value="c2Bitwise OR";
-        m.Get<string>("A").value="Ai";
-        m.Get<string>("B").value="Bi";
-        m.Get<string>("C").value="Ci";
-        m.Get<string>("D").value="Di";
-        m.Get<string>("E").value="Ei";
-        m.Get<string>("F").value="Fi";
-        m.Get<string>("G").value="Gi";
-        m.Get<string>("H").value="Hi";
-        m.Get<string>("Q").value="ai";
-        m.Get<string>("N").value="bz";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="ANDI";
       }
 
       public void Init(DVar<PiStatement> model) {
@@ -199,18 +188,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/XORI");
         m.value="pack://application:,,/CC;component/Images/bi_xor.png";
         m.Get<string>("_description").value="c3Bitwise XOR";
-        m.Get<string>("A").value="Ai";
-        m.Get<string>("B").value="Bi";
-        m.Get<string>("C").value="Ci";
-        m.Get<string>("D").value="Di";
-        m.Get<string>("E").value="Ei";
-        m.Get<string>("F").value="Fi";
-        m.Get<string>("G").value="Gi";
-        m.Get<string>("H").value="Hi";
-        m.Get<string>("Q").value="ai";
-        m.Get<string>("N").value="bz";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="ANDI";
       }
 
       public void Init(DVar<PiStatement> model) {
@@ -268,11 +246,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/SHR");
         m.value="pack://application:,,/CC;component/Images/bi_shr.png";
         m.Get<string>("_description").value="c5Bitwise right shift";
-        m.Get<string>("A").value="Ai";
-        m.Get<string>("B").value="Bi";
-        m.Get<string>("Q").value="ai";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="SHL";
       }
       public void Init(DVar<PiStatement> model) {
         AddPin<long>(model, "A");
@@ -374,15 +348,8 @@ namespace X13.PLC {
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/comp_gr");
         t1.value="pack://application:,,/CC;component/Images/ar_comp_gr.png";
-        t1.Get<string>("A").value="Ag";
-        t1.Get<string>("B").value="Bb";
-        t1.Get<string>("Q").value="az";
-        t1.Get<string>("!Q").value="bz";
-
         t1.Get<string>("_description").value="f Greater";
-
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
+        t1.Get<string>("_proto").value="comp_eq";
       }
       public void Init(DVar<PiStatement> model) {
         _a=AddPin<double>(model, "A");
@@ -407,15 +374,8 @@ namespace X13.PLC {
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/comp_le");
         t1.value="pack://application:,,/CC;component/Images/ar_comp_le.png";
-        t1.Get<string>("A").value="Ag";
-        t1.Get<string>("B").value="Bb";
-        t1.Get<string>("Q").value="az";
-        t1.Get<string>("!Q").value="bz";
-
         t1.Get<string>("_description").value="f Less";
-
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
+        t1.Get<string>("_proto").value="comp_eq";
       }
       public void Init(DVar<PiStatement> model) {
         _a=AddPin<double>(model, "A");
@@ -722,9 +682,10 @@ namespace X13.PLC {
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "PID")]
     private class PID : IStatement {
-      private DVar<double> _pv, _sp, _kp, _ki, _kd, _u, _uMax, _uMin;
+      private DVar<double> _pv, _sp, _kp, _ki, _kd, _ui, _u, _uMax, _uMin;
+      private DVar<bool> _auto;
       private DVar<long> _t;
-      private double _sum, _prev;
+      private double _prev;
       private double[] _hist;
       private Timer _ct;
       private DateTime _pt;
@@ -751,6 +712,8 @@ namespace X13.PLC {
         _hist=new double[9];
         _pv=AddPin<double>(model, "PV");
         _sp=AddPin<double>(model, "SP");
+        _ui=AddPin<double>(model, "_iSum");
+        _ui.saved=true;
         _u=AddPin<double>(model, "U");
         _u.saved=false;
         _kp=AddPin<double>(model, "_Kp");
@@ -771,6 +734,7 @@ namespace X13.PLC {
         if(!t_p) {
           _uMin.value=-255.0;
         }
+        _auto=AddPin<bool>(model, "_auto");
         _ct=new Timer(Pool);
         if(_t.value>0) {
           int t=(int)Math.Sqrt(_t.value/250);
@@ -779,7 +743,6 @@ namespace X13.PLC {
         }
         _pt=DateTime.Now;
         _ptI=_pt;
-        _sum=0;
         _prev=_pv.value;
         for(int i=0; i<9; i++) {
           _hist[i]=_pv.value;
@@ -800,6 +763,8 @@ namespace X13.PLC {
         } else if(_t.value>0 && _cntMax>0 && (source==_sp || source==_kp || source==_ki || source==_kd)) {
           _ct.Change(1, _t.value/_cntMax);
           _cnt=_cntMax;
+        } else if(source==_auto && _auto.value==true){
+
         } else {
           Topic tt;
           DVar<bool> bt;
@@ -815,21 +780,23 @@ namespace X13.PLC {
         var now=DateTime.Now;
         var e=_sp.value-_pv.value;
         var dtI=(now-_ptI).TotalSeconds;
+        double uIntegral=_ui.value;
         if(_ki.value!=0) {
           var ic=e*dtI*_ki.value;
           if((ic>0 && _gt) || (ic<0 && _gb)) {
             ic=0;
           } else {
-            _sum+=ic;
-            if(_sum>_uMax.value) {
-              _sum=_uMax.value;
-            } else if(_sum<_uMin.value) {
-              _sum=_uMin.value;
+            uIntegral+=ic;
+            if(uIntegral>_uMax.value) {
+              uIntegral=_uMax.value;
+            } else if(uIntegral<_uMin.value) {
+              uIntegral=_uMin.value;
             }
           }
         } else {
-          _sum=0;
+          uIntegral=0;
         }
+        _ui.value=uIntegral;
         for(int i=1; i<9; i++) {
           _hist[i]=_hist[i-1];
         }
@@ -840,13 +807,13 @@ namespace X13.PLC {
           var dt=(now-_pt).TotalSeconds;
           double d=(_hist[0]+_hist[1]+_hist[2])/2 - (_hist[3]+_hist[4]+_hist[5])/4.5 + (_hist[6]+_hist[7]+_hist[8])/18;
           e=_sp.value-d;
-          double rez=_kp.value*e+_sum+_kd.value*(_prev-d)/dt;
+          double rez=_kp.value*e+uIntegral+_kd.value*(_prev-d)/dt;
           if(rez>_uMax.value) {
             rez=_uMax.value;
           } else if(rez<_uMin.value) {
             rez=_uMin.value;
           }
-          _prev=d;
+          _prev=(d+_prev)/2;
           _u.value=rez;
           _pt=now;
         }
@@ -906,17 +873,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/Sub");
         m.value="pack://application:,,/CC;component/Images/ar_sub.png";
         m.Get<string>("_description").value="g2Subtraction";
-        m.Get<string>("A").value="Ag";
-        m.Get<string>("B").value="Bg";
-        m.Get<string>("C").value="Cg";
-        m.Get<string>("D").value="Dg";
-        m.Get<string>("E").value="Eg";
-        m.Get<string>("F").value="Fg";
-        m.Get<string>("G").value="Gg";
-        m.Get<string>("H").value="Hg";
-        m.Get<string>("Q").value="ag";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="Sum";
       }
       public void Init(DVar<PiStatement> model) {
         AddPin<double>(model, "A");
@@ -942,17 +899,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/Mul");
         m.value="pack://application:,,/CC;component/Images/ar_mul.png";
         m.Get<string>("_description").value="g3Multiplication";
-        m.Get<string>("A").value="Ag";
-        m.Get<string>("B").value="Bg";
-        m.Get<string>("C").value="Cg";
-        m.Get<string>("D").value="Dg";
-        m.Get<string>("E").value="Eg";
-        m.Get<string>("F").value="Fg";
-        m.Get<string>("G").value="Gg";
-        m.Get<string>("H").value="Hg";
-        m.Get<string>("Q").value="ag";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="Sum";
       }
       public void Init(DVar<PiStatement> model) {
         AddPin<double>(model, "A");
@@ -978,17 +925,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/Div");
         m.value="pack://application:,,/CC;component/Images/ar_div.png";
         m.Get<string>("_description").value="g4Division";
-        m.Get<string>("A").value="Ag";
-        m.Get<string>("B").value="Bg";
-        m.Get<string>("C").value="Cg";
-        m.Get<string>("D").value="Dg";
-        m.Get<string>("E").value="Eg";
-        m.Get<string>("F").value="Fg";
-        m.Get<string>("G").value="Gg";
-        m.Get<string>("H").value="Hg";
-        m.Get<string>("Q").value="ag";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="Sum";
       }
       public void Init(DVar<PiStatement> model) {
         AddPin<double>(model, "A");
@@ -1016,17 +953,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/Remainder");
         m.value="pack://application:,,/CC;component/Images/ar_mod.png";
         m.Get<string>("_description").value="g5Modulo";
-        m.Get<string>("A").value="Ag";
-        m.Get<string>("B").value="Bg";
-        m.Get<string>("C").value="Cg";
-        m.Get<string>("D").value="Dg";
-        m.Get<string>("E").value="Eg";
-        m.Get<string>("F").value="Fg";
-        m.Get<string>("G").value="Gg";
-        m.Get<string>("H").value="Hg";
-        m.Get<string>("Q").value="ag";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="Sum";
       }
       public void Init(DVar<PiStatement> model) {
         AddPin<double>(model, "A");
@@ -1397,16 +1324,8 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/Cosm");
         m.value="pack://application:,,/CC;component/Images/fu_cosm.png";
         m.Get<string>("_description").value="v Export to xively.com";
-        m.Get<string>("Push").value="Az";
-        m.Get<string>("A").value="Bg";
-        m.Get<string>("B").value="Cg";
-        m.Get<string>("C").value="Dg";
-        m.Get<string>("D").value="Eg";
-        m.Get<string>("E").value="Fg";
-        m.Get<string>("F").value="Gg";
-        m.Get<string>("G").value="Hg";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="Pile";
+
       }
 
       public void Init(DVar<PiStatement> model) {
@@ -1507,16 +1426,7 @@ namespace X13.PLC {
         var m=Topic.root.Get<string>("/etc/declarers/func/NarodMon");
         m.value="pack://application:,,/CC;component/Images/fu_NarodMon.png";
         m.Get<string>("_description").value="v Export to narodmon.ru";
-        m.Get<string>("Push").value="Az";
-        m.Get<string>("A").value="Bg";
-        m.Get<string>("B").value="Cg";
-        m.Get<string>("C").value="Dg";
-        m.Get<string>("D").value="Eg";
-        m.Get<string>("E").value="Fg";
-        m.Get<string>("F").value="Gg";
-        m.Get<string>("G").value="Hg";
-        m.Get<string>("rename").value="|R";
-        m.Get<string>("remove").value="}D";
+        m.Get<string>("_proto").value="Pile";
       }
 
       public void Init(DVar<PiStatement> model) {
@@ -1595,6 +1505,11 @@ namespace X13.PLC {
     [Export(typeof(IStatement))]
     [ExportMetadata("declarer", "Pile")]
     private class Pile : IStatement {
+      private Timer _saveT;
+      private DVar<PiStatement> _model;
+      public Pile() {
+        _saveT=new Timer(Save);
+      }
       public void Load() {
         var m=Topic.root.Get<string>("/etc/declarers/func/Pile");
         m.value="pack://application:,,/CC;component/Images/ar_pile.png";
@@ -1612,6 +1527,7 @@ namespace X13.PLC {
       }
 
       public void Init(DVar<PiStatement> model) {
+        _model=model;
         AddPin<double>(model, "A");
         AddPin<bool>(model, "Push");
         AddPin<string>(model, "_id_A");
@@ -1631,40 +1547,48 @@ namespace X13.PLC {
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
         var push=model.Get<bool>("Push");
-        if(source==push && push.value) {
-          string path=model.Get<string>("_fileName").value;
-          string[] old=null;
-          if(File.Exists(path)) {
-            try {
-              old=File.ReadAllLines(path);
-            }
-            catch(Exception) {
-            }
-          }
-          if(old==null) {
-            old=new string[] { string.Empty };
-          }
+        if(push.value && _saveT!=null) {
+          _saveT.Change(100, -1);
+        }
+      }
 
-          long cap=model.Get<long>("_capacity").value;
-          string header="DT";
-          string cur=DateTime.Now.ToString(model.Get<string>("_XFormat").value);
-          string valS;
-          foreach(var inp in model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
-            var id=model.Get<string>(string.Format("_id_{0}", inp.name)).value;
-            if(string.IsNullOrEmpty(id)) {
-              id=inp.name;
-            }
-            header=header+","+id;
-            valS=inp.value.ToString(CultureInfo.InvariantCulture);
-            {
-              int i=Math.Max(valS.IndexOf('.'), 6);
-              if(i<valS.Length) {
-                valS=valS.Substring(0, i);
-              }
-            }
-            cur=cur+","+valS;
+      private void Save(object o) {
+        string path=_model.Get<string>("_fileName").value;
+        string[] old=null;
+        if(File.Exists(path)) {
+          try {
+            old=File.ReadAllLines(path);
           }
-          using(StreamWriter file = new StreamWriter(path, false)) {
+          catch(Exception) {
+            _saveT.Change(100, -1);
+            return;
+          }
+        }
+        if(old==null) {
+          old=new string[] { string.Empty };
+        }
+
+        long cap=_model.Get<long>("_capacity").value;
+        string header="DT";
+        string cur=DateTime.Now.ToString(_model.Get<string>("_XFormat").value);
+        string valS;
+        foreach(var inp in _model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
+          var id=_model.Get<string>(string.Format("_id_{0}", inp.name)).value;
+          if(string.IsNullOrEmpty(id)) {
+            id=inp.name;
+          }
+          header=header+","+id;
+          valS=inp.value.ToString(CultureInfo.InvariantCulture);
+          {
+            int i=Math.Max(valS.IndexOf('.'), 6);
+            if(i<valS.Length) {
+              valS=valS.Substring(0, i);
+            }
+          }
+          cur=cur+","+valS;
+        }
+        using(StreamWriter file = new StreamWriter(path, false)) {
+          try {
             file.WriteLine(header);
             int stIndex=old.Length-(int)cap+1;
             if(cap<1 || stIndex<1) {
@@ -1675,9 +1599,11 @@ namespace X13.PLC {
             }
             file.WriteLine(cur);
           }
+          catch(Exception) {
+            _saveT.Change(100, -1);
+          }
         }
       }
-
       public void DeInit() {
       }
     }
@@ -1794,14 +1720,9 @@ namespace X13.PLC {
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/BAInsertS");
         t1.value="pack://application:,,/CC;component/Images/fu_BAInsertS.png";
-        t1.Get<string>("in").value="Ao";
-        t1.Get<string>("val").value="Bs";
-        t1.Get<string>("pos").value="Ci";
-        t1.Get<string>("len").value="Di";
-        t1.Get<string>("out").value="ao";
         t1.Get<string>("_description").value="pcInsert string to byteArray";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
+        t1.Get<string>("_proto").value="BAInsertL";
+        t1.Get<string>("val").value="Bs";
       }
 
       public void Init(DVar<PiStatement> model) {
@@ -1914,13 +1835,9 @@ namespace X13.PLC {
       public void Load() {
         var t1=Topic.root.Get<string>("/etc/declarers/func/BAGetS");
         t1.value="pack://application:,,/CC;component/Images/fu_BAGetS.png";
-        t1.Get<string>("in").value="Ao";
-        t1.Get<string>("pos").value="Bi";
-        t1.Get<string>("len").value="Ci";
-        t1.Get<string>("out").value="as";
         t1.Get<string>("_description").value="pdGet string from byteArray";
-        t1.Get<string>("rename").value="|R";
-        t1.Get<string>("remove").value="}D";
+        t1.Get<string>("_proto").value="BAGetL";
+        t1.Get<string>("out").value="as";
       }
 
       public void Init(DVar<PiStatement> model) {

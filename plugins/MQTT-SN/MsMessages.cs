@@ -190,6 +190,9 @@ namespace X13.Periphery {
       radius=buf[start+2];
     }
     public readonly byte radius;
+    public override string ToString() {
+      return "SEARCHGW("+(radius==0?"broadcast":radius.ToString())+")";
+    }
   }
 
   internal class MsGwInfo : MsMessage {
@@ -530,6 +533,13 @@ namespace X13.Periphery {
       }
     }
     public readonly ushort Duration;
+    public override string ToString() {
+      if(Duration==0) {
+        return MsgTyp.ToString();
+      } else {
+        return "DISCONNECT("+Duration.ToString()+")";
+      }
+    }
   }
 
   internal class MsForward : MsMessage {

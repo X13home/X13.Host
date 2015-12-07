@@ -23,11 +23,13 @@ namespace X13.Periphery {
     private const ushort LOG_W_ID=0xFFE2;
     private const ushort LOG_E_ID=0xFFE3;
     private static DVar<bool> _verbose;
+    private static DVar<bool> _statistic;
     private static List<IMsGate> _gates;
     private static Random _rand;
 
     static MsDevice() {
       _verbose=Topic.root.Get<bool>("/etc/MQTT-SN/verbose");
+      _statistic=Topic.root.Get<bool>("/etc/MQTT-SN/statistic");
       _gates=new List<IMsGate>();
       _rand=new Random((int)DateTime.Now.Ticks);
     }
@@ -69,7 +71,7 @@ namespace X13.Periphery {
       var msg=MsMessage.Parse(buf, start, end);
       if(msg==null) {
         if(_verbose.value) {
-          Log.Warning("r  {0}: {1}  bad message", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start));
+          Log.Warning("r {0}: {1}  bad message", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start));
         }
         return;
       }
@@ -77,10 +79,10 @@ namespace X13.Periphery {
         return;
       }
       if(_verbose.value) {
-        Log.Debug("r  {0}: {1}  {2}", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start), msg.ToString());
+        Log.Debug("r {0}: {1}  {2}", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start), msg.ToString());
       }
       if(msg.MsgTyp==MsMessageType.SEARCHGW && ((msg as MsSearchGW).radius==0 || (msg as MsSearchGW).radius==1)) {
-        gate.SendGw(null, new MsGwInfo(gate.gwIdx));
+        gate.SendGw((MsDevice)null, new MsGwInfo(gate.gwIdx));
         return;
       }
       Topic devR=Topic.root.Get("/dev");
@@ -116,14 +118,14 @@ namespace X13.Periphery {
               ackAddr.AddRange(resp);
             } else {
               if(_verbose.value) {
-                Log.Warning("r  {0}: {1}  DhcpReq.hLen is too high", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start));
+                Log.Warning("r {0}: {1}  DhcpReq.hLen is too high", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start));
               }
               ackAddr=null;
               break;
             }
           }
           if(ackAddr!=null) {
-            gate.SendGw(null, new MsDhcpAck(gate.gwIdx, dr.xId, ackAddr.ToArray()));
+            gate.SendGw((MsDevice)null, new MsDhcpAck(gate.gwIdx, dr.xId, ackAddr.ToArray()));
           }
         }
         return;
@@ -136,9 +138,11 @@ namespace X13.Periphery {
           Thread.Sleep(0);
           dDev.value.Owner=dDev;
         } else {
+          gate.RemoveNode(dDev.value);
           dDev.value._gate=gate;
           dDev.value.Addr=addr;
         }
+        gate.AddNode(dDev.value);
         dDev.value.Connect(cm);
         foreach(var dub in devR.children.Select(z => z.GetValue() as MsDevice).Where(z => z!=null && z!=dDev.value && z.Addr!=null && z.Addr.SequenceEqual(addr) && z._gate==gate).ToArray()) {
           dub.Addr=null;
@@ -152,6 +156,7 @@ namespace X13.Periphery {
         } else {
           if(dev==null || dev.Owner==null) {
             Log.Debug("{0} unknown device", gate.Addr2If(addr));
+            gate.SendGw(addr, new MsDisconnect());
           } else {
             Log.Debug("{0} inactive device: {1}", gate.Addr2If(addr), dev.Owner.path);
             gate.SendGw(dev, new MsDisconnect());
@@ -177,13 +182,23 @@ namespace X13.Periphery {
     private DVar<bool> _present;
     private IMsGate _gate;
     private bool _waitAck;
+    private List<MsDevice> _nodes;
+    private Timer _poolTimer;
+    private MsPublish _lastInPub;
 
     private MsDevice() {
       if(Topic.brokerMode) {
         _activeTimer=new Timer(new TimerCallback(TimeOut));
+        _poolTimer=new Timer(ReisePool);
         _topics=new List<TopicInfo>(16);
         _subsscriptions=new List<Topic.Subscription>(4);
         _sendQueue=new Queue<MsMessage>();
+      }
+    }
+
+    private void ReisePool(object state) {
+      if(Pool!=null) {
+        Pool();
       }
     }
 
@@ -216,6 +231,16 @@ namespace X13.Periphery {
             _present=null;
           }
         }
+        if(value==State.Connected) {
+          _poolTimer.Change(300, 100);
+        } else {
+          _poolTimer.Change(-1, -1);
+          if(!_present.value) {
+            foreach(var t in Owner.children.Where(z => z.valueType==typeof(TWIDriver)).Select(z => z.GetValue() as TWIDriver).Where(z => z!=null)) {
+              t.Reset();
+            }
+          }
+        }
       }
     }
     public Topic Owner { get; private set; }
@@ -237,9 +262,33 @@ namespace X13.Periphery {
     private byte[] Addr { get; set; }
     [Newtonsoft.Json.JsonProperty]
     private string backName { get; set; }
+    public void AddNode(MsDevice dev) {
+      if(_nodes==null) {
+        _nodes=new List<MsDevice>();
+      }
+      _nodes.Add(dev);
+    }
+    public void RemoveNode(MsDevice dev) {
+      if(_nodes!=null) {
+        _nodes.Remove(dev);
+      }
+    }
+    public void Stop() {
+      if(_nodes==null || !_nodes.Any()) {
+        return;
+      }
+      var nodes=_nodes.ToArray();
+      for(int i=0; i<nodes.Length; i++) {
+        nodes[i].Stop();
+      }
+      if(_gate!=null) {
+        _gate.SendGw(this, new MsDisconnect());
+        Stat(true, MsMessageType.DISCONNECT, false);
+      }
+      state=State.Disconnected;
+    }
 
     private void Stat(bool send, MsMessageType t, bool dub=false) {
-#if DEBUG
       string n2;
       switch(t) {
       case MsMessageType.CONNECT:
@@ -273,17 +322,16 @@ namespace X13.Periphery {
       if(Owner==null) {
         return;
       }
-      string p=string.Concat("/etc/MQTT-SN/stat/", Owner.name);
+      string p=string.Concat("/var/stat/MQTT-SN/", Owner.name);
       Topic pa=Topic.root.Get(p);
       pa.saved=false;
       DVar<long> d=pa.Get<long>(n2);
       d.saved=false;
       d.value++;
-#endif
     }
 
     internal void ProcessInPacket(MsMessage msg) {
-      if(msg.MsgTyp!=MsMessageType.EncapsulatedMessage && msg.MsgTyp!=MsMessageType.PUBLISH) {
+      if(_statistic.value && msg.MsgTyp!=MsMessageType.EncapsulatedMessage && msg.MsgTyp!=MsMessageType.PUBLISH) {
         Stat(false, msg.MsgTyp);
       }
       switch(msg.MsgTyp) {
@@ -301,10 +349,10 @@ namespace X13.Periphery {
           var tmp=msg as MsWillMsg;
           if(state==State.WillMsg) {
             _wilMsg=tmp.Payload;
+            Log.Info("{0}.state {1} => WILLTOPICREQ", Owner.path, state);
             state=State.PreConnect;
             ProccessAcknoledge(msg);
             Send(new MsConnack(MsReturnCode.Accepted));
-            Log.Info("{0} connected", Owner.path);
           }
         }
         break;
@@ -349,7 +397,6 @@ namespace X13.Periphery {
                 } else {
                   (ti.topic as DVar<TWIDriver>).value.Reset();
                 }
-
               }
             }
             Send(new MsRegAck(ti.TopicId, tmp.MessageId, MsReturnCode.Accepted));
@@ -384,7 +431,9 @@ namespace X13.Periphery {
         break;
       case MsMessageType.PUBLISH: {
           var tmp=msg as MsPublish;
-          Stat(false, msg.MsgTyp, tmp.Dup);
+          if(_statistic.value) {
+            Stat(false, msg.MsgTyp, tmp.Dup);
+          }
           TopicInfo ti=_topics.Find(z => z.TopicId==tmp.TopicId && z.it==tmp.topicIdType);
           if(ti==null && tmp.topicIdType!=TopicIdType.Normal) {
             ti=GetTopicInfo(tmp.TopicId, tmp.topicIdType, false);
@@ -418,7 +467,11 @@ namespace X13.Periphery {
               break;
             }
           } else if(ti!=null) {
-            SetValue(ti, tmp.Data, tmp.Retained);
+            if(tmp.Dup && _lastInPub!=null && tmp.MessageId==_lastInPub.MessageId) {  // arready recieved
+            } else {
+              SetValue(ti, tmp.Data, tmp.Retained);
+            }
+            _lastInPub=tmp;
           }
         }
         break;
@@ -441,7 +494,9 @@ namespace X13.Periphery {
             ResetTimer();
             if(_gate!=null) {
               _gate.SendGw(this, new MsMessage(MsMessageType.PINGRESP));
-              Stat(true, MsMessageType.PINGRESP, false);
+              if(_statistic.value) {
+                Stat(true, MsMessageType.PINGRESP, false);
+              }
             }
           }
         }
@@ -510,14 +565,14 @@ namespace X13.Periphery {
             if(fm.msg.MsgTyp==MsMessageType.CONNECT) {
               var cm=fm.msg as MsConnect;
               if(fm.addr!=null && fm.addr.Length==2 && fm.addr[1]==0xFF) {    // DHCP V<0.3
-                _gate.SendGw(this, new MsForward(fm.addr, new MsConnack(MsReturnCode.Accepted) ) );
+                _gate.SendGw(this, new MsForward(fm.addr, new MsConnack(MsReturnCode.Accepted)));
 
                 byte[] nAddr=new byte[1];
                 do {
                   nAddr[0]=(byte)(_rand.Next(32, 254));
                 } while(!devR.children.Select(z => z as DVar<MsDevice>).Where(z => z!=null && z.value!=null).All(z => !z.value.CheckAddr(nAddr)));
                 Log.Info("{0} new addr={1:X2}", cm.ClientId, nAddr[0]);
-                _gate.SendGw(this, new MsForward(fm.addr, new MsPublish(null, PredefinedTopics[".cfg/XD_DeviceAddr"], QoS.AtLeastOnce) { MessageId=1, Data=nAddr }) );
+                _gate.SendGw(this, new MsForward(fm.addr, new MsPublish(null, PredefinedTopics[".cfg/XD_DeviceAddr"], QoS.AtLeastOnce) { MessageId=1, Data=nAddr }));
               } else {
                 DVar<MsDevice> dDev=devR.Get<MsDevice>(cm.ClientId);
                 if(dDev.value==null) {
@@ -525,9 +580,11 @@ namespace X13.Periphery {
                   Thread.Sleep(0);
                   dDev.value.Owner=dDev;
                 } else {
+                  this.RemoveNode(dDev.value);
                   dDev.value._gate=this;
                   dDev.value.Addr=fm.addr;
                 }
+                this.AddNode(dDev.value);
                 dDev.value.Connect(cm);
                 foreach(var dub in devR.children.Select(z => z.GetValue() as MsDevice).Where(z => z!=null && z!=dDev.value && z.Addr!=null && z.Addr.SequenceEqual(fm.addr) && z._gate==this).ToArray()) {
                   dub.Addr=null;
@@ -562,10 +619,12 @@ namespace X13.Periphery {
                   }
                 }
               } else {
-                if(_verbose.value) {
-                  if(dev==null || dev.Owner==null) {
+                if(dev==null || dev.Owner==null) {
+                  if(_verbose.value) {
                     Log.Debug("{0} via {1} unknown device", BitConverter.ToString(fm.addr), this.name);
-                  } else {
+                  }
+                } else {
+                  if(_verbose.value) {
                     Log.Debug("{0} via {1} inactive", dev.Owner.name, this.name);
                   }
                 }
@@ -598,22 +657,24 @@ namespace X13.Periphery {
       if(msg.Will) {
         _willPath=string.Empty;
         _wilMsg=null;
-        if(state!=State.ASleep) {
+        if(msg.CleanSession) {
           Log.Info("{0}.state {1} => WILLTOPICREQ", Owner.path, state);
         }
         state=State.WillTopic;
         Send(new MsMessage(MsMessageType.WILLTOPICREQ));
       } else {
-        if(state!=State.ASleep) {
+        if(msg.CleanSession) {
           Log.Info("{0}.state {1} => PreConnect", Owner.path, state);
           state=State.PreConnect;
         } else {
           state=State.Connected;
         }
-        via=_gate.name;
         Send(new MsConnack(MsReturnCode.Accepted));
       }
-      Stat(false, MsMessageType.CONNECT, msg.CleanSession);
+      via=_gate.name;
+      if(_statistic.value) {
+        Stat(false, MsMessageType.CONNECT, msg.CleanSession);
+      }
     }
     //TODO: Unsubscribe
     private void SetValue(TopicInfo ti, byte[] msgData, bool retained) {
@@ -680,7 +741,10 @@ namespace X13.Periphery {
         SetValue(ti, _wilMsg, false);
       }
       if(duration>0) {
-        ResetTimer(duration*1550);
+        if(state==State.ASleep) {
+          state=State.AWake;
+        }
+        ResetTimer(3100+duration*1550);  // t_wakeup
         this.Send(new MsDisconnect());
         _tryCounter=0;
         state=State.ASleep;
@@ -696,14 +760,6 @@ namespace X13.Periphery {
             Log.Info("{0} Disconnected", Owner.path);
           }
         }
-        //Topic dev=Topic.root.Get("/dev");
-        //IEnumerable<MsDevice> ifs;
-        //lock(dev) {
-        //  ifs=dev.children.Where(z => z.valueType==typeof(MsDevice)).Cast<DVar<MsDevice>>().Where(z => z.value!=null && z.value._gate==this).Select(z => z.value).ToArray();
-        //}
-        //foreach(var t in ifs) {
-        //  t.Disconnect();
-        //}
       }
       _waitAck=false;
     }
@@ -843,11 +899,11 @@ namespace X13.Periphery {
     }
     private ushort CalculateTopicId(string path) {
       ushort id;
-        byte[] buf=Encoding.UTF8.GetBytes(path);
-        id=Crc16.ComputeChecksum(buf);
-        while(id==0 || id==0xF000 || id==0xFFFF || _topics.Any(z => z.it==TopicIdType.Normal && z.TopicId==id)) {
-          id=Crc16.UpdateChecksum(id, (byte)_rand.Next(0, 255));
-        }
+      byte[] buf=Encoding.UTF8.GetBytes(path);
+      id=Crc16.ComputeChecksum(buf);
+      while(id==0 || id==0xF000 || id==0xFFFF || _topics.Any(z => z.it==TopicIdType.Normal && z.TopicId==id)) {
+        id=Crc16.UpdateChecksum(id, (byte)_rand.Next(0, 255));
+      }
       return id;
     }
     private TopicInfo GetTopicInfo(string path, bool sendRegister=true) {
@@ -933,6 +989,12 @@ namespace X13.Periphery {
           }
         }
       }
+      if(msg==null && !_waitAck && state==State.AWake) {
+        ReisePool(null);
+        if(_waitAck) {
+          return; // sended from pool
+        }
+      }
       if(msg!=null || state==State.AWake) {
         if(msg!=null && msg.IsRequest) {
           _tryCounter=2;
@@ -963,10 +1025,12 @@ namespace X13.Periphery {
       }
     }
     private void SendIntern(MsMessage msg) {
-      while((msg!=null || state==State.AWake) && state!=State.ASleep) {
+      while(state==State.AWake || (msg!=null && (state!=State.ASleep || msg.MsgTyp==MsMessageType.DISCONNECT))) {
         if(msg!=null) {
           if(_gate!=null) {
-            Stat(true, msg.MsgTyp, ((msg is MsPublish && (msg as MsPublish).Dup) || (msg is MsSubscribe && (msg as MsSubscribe).dup)));
+            if(_statistic.value) {
+              Stat(true, msg.MsgTyp, ((msg is MsPublish && (msg as MsPublish).Dup) || (msg is MsSubscribe && (msg as MsSubscribe).dup)));
+            }
             try {
               _gate.SendGw(this, msg);
             }
@@ -997,8 +1061,12 @@ namespace X13.Periphery {
           if(_sendQueue.Count==0 && state==State.AWake) {
             if(_gate!=null) {
               _gate.SendGw(this, new MsMessage(MsMessageType.PINGRESP));
-              Stat(true, MsMessageType.PINGRESP, false);
+              if(_statistic.value) {
+                Stat(true, MsMessageType.PINGRESP, false);
+              }
             }
+            var st=Owner.Get<long>(".cfg/XD_SleepTime", Owner);
+            ResetTimer(st.value>0?(3100+(int)st.value*1550):_duration);  // t_wakeup
             state=State.ASleep;
             break;
           }
@@ -1045,7 +1113,9 @@ namespace X13.Periphery {
       state=State.Lost;
       if(Owner!=null) {
         Disconnect();
-        Stat(false, MsMessageType.GWINFO);
+        if(_statistic.value) {
+          Stat(false, MsMessageType.GWINFO);
+        }
         Log.Warning("{0} Lost", Owner.path);
       }
       lock(_sendQueue) {
@@ -1053,9 +1123,13 @@ namespace X13.Periphery {
       }
       if(_gate!=null) {
         _gate.SendGw(this, new MsDisconnect());
-        Stat(true, MsMessageType.DISCONNECT, false);
+        if(_statistic.value) {
+          Stat(true, MsMessageType.DISCONNECT, false);
+        }
       }
     }
+
+    internal event Action Pool;
 
     #region ITopicOwned Members
     void ITopicOwned.SetOwner(Topic owner) {
@@ -1102,12 +1176,16 @@ namespace X13.Periphery {
     #endregion ITopicOwned Members
 
     #region IMsGate Members
+    public void SendGw(byte[] addr, MsMessage msg) {
+      if(_gate!=null && addr!=null) {
+        _gate.SendGw(this, new MsForward(addr, msg));
+      }
+    }
     public void SendGw(MsDevice dev, MsMessage msg) {
       if(_gate!=null) {
         _gate.SendGw(this, new MsForward(dev.Addr, msg));
       }
     }
-
     public byte gwIdx { get { return (byte)(_gate==null?0xFF:_gate.gwIdx); } }
     #endregion  IMsGate Members
 
@@ -1255,12 +1333,16 @@ namespace X13.Periphery {
       Lost,
       PreConnect,
     }
+
   }
   public interface IMsGate {
+    void SendGw(byte[] addr, MsMessage msg);
     void SendGw(MsDevice dev, MsMessage msg);
     byte gwIdx { get; }
     string name { get; }
     string Addr2If(byte[] addr);
-    //TODO: Stop
+    void AddNode(MsDevice dev);
+    void RemoveNode(MsDevice dev);
+    void Stop();
   }
 }

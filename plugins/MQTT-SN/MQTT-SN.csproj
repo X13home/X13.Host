@@ -77,7 +77,9 @@
     <EmbeddedResource Include="MQTTSUdp.xst" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="MQTTSRf.xst" />
+    <EmbeddedResource Include="MQTTSRf.xst">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="TWI.xst">
@@ -86,6 +88,17 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\ty_twi.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\CCWPF\Images\ty_ugate.png">
+      <Link>Images\ty_ugate.png</Link>
+    </Resource>
+    <Resource Include="..\..\CCWPF\Images\ty_unode.png">
+      <Link>Images\ty_unode.png</Link>
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\ty_blinkm.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
