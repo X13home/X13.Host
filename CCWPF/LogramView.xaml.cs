@@ -92,7 +92,7 @@ namespace X13.CC {
 
     public LogramView(string lName) {
       this.Name=lName;
-      DVar<PiLogram> m=Topic.root.Get("/plc").Get<PiLogram>(ExConverter.Name2String(lName));
+      DVar<PiLogram> m=Topic.root.Get("/plc").Get<PiLogram>(ExConverter.Name2String2(lName));
       if(m.value==null) {
         m.saved=true;
         m.value=new PiLogram();
