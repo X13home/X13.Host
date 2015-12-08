@@ -55,19 +55,48 @@ namespace X13.WOUM {
       }
       return sb.ToString();
     }
+    public static string Name2String2(string name) {
+      if(string.IsNullOrEmpty(name)) {
+        return string.Empty;
+      }
+      StringBuilder sb=new StringBuilder();
+      int fl=0;
+      int ch=0;
+      for(int i=2; i<name.Length; i++) {
+        if(fl>0) {
+          int tmp;
+          if(!int.TryParse(name.Substring(i, 1), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out tmp)) {
+            Log.Warning("Name2String2({0}) - bad symbol", name);
+            return string.Empty;
+          }
+          ch=(ch<<4) | (tmp&0x0f);
+          if(fl==4) {
+            sb.Append((char)ch);
+            fl=0;
+          } else {
+            fl++;
+          }
+        } else if(name[i]=='_') {
+          fl=1;
+          ch=0;
+        } else {
+          sb.Append(name[i]);
+        }
+      }
+      return sb.ToString();
+    }
     public static string String2Name(string str) {
       if(string.IsNullOrEmpty(str)) {
         return string.Empty;
       }
       StringBuilder sb=new StringBuilder();
-      sb.Append("Logram_");
+      sb.Append("L_");
       for(int i=0; i<str.Length; i++) {
         int k=(int)str[i];
-        if(!char.IsLetterOrDigit(str[i]) && k>=0x20 && k<=0x7F) {
-          sb.Append('_');
-          sb.Append(nsTable[k-0x20]);
-        } else {
+        if(char.IsLetterOrDigit(str[i]) && k>=0x20 && k<=0x7F) {
           sb.Append(str[i]);
+        } else {
+          sb.AppendFormat("_{0:X4}", k);
         }
       }
       return sb.ToString();

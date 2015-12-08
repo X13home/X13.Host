@@ -763,7 +763,7 @@ namespace X13.PLC {
         } else if(_t.value>0 && _cntMax>0 && (source==_sp || source==_kp || source==_ki || source==_kd)) {
           _ct.Change(1, _t.value/_cntMax);
           _cnt=_cntMax;
-        } else if(source==_auto && _auto.value==true){
+        } else if(source==_auto && _auto.value==true) {
 
         } else {
           Topic tt;
@@ -1587,8 +1587,8 @@ namespace X13.PLC {
           }
           cur=cur+","+valS;
         }
-        using(StreamWriter file = new StreamWriter(path, false)) {
-          try {
+        try {
+          using(StreamWriter file = new StreamWriter(path, false)) {
             file.WriteLine(header);
             int stIndex=old.Length-(int)cap+1;
             if(cap<1 || stIndex<1) {
@@ -1599,9 +1599,9 @@ namespace X13.PLC {
             }
             file.WriteLine(cur);
           }
-          catch(Exception) {
-            _saveT.Change(100, -1);
-          }
+        }
+        catch(Exception) {
+          _saveT.Change(100, -1);
         }
       }
       public void DeInit() {
