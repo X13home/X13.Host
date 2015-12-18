@@ -81,8 +81,10 @@ namespace X13.Periphery {
       if(_verbose.value) {
         Log.Debug("r {0}: {1}  {2}", gate.Addr2If(addr), BitConverter.ToString(buf, start, end-start), msg.ToString());
       }
-      if(msg.MsgTyp==MsMessageType.SEARCHGW && ((msg as MsSearchGW).radius==0 || (msg as MsSearchGW).radius==1)) {
-        gate.SendGw((MsDevice)null, new MsGwInfo(gate.gwIdx));
+      if(msg.MsgTyp==MsMessageType.SEARCHGW) {
+        if((msg as MsSearchGW).radius==0 || (msg as MsSearchGW).radius==gate.gwRadius) {
+          gate.SendGw((MsDevice)null, new MsGwInfo(gate.gwIdx));
+        }
         return;
       }
       Topic devR=Topic.root.Get("/dev");
@@ -1211,6 +1213,7 @@ namespace X13.Periphery {
       }
     }
     public byte gwIdx { get { return (byte)(_gate==null?0xFF:_gate.gwIdx); } }
+    public byte gwRadius { get { return 0; } }
     #endregion  IMsGate Members
 
     public override string ToString() {
@@ -1357,12 +1360,12 @@ namespace X13.Periphery {
       Lost,
       PreConnect,
     }
-
   }
   public interface IMsGate {
     void SendGw(byte[] addr, MsMessage msg);
     void SendGw(MsDevice dev, MsMessage msg);
     byte gwIdx { get; }
+    byte gwRadius { get; }
     string name { get; }
     string Addr2If(byte[] addr);
     void AddNode(MsDevice dev);

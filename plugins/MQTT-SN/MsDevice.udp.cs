@@ -113,6 +113,7 @@ namespace X13.Periphery {
       private Timer _advTick;
       private List<MsDevice> _nodes;
       private byte[] _wla_arr, _wlm_arr;  // Whitelist
+      private byte _gwRadius;
 
       private MsGUdp() {
         try {
@@ -133,6 +134,17 @@ namespace X13.Periphery {
             _wla_arr=new byte[]{ 0, 0, 0, 0 };
             _wlm_arr=_wla_arr;
           }
+          Topic t;
+          DVar<long> tl;
+          if(Topic.root.Exist("/local/cfg/MQTT-SN.udp/radius", out t) && t.valueType==typeof(long) && (tl=t as DVar<long>)!=null) {
+            _gwRadius=(byte)tl.value;
+            if(_gwRadius<1 || _gwRadius>3) {
+              _gwRadius=0;
+            }
+          } else {
+            _gwRadius=1;
+          }
+          //SendGw((MsDevice)null, new MsDisconnect());
         }
         catch(Exception ex) {
           Log.Error("MsGUdp.ctor() {0}", ex.Message);
@@ -224,6 +236,8 @@ namespace X13.Periphery {
         return (new IPAddress(addr)).ToString();
       }
       public byte gwIdx { get { return 0; } }
+      public byte gwRadius { get { return _gwRadius; } }
+
       public void AddNode(MsDevice dev) {
         _nodes.Add(dev);
       }
@@ -249,6 +263,8 @@ namespace X13.Periphery {
 
       }
       #endregion instance
+
+
     }
   }
 }

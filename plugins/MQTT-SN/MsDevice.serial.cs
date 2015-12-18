@@ -384,6 +384,7 @@ namespace X13.Periphery {
         }
       }
       public byte gwIdx { get; private set; }
+      public byte gwRadius { get { return 1; } }
       public string name { get { return _port!=null?_port.PortName:string.Empty; } }
       public string Addr2If(byte[] addr) {
         return _port!=null?_port.PortName:string.Empty;
