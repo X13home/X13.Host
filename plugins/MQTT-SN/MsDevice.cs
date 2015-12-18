@@ -397,6 +397,13 @@ namespace X13.Periphery {
                 } else {
                   (ti.topic as DVar<TWIDriver>).value.Reset();
                 }
+              } else if(ti.topic.valueType==typeof(DevicePLC)) {
+                if(ti.topic.GetValue()==null) {
+                  ti.topic.SetValue(new DevicePLC(ti.topic), new TopicChanged(TopicChanged.ChangeArt.Value, Owner));
+                } else {
+                  (ti.topic as DVar<DevicePLC>).value.Reset();
+                }
+
               }
             }
             Send(new MsRegAck(ti.TopicId, tmp.MessageId, MsReturnCode.Accepted));
@@ -725,6 +732,17 @@ namespace X13.Periphery {
               return;
             }
             break;
+          } else if(ti.topic.valueType==typeof(DevicePLC)) {
+            var plc=(ti.topic.GetValue() as DevicePLC);
+            if(plc==null) {
+              plc=new DevicePLC(ti.topic);
+              plc.Recv(msgData);
+              val=plc;
+            } else {
+              plc.Recv(msgData);
+              return;
+            }
+            break;
           } else {
             return;
           }
@@ -781,6 +799,9 @@ namespace X13.Periphery {
         if(topic.valueType==typeof(TWIDriver)) {  //  || (topic.parent!=null && topic.parent.valueType==typeof(TWIDriver))
           return;   // processed from TWIDriver
         }
+        if(topic.valueType==typeof(DevicePLC)) {
+          return;   // processed from DevicePLC
+        }
         GetTopicInfo(topic);
         return;
       }
@@ -799,6 +820,9 @@ namespace X13.Periphery {
       }
       if(topic.valueType==typeof(TWIDriver)) {  //  || (topic.parent!=null && topic.parent.valueType==typeof(TWIDriver))
         return;   // processed from TWIDriver
+      }
+      if(topic.valueType==typeof(DevicePLC)) {
+        return;   // processed from DevicePLC
       }
       TopicInfo rez=null;
       for(int i=_topics.Count-1; i>=0; i--) {
@@ -871,7 +895,7 @@ namespace X13.Periphery {
           Topic tmp=tp.parent;
           bool ignory=false;
           while(tmp!=null && tmp.valueType!=typeof(MsDevice)) {
-            if(tmp.valueType==typeof(SmartTwi) || tmp.valueType==typeof(TWIDriver)) {
+            if(tmp.valueType==typeof(SmartTwi) || tmp.valueType==typeof(TWIDriver) || tmp.valueType==typeof(DevicePLC)) {
               ignory=true;
               break;
             }
@@ -1236,7 +1260,7 @@ namespace X13.Periphery {
       new NTRecord("TD", typeof(long)),   //uint32
       new NTRecord("Tq", typeof(long)),   //int64
       new NTRecord("Ts", typeof(string)),
-      new NTRecord("Ta0", typeof(TWIDriver)),   // TWI >= ver 2.7
+      new NTRecord("Ta", typeof(TWIDriver)),   // TWI >= ver 2.7
       new NTRecord("sa", typeof(SmartTwi)),    // Smart TWI
       new NTRecord("Xz", typeof(bool)),   // user defined
       new NTRecord("Xb", typeof(long)),   //int8
@@ -1257,8 +1281,8 @@ namespace X13.Periphery {
       new NTRecord("MD", typeof(long)),   //uint32
       new NTRecord("Mq", typeof(long)),   //int64
       new NTRecord("Ms", typeof(string)),
-      new NTRecord("Ma", typeof(PLC.ByteArray)),
-      new NTRecord("Pa", typeof(PLC.ByteArray)),    // Program
+      new NTRecord("Ma", typeof(PLC.ByteArray)),  // Merkers
+      new NTRecord("pa", typeof(DevicePLC)),    // Program
       new NTRecord("_declarer", typeof(string)),
       new NTRecord("present", typeof(bool)),
     };

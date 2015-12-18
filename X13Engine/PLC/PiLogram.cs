@@ -19,9 +19,13 @@ namespace X13.PLC {
   public class PiLogram : ITopicOwned {
     private static DVar<string> _id;
     private static DVar<string> _defPLC;
+    private static DVar<bool> _viasEnabled;
+    private static bool _plcEnabled;
     internal static bool _isDefault { get { return _id.value==_defPLC.value; } }
     static PiLogram() {
+      _plcEnabled=Topic.root.Get<bool>("/local/cfg/PLC/enable").value;
       _id=Topic.root.Get<string>("/local/cfg/id");
+      _viasEnabled=Topic.root.Get<bool>("/local/cfg/PLC/viasEnabled");
       _defPLC=Topic.root.Get<string>("/etc/PLC/default");
     }
 
@@ -32,7 +36,7 @@ namespace X13.PLC {
 
     public DVar<PiLogram> Owner { get; private set; }
 
-    public bool exec { get { return _via!=null && _via.value==_id.value; } }
+    public bool exec { get { return ((_via!=null && _via.value==_id.value) || (_plcEnabled && !_viasEnabled.value)); } }
 
     private void _via_changed(Topic sender, TopicChanged arg) {
       if(arg.Art!=TopicChanged.ChangeArt.Value) {
@@ -42,7 +46,7 @@ namespace X13.PLC {
     }
 
     private void RefreshStatements() {
-      if(Owner==null){
+      if(Owner==null) {
         return;
       }
       foreach(var stD in Owner.children.Where(z => z.valueType==typeof(PiStatement)).Select(z => (z as DVar<PiStatement>).value).Where(z => z!=null)){

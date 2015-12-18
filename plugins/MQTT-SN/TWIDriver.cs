@@ -81,11 +81,11 @@ namespace X13.Periphery {
         }
       }
       if(_dev!=null) {
-        _dev.Pool+=_dev_Pool;
+        _dev.Pool-=_dev_Pool;
       }
       _owner=owner;
       if(_owner!=null) {
-        name=owner.name;
+        name=_owner.name;
         if(Topic.brokerMode) {
           if(_owner.parent!=null && _owner.parent.valueType==typeof(MsDevice)) {
             _dev=(_owner.parent as DVar<MsDevice>).value;

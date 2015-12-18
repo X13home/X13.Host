@@ -10,8 +10,10 @@
     <item name="_declarer" value="etcFolder" saved="True" type="System.String"/>
     <item name="declarers">
       <item name="type">
-        <item name="L_Folder" value="pack://application:,,/CC;component/Images/ty_PLC.png" saved="True" type="System.String">
+        <item name="L_Folder" value="pack://application:,,/CC;component/Images/ty_PLC.png" saved="True" type="System.String" ver="0.315.1218.1">
           <item name="Create Logram" value="1L" saved="True" type="System.String" />
+          <item name="Create Folder" value="2N⌂L_Folder" saved="True" type="System.String" />
+          <item name="remove" value="3D" saved="True" type="System.String" />
         </item>
         <item name="Logram" value="pack://application:,,/CC;component/Images/ty_logram.png" saved="True" type="System.String">
           <item name="open" value="1O" saved="True" type="System.String" />
