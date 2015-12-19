@@ -180,7 +180,7 @@
         <item name="OnE" value="3zX14" saved="True" type="System.String" />
         <item name="OnF" value="3zX15" saved="True" type="System.String" />
       </item>
-      <item name="IRQ" value="HzX0" saved="True" type="System.String" />
+      <item name="IRQ" value="Hz" saved="True" type="System.String" />
       <item name="remove" value="ZD" saved="True" type="System.String" />
     </item>
   </item>
