@@ -91,7 +91,6 @@ namespace X13.Periphery {
       if(msg.MsgTyp==MsMessageType.DHCP_REQ) {
         var dr=msg as MsDhcpReq;
         if((dr.radius==0 || dr.radius==1)) {
-          var r=new Random((int)DateTime.Now.Ticks);
           List<byte> ackAddr=new List<byte>();
           byte[] respPrev=null;
           foreach(byte hLen in dr.hLen) {
@@ -105,7 +104,7 @@ namespace X13.Periphery {
                 resp=new byte[hLen];
                 for(int i=0; i<5; i++) {
                   for(int j=0; j<resp.Length; j++) {
-                    resp[j]=(byte)r.Next(j==0?4:0, (i<3 && hLen==1)?31:(j==0?254:255));
+                    resp[j]=(byte)_rand.Next(j==0?4:0, (i<3 && hLen==1)?31:(j==0?254:255));
                   }
                   if(devR.children.Select(z => z as DVar<MsDevice>).Where(z => z!=null && z.value!=null).All(z => !z.value.CheckAddr(resp))) {
                     break;
