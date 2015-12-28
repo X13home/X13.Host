@@ -239,8 +239,7 @@ l1: { }
       }
       if(nParent._childNodes==null) {
         nParent._childNodes=new SortedList<string, Topic>();
-      }
-      if(nParent._childNodes.ContainsKey(name)) {
+      } else if(nParent._childNodes.ContainsKey(name)) {
         throw new ArgumentException(string.Format("{0} allready exist in {1}", name, nParent.path));
       }
       this.parent._childNodes.Remove(this.name);

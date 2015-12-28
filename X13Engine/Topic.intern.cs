@@ -57,7 +57,11 @@ namespace X13 {
       string[] pe=path.Split(_delmiter, StringSplitOptions.RemoveEmptyEntries);
       for(int i=0; i<pe.Length; i++, cur=next) {
         if(cur._childNodes==null) {
-          cur._childNodes=new SortedList<string, Topic>();
+          lock(cur) {
+            if(cur._childNodes==null) {
+              cur._childNodes=new SortedList<string, Topic>();
+            }
+          }
         }
         bool chExist=cur._childNodes.TryGetValue(pe[i], out next);
         if(!chExist) {

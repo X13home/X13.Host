@@ -63,6 +63,7 @@ namespace X13.Periphery {
       static MsGSerial() {
         _startScan=new AutoResetEvent(false);
         _scanBusy=0;
+
         ThreadPool.RegisterWaitForSingleObject(_startScan, ScanPorts, null, 45000, false);
       }
 
@@ -352,6 +353,7 @@ namespace X13.Periphery {
       private byte[] _gateAddr;
       private DateTime _advTick;
       private List<MsDevice> _nodes;
+      private byte _gwRadius;
 
       public MsGSerial(SerialPort port) {
         _nodes=new List<MsDevice>();
@@ -369,6 +371,16 @@ namespace X13.Periphery {
         _sendQueue=new Queue<MsMessage>();
         _sndBuf=new byte[384];
         _advTick=DateTime.Now.AddSeconds(31.3);
+        Topic t;
+        DVar<long> tl;
+        if(Topic.root.Exist("/local/cfg/MQTT-SN.Serial/radius", out t) && t.valueType==typeof(long) && (tl=t as DVar<long>)!=null) {
+          _gwRadius=(byte)tl.value;
+          if(_gwRadius<1 || _gwRadius>3) {
+            _gwRadius=0;
+          }
+        } else {
+          _gwRadius=1;
+        }
         ThreadPool.QueueUserWorkItem(CommThread);
       }
       public void SendGw(byte[] addr, MsMessage msg) {
@@ -384,7 +396,7 @@ namespace X13.Periphery {
         }
       }
       public byte gwIdx { get; private set; }
-      public byte gwRadius { get { return 1; } }
+      public byte gwRadius { get { return _gwRadius; } }
       public string name { get { return _port!=null?_port.PortName:string.Empty; } }
       public string Addr2If(byte[] addr) {
         return _port!=null?_port.PortName:string.Empty;
