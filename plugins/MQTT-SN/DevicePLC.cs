@@ -51,7 +51,7 @@ namespace X13.Periphery {
           Log.Error("{0}.Recv({1}) ch={2}", _owner, BitConverter.ToString(msgData), _curChunk==null?"null":_curChunk.ToString());
           _st=1;
         }
-      } else if(_st==4 && msgData[0]==(byte)Cmd.PlcStopResp){
+      } else if((_st==0 || _st==4) && msgData[0]==(byte)Cmd.PlcStopResp){
         _plcStoped=true;
         _st=_curChunk==null?1:5;
       } else if(_st==6 && msgData.Length==2 && msgData[0]==(byte)Cmd.WriteBlockResp) {
@@ -69,7 +69,7 @@ namespace X13.Periphery {
           Log.Error("{0}.Recv({1}) {2}", _owner, BitConverter.ToString(msgData), ((Cmd)msgData[0]));
           _st=1;
         }
-      } else if(_st==7 && msgData[0]==(byte)Cmd.PlcStartResp) {
+      } else if((_st==0 || _st==7) && msgData[0]==(byte)Cmd.PlcStartResp) {
         _st=0;
         _plcStoped=false;
       } else if(_verbose.value) {
@@ -192,15 +192,17 @@ namespace X13.Periphery {
       }
     }
     private enum Cmd : byte {
-      Idle,
-      PlcStartReq,
-      PlcStartResp,
-      PlcStopReq,
-      PlcStopResp,
-      GetCRCReq,
-      GetCRCResp,
-      WriteBlockReq,
-      WriteBlockResp,
+      Idle              = 0,
+      PlcStartReq       = 1,   // 1
+      PlcStartResp      = 2,   // 2, 0
+      PlcStopReq        = 3,   // 3
+      PlcStopResp       = 4,   // 4, 0
+      GetCRCReq         = 5,   // 5, addrL, addrH, lenL, lenH
+      GetCRCResp        = 6,   // 6, 0, crcL, crcH
+      WriteBlockReq     = 7,   // 7, AddrL, AddrH, [data(length= packet lenght-5)], crcL, crcH
+      WriteBlockResp    = 8,   // 8, 0
+      EraseBlockReq     = 9,   // 9, addrL, addrH, lenL, lenH
+      EraseBlockResp    =10,   //10, 0
     }
     private class Chunk : IComparable<Chunk> {
       public int offset;
