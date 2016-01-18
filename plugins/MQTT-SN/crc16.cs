@@ -18,9 +18,23 @@ namespace X13.Periphery {
     private const ushort polynomial = 0xA001;
     private static ushort[] table = new ushort[256];
 
+    public static ushort UpdateCrc(ushort crc_in, byte[] buf) {
+      for(int j = 0; j < buf.Length; ++j) {
+        byte data = buf[j];
+        for(int i = 0; i < 8; i++) {
+          if((((crc_in & 0x8000) >> 8) ^ (data & 0x80))!=0)
+            crc_in = (ushort)((crc_in << 1) ^ 0x8005);
+          else
+            crc_in = (ushort)(crc_in << 1);
+          data <<= 1;
+        }
+      }
+      return crc_in;
+    }
+
 
     public static ushort ComputeChecksum(byte[] bytes) {
-      ushort crc = 0;
+      ushort crc = 0xFFFF;
       for(int i = 0; i < bytes.Length; ++i) {
         byte index = (byte)(crc ^ bytes[i]);
         crc = (ushort)((crc >> 8) ^ table[index]);
