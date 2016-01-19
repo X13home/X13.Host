@@ -300,5 +300,9 @@
       <item name="Xa_IPRouter" value="4b" saved="True" type="System.String" />
       <item name="Xa_IPBroker" value="4b" saved="True" type="System.String" />
     </item>
-  </item>
+    <item name="DevicePLC" value="pack://application:,,/MQTT-SN;component/Images/code.png" saved="True" type="System.String" ver="0.316.119.3">
+      <item name="pa0" value="Hb" saved="True" type="System.String" />
+      <item name="program" value="LB" saved="True" type="System.String" />
+    </item>
+    </item>
 </root>

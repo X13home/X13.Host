@@ -101,6 +101,9 @@
   <ItemGroup>
     <Resource Include="Images\ty_blinkm.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\code.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>

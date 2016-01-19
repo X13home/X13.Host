@@ -11,6 +11,7 @@ namespace X13.Periphery {
     static DevicePLC() {
       _verbose = Topic.root.Get<bool>("/etc/MQTT-SN/PLC/verbose");
     }
+
     private Topic _owner;
     private MsDevice _dev;
     private int _offset, _st;  // 0 - idle, 1 - check CRC, 2- check CRC resp, 3-PLC stop, 4 - PLC stop resp, 5- write block, 6- write block resp, 7- PLC start resp
