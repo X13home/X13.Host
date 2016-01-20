@@ -36,6 +36,9 @@ namespace X13.Periphery {
     public void Reset() {
       _st = 1;
       _plcStoped = false;
+      foreach(var c in _prg) {
+        c.crcDev = -1;
+      }
       if(_verbose.value) {
         Log.Info("{0}[{1}].Reset", _owner == null ? null : _owner.path, signature);
       }
@@ -45,6 +48,8 @@ namespace X13.Periphery {
         return;
       }
       bool processed = false;
+      int oSt = _st;
+
       if(_st == 2 && msgData[0] == (byte)Cmd.GetCRCResp) {
         if(_curChunk != null && msgData.Length == 4 && msgData[1] == 0) {
           _curChunk.crcDev = (msgData[3] << 8) | msgData[2];
@@ -56,10 +61,21 @@ namespace X13.Periphery {
           }
           processed = true;
         }
-      } else if((_st == 0 || _st == 4) && msgData[0] == (byte)Cmd.PlcStopResp) {
-        _plcStoped = true;
-        _st = _curChunk == null ? 1 : 5;
-        processed = true;
+      } else if(msgData[0] == (byte)Cmd.PlcStopResp) {
+        if(msgData[1] != 0) {
+          if(msgData.Length == 18) {
+            processed = true;
+            _plcStoped = true;
+            Log.Warning("{0}.PlcStop({1}) SP={2:X4}, *SP={3:X4}, SFP={4:X4}, PC={5:X4}", _owner, ((ErrorCode)msgData[1]).ToString(), BitConverter.ToUInt32(msgData, 2), BitConverter.ToInt32(msgData, 6), BitConverter.ToUInt32(msgData, 10), BitConverter.ToUInt32(msgData, 14));
+          } else {
+            processed = false;
+          }
+          _st = 0;
+        } else {
+          _plcStoped = true;
+          _st = _curChunk == null ? 1 : 5;
+          processed = true;
+        }
       } else if(_st == 6 && msgData.Length == 2 && msgData[0] == (byte)Cmd.WriteBlockResp) {
         if(msgData[1] == 0) {  // success
           _offset += 32;
@@ -73,7 +89,7 @@ namespace X13.Periphery {
           }
           processed = true;
         }
-      } else if((_st == 0 || _st == 7) && msgData[0] == (byte)Cmd.PlcStartResp) {
+      } else if(_st == 7 && msgData[0] == (byte)Cmd.PlcStartResp) {
         _st = 0;
         _plcStoped = false;
         processed = true;
@@ -83,6 +99,8 @@ namespace X13.Periphery {
           Log.Warning("{0}.Recv({1}) {2}-{3}", _owner, BitConverter.ToString(msgData), ((Cmd)msgData[0]), msgData.Length > 1 ? ((ErrorCode)msgData[1]).ToString() : "empty");
         }
         _st = 0;
+      } else if(_verbose.value && _st != oSt) {
+        Log.Info("{0}[{1}]._st={2}=>{3}", _owner == null ? null : _owner.path, signature, oSt, _st);
       }
     }
     private void Pool() {
@@ -162,7 +180,7 @@ namespace X13.Periphery {
           if(_owner.parent != null && _owner.parent.valueType == typeof(MsDevice)) {
             _dev = (_owner.parent as DVar<MsDevice>).value;
           }
-          _owner.Get<string>("_declarer", _owner).value="DevicePLC";
+          _owner.Get<string>("_declarer", _owner).value = "DevicePLC";
           _owner.Subscribe("+", VarChanged);
           if(_dev != null) {
             _dev.Pool += Pool;
@@ -217,6 +235,13 @@ namespace X13.Periphery {
     }
     private enum ErrorCode : byte {
       Success = 0x00,
+
+      UnknownOperation = 0x80,
+      ProgrammOutOfRange = 0x81,
+      RamOutofRange = 0x82,
+      TestError = 0x83,
+      Watchdog=0x84,
+
       WrongState = 0xFA,
       CrcError = 0xFB,
       OutOfRange = 0xFC,

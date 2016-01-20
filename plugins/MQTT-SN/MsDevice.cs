@@ -199,7 +199,12 @@ namespace X13.Periphery {
 
     private void ReisePool(object state) {
       if(Pool!=null) {
-        Pool();
+        try {
+          Pool();
+        }
+        catch(Exception ex) {
+          Log.Warning("{0}.ReisePool - {1}", Owner, ex.ToString());
+        }
       }
     }
 
