@@ -1,0 +1,23 @@
+﻿<my:DocumentView x:Class="X13.CC.JSView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ad="clr-namespace:AvalonDock;assembly=AvalonDock"
+        xmlns:ae="http://icsharpcode.net/sharpdevelop/avalonedit"
+        xmlns:my="clr-namespace:X13.CC"
+        Height="244" Width="298" TextOptions.TextRenderingMode="Grayscale" FontSize="12">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="30"/>
+      <RowDefinition/>
+    </Grid.RowDefinitions>
+    <ToolBar>
+      <Button Command="Undo">
+        <Image Source="Images/Undo.png" Height="16"/>
+      </Button>
+      <Button Command="Redo">
+        <Image Source="Images/Redo.png" Height="16"/>
+      </Button>
+    </ToolBar>
+    <ae:TextEditor Grid.Row="1" Name="textEditor" FontFamily="Consolas" FontSize="10pt" SyntaxHighlighting="JavaScript" />
+  </Grid>
+</my:DocumentView>

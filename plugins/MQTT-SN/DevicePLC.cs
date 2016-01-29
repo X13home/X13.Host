@@ -5,7 +5,7 @@ using System.Text;
 
 namespace X13.Periphery {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
-  public class DevicePLC : ITopicOwned {
+  public class DevicePLC : ITopicOwned, X13.PLC.IPiDocument {
     private static DVar<bool> _verbose;
 
     static DevicePLC() {
@@ -32,6 +32,7 @@ namespace X13.Periphery {
 
     [Newtonsoft.Json.JsonProperty]
     public int signature { get; set; }
+    public string View { get { return "JavaScript"; } }
 
     public void Reset() {
       _st = 1;

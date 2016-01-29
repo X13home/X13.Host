@@ -95,7 +95,7 @@ namespace X13.CC {
             if(sender==obj) {
               PropertyChanged(this, new PropertyChangedEventArgs("value"));
             } else if(sender!=null) {
-              PropertyChanged(this, new PropertyChangedEventArgs(ExConverter.String2Name(sender.name)));
+              PropertyChanged(this, new PropertyChangedEventArgs(ExConverter.String2Name("", sender.name)));
             }
           }
         } else {
@@ -160,7 +160,7 @@ namespace X13.CC {
     private class DVarPropertyDescriptor : PropertyDescriptor {
       private Topic obj;
 
-      public DVarPropertyDescriptor(Topic obj) : base(ExConverter.String2Name(obj.name), 
+      public DVarPropertyDescriptor(Topic obj) : base(ExConverter.String2Name("P_", obj.name), 
         new Attribute[] { 
           new CategoryAttribute("Entrys"), 
           new BrowsableAttribute(true), 

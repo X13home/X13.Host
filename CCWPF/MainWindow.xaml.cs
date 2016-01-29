@@ -155,7 +155,7 @@ namespace X13.CC {
     private void dockManager_ActiveDocumentChanged(object sender, EventArgs e) {
       LogramView doc=this.dockManager.ActiveDocument as LogramView;
       if(doc!=null) {
-        App.currentLogram=doc.model;
+        App.currentDocument=doc.model;
       }
     }
     public string BrokerState {
@@ -220,10 +220,12 @@ namespace X13.CC {
       } else if(name=="SecurityPanel"){
         rez=dockManager.DockableContents.FirstOrDefault(p => p is SecurityView)??new SecurityView();
       } else if(name.StartsWith("Logram_")) {
-        var cName=X13.WOUM.ExConverter.String2Name(X13.WOUM.ExConverter.Name2String(name));
+        var cName = X13.WOUM.ExConverter.String2Name("L_", X13.WOUM.ExConverter.Name2String(name));
         rez=dockManager.Documents.FirstOrDefault(p => p is DocumentContent && p.Name==cName)??new LogramView(cName);
       } else if(name.StartsWith("L_")) {
         rez=dockManager.Documents.FirstOrDefault(p => p is DocumentContent && p.Name==name)??new LogramView(name);
+      } else if(name.StartsWith("JS_")) {
+        rez = new JSView(name);
       }
       return rez;
     }

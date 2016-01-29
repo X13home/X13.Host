@@ -55,14 +55,14 @@ namespace X13.WOUM {
       }
       return sb.ToString();
     }
-    public static string Name2String2(string name) {
-      if(string.IsNullOrEmpty(name)) {
+    public static string Name2String2(string prefix, string name) {
+      if(string.IsNullOrEmpty(name) || !name.StartsWith(prefix)) {
         return string.Empty;
       }
       StringBuilder sb=new StringBuilder();
       int fl=0;
       int ch=0;
-      for(int i=2; i<name.Length; i++) {
+      for(int i=prefix.Length; i<name.Length; i++) {
         if(fl>0) {
           int tmp;
           if(!int.TryParse(name.Substring(i, 1), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out tmp)) {
@@ -85,12 +85,12 @@ namespace X13.WOUM {
       }
       return sb.ToString();
     }
-    public static string String2Name(string str) {
+    public static string String2Name(string prefix, string str) {
       if(string.IsNullOrEmpty(str)) {
         return string.Empty;
       }
       StringBuilder sb=new StringBuilder();
-      sb.Append("L_");
+      sb.Append(prefix);
       for(int i=0; i<str.Length; i++) {
         int k=(int)str[i];
         if(char.IsLetterOrDigit(str[i]) && k>=0x20 && k<=0x7F) {

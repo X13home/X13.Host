@@ -80,6 +80,7 @@
     <Compile Include="PLC\BiultInStatements.cs" />
     <Compile Include="PLC\ByteArray.cs" />
     <Compile Include="PLC\Eval.cs" />
+    <Compile Include="PLC\IPiDocument.cs" />
     <Compile Include="PLC\PiLogram.cs" />
     <Compile Include="PLC\PiStatement.cs" />
     <Compile Include="PLC\PiTracer.cs" />

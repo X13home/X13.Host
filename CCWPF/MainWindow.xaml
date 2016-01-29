@@ -26,6 +26,7 @@
         <MenuItem Header="Output" Click="ActivateView"  Tag="LogPanel"/>
         <MenuItem Header="Properties" Click="ActivateView"  Tag="PropertyPanel"/>
         <MenuItem Header="Data storage" Click="ActivateView"  Tag="DataStoragePanel"/>
+        <MenuItem Header="JSEditor" Click="ActivateView"  Tag="JSEditorPanel"/>
         <MenuItem Header="Security" Click="ActivateView"  Tag="SecurityPanel"/>
       </MenuItem>
     </Menu>

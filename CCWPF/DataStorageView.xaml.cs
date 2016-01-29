@@ -192,8 +192,8 @@ namespace X13.CC {
         next=cur.Get<object>(ci.Header as string);
         break;
       case ItemAction.open:
-        if(cur!=null && cur.valueType==typeof(PiLogram)) {
-          App.OpenLogram(cur as DVar<PiLogram>);
+        if(cur!=null && typeof(X13.PLC.IPiDocument).IsAssignableFrom(cur.valueType)) {
+          App.OpenLogram(cur);
         }
         break;
       case ItemAction.addToLogram:
@@ -234,13 +234,13 @@ namespace X13.CC {
 
 
     private static void AddToLogram(Topic cur) {
-      if(cur!=null && App.currentLogram!=null) {
+      if(cur!=null && App.currentDocument!=null) {
         string name=cur.name;
         int i=1;
-        while(App.currentLogram.Exist(name)) {
+        while(App.currentDocument.Exist(name)) {
           name=string.Format("{0}_{1}", cur.name, i++);
         }
-        var it=App.currentLogram.Get<Topic>(name);
+        var it=App.currentDocument.Get<Topic>(name);
         it.saved=true;
         it.value=cur;
       }
