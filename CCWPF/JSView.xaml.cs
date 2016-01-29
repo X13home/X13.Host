@@ -19,6 +19,9 @@ namespace X13.CC {
   /// </summary>
   public partial class JSView : DocumentView {
     private Topic _model;
+	private DVar<string> _src;
+	private DP_Compiler _compiler;
+
     public JSView(string lName) {
       this.Name = lName;
       if(!Topic.root.Exist(ExConverter.Name2String2("JS_", lName) + "/pa0", out _model)) {
@@ -31,6 +34,39 @@ namespace X13.CC {
       this.textEditor.Options.EnableEmailHyperlinks = false;
       this.textEditor.Options.EnableTextDragDrop = false;
     }
-    public override Topic model { get { return _model; } }
+	public override Topic model { get { return _model; } }
+
+
+	private void DocumentView_Loaded(object sender, RoutedEventArgs e) {
+	  _model.changed+=_model_changed;
+	  _src=_model.Get<string>("_src");
+	  _src.changed+=_src_changed;
+	}
+	private void DocumentView_Closed(object sender, EventArgs e) {
+	  _src.changed-=_src_changed;
+	  _model.changed-=_model_changed;
+	}
+
+	void _model_changed(Topic arg1, TopicChanged arg2) {
+	}
+	private void _src_changed(Topic arg1, TopicChanged arg2) {
+	  this.Dispatcher.BeginInvoke(new Action(() => this.textEditor.Text=_src.value), System.Windows.Threading.DispatcherPriority.DataBind);
+	}
+
+	private void saveFileClick(object sender, RoutedEventArgs e) {
+	  _src.value=this.textEditor.Text;
+	}
+
+	private void Button_Click(object sender, RoutedEventArgs e) {
+	  if(_compiler==null) {
+		_compiler=new DP_Compiler();
+	  }
+	  _src.value=this.textEditor.Text;
+	  var bytes=_compiler.Parse(this.textEditor.Text);
+	  if(bytes!=null) {
+		_model.Get<PLC.ByteArray>("pa0").value=new PLC.ByteArray(bytes);
+	  }
+	}
+
   }
 }

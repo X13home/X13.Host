@@ -60,6 +60,10 @@
       <HintPath>..\packages\AvalonEdit.5.0.2\lib\Net40\ICSharpCode.AvalonEdit.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="NiL.JS, Version=2.0.864.0, Culture=neutral, PublicKeyToken=f1426dd7ad77fce3, processorArchitecture=MSIL">
+      <HintPath>..\packages\NiL.JS.2.0.864.0\lib\net40\NiL.JS.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="PresentationUI, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="ReachFramework" />
     <Reference Include="System" />
@@ -96,6 +100,8 @@
     <Compile Include="..\X13Engine\Properties\VersionInfo.cs">
       <Link>VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="Compiler.cs" />
+    <Compile Include="Compiler.visit.cs" />
     <Compile Include="DocumentView.cs" />
     <Compile Include="JSView.xaml.cs">
       <DependentUpon>JSView.xaml</DependentUpon>
@@ -119,6 +125,7 @@
       <DependentUpon>SetupView.xaml</DependentUpon>
     </Compile>
     <Compile Include="uiItems.cs" />
+    <Compile Include="VN_Enums.cs" />
     <Page Include="DataStorageView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -319,6 +326,9 @@
   <ItemGroup>
     <Resource Include="Images\Redo.png" />
     <Resource Include="Images\Undo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Save.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
