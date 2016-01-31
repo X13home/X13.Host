@@ -1,4 +1,5 @@
 ﻿using AvalonDock;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,7 +48,7 @@ namespace X13.CC {
 	  _model.changed-=_model_changed;
 	}
 
-	void _model_changed(Topic arg1, TopicChanged arg2) {
+	private void _model_changed(Topic arg1, TopicChanged arg2) {
 	}
 	private void _src_changed(Topic arg1, TopicChanged arg2) {
 	  this.Dispatcher.BeginInvoke(new Action(() => this.textEditor.Text=_src.value), System.Windows.Threading.DispatcherPriority.DataBind);
@@ -57,13 +58,30 @@ namespace X13.CC {
 	  _src.value=this.textEditor.Text;
 	}
 
-	private void Button_Click(object sender, RoutedEventArgs e) {
+	private void Compile_Click(object sender, RoutedEventArgs e) {
 	  if(_compiler==null) {
 		_compiler=new DP_Compiler();
 	  }
 	  _src.value=this.textEditor.Text;
 	  var bytes=_compiler.Parse(this.textEditor.Text);
 	  if(bytes!=null) {
+		if(_compiler.ioList!=null) {
+		  foreach(var v in _compiler.ioList) {
+			if((new string[] { "Ip", "Op", "In", "On" }).Any(z => z==v)) {
+			  _model.parent.Get<bool>(v);
+			} else {
+			  _model.parent.Get<long>(v);
+			}
+		  }
+		}
+		if(_compiler.varList!=null) {
+		  JObject o = new JObject();
+		  o["+"]="Newtonsoft.Json.Linq.JObject";
+		  foreach(var kv in _compiler.varList) {
+			o[kv.Key]=kv.Value;
+		  }
+		  _model.Get<JObject>("_vars").value=o;
+		}
 		_model.Get<PLC.ByteArray>("pa0").value=new PLC.ByteArray(bytes);
 	  }
 	}

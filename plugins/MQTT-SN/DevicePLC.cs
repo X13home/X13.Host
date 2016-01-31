@@ -41,7 +41,7 @@ namespace X13.Periphery {
         c.crcDev = -1;
       }
       if(_verbose.value) {
-        Log.Info("{0}[{1}].Reset", _owner == null ? null : _owner.path, signature);
+        Log.Debug("{0}.Reset", _owner == null ? null : _owner.path);
       }
     }
     public void Recv(byte[] msgData) {
@@ -49,7 +49,6 @@ namespace X13.Periphery {
         return;
       }
       bool processed = false;
-      int oSt = _st;
 
       if(_st == 2 && msgData[0] == (byte)Cmd.GetCRCResp) {
         if(_curChunk != null && msgData.Length == 4 && msgData[1] == 0) {
@@ -59,6 +58,9 @@ namespace X13.Periphery {
             _st = 1;
           } else {
             _st = _plcStoped ? 5 : 3;
+			if(_verbose.value) {
+			  Log.Info("{0}.crc differ 0x{1:X4}:{2:X4}", _owner.path, _curChunk.offset, _curChunk.Data.Length);
+			}
           }
           processed = true;
         }
@@ -80,7 +82,7 @@ namespace X13.Periphery {
       } else if(_st == 6 && msgData.Length == 2 && msgData[0] == (byte)Cmd.WriteBlockResp) {
         if(msgData[1] == 0) {  // success
           _offset += 32;
-          if(_offset > _curChunk.Data.Length) {
+          if(_offset >= _curChunk.Data.Length) {
             _curChunk.crcDev = _curChunk.crcCur;
             _curChunk = null;
             _st = 1;
@@ -100,8 +102,6 @@ namespace X13.Periphery {
           Log.Warning("{0}.Recv({1}) {2}-{3}", _owner, BitConverter.ToString(msgData), ((Cmd)msgData[0]), msgData.Length > 1 ? ((ErrorCode)msgData[1]).ToString() : "empty");
         }
         _st = 0;
-      } else if(_verbose.value && _st != oSt) {
-        Log.Info("{0}[{1}]._st={2}=>{3}", _owner == null ? null : _owner.path, signature, oSt, _st);
       }
     }
     private void Pool() {
@@ -116,7 +116,6 @@ namespace X13.Periphery {
       if(_st == 0) {
         return;
       } else {
-        int oSt = _st;
         if(_curChunk == null) {
           _st = 1;
         }
@@ -157,9 +156,9 @@ namespace X13.Periphery {
           buf[len + 4] = (byte)(crc >> 8);
           _st = 6;
           _dev.PublishWithPayload(_owner, buf);
-        }
-        if(_verbose.value && _st != oSt) {
-          Log.Info("{0}[{1}]._st={2}=>{3}", _owner == null ? null : _owner.path, signature, oSt, _st);
+		  if(_verbose.value) {
+			Log.Info("{0}.write 0x{1:X4} {2}", _owner.path, addr, BitConverter.ToString(buf, 3, len));
+		  }
         }
       }
     }
@@ -196,6 +195,9 @@ namespace X13.Periphery {
 
     private void VarChanged(Topic snd, TopicChanged p) {
       int start;
+	  if(_dev!=null && snd.name=="_vars" && snd.valueType==typeof(Newtonsoft.Json.Linq.JObject) && snd.GetValue()!=null) {
+		_dev.varMapping=(snd.GetValue() as Newtonsoft.Json.Linq.JObject).ToObject<SortedList<string, string>>();
+	  }
       if(!snd.name.StartsWith("pa") || snd.valueType != typeof(PLC.ByteArray) || !int.TryParse(snd.name.Substring(2), out start)) {
         return;
       }

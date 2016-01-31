@@ -30,6 +30,9 @@ namespace X13.CC {
     private Stack<DP_Scope> _scope;
     private DP_Scope cur;
 
+	public SortedList<string, string> varList;
+	public List<string> ioList;
+
 	public byte[] Parse(string code) {
 	  List<byte> _bytes;
 	  _memory = new List<DP_Merker>();
@@ -37,6 +40,7 @@ namespace X13.CC {
 	  _programm = new List<DP_Scope>();
 	  _sp = new Stack<DP_Inst>();
 	  uint addr;
+	  string vName;
 	  try {
 		ScopePush("");
 
@@ -48,8 +52,37 @@ namespace X13.CC {
 		  cur.code.Add(new DP_Inst(DP_InstCode.RET));
 		}
 		addr = 0;
-		foreach(var m in _memory.Where(z => (z.type == DP_Type.BOOL || z.type == DP_Type.SINT8 || z.type == DP_Type.SINT16 || z.type == DP_Type.SINT32 || z.type == DP_Type.UINT8 || z.type == DP_Type.UINT16))) {
+		varList=new SortedList<string, string>();
+		ioList=new List<string>();
+		foreach(var m in _memory) {
+		  switch(m.type) {
+		  case DP_Type.BOOL:
+			vName="Mz";
+			break;
+		  case DP_Type.SINT8:
+			vName="Mb";
+			break;
+		  case DP_Type.SINT16:
+			vName="Mw";
+			break;
+		  case DP_Type.SINT32:
+			vName="Md";
+			break;
+		  case DP_Type.UINT8:
+			vName="MB";
+			break;
+		  case DP_Type.UINT16:
+			vName="MW";
+			break;
+		  case DP_Type.INPUT:
+		  case DP_Type.OUTPUT:
+			ioList.Add(m.vd.Name);
+			continue;
+		  default:
+			continue;
+		  }
 		  m.Addr = addr++;
+		  varList[m.vd.Name]=vName+m.Addr.ToString();
 		}
 
 		addr = 0;
@@ -75,6 +108,15 @@ namespace X13.CC {
 		  }
 		}
 	  }
+	  catch(JSException ex) {
+		_bytes=null;
+		var syntaxError = ex.Error.Value as NiL.JS.BaseLibrary.SyntaxError;
+		if(syntaxError != null) {
+		  Log.Error("{0}", syntaxError.message);
+		} else {
+		  Log.Error("Compile - {0}", ex.ToString());
+		}
+	  }
 	  catch(Exception ex) {
 		_bytes=null;
 		Log.Error("Compile - {0}", ex.ToString());
@@ -85,6 +127,7 @@ namespace X13.CC {
 
 	  return _bytes==null?null:_bytes.ToArray();
 	}
+
 	private void CompilerMessageCallback(MessageLevel level, CodeCoordinates coords, string message) {
 	  var msg=string.Format("[{0}, {1}] {2}", coords.Line, coords.Column, message);
 	  switch(level) {

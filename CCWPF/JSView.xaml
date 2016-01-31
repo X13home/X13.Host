@@ -22,7 +22,7 @@
 				<Image Source="Images/Redo.png" Height="16"/>
 			</Button>
 			<Separator/>
-			<Button Click="Button_Click">Compile</Button>
+			<Button Click="Compile_Click">Compile</Button>
 		</ToolBar>
 		<ae:TextEditor Grid.Row="1" Name="textEditor" FontFamily="Consolas" FontSize="10pt" SyntaxHighlighting="JavaScript" />
 	</Grid>

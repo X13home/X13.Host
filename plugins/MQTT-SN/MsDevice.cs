@@ -268,7 +268,9 @@ namespace X13.Periphery {
     private byte[] Addr { get; set; }
     [Newtonsoft.Json.JsonProperty]
     private string backName { get; set; }
-    public void AddNode(MsDevice dev) {
+	public SortedList<string, string> varMapping;
+
+	public void AddNode(MsDevice dev) {
       if(_nodes==null) {
         _nodes=new List<MsDevice>();
       }
@@ -920,6 +922,10 @@ namespace X13.Periphery {
       }
       if(!rez.registred) {
         if(sendRegister) {
+		  string tpc_n;
+		  if(varMapping!=null && varMapping.TryGetValue(tpc, out tpc_n)) {
+			tpc=tpc_n;
+		  }
           Send(new MsRegister(rez.TopicId, tpc));
         } else {
           rez.registred=true;
@@ -944,6 +950,14 @@ namespace X13.Periphery {
       var rec=_NTTable.FirstOrDefault(z => cName.StartsWith(z.name));
       TopicInfo ret;
       if(rec.name!=null && !path.StartsWith("/local")) {
+		KeyValuePair<string, string> kv;
+		if(varMapping!=null && (kv=varMapping.FirstOrDefault(z=>z.Value==cName)).Value==cName){
+		  if(idx>0) {
+			path=path.Substring(0, idx)+kv.Key;
+		  } else {
+			path=kv.Key;
+		  }
+		}
         cur=Topic.GetP(path, rec.type, Owner, Owner);
         ret=GetTopicInfo(cur, sendRegister);
       } else {
@@ -1294,23 +1308,6 @@ namespace X13.Periphery {
       new NTRecord("present", typeof(bool)),
     };
     internal static Dictionary<string, ushort> PredefinedTopics=new Dictionary<string, ushort>(){
-      {"Pa0000",        0x0000},
-      {"Pa0001",        0x0001},
-      {"Pa0002",        0x0002},
-      {"Pa0003",        0x0003},
-      {"Pa0004",        0x0004},
-      {"Pa0005",        0x0005},
-      {"Pa0006",        0x0006},
-      {"Pa0007",        0x0007},
-      {"Pa0008",        0x0008},
-      {"Pa0009",        0x0009},
-      {"Pa000A",        0x000A},
-      {"Pa000B",        0x000B},
-      {"Pa000C",        0x000C},
-      {"Pa000D",        0x000D},
-      {"Pa000E",        0x000E},
-      {"Pa000F",        0x000F},
-
       {"_sName",             0xFF00},
       {".cfg/XD_SleepTime",  0xFF01},
       {".cfg/XD_ADCintegrate",   0xFF08},
@@ -1343,7 +1340,6 @@ namespace X13.Periphery {
       {"_logW",              LOG_W_ID},
       {"_logE",              LOG_E_ID},
     };
-
     private struct NTRecord {
       public NTRecord(string name, Type type) {
         this.name=name;

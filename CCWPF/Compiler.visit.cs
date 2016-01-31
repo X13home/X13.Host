@@ -387,8 +387,30 @@ namespace X13.CC {
       return this;
     }
     protected override DP_Compiler Visit(Conditional node) {
-      return Visit(node as Expression);
-    }
+	  DP_Inst j1, j2, j3;
+	  node.FirstOperand.Visit(this);
+	  j1 = new DP_Inst(DP_InstCode.JZ, null, node.FirstOperand);
+	  cur.code.Add(j1);
+	  _sp.Pop();
+	  node.Threads[0].Visit(this);
+	  if(node.Threads.Count>1) {
+		j2 = new DP_Inst(DP_InstCode.JMP);
+		cur.code.Add(j2);
+		j3 = new DP_Inst(DP_InstCode.LABEL);
+		j1._ref = j3;
+		cur.code.Add(j3);
+		node.Threads[1].Visit(this);
+		_sp.Pop();
+		j3 = new DP_Inst(DP_InstCode.LABEL);
+		j2._ref = j3;
+		cur.code.Add(j3);
+	  } else {
+		j3 = new DP_Inst(DP_InstCode.LABEL);
+		j1._ref = j3;
+		cur.code.Add(j3);
+	  }
+	  return this;
+	}
     protected override DP_Compiler Visit(ConvertToBoolean node) {
       return Visit(node as Expression);
     }
