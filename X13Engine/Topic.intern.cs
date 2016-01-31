@@ -394,6 +394,7 @@ namespace X13 {
               object tmp=this.GetValue();
               if(tmp!=null) {
                 JsonConvert.PopulateObject(json, tmp, _parseObj);
+				_json=null;
                 Publish(this, param);
               } else {
                 this.SetValue(JsonConvert.DeserializeObject(json, valueType, _parseObj), param);

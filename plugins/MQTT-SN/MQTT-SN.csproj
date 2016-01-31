@@ -59,7 +59,6 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="crc16.cs" />
-    <Compile Include="DevicePLC.cs" />
     <Compile Include="MsDevice.cs" />
     <Compile Include="MsDevice.serial.cs" />
     <Compile Include="MsDevice.udp.cs" />
