@@ -37,7 +37,6 @@ namespace X13.CC {
     }
 	public override Topic model { get { return _model; } }
 
-
 	private void DocumentView_Loaded(object sender, RoutedEventArgs e) {
 	  _model.changed+=_model_changed;
 	  _src=_model.Get<string>("_src");
@@ -47,17 +46,14 @@ namespace X13.CC {
 	  _src.changed-=_src_changed;
 	  _model.changed-=_model_changed;
 	}
-
 	private void _model_changed(Topic arg1, TopicChanged arg2) {
 	}
 	private void _src_changed(Topic arg1, TopicChanged arg2) {
 	  this.Dispatcher.BeginInvoke(new Action(() => this.textEditor.Text=_src.value), System.Windows.Threading.DispatcherPriority.DataBind);
 	}
-
 	private void saveFileClick(object sender, RoutedEventArgs e) {
 	  _src.value=this.textEditor.Text;
 	}
-
 	private void Compile_Click(object sender, RoutedEventArgs e) {
 	  if(_compiler==null) {
 		_compiler=new DP_Compiler();
@@ -67,7 +63,7 @@ namespace X13.CC {
 	  if(bytes!=null) {
 		if(_compiler.ioList!=null) {
 		  foreach(var v in _compiler.ioList) {
-			if((new string[] { "Ip", "Op", "In", "On" }).Any(z => z==v)) {
+			if((new string[] { "Ip", "Op", "In", "On" }).Any(z => v.StartsWith(z))) {
 			  _model.parent.Get<bool>(v);
 			} else {
 			  _model.parent.Get<long>(v);
@@ -85,6 +81,5 @@ namespace X13.CC {
 		_model.Get<PLC.ByteArray>("pa0").value=new PLC.ByteArray(bytes);
 	  }
 	}
-
   }
 }
