@@ -1,7 +1,10 @@
 ﻿using AvalonDock;
+using ICSharpCode.AvalonEdit.AddIn;
+using ICSharpCode.SharpDevelop.Editor;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Text;
 using System.Windows;
@@ -22,6 +25,8 @@ namespace X13.CC {
     private Topic _model;
 	private DVar<string> _src;
 	private DP_Compiler _compiler;
+    ITextMarkerService textMarkerService;
+
 
     public JSView(string lName) {
       this.Name = lName;
@@ -30,6 +35,7 @@ namespace X13.CC {
       }
       this.Title = _model.parent.name;
       InitializeComponent();
+      InitializeTextMarkerService();
       this.textEditor.ShowLineNumbers = true;
       this.textEditor.Options.EnableHyperlinks = false;
       this.textEditor.Options.EnableEmailHyperlinks = false;
@@ -46,6 +52,16 @@ namespace X13.CC {
 	  _src.changed-=_src_changed;
 	  _model.changed-=_model_changed;
 	}
+    private void InitializeTextMarkerService() {
+      var textMarkerService = new TextMarkerService(textEditor.Document);
+      textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
+      textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
+      IServiceContainer services = (IServiceContainer)textEditor.Document.ServiceProvider.GetService(typeof(IServiceContainer));
+      if(services != null)
+        services.AddService(typeof(ITextMarkerService), textMarkerService);
+      this.textMarkerService = textMarkerService;
+    }
+
 	private void _model_changed(Topic arg1, TopicChanged arg2) {
 	}
 	private void _src_changed(Topic arg1, TopicChanged arg2) {
@@ -57,7 +73,9 @@ namespace X13.CC {
 	private void Compile_Click(object sender, RoutedEventArgs e) {
 	  if(_compiler==null) {
 		_compiler=new DP_Compiler();
+        _compiler.CMsg += _compiler_CMsg;
 	  }
+      textMarkerService.RemoveAll(m => true);
 	  _src.value=this.textEditor.Text;
 	  var bytes=_compiler.Parse(this.textEditor.Text);
 	  if(bytes!=null) {
@@ -81,5 +99,28 @@ namespace X13.CC {
 		_model.Get<PLC.ByteArray>("pa0").value=new PLC.ByteArray(bytes);
 	  }
 	}
+
+    void _compiler_CMsg(NiL.JS.MessageLevel level, NiL.JS.Core.CodeCoordinates coords, string message) {
+      ITextMarker marker = textMarkerService.Create(textEditor.Document.GetOffset(coords.Line, coords.Column), coords.Length);
+      marker.MarkerTypes = TextMarkerTypes.SquigglyUnderline;
+      marker.ToolTip = message;
+
+      switch(level) {
+      case NiL.JS.MessageLevel.Error:
+      case NiL.JS.MessageLevel.CriticalWarning:
+      marker.MarkerColor = Colors.Red;
+        break;
+      case NiL.JS.MessageLevel.Warning:
+        marker.MarkerColor = Colors.Yellow;
+        break;
+      case NiL.JS.MessageLevel.Recomendation:
+      marker.MarkerColor = Colors.Blue;
+        break;
+      default:
+      marker.MarkerColor = Colors.LightGray;
+        break;
+      }
+
+    }
   }
 }

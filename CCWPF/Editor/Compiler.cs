@@ -32,6 +32,7 @@ namespace X13.CC {
 
 	public SortedList<string, string> varList;
 	public List<string> ioList;
+    public event CompilerMessageCallback CMsg;
 
 	public byte[] Parse(string code) {
 	  List<byte> _bytes;
@@ -114,13 +115,13 @@ namespace X13.CC {
 		if(syntaxError != null) {
 		  Log.Error("{0}", syntaxError.message);
 		} else {
-		  Log.Error("Compile - {0}", ex.ToString());
+          Log.Error("Compile - {0}: {1}", ex.GetType().Name, ex.Message);
 		}
 	  }
 	  catch(Exception ex) {
 		_bytes=null;
-		Log.Error("Compile - {0}", ex.ToString());
-	  }
+        Log.Error("Compile - {0}: {1}", ex.GetType().Name, ex.Message);
+      }
 	  _scope = null;
 	  _programm = null;
 	  _sp = null;
@@ -145,6 +146,9 @@ namespace X13.CC {
 		Log.Debug("{0}", msg);
 		break;
 	  }
+      if(CMsg != null) {
+        CMsg(level, coords, message);
+      }
 	}
 	private void ScopePush(string name) {
       cur = new DP_Scope(name);
@@ -279,9 +283,9 @@ namespace X13.CC {
     }
     private DP_Merker GetMerker(VariableDescriptor v) {
       DP_Merker m = null;
-      m = cur.memory.FirstOrDefault(z => z.vd.Name == v.Name);
+      m = cur.memory.FirstOrDefault(z => z.vd == v);
       if(m == null) {
-        m = _memory.FirstOrDefault(z => z.vd.Name == v.Name);
+        m = _memory.FirstOrDefault(z => z.vd == v);
       }
       return m;
     }

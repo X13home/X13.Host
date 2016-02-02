@@ -29,10 +29,16 @@ namespace X13.CC {
       return this;
     }
     protected override DP_Compiler Visit(Call node) {
+      if(node.CallMode != CallMode.Regular) {
+        throw new NotSupportedException(node.FirstOperand.ToString() +" Mode: "+node.CallMode.ToString());
+      }
       GetVariable f = node.FirstOperand as GetVariable;
       DP_Inst d;
       if(f != null) {
         var m = GetMerker(f.Descriptor);
+        if(m == null) {
+          throw new ArgumentException("Unknown function: " + f.Descriptor.Name);
+        }
         if(m.scope != null) {
           var al = m.scope.memory.Where(z => z.type == DP_Type.PARAMETER).OrderBy(z => z.Addr).ToArray();
           if(al.Length == 0) {
@@ -160,6 +166,9 @@ namespace X13.CC {
     }
     protected override DP_Compiler Visit(GetVariable node) {
       DP_Merker m = GetMerker(node.Descriptor);
+      if(m == null) {
+        throw new ArgumentException("undefined variable " + node.Name);
+      }
       DP_Inst d;
       switch(m.type) {
       case DP_Type.BOOL:

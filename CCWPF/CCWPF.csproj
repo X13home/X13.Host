@@ -104,9 +104,11 @@
     <Compile Include="..\X13Engine\Properties\VersionInfo.cs">
       <Link>VersionInfo.cs</Link>
     </Compile>
-    <Compile Include="Compiler.cs" />
-    <Compile Include="Compiler.visit.cs" />
+    <Compile Include="Editor\Compiler.cs" />
+    <Compile Include="Editor\Compiler.visit.cs" />
     <Compile Include="DocumentView.cs" />
+    <Compile Include="Editor\ITextMarker.cs" />
+    <Compile Include="Editor\TextMarkerService.cs" />
     <Compile Include="JSView.xaml.cs">
       <DependentUpon>JSView.xaml</DependentUpon>
     </Compile>
@@ -129,7 +131,7 @@
       <DependentUpon>SetupView.xaml</DependentUpon>
     </Compile>
     <Compile Include="uiItems.cs" />
-    <Compile Include="VN_Enums.cs" />
+    <Compile Include="Editor\VN_Enums.cs" />
     <Page Include="DataStorageView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
