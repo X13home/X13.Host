@@ -95,7 +95,7 @@ namespace X13.CC {
             if(sender==obj) {
               PropertyChanged(this, new PropertyChangedEventArgs("value"));
             } else if(sender!=null) {
-              PropertyChanged(this, new PropertyChangedEventArgs(ExConverter.String2Name("", sender.name)));
+              PropertyChanged(this, new PropertyChangedEventArgs(ExConverter.String2Name("P_", sender.name)));
             }
           }
         } else {

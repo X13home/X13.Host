@@ -238,6 +238,7 @@
     <Resource Include="Images\ar_switch.png" />
   </ItemGroup>
   <ItemGroup>
+    <Resource Include="Images\Run.png" />
     <Resource Include="Images\ty_str.png" />
   </ItemGroup>
   <ItemGroup>

@@ -22,7 +22,12 @@
 				<Image Source="Images/Redo.png" Height="16"/>
 			</Button>
 			<Separator/>
-			<Button Click="Compile_Click">Compile</Button>
+			<Button Click="Compile_Click">
+        <StackPanel Orientation="Horizontal" >
+          <Image Source="Images/Run.png"></Image>
+          <TextBlock VerticalAlignment="Center" Padding="5,0,0,0">Run</TextBlock>
+        </StackPanel>
+      </Button>
 		</ToolBar>
 		<ae:TextEditor Grid.Row="1" Name="textEditor" FontFamily="Consolas" FontSize="10pt" SyntaxHighlighting="JavaScript" />
 	</Grid>
