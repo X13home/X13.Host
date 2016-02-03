@@ -207,26 +207,31 @@ namespace X13.CC {
       }
     }
     private ManagedContent GetContent(string name) {
-      ManagedContent rez=null;
-      if(string.IsNullOrEmpty(name)) {
-      } else if(name=="PropertyPanel") {
-        rez=dockManager.DockableContents.FirstOrDefault(p => p is PropertyView)??new PropertyView();
-      } else if(name=="LogPanel") {
-        rez=dockManager.DockableContents.FirstOrDefault(p => p is LogView)??new LogView();
-      } else if(name=="DataStoragePanel") {
-        rez=dockManager.DockableContents.FirstOrDefault(p => p is DataStorageView)??new DataStorageView();
-      } else if(name=="SetupView") {
-        rez=dockManager.Documents.FirstOrDefault(p => p is SetupView)??new SetupView();
-      } else if(name=="SecurityPanel"){
-        rez=dockManager.DockableContents.FirstOrDefault(p => p is SecurityView)??new SecurityView();
-      } else if(name.StartsWith("Logram_")) {
-        var cName = X13.WOUM.ExConverter.String2Name("L_", X13.WOUM.ExConverter.Name2String(name));
-        rez=dockManager.Documents.FirstOrDefault(p => p is DocumentContent && p.Name==cName)??new LogramView(cName);
-      } else if(name.StartsWith("L_")) {
-        rez=dockManager.Documents.FirstOrDefault(p => p is DocumentContent && p.Name==name)??new LogramView(name);
-      } else if(name.StartsWith("JS_")) {
-        rez = new JSView(name);
-      }
+        ManagedContent rez = null;
+        try {
+          if(string.IsNullOrEmpty(name)) {
+          } else if(name == "PropertyPanel") {
+            rez = dockManager.DockableContents.FirstOrDefault(p => p is PropertyView) ?? new PropertyView();
+          } else if(name == "LogPanel") {
+            rez = dockManager.DockableContents.FirstOrDefault(p => p is LogView) ?? new LogView();
+          } else if(name == "DataStoragePanel") {
+            rez = dockManager.DockableContents.FirstOrDefault(p => p is DataStorageView) ?? new DataStorageView();
+          } else if(name == "SetupView") {
+            rez = dockManager.Documents.FirstOrDefault(p => p is SetupView) ?? new SetupView();
+          } else if(name == "SecurityPanel") {
+            rez = dockManager.DockableContents.FirstOrDefault(p => p is SecurityView) ?? new SecurityView();
+          } else if(name.StartsWith("Logram_")) {
+            var cName = X13.WOUM.ExConverter.String2Name("L_", X13.WOUM.ExConverter.Name2String(name));
+            rez = dockManager.Documents.FirstOrDefault(p => p is DocumentContent && p.Name == cName) ?? new LogramView(cName);
+          } else if(name.StartsWith("L_")) {
+            rez = dockManager.Documents.FirstOrDefault(p => p is DocumentContent && p.Name == name) ?? new LogramView(name);
+          } else if(name.StartsWith("JS_")) {
+            rez = new JSView(name);
+          }
+        }
+        catch(Exception ex) {
+          Log.Error("GetContent({0}) - {1}", name, ex.Message);
+        }
       return rez;
     }
     private void Window_Closing(object sender, CancelEventArgs e) {

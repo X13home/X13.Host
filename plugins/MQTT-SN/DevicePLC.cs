@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using JNL=Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 namespace X13.Periphery {
-  [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
+  [JsonObject(MemberSerialization.OptIn)]
   public class DevicePLC : ITopicOwned, X13.PLC.IPiDocument {
     private static DVar<bool> _verbose;
 
@@ -30,7 +32,7 @@ namespace X13.Periphery {
       SetOwner(owner);
     }
 
-    [Newtonsoft.Json.JsonProperty]
+    [JsonProperty]
     public int signature { get; set; }
     public string View { get { return "JavaScript"; } }
 
@@ -195,8 +197,8 @@ namespace X13.Periphery {
 
     private void VarChanged(Topic snd, TopicChanged p) {
       int start;
-	  if(_dev!=null && snd.name=="_vars" && snd.valueType==typeof(Newtonsoft.Json.Linq.JObject) && snd.GetValue()!=null) {
-		_dev.varMapping=(snd.GetValue() as Newtonsoft.Json.Linq.JObject).ToObject<SortedList<string, string>>();
+	  if(_dev!=null && snd.name=="_vars" && snd.valueType==typeof(JNL.JObject) && snd.GetValue()!=null) {
+		_dev.varMapping=(snd.GetValue() as JNL.JObject).ToObject<SortedList<string, string>>();
 	  }
       if(!snd.name.StartsWith("pa") || snd.valueType != typeof(PLC.ByteArray) || !int.TryParse(snd.name.Substring(2), out start)) {
         return;

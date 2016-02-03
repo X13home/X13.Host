@@ -849,7 +849,16 @@ namespace X13.Periphery {
         Send(new MsPublish(rez.topic, rez.TopicId, param.Subscription.qos));
       } else {          // Remove by device
         if(rez.it==TopicIdType.Normal) {
-          Send(new MsRegister(0xFFFF, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
+          string tpc, tpc_n;
+          if(rez.path.StartsWith(Owner.path)) {
+            tpc = rez.path.Substring(Owner.path.Length + 1);
+            if(varMapping != null && varMapping.TryGetValue(tpc, out tpc_n)) {
+              tpc = tpc_n;
+            }
+          } else {
+            tpc = rez.path;
+          }
+          Send(new MsRegister(0xFFFF, tpc));
         }
         _topics.Remove(rez);
       }
@@ -889,7 +898,7 @@ namespace X13.Periphery {
           break;
         }
       }
-      string tpc=(tp.path.StartsWith(Owner.path))?tp.path.Remove(0, Owner.path.Length+1):tp.path;
+      string tpc=(tp.path.StartsWith(Owner.path))?tp.path.Substring(Owner.path.Length+1):tp.path;
       if(rez==null) {
         rez=new TopicInfo();
         rez.topic=tp;
@@ -1334,6 +1343,7 @@ namespace X13.Periphery {
       {".cfg/_state",        0xFFD1},
       {"present",            0xFFD2},
       {".cfg/_via",          0xFFD3},
+      {".pa0/_declarer",     0xFFD8},
 
       {"_logD",              LOG_D_ID},
       {"_logI",              LOG_I_ID},

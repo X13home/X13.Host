@@ -373,11 +373,29 @@ namespace X13.CC {
       return Visit(node as Expression);
     }
     protected override DP_Compiler Visit(SignedShiftLeft node) {
-      Arg2Op(node, DP_InstCode.LSL);
+      var c=node.SecondOperand as Constant;
+      if(c == null) {
+        throw new NotImplementedException(node.ToString());
+      } else {
+        node.FirstOperand.Visit(this);
+        _sp.Pop();
+        var d = new DP_Inst(DP_InstCode.LSL, null, c);
+        cur.code.Add(d);
+        _sp.Push(d);
+      }
       return this;
     }
     protected override DP_Compiler Visit(SignedShiftRight node) {
-      Arg2Op(node, DP_InstCode.ASR);
+      var c = node.SecondOperand as Constant;
+      if(c == null) {
+        throw new NotImplementedException(node.ToString());
+      } else {
+        node.FirstOperand.Visit(this);
+        _sp.Pop();
+        var d = new DP_Inst(DP_InstCode.ASR, null, c);
+        cur.code.Add(d);
+        _sp.Push(d);
+      }
       return this;
     }
     protected override DP_Compiler Visit(StrictEqual node) {
@@ -439,7 +457,16 @@ namespace X13.CC {
       return Visit(node as Expression);
     }
     protected override DP_Compiler Visit(UnsignedShiftRight node) {
-      Arg2Op(node, DP_InstCode.LSR);
+      var c = node.SecondOperand as Constant;
+      if(c == null) {
+        throw new NotImplementedException(node.ToString());
+      } else {
+        node.FirstOperand.Visit(this);
+        _sp.Pop();
+        var d = new DP_Inst(DP_InstCode.LSR, null, c);
+        cur.code.Add(d);
+        _sp.Push(d);
+      }
       return this;
     }
     protected override DP_Compiler Visit(BitwiseExclusiveDisjunction node) {

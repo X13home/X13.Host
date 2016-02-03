@@ -499,6 +499,15 @@ namespace X13.CC {
         }
         _code[0] = (byte)cmd;
         break;
+      case DP_InstCode.LSL:
+      case DP_InstCode.LSR:
+      case DP_InstCode.ASR:
+        if(_code == null || _code.Length != 2) {
+          _code = new byte[2];
+        }
+        _code[0] = (byte)cmd;
+        _code[1] = (byte)((int)((Constant)_cn).Value & 0x1F);
+        break;
       case DP_InstCode.STM_B1_C16:
       case DP_InstCode.STM_S1_C16:
       case DP_InstCode.STM_S2_C16:
@@ -590,6 +599,59 @@ namespace X13.CC {
       } else {
         return null;
       }
+    }
+  }
+  internal class DP_MemBlocks {
+    private uint _addr;
+    private uint _length;
+    private Fl _flags;
+    private string _name;
+    public DP_MemBlocks(uint addr, uint length, string name) {
+      _addr = addr;
+      if(name != null) {
+        switch(length) {
+        case 1:
+          _flags = Fl.Bool;
+          break;
+        case 8:
+          _flags = Fl.Byte;
+          break;
+        case 16:
+          _flags = Fl.Word;
+          break;
+        case 32:
+          _flags = Fl.DWord;
+          break;
+        default:
+          throw new ArgumentOutOfRangeException(string.Format("DP_MemBlock.ctor({0}, {1}, {2}) - bad length", addr, length, name));
+        }
+        _name=name;
+      } else {
+        if(length == 0) {
+          throw new ArgumentOutOfRangeException(string.Format("DP_MemBlock.ctor({0}, {1}, {2}) - zero length", addr, length, name));
+        }
+        _length=length;
+        _flags = Fl.Bool | Fl.Free;
+        if((length & 7) == 0 && (_addr & 7) == 0) {
+          _flags |= Fl.Byte;
+          if((length & 15) == 0 && (_addr & 15) == 0) {
+            _flags |= Fl.Word;
+            if((length & 31) == 0 && (_addr & 31) == 0) {
+              _flags |= Fl.DWord;
+            }
+          } 
+        }
+      }
+    }
+
+    [Flags]
+    private enum Fl {
+      Null=0,
+      Bool=1,
+      Byte=2,
+      Word=4,
+      DWord=8,
+      Free=16
     }
   }
 }
