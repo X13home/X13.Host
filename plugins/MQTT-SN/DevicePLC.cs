@@ -242,10 +242,13 @@ namespace X13.Periphery {
       Success = 0x00,
 
       UnknownOperation = 0x80,
-      ProgrammOutOfRange = 0x81,
-      RamOutofRange = 0x82,
+      Programm_OutOfRange = 0x81,
+      Ram_OutOfRange = 0x82,
       TestError = 0x83,
       Watchdog=0x84,
+      SFP_OutOfRange = 0x85,
+      DivByZero = 0x86,
+      SP_OutOfRange = 0x87,
 
       WrongState = 0xFA,
       CrcError = 0xFB,

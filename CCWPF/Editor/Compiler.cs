@@ -1,6 +1,7 @@
 ﻿using NiL.JS;
 using NiL.JS.Core;
 using NiL.JS.Expressions;
+using NiL.JS.Statements;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,149 +9,223 @@ using System.Text;
 
 namespace X13.CC {
   internal partial class DP_Compiler : Visitor<DP_Compiler> {
-	private static SortedList<string, DP_Type> _predefs;
-	private static DVar<bool> _verbose;
+    private static SortedList<string, DP_Type> _predefs;
+    private static DVar<bool> _verbose;
 
-	static DP_Compiler() {
-	  _predefs = new SortedList<string, DP_Type>();
-	  _predefs["Op"] = DP_Type.OUTPUT;
-	  _predefs["On"] = DP_Type.OUTPUT;
-	  _predefs["Pp"] = DP_Type.OUTPUT;
-	  _predefs["Pn"] = DP_Type.OUTPUT;
-	  _predefs["Ip"] = DP_Type.INPUT;
-	  _predefs["In"] = DP_Type.INPUT;
-	  _predefs["Av"] = DP_Type.INPUT;
-	  _predefs["Ai"] = DP_Type.INPUT;
-	  _verbose = Topic.root.Get<bool>("/etc/MQTT-SN/PLC/verbose");
-	}
+    static DP_Compiler() {
+      _predefs = new SortedList<string, DP_Type>();
+      _predefs["Op"] = DP_Type.OUTPUT;
+      _predefs["On"] = DP_Type.OUTPUT;
+      _predefs["Pp"] = DP_Type.OUTPUT;
+      _predefs["Pn"] = DP_Type.OUTPUT;
+      _predefs["Ip"] = DP_Type.INPUT;
+      _predefs["In"] = DP_Type.INPUT;
+      _predefs["Av"] = DP_Type.INPUT;
+      _predefs["Ai"] = DP_Type.INPUT;
+      _verbose = Topic.root.Get<bool>("/etc/MQTT-SN/PLC/verbose");
+    }
 
-	private Stack<DP_Inst> _sp;
+    private Stack<DP_Inst> _sp;
     private List<DP_Merker> _memory;
     private List<DP_Scope> _programm;
     private Stack<DP_Scope> _scope;
+    private SortedSet<DP_MemBlock> _memBlocks;
     private DP_Scope cur;
 
-	public SortedList<string, string> varList;
-	public List<string> ioList;
+    public SortedList<string, string> varList;
+    public List<string> ioList;
     public event CompilerMessageCallback CMsg;
+    public long StackBottom { get; private set; }
 
-	public byte[] Parse(string code) {
-	  List<byte> _bytes;
-	  _memory = new List<DP_Merker>();
-	  _scope = new Stack<DP_Scope>();
-	  _programm = new List<DP_Scope>();
-	  _sp = new Stack<DP_Inst>();
-	  uint addr;
-	  string vName;
-	  try {
-		ScopePush("");
+    public byte[] Parse(string code) {
+      List<byte> _bytes;
+      _memory = new List<DP_Merker>();
+      _scope = new Stack<DP_Scope>();
+      _programm = new List<DP_Scope>();
+      _sp = new Stack<DP_Inst>();
+      _memBlocks = new SortedSet<DP_MemBlock>();
+      _memBlocks.Add(new DP_MemBlock(0, 16384));
+      uint addr;
+      string vName;
+      try {
+        ScopePush("");
 
-		var module = new Module(code, CompilerMessageCallback, Options.SuppressConstantPropogation);
-		module.Root.Visit(this);
+        var module = new Module(code, CompilerMessageCallback, Options.SuppressConstantPropogation);
+        module.Root.Visit(this);
 
-		cur = _programm[0];
-		if(cur.code.Count == 0 || cur.code[cur.code.Count - 1]._code.Length != 1 || cur.code[cur.code.Count - 1]._code[0] != (byte)DP_InstCode.RET) {
-		  cur.code.Add(new DP_Inst(DP_InstCode.RET));
-		}
-		addr = 0;
-		varList=new SortedList<string, string>();
-		ioList=new List<string>();
-		foreach(var m in _memory) {
-		  switch(m.type) {
-		  case DP_Type.BOOL:
-			vName="Mz";
-			break;
-		  case DP_Type.SINT8:
-			vName="Mb";
-			break;
-		  case DP_Type.SINT16:
-			vName="Mw";
-			break;
-		  case DP_Type.SINT32:
-			vName="Md";
-			break;
-		  case DP_Type.UINT8:
-			vName="MB";
-			break;
-		  case DP_Type.UINT16:
-			vName="MW";
-			break;
-		  case DP_Type.INPUT:
-		  case DP_Type.OUTPUT:
-			ioList.Add(m.vd.Name);
-			continue;
-		  default:
-			continue;
-		  }
-		  m.Addr = addr++;
-		  varList[m.vd.Name]=vName+m.Addr.ToString();
-		}
+        cur = _programm[0];
+        if(cur.code.Count == 0 || cur.code[cur.code.Count - 1]._code.Length != 1 || cur.code[cur.code.Count - 1]._code[0] != (byte)DP_InstCode.RET) {
+          cur.code.Add(new DP_Inst(DP_InstCode.RET));
+        }
+        varList = new SortedList<string, string>();
+        ioList = new List<string>();
+        uint mLen;
 
-		addr = 0;
-		foreach(var p in _programm) {
-		  if(p.entryPoint != null) {
-			p.entryPoint.Addr = addr;
-		  }
-		  foreach(var c in p.code) {
-			c.addr = addr;
-			addr += (uint)c._code.Length;
-		  }
-		}
-		_bytes=new List<byte>();
-		foreach(var p in _programm) {
-		  foreach(var c in p.code) {
-			c.Link();
-			if(c._code.Length>0) {
-			  _bytes.AddRange(c._code);
-			}
-		  }
-		  if(_verbose.value) {
-			Log.Debug("{0}", p.ToString());
-		  }
-		}
-	  }
-	  catch(JSException ex) {
-		_bytes=null;
-		var syntaxError = ex.Error.Value as NiL.JS.BaseLibrary.SyntaxError;
-		if(syntaxError != null) {
-		  Log.Error("{0}", syntaxError.message);
-		} else {
+        foreach(var m in _memory) {
+          switch(m.type) {
+          case DP_Type.BOOL:
+            vName = "Mz";
+            mLen = 1;
+            break;
+          case DP_Type.SINT8:
+            vName = "Mb";
+            mLen = 8;
+            break;
+          case DP_Type.SINT16:
+            vName = "Mw";
+            mLen = 16;
+            break;
+          case DP_Type.SINT32:
+            vName = "Md";
+            mLen = 32;
+            break;
+          case DP_Type.UINT8:
+            vName = "MB";
+            mLen = 8;
+            break;
+          case DP_Type.UINT16:
+            vName = "MW";
+            mLen = 16;
+            break;
+          case DP_Type.INPUT:
+          case DP_Type.OUTPUT:
+            ioList.Add(m.vd.Name);
+            continue;
+          default:
+            continue;
+          }
+          if(m.Addr == uint.MaxValue) {
+            m.Addr = AllocateMemory(uint.MaxValue, mLen) / mLen;
+          }
+          varList[m.vd.Name] = vName + m.Addr.ToString();
+        }
+
+        addr = 0;
+        foreach(var p in _programm) {
+          if(p.entryPoint != null) {
+            p.entryPoint.Addr = addr;
+          }
+          foreach(var c in p.code) {
+            c.addr = addr;
+            addr += (uint)c._code.Length;
+          }
+        }
+        _bytes = new List<byte>();
+        foreach(var p in _programm) {
+          foreach(var c in p.code) {
+            c.Link();
+            if(c._code.Length > 0) {
+              _bytes.AddRange(c._code);
+            }
+          }
+          if(_verbose.value) {
+            Log.Debug("{0}", p.ToString());
+          }
+        }
+        StackBottom=_memBlocks.Last().start / 8;
+        Log.Info("Used ROM: {0} bytes, RAM: {1} bytes", _bytes.Count, StackBottom);
+      }
+      catch(JSException ex) {
+        _bytes = null;
+        var syntaxError = ex.Error.Value as NiL.JS.BaseLibrary.SyntaxError;
+        if(syntaxError != null) {
+          Log.Error("{0}", syntaxError.message);
+        } else {
           Log.Error("Compile - {0}: {1}", ex.GetType().Name, ex.Message);
-		}
-	  }
-	  catch(Exception ex) {
-		_bytes=null;
+        }
+      }
+      catch(Exception ex) {
+        _bytes = null;
         Log.Error("Compile - {0}: {1}", ex.GetType().Name, ex.Message);
       }
-	  _scope = null;
-	  _programm = null;
-	  _sp = null;
+      _scope = null;
+      _programm = null;
+      _sp = null;
 
-	  return _bytes==null?null:_bytes.ToArray();
-	}
+      return _bytes == null ? null : _bytes.ToArray();
+    }
 
-	private void CompilerMessageCallback(MessageLevel level, CodeCoordinates coords, string message) {
-	  var msg=string.Format("[{0}, {1}] {2}", coords.Line, coords.Column, message);
-	  switch(level) {
-	  case MessageLevel.Error:
-	  case MessageLevel.CriticalWarning:
-		Log.Error("{0}", msg);
-		break;
-	  case MessageLevel.Warning:
-		Log.Warning("{0}", msg);
-		break;
-	  case MessageLevel.Recomendation:
-		Log.Info("{0}", msg);
-		break;
-	  default:
-		Log.Debug("{0}", msg);
-		break;
-	  }
+    private uint AllocateMemory(uint addr, uint length) {
+      DP_MemBlock fb;
+      uint start, end;
+      int o;
+      if(length >= 16) {
+        o = 32;
+      } else if(length > 8) {
+        o = 16;
+      } else if(length > 1) {
+        o = 8;
+      } else {
+        o = 1;
+      }
+
+      if(addr == uint.MaxValue) {
+        fb = _memBlocks.FirstOrDefault(z => z.Check(length, o));
+        if(fb == null) {
+          throw new ArgumentOutOfRangeException("Not enough memory");
+        }
+        _memBlocks.Remove(fb);
+        start = (uint)(fb.start + (o - (fb.start % o)) % o);
+        if(start != fb.start) {
+          _memBlocks.Add(new DP_MemBlock(fb.start, start - 1));
+        }
+        end = start + length - 1;
+        if(end != fb.end) {
+          _memBlocks.Add(new DP_MemBlock(end + 1, fb.end));
+        }
+      } else {
+        start = addr;
+        end = addr+length-1;
+        fb = _memBlocks.FirstOrDefault(z => z.start<=start && z.end>=start);
+        if(fb != null) {
+          _memBlocks.Remove(fb);
+          if(fb.start != start) {
+            _memBlocks.Add(new DP_MemBlock(fb.start, start - 1));
+          }
+          if(fb.end > end) {
+            _memBlocks.Add(new DP_MemBlock(end + 1, fb.end));
+          } else if(fb.end < end) {
+            fb = null;
+          }
+        }
+        while(fb == null) {
+          fb = _memBlocks.FirstOrDefault(z => z.start<=end && z.end>=end);
+          if(fb == null) {
+            break;
+          }
+          _memBlocks.Remove(fb);
+          if(fb.end > end) {
+            _memBlocks.Add(new DP_MemBlock(end + 1, fb.end));
+          } else if(fb.end < end) {
+            fb = null;
+          }
+        }
+      }
+      return start;
+    }
+
+    private void CompilerMessageCallback(MessageLevel level, CodeCoordinates coords, string message) {
+      var msg = string.Format("[{0}, {1}] {2}", coords.Line, coords.Column, message);
+      switch(level) {
+      case MessageLevel.Error:
+      case MessageLevel.CriticalWarning:
+        Log.Error("{0}", msg);
+        break;
+      case MessageLevel.Warning:
+        Log.Warning("{0}", msg);
+        break;
+      case MessageLevel.Recomendation:
+        Log.Info("{0}", msg);
+        break;
+      default:
+        Log.Debug("{0}", msg);
+        break;
+      }
       if(CMsg != null) {
         CMsg(level, coords, message);
       }
-	}
-	private void ScopePush(string name) {
+    }
+    private void ScopePush(string name) {
       cur = new DP_Scope(name);
       _scope.Push(cur);
       _programm.Add(cur);
@@ -192,7 +267,7 @@ namespace X13.CC {
           }
         }
       }
-      var d = new DP_Inst(c, null, node) { canOptimized = true };
+      var d = new DP_Inst(c, null, node);
       cur.code.Add(d);
       _sp.Push(d);
     }
@@ -289,6 +364,20 @@ namespace X13.CC {
       }
       return m;
     }
+    private void SafeCodeBlock(CodeNode node) {
+      if(node is CodeBlock) {
+        node.Visit(this);
+      } else {
+        var sp = _sp.Count;
+        node.Visit(this);
+        while(_sp.Count > sp) {
+          var d = _sp.Pop();
+          if(!d.canOptimized || !cur.code.Remove(d)) {
+            cur.code.Add(new DP_Inst(DP_InstCode.DROP));
+          }
+        }
+      }
+    }
   }
   internal class DP_Merker {
     public uint Addr;
@@ -299,13 +388,13 @@ namespace X13.CC {
     public bool initialized;
   }
   internal class DP_Scope {
-	public string name;
-	public List<DP_Inst> code;
-	public List<DP_Merker> memory;
-	public DP_Merker entryPoint;
-	public Stack<DP_Loop> loops;
+    public string name;
+    public List<DP_Inst> code;
+    public List<DP_Merker> memory;
+    public DP_Merker entryPoint;
+    public Stack<DP_Loop> loops;
 
-	public DP_Scope(string name) {
+    public DP_Scope(string name) {
       this.name = name;
       code = new List<DP_Inst>();
       memory = new List<DP_Merker>();
@@ -332,7 +421,7 @@ namespace X13.CC {
         }
         sb.Append("| ").Append(c.ToString());
         if(c._cn != null) {
-          while((sb.Length-ls) < 46) {
+          while((sb.Length - ls) < 46) {
             sb.Append(" ");
           }
           sb.Append("; ").Append(c._cn.ToString());
@@ -346,10 +435,10 @@ namespace X13.CC {
   internal class DP_Loop {
     public DP_Loop(int sp1, ICollection<string> labels) {
       this.sp1 = sp1;
-      this.labels=labels;
-      L1=new DP_Inst(DP_InstCode.LABEL);
-      L2=new DP_Inst(DP_InstCode.LABEL);
-      L3=new DP_Inst(DP_InstCode.LABEL);
+      this.labels = labels;
+      L1 = new DP_Inst(DP_InstCode.LABEL);
+      L2 = new DP_Inst(DP_InstCode.LABEL);
+      L3 = new DP_Inst(DP_InstCode.LABEL);
     }
     public DP_Inst L1, L2, L3;
     public int sp1, sp2;
@@ -601,57 +690,19 @@ namespace X13.CC {
       }
     }
   }
-  internal class DP_MemBlocks {
-    private uint _addr;
-    private uint _length;
-    private Fl _flags;
-    private string _name;
-    public DP_MemBlocks(uint addr, uint length, string name) {
-      _addr = addr;
-      if(name != null) {
-        switch(length) {
-        case 1:
-          _flags = Fl.Bool;
-          break;
-        case 8:
-          _flags = Fl.Byte;
-          break;
-        case 16:
-          _flags = Fl.Word;
-          break;
-        case 32:
-          _flags = Fl.DWord;
-          break;
-        default:
-          throw new ArgumentOutOfRangeException(string.Format("DP_MemBlock.ctor({0}, {1}, {2}) - bad length", addr, length, name));
-        }
-        _name=name;
-      } else {
-        if(length == 0) {
-          throw new ArgumentOutOfRangeException(string.Format("DP_MemBlock.ctor({0}, {1}, {2}) - zero length", addr, length, name));
-        }
-        _length=length;
-        _flags = Fl.Bool | Fl.Free;
-        if((length & 7) == 0 && (_addr & 7) == 0) {
-          _flags |= Fl.Byte;
-          if((length & 15) == 0 && (_addr & 15) == 0) {
-            _flags |= Fl.Word;
-            if((length & 31) == 0 && (_addr & 31) == 0) {
-              _flags |= Fl.DWord;
-            }
-          } 
-        }
-      }
-    }
+  internal class DP_MemBlock : IComparable<DP_MemBlock> {
+    public readonly uint start;
+    public readonly uint end;
 
-    [Flags]
-    private enum Fl {
-      Null=0,
-      Bool=1,
-      Byte=2,
-      Word=4,
-      DWord=8,
-      Free=16
+    public DP_MemBlock(uint start, uint end) {
+      this.start = start;
+      this.end = end;
+    }
+    public int CompareTo(DP_MemBlock other) {
+      return other == null ? int.MaxValue : this.start.CompareTo(other.start);
+    }
+    public bool Check(uint length, int o) {
+      return (length + (o - (start % o)) % o) <= end - start+1;
     }
   }
 }

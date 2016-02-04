@@ -1332,6 +1332,8 @@ namespace X13.Periphery {
       {".cfg/Xa_IPRouter",   0xFF23},
       {".cfg/Xa_IPBroker",   0xFF24},
 
+      {"pa0/XD_StackBottom", 0xFF50},
+
       {"_declarer",          0xFFC0},
       {".cfg/_a_phy1",       0xFFC1},
       {".cfg/_a_phy2",       0xFFC2},
@@ -1343,7 +1345,7 @@ namespace X13.Periphery {
       {".cfg/_state",        0xFFD1},
       {"present",            0xFFD2},
       {".cfg/_via",          0xFFD3},
-      {".pa0/_declarer",     0xFFD8},
+      {"pa0/_declarer",     0xFFD8},
 
       {"_logD",              LOG_D_ID},
       {"_logI",              LOG_I_ID},

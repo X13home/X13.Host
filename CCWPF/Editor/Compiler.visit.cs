@@ -524,8 +524,38 @@ namespace X13.CC {
             throw new ArgumentOutOfRangeException("Too many local variables: " + v.Name + "in \n" + v.Owner.ToString());
           }
         } else {
-          type = DP_Type.SINT32;
-          addr = uint.MaxValue;
+          uint mLen;
+          switch(v.Name.Length > 1 ? v.Name.Substring(0, 2) : "  ") {
+          case "Mz":
+            type = DP_Type.BOOL;
+            mLen=1;
+            break;
+          case "Mb":
+            type=DP_Type.SINT8;
+            mLen=8;
+            break;
+          case "MB":
+            type=DP_Type.UINT8;
+            mLen=8;
+            break;
+          case "Mw":
+            type = DP_Type.SINT16;
+            mLen=16;
+            break;
+          case "MW":
+            type = DP_Type.UINT16;
+            mLen=16;
+            break;
+          default:
+            type = DP_Type.SINT32;
+            mLen=32;
+            break;
+          }
+          if(v.Name.Length <= 2 || !uint.TryParse(v.Name.Substring(2), out addr)) {
+            addr = uint.MaxValue;
+          } else {
+            AllocateMemory(addr*mLen, mLen);
+          }
         }
         if(type == DP_Type.LOCAL) {
           m = cur.memory.FirstOrDefault(z => z.vd.Name == v.Name && z.type == type);
@@ -555,15 +585,8 @@ namespace X13.CC {
           }
         }
       }
-      int sp = _sp.Count;
       for(var i = 0; i < node.Body.Length; i++) {
-        node.Body[i].Visit(this);
-        while(_sp.Count > sp) {
-          var d = _sp.Pop();
-          if(!d.canOptimized || !cur.code.Remove(d)) {
-            cur.code.Add(new DP_Inst(DP_InstCode.DROP));
-          }
-        }
+        SafeCodeBlock(node.Body[i]);
       }
       while(_sp.Count > sp2) {
         var d = _sp.Pop();
@@ -604,14 +627,7 @@ namespace X13.CC {
 
       cur.code.Add(cl.L1);
 
-      cl.sp2 = _sp.Count();
-
-      node.Body.Visit(this);
-
-      while(_sp.Count > cl.sp2) {
-        _sp.Pop();
-        cur.code.Add(new DP_Inst(DP_InstCode.DROP));
-      }
+      SafeCodeBlock(node.Body);
 
       cur.code.Add(cl.L2);
       node.Condition.Visit(this);
@@ -642,14 +658,9 @@ namespace X13.CC {
       node.Condition.Visit(this);
       cur.code.Add(new DP_Inst(DP_InstCode.JZ, null, node.Condition) { _ref = cl.L3 });
       _sp.Pop();
-      cl.sp2 = _sp.Count;
 
-      node.Body.Visit(this);
+      SafeCodeBlock(node.Body);
 
-      while(_sp.Count > cl.sp2) {
-        _sp.Pop();
-        cur.code.Add(new DP_Inst(DP_InstCode.DROP));
-      }
       cur.code.Add(cl.L2);
       if(node.Post != null) {
         node.Post.Visit(this);
@@ -667,14 +678,14 @@ namespace X13.CC {
       j1 = new DP_Inst(DP_InstCode.JZ, null, node.Condition);
       cur.code.Add(j1);
       _sp.Pop();
-      node.Then.Visit(this);
+      SafeCodeBlock(node.Then);
       if(node.Else != null) {
         j2 = new DP_Inst(DP_InstCode.JMP);
         cur.code.Add(j2);
         j3 = new DP_Inst(DP_InstCode.LABEL);
         j1._ref = j3;
         cur.code.Add(j3);
-        node.Else.Visit(this);
+        SafeCodeBlock(node.Else);
         j3 = new DP_Inst(DP_InstCode.LABEL);
         j2._ref = j3;
         cur.code.Add(j3);
@@ -691,14 +702,8 @@ namespace X13.CC {
 
       cur.code.Add(cl.L1);
       cur.code.Add(cl.L2);
-      cl.sp2 = _sp.Count;
 
-      node.Body.Visit(this);
-
-      while(_sp.Count > cl.sp2) {
-        _sp.Pop();
-        cur.code.Add(new DP_Inst(DP_InstCode.DROP));
-      }
+      SafeCodeBlock(node.Body);
 
       cur.code.Add(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L1 });
       cur.code.Add(cl.L3);
@@ -747,7 +752,7 @@ namespace X13.CC {
           cur.code.Add(labels[j]);
           j++;
         }
-        node.Body[i].Visit(this);
+        SafeCodeBlock(node.Body[i]);
       }
       while(j < labels.Length) {
         cur.code.Add(labels[j++]);
@@ -787,14 +792,8 @@ namespace X13.CC {
       node.Condition.Visit(this);
       cur.code.Add(new DP_Inst(DP_InstCode.JZ, null, node.Condition) { _ref = cl.L3 });
       _sp.Pop();
-      cl.sp2 = _sp.Count;
 
-      node.Body.Visit(this);
-
-      while(_sp.Count > cl.sp2) {
-        _sp.Pop();
-        cur.code.Add(new DP_Inst(DP_InstCode.DROP));
-      }
+      SafeCodeBlock(node.Body);
 
       cur.code.Add(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L1 });
       cur.code.Add(cl.L3);

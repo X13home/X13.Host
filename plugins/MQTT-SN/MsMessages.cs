@@ -428,7 +428,17 @@ namespace X13.Periphery {
       this.qualityOfService=qualityOfService;
       this.TopicId=topicId;
       this._val=val;
-      if(MsDevice.PredefinedTopics.ContainsValue(topicId) && (_val==null || MsDevice.PredefinedTopics.ContainsKey(_val.name) || MsDevice.PredefinedTopics.ContainsKey(".cfg/"+_val.name))) {
+      Topic dev=val;
+      string lPath;
+      while(dev != null && dev.valueType != typeof(MsDevice)) {
+        dev = dev.parent;
+      }
+      if(dev != null) {
+        lPath = val.path.Substring(dev.path.Length + 1);
+      } else {
+        lPath = val.path;
+      }
+      if(MsDevice.PredefinedTopics.ContainsValue(topicId) && (_val==null || MsDevice.PredefinedTopics.ContainsKey(lPath))) {
         this.topicIdType=TopicIdType.PreDefined;
       }
     }

@@ -27,7 +27,6 @@ namespace X13.CC {
 	private DP_Compiler _compiler;
     ITextMarkerService textMarkerService;
 
-
     public JSView(string lName) {
       this.Name = lName;
       if(!Topic.root.Exist(ExConverter.Name2String2("JS_", lName) + "/pa0", out _model)) {
@@ -97,6 +96,7 @@ namespace X13.CC {
 		  _model.Get<JObject>("_vars").value=o;
 		}
 		_model.Get<PLC.ByteArray>("pa0").value=new PLC.ByteArray(bytes);
+        _model.Get<long>("XD_StackBottom").value = (_compiler.StackBottom-1)/4;
 	  }
 	}
 
