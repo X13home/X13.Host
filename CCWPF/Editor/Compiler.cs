@@ -22,11 +22,17 @@ namespace X13.CC {
       _predefs["In"] = DP_Type.INPUT;
       _predefs["Av"] = DP_Type.INPUT;
       _predefs["Ai"] = DP_Type.INPUT;
+      _predefs["Mz"] = DP_Type.BOOL;
+      _predefs["Mb"] = DP_Type.SINT8;
+      _predefs["MB"] = DP_Type.UINT8;
+      _predefs["Mw"] = DP_Type.SINT16;
+      _predefs["MW"] = DP_Type.UINT16;
+      _predefs["Md"] = DP_Type.SINT32;
+
       _verbose = Topic.root.Get<bool>("/etc/MQTT-SN/PLC/verbose");
     }
 
     private Stack<DP_Inst> _sp;
-    private List<DP_Merker> _memory;
     private List<DP_Scope> _programm;
     private Stack<DP_Scope> _scope;
     private SortedSet<DP_MemBlock> _memBlocks;
@@ -44,7 +50,6 @@ namespace X13.CC {
 
     public bool Parse(string code) {
       bool success = false;
-      _memory = new List<DP_Merker>();
       _scope = new Stack<DP_Scope>();
       _programm = new List<DP_Scope>();
       _sp = new Stack<DP_Inst>();
@@ -55,7 +60,7 @@ namespace X13.CC {
       try {
         ScopePush("");
 
-        var module = new Module(code, CompilerMessageCallback, Options.SuppressConstantPropogation);
+        var module = new Module(code, CompilerMessageCallback, Options.SuppressConstantPropogation | Options.SuppressUselessExpressionsElimination);
         module.Root.Visit(this);
 
         cur = _programm[0];
@@ -66,49 +71,49 @@ namespace X13.CC {
         ioList = new List<string>();
         uint mLen;
 
-        foreach(var m in _memory) {
-          switch(m.type) {
-          case DP_Type.BOOL:
-            vName = "Mz";
-            mLen = 1;
-            break;
-          case DP_Type.SINT8:
-            vName = "Mb";
-            mLen = 8;
-            break;
-          case DP_Type.SINT16:
-            vName = "Mw";
-            mLen = 16;
-            break;
-          case DP_Type.SINT32:
-            vName = "Md";
-            mLen = 32;
-            break;
-          case DP_Type.UINT8:
-            vName = "MB";
-            mLen = 8;
-            break;
-          case DP_Type.UINT16:
-            vName = "MW";
-            mLen = 16;
-            break;
-          case DP_Type.INPUT:
-          case DP_Type.OUTPUT:
-            ioList.Add(m.vd.Name);
-            continue;
-          default:
-            continue;
-          }
-          if(m.Addr == uint.MaxValue) {
-            m.Addr = AllocateMemory(uint.MaxValue, mLen) / mLen;
-          }
-          varList[m.vd.Name] = vName + m.Addr.ToString();
-        }
-
         addr = 0;
         SortedList<uint, PLC.ByteArray> HexN = new SortedList<uint, PLC.ByteArray>();
 
         foreach(var p in _programm) {
+          foreach(var m in p.memory) {
+            switch(m.type) {
+            case DP_Type.BOOL:
+              vName = "Mz";
+              mLen = 1;
+              break;
+            case DP_Type.SINT8:
+              vName = "Mb";
+              mLen = 8;
+              break;
+            case DP_Type.SINT16:
+              vName = "Mw";
+              mLen = 16;
+              break;
+            case DP_Type.SINT32:
+              vName = "Md";
+              mLen = 32;
+              break;
+            case DP_Type.UINT8:
+              vName = "MB";
+              mLen = 8;
+              break;
+            case DP_Type.UINT16:
+              vName = "MW";
+              mLen = 16;
+              break;
+            case DP_Type.INPUT:
+            case DP_Type.OUTPUT:
+              ioList.Add(m.vd.Name);
+              continue;
+            default:
+              continue;
+            }
+            if(m.Addr == uint.MaxValue) {
+              m.Addr = AllocateMemory(uint.MaxValue, mLen) / mLen;
+            }
+            varList[m.vd.Name] = vName + m.Addr.ToString();
+          }
+
           addr += (32 - (addr % 32)) % 32;
           if(p.entryPoint != null) {
             p.entryPoint.Addr = addr;
@@ -126,15 +131,15 @@ namespace X13.CC {
               bytes.AddRange(c._code);
             }
           }
-          HexN[p.code.First().addr] = new PLC.ByteArray(bytes.ToArray()); // { Titel = p.name };
+          HexN[p.code.First().addr] = new PLC.ByteArray(bytes.ToArray()) { Titel = p.name };
           if(_verbose.value) {
             Log.Debug("{0}", p.ToString());
           }
           bytes.Clear();
         }
         Hex = HexN;
-        StackBottom=_memBlocks.Last().start / 8;
-        Log.Info("Used ROM: {0} bytes, RAM: {1} bytes", Hex.Select(z=>z.Key+z.Value.GetBytes().Length).Max(), StackBottom);
+        StackBottom = _memBlocks.Last().start / 8;
+        Log.Info("Used ROM: {0} bytes, RAM: {1} bytes", Hex.Select(z => z.Key + z.Value.GetBytes().Length).Max(), StackBottom);
         success = true;
       }
       catch(JSException ex) {
@@ -154,6 +159,7 @@ namespace X13.CC {
 
       return success;
     }
+
 
     private uint AllocateMemory(uint addr, uint length) {
       DP_MemBlock fb;
@@ -364,15 +370,46 @@ namespace X13.CC {
       cur.code.Add(d);
       _sp.Push(d);
     }
-    private DP_Merker GetMerker(VariableDescriptor v) {
+    private DP_Merker GetMerker(VariableDescriptor v, DP_Type type = DP_Type.NONE) {
       DP_Merker m = null;
+
       m = cur.memory.FirstOrDefault(z => z.vd == v);
       if(m == null) {
-        m = _memory.FirstOrDefault(z => z.vd == v);
+        m = _scope.Last().memory.FirstOrDefault(z => z.vd == v);
+      }
+      if(m == null) {
+        m = LoadNativeFunctions(v);
+      }
+      if(m == null) {
+        m = new DP_Merker() { type = type, vd = v };
+        cur.memory.Add(m);
       }
       return m;
     }
-    private void SafeCodeBlock(CodeNode node, int sp=-1) {
+
+    private DP_Merker LoadNativeFunctions(VariableDescriptor v) {
+      DP_Merker m;
+      switch(v.Name) {
+      case "TwiControl":
+        m = new DP_Merker() { type = DP_Type.API, Addr = 1, vd = v, pIn = 1 };
+        break;
+      case "TwiStatus":
+        m = new DP_Merker() { type = DP_Type.API, Addr = 2, vd = v, pOut=1 };
+        break;
+      case "TwiPutByte":
+        m = new DP_Merker() { type = DP_Type.API, Addr = 3, vd = v, pIn=1 };
+        break;
+      case "TwiGetByte":
+        m = new DP_Merker() { type = DP_Type.API, Addr = 4, vd = v, pOut=1 };
+        break;
+      default:
+        return null;
+      }
+      _programm[0].memory.Add(m);
+      return m;
+    }
+
+    private void SafeCodeBlock(CodeNode node, int sp = -1) {
       if(node is CodeBlock) {
         node.Visit(this);
       } else {
@@ -396,6 +433,8 @@ namespace X13.CC {
     public Expression init;
     public DP_Scope scope;
     public bool initialized;
+    public int pIn;
+    public int pOut;
   }
   internal class DP_Scope {
     public string name;
@@ -618,6 +657,7 @@ namespace X13.CC {
       case DP_InstCode.LDM_U1_C16:
       case DP_InstCode.LDM_U2_C16:
       case DP_InstCode.CALL:
+      case DP_InstCode.API:
         if(_code == null || _code.Length != 3) {
           _code = new byte[3];
         }
@@ -712,7 +752,7 @@ namespace X13.CC {
       return other == null ? int.MaxValue : this.start.CompareTo(other.start);
     }
     public bool Check(uint length, int o) {
-      return (length + (o - (start % o)) % o) <= end - start+1;
+      return (length + (o - (start % o)) % o) <= end - start + 1;
     }
   }
 }

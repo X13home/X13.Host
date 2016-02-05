@@ -172,6 +172,8 @@ namespace X13.CC {
     IN = 0xC0,
     OUT = 0xC1,
 
+    API=0xC6,
+
     SJMP = 0xF0,
     JZ = 0xF1,
     JNZ = 0xF2,
@@ -195,6 +197,7 @@ namespace X13.CC {
     SINT16,
     SINT32,
     FUNCTION,
+    API,
     PARAMETER,
     LOCAL,
     INPUT,

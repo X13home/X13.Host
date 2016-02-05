@@ -20,6 +20,9 @@ namespace X13.PLC {
   public class ByteArray { // : IConvertible 
     [Newtonsoft.Json.JsonProperty]
     private byte[] _val;
+    [Newtonsoft.Json.JsonProperty]
+    private string _titel;
+
     public ByteArray() {
       _val=new byte[0];
     }
@@ -59,7 +62,7 @@ namespace X13.PLC {
     public byte[] GetBytes() {
       return _val;
     }
-
+    public string Titel { get { return _titel; } set { _titel = value; } }
     public override string ToString() {
       return BitConverter.ToString(_val);
     }

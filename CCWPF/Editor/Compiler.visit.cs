@@ -30,7 +30,7 @@ namespace X13.CC {
     }
     protected override DP_Compiler Visit(Call node) {
       if(node.CallMode != CallMode.Regular) {
-        throw new NotSupportedException(node.FirstOperand.ToString() +" Mode: "+node.CallMode.ToString());
+        throw new NotSupportedException(node.FirstOperand.ToString() + " Mode: " + node.CallMode.ToString());
       }
       GetVariable f = node.FirstOperand as GetVariable;
       DP_Inst d;
@@ -39,7 +39,21 @@ namespace X13.CC {
         if(m == null) {
           throw new ArgumentException("Unknown function: " + f.Descriptor.Name);
         }
-        if(m.scope != null) {
+        if(m.type == DP_Type.API) {
+          int i;
+          for(i = m.pIn-1; i >= 0; i--) {
+            if(i < node.Arguments.Length) {
+              node.Arguments[i].Visit(this);
+              _sp.Pop();
+            } else {
+              cur.code.Add(new DP_Inst(DP_InstCode.LDI_0));
+            }
+          }
+          cur.code.Add(d = new DP_Inst(DP_InstCode.API, m, node));
+          for(i = m.pOut - 1; i >= 0; i--) {
+            _sp.Push(d);
+          }
+        } else if(m.type==DP_Type.FUNCTION && m.scope != null) {
           var al = m.scope.memory.Where(z => z.type == DP_Type.PARAMETER).OrderBy(z => z.Addr).ToArray();
           if(al.Length == 0) {
             d = new DP_Inst(DP_InstCode.LDI_0);
@@ -66,7 +80,7 @@ namespace X13.CC {
             _sp.Push(d);
           }
         } else {
-          throw new ApplicationException(m.vd.Name + ".scope null pointer exception");
+          throw new ApplicationException("undefined fuction: " + m.vd.Name);
         }
       } else {
         if(node.Arguments.Length == 0) {
@@ -373,7 +387,7 @@ namespace X13.CC {
       return Visit(node as Expression);
     }
     protected override DP_Compiler Visit(SignedShiftLeft node) {
-      var c=node.SecondOperand as Constant;
+      var c = node.SecondOperand as Constant;
       if(c == null) {
         throw new NotImplementedException(node.ToString());
       } else {
@@ -414,30 +428,30 @@ namespace X13.CC {
       return this;
     }
     protected override DP_Compiler Visit(Conditional node) {
-	  DP_Inst j1, j2, j3;
-	  node.FirstOperand.Visit(this);
-	  j1 = new DP_Inst(DP_InstCode.JZ, null, node.FirstOperand);
-	  cur.code.Add(j1);
-	  _sp.Pop();
-	  node.Threads[0].Visit(this);
-	  if(node.Threads.Count>1) {
-		j2 = new DP_Inst(DP_InstCode.JMP);
-		cur.code.Add(j2);
-		j3 = new DP_Inst(DP_InstCode.LABEL);
-		j1._ref = j3;
-		cur.code.Add(j3);
-		node.Threads[1].Visit(this);
-		_sp.Pop();
-		j3 = new DP_Inst(DP_InstCode.LABEL);
-		j2._ref = j3;
-		cur.code.Add(j3);
-	  } else {
-		j3 = new DP_Inst(DP_InstCode.LABEL);
-		j1._ref = j3;
-		cur.code.Add(j3);
-	  }
-	  return this;
-	}
+      DP_Inst j1, j2, j3;
+      node.FirstOperand.Visit(this);
+      j1 = new DP_Inst(DP_InstCode.JZ, null, node.FirstOperand);
+      cur.code.Add(j1);
+      _sp.Pop();
+      node.Threads[0].Visit(this);
+      if(node.Threads.Count > 1) {
+        j2 = new DP_Inst(DP_InstCode.JMP);
+        cur.code.Add(j2);
+        j3 = new DP_Inst(DP_InstCode.LABEL);
+        j1._ref = j3;
+        cur.code.Add(j3);
+        node.Threads[1].Visit(this);
+        _sp.Pop();
+        j3 = new DP_Inst(DP_InstCode.LABEL);
+        j2._ref = j3;
+        cur.code.Add(j3);
+      } else {
+        j3 = new DP_Inst(DP_InstCode.LABEL);
+        j1._ref = j3;
+        cur.code.Add(j3);
+      }
+      return this;
+    }
     protected override DP_Compiler Visit(ConvertToBoolean node) {
       return Visit(node as Expression);
     }
@@ -511,10 +525,36 @@ namespace X13.CC {
         addr = uint.MaxValue;
         if(v.Initializer != null && v.Initializer is FunctionDefinition) {
           type = DP_Type.FUNCTION;
-        } else if(v.Name.Length > 2 && _predefs.TryGetValue(v.Name.Substring(0, 2), out type) && UInt32.TryParse(v.Name.Substring(2), out addr)) {
-          addr &= 0xFFFF;
-          if(type == DP_Type.INPUT || type == DP_Type.OUTPUT) {
-            addr = (uint)((uint)(((byte)v.Name[0]) << 24) | (uint)(((byte)v.Name[1]) << 16) | addr);
+        } else if(v.Name.Length > 2 && _predefs.TryGetValue(v.Name.Substring(0, 2), out type)) {
+          uint mLen;
+          switch(type) {
+          case DP_Type.BOOL:
+            mLen = 1;
+            break;
+          case DP_Type.SINT8:
+          case DP_Type.UINT8:
+            mLen = 8;
+            break;
+          case DP_Type.SINT16:
+          case DP_Type.UINT16:
+            mLen = 16;
+            break;
+          case DP_Type.SINT32:
+            mLen = 32;
+            break;
+          default:
+            mLen = 0;
+            break;
+          }
+          if(UInt32.TryParse(v.Name.Substring(2), out addr)) {
+            addr &= 0xFFFF;
+            if(type == DP_Type.INPUT || type == DP_Type.OUTPUT) {
+              addr = (uint)((uint)(((byte)v.Name[0]) << 24) | (uint)(((byte)v.Name[1]) << 16) | addr);
+            } else if(mLen > 0) {
+              AllocateMemory(addr * mLen, mLen);
+            }
+          } else {
+            addr = uint.MaxValue;
           }
         } else if(v.LexicalScope) {
           addr = (uint)cur.memory.Where(z => z.type == DP_Type.LOCAL).Count();
@@ -524,56 +564,15 @@ namespace X13.CC {
             throw new ArgumentOutOfRangeException("Too many local variables: " + v.Name + "in \n" + v.Owner.ToString());
           }
         } else {
-          uint mLen;
-          switch(v.Name.Length > 1 ? v.Name.Substring(0, 2) : "  ") {
-          case "Mz":
-            type = DP_Type.BOOL;
-            mLen=1;
-            break;
-          case "Mb":
-            type=DP_Type.SINT8;
-            mLen=8;
-            break;
-          case "MB":
-            type=DP_Type.UINT8;
-            mLen=8;
-            break;
-          case "Mw":
-            type = DP_Type.SINT16;
-            mLen=16;
-            break;
-          case "MW":
-            type = DP_Type.UINT16;
-            mLen=16;
-            break;
-          default:
-            type = DP_Type.SINT32;
-            mLen=32;
-            break;
-          }
-          if(v.Name.Length <= 2 || !uint.TryParse(v.Name.Substring(2), out addr)) {
-            addr = uint.MaxValue;
-          } else {
-            AllocateMemory(addr*mLen, mLen);
-          }
+          type = DP_Type.SINT32;
+          addr = uint.MaxValue;
         }
-        if(type == DP_Type.LOCAL) {
-          m = cur.memory.FirstOrDefault(z => z.vd.Name == v.Name && z.type == type);
-          if(m == null) {
-            m = new DP_Merker() { Addr = addr, type = type, vd = v };
-            cur.memory.Add(m);
-          }
-        } else {
-          m = _memory.FirstOrDefault(z => z.vd.Name == v.Name && z.type == type);
-          if(m == null) {
-            m = new DP_Merker() { Addr = addr, type = type, vd = v };
-            _memory.Add(m);
-          }
-        }
-        //cur.code.AppendFormat("\tDEF_{3}\t{0}\t\t;{1}@{2}\n", m.vd.Name, m.type.ToString(), m.Addr, m.type == VM_DType.LOCAL ? "L" : "G");
-        if(v.Initializer != null) {
-          v.Initializer.Visit(this);
-        } else if(type == DP_Type.LOCAL) {
+        m = GetMerker(v, type);
+        m.Addr = addr;
+
+        if(m.vd.Initializer != null) {
+          m.vd.Initializer.Visit(this);
+        } else if(m.type == DP_Type.LOCAL) {
           var a2 = inList.FirstOrDefault(z => (z.FirstOperand as GetVariable) != null && (z.FirstOperand as GetVariable).Descriptor == m.vd);
           if(a2 != null) {
             a2.SecondOperand.Visit(this);
@@ -585,6 +584,7 @@ namespace X13.CC {
           }
         }
       }
+
       int sp = _sp.Count;
       for(var i = 0; i < node.Body.Length; i++) {
         SafeCodeBlock(node.Body[i], sp);
@@ -730,7 +730,7 @@ namespace X13.CC {
       var labels = new DP_Inst[node.Cases.Length];
       var cvs = node.Cases.Where(z => z.Statement != null).OrderBy(z => z.Index).Union(node.Cases.Where(z => z.Statement == null)).ToArray();
       node.Image.Visit(this);
-      for(j = 0; j < cvs.Length; j++ ) {
+      for(j = 0; j < cvs.Length; j++) {
         labels[j] = new DP_Inst(DP_InstCode.LABEL);
         if(cvs[j].Statement != null) {
           if(j < cvs.Length - 2) {
