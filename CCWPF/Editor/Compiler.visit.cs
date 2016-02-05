@@ -585,8 +585,9 @@ namespace X13.CC {
           }
         }
       }
+      int sp = _sp.Count;
       for(var i = 0; i < node.Body.Length; i++) {
-        SafeCodeBlock(node.Body[i]);
+        SafeCodeBlock(node.Body[i], sp);
       }
       while(_sp.Count > sp2) {
         var d = _sp.Pop();
@@ -627,6 +628,7 @@ namespace X13.CC {
 
       cur.code.Add(cl.L1);
 
+      cl.sp2 = _sp.Count;
       SafeCodeBlock(node.Body);
 
       cur.code.Add(cl.L2);
@@ -658,7 +660,7 @@ namespace X13.CC {
       node.Condition.Visit(this);
       cur.code.Add(new DP_Inst(DP_InstCode.JZ, null, node.Condition) { _ref = cl.L3 });
       _sp.Pop();
-
+      cl.sp2 = _sp.Count;
       SafeCodeBlock(node.Body);
 
       cur.code.Add(cl.L2);
@@ -703,6 +705,7 @@ namespace X13.CC {
       cur.code.Add(cl.L1);
       cur.code.Add(cl.L2);
 
+      cl.sp2 = _sp.Count;
       SafeCodeBlock(node.Body);
 
       cur.code.Add(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L1 });
@@ -793,7 +796,8 @@ namespace X13.CC {
       cur.code.Add(new DP_Inst(DP_InstCode.JZ, null, node.Condition) { _ref = cl.L3 });
       _sp.Pop();
 
-      SafeCodeBlock(node.Body);
+      cl.sp2 = _sp.Count;
+      SafeCodeBlock(node.Body, cl.sp2);
 
       cur.code.Add(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L1 });
       cur.code.Add(cl.L3);

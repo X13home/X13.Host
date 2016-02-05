@@ -249,6 +249,7 @@ namespace X13.Periphery {
       SFP_OutOfRange = 0x85,
       DivByZero = 0x86,
       SP_OutOfRange = 0x87,
+      API_Unknown = 0x88,
 
       WrongState = 0xFA,
       CrcError = 0xFB,

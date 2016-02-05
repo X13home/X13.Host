@@ -76,8 +76,7 @@ namespace X13.CC {
 	  }
       textMarkerService.RemoveAll(m => true);
 	  _src.value=this.textEditor.Text;
-	  var bytes=_compiler.Parse(this.textEditor.Text);
-	  if(bytes!=null) {
+	  if(_compiler.Parse(this.textEditor.Text)) {
 		if(_compiler.ioList!=null) {
 		  foreach(var v in _compiler.ioList) {
 			if((new string[] { "Ip", "Op", "In", "On" }).Any(z => v.StartsWith(z))) {
@@ -95,7 +94,15 @@ namespace X13.CC {
 		  }
 		  _model.Get<JObject>("_vars").value=o;
 		}
-		_model.Get<PLC.ByteArray>("pa0").value=new PLC.ByteArray(bytes);
+		//_model.Get<PLC.ByteArray>("pa0").value=new PLC.ByteArray(bytes);
+        uint addr;
+        var toDel = _model.children.Where(z => z.valueType == typeof(PLC.ByteArray) && z.name.StartsWith("pa") && uint.TryParse(z.name.Substring(2), out addr) && !_compiler.Hex.ContainsKey(addr)).ToArray();
+        foreach(var t in toDel) {
+          t.Remove();
+        }
+        foreach(var kv in _compiler.Hex) {
+          _model.Get<PLC.ByteArray>("pa" + kv.Key.ToString()).value = kv.Value;
+        }
         _model.Get<long>("XD_StackBottom").value = (_compiler.StackBottom-1)/4;
 	  }
 	}

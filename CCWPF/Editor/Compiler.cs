@@ -36,9 +36,14 @@ namespace X13.CC {
     public List<string> ioList;
     public event CompilerMessageCallback CMsg;
     public long StackBottom { get; private set; }
+    public SortedList<uint, PLC.ByteArray> Hex;
 
-    public byte[] Parse(string code) {
-      List<byte> _bytes;
+    public DP_Compiler() {
+      Hex = new SortedList<uint, PLC.ByteArray>();
+    }
+
+    public bool Parse(string code) {
+      bool success = false;
       _memory = new List<DP_Merker>();
       _scope = new Stack<DP_Scope>();
       _programm = new List<DP_Scope>();
@@ -101,7 +106,10 @@ namespace X13.CC {
         }
 
         addr = 0;
+        SortedList<uint, PLC.ByteArray> HexN = new SortedList<uint, PLC.ByteArray>();
+
         foreach(var p in _programm) {
+          addr += (32 - (addr % 32)) % 32;
           if(p.entryPoint != null) {
             p.entryPoint.Addr = addr;
           }
@@ -110,23 +118,26 @@ namespace X13.CC {
             addr += (uint)c._code.Length;
           }
         }
-        _bytes = new List<byte>();
+        List<byte> bytes = new List<byte>();
         foreach(var p in _programm) {
           foreach(var c in p.code) {
             c.Link();
             if(c._code.Length > 0) {
-              _bytes.AddRange(c._code);
+              bytes.AddRange(c._code);
             }
           }
+          HexN[p.code.First().addr] = new PLC.ByteArray(bytes.ToArray()); // { Titel = p.name };
           if(_verbose.value) {
             Log.Debug("{0}", p.ToString());
           }
+          bytes.Clear();
         }
+        Hex = HexN;
         StackBottom=_memBlocks.Last().start / 8;
-        Log.Info("Used ROM: {0} bytes, RAM: {1} bytes", _bytes.Count, StackBottom);
+        Log.Info("Used ROM: {0} bytes, RAM: {1} bytes", Hex.Select(z=>z.Key+z.Value.GetBytes().Length).Max(), StackBottom);
+        success = true;
       }
       catch(JSException ex) {
-        _bytes = null;
         var syntaxError = ex.Error.Value as NiL.JS.BaseLibrary.SyntaxError;
         if(syntaxError != null) {
           Log.Error("{0}", syntaxError.message);
@@ -135,72 +146,69 @@ namespace X13.CC {
         }
       }
       catch(Exception ex) {
-        _bytes = null;
         Log.Error("Compile - {0}: {1}", ex.GetType().Name, ex.Message);
       }
       _scope = null;
       _programm = null;
       _sp = null;
 
-      return _bytes == null ? null : _bytes.ToArray();
+      return success;
     }
 
     private uint AllocateMemory(uint addr, uint length) {
       DP_MemBlock fb;
       uint start, end;
-      int o;
-      if(length >= 16) {
-        o = 32;
-      } else if(length > 8) {
-        o = 16;
-      } else if(length > 1) {
-        o = 8;
-      } else {
-        o = 1;
-      }
 
       if(addr == uint.MaxValue) {
+        int o;
+        if(length >= 16) {
+          o = 32;
+        } else if(length > 8) {
+          o = 16;
+        } else if(length > 1) {
+          o = 8;
+        } else {
+          o = 1;
+        }
+
         fb = _memBlocks.FirstOrDefault(z => z.Check(length, o));
         if(fb == null) {
           throw new ArgumentOutOfRangeException("Not enough memory");
         }
         _memBlocks.Remove(fb);
         start = (uint)(fb.start + (o - (fb.start % o)) % o);
-        if(start != fb.start) {
+        end = start + length - 1;
+        if(fb.start < start) {
           _memBlocks.Add(new DP_MemBlock(fb.start, start - 1));
         }
-        end = start + length - 1;
-        if(end != fb.end) {
+        if(fb.end > end) {
           _memBlocks.Add(new DP_MemBlock(end + 1, fb.end));
         }
       } else {
         start = addr;
-        end = addr+length-1;
-        fb = _memBlocks.FirstOrDefault(z => z.start<=start && z.end>=start);
-        if(fb != null) {
-          _memBlocks.Remove(fb);
-          if(fb.start != start) {
-            _memBlocks.Add(new DP_MemBlock(fb.start, start - 1));
-          }
-          if(fb.end > end) {
-            _memBlocks.Add(new DP_MemBlock(end + 1, fb.end));
-          } else if(fb.end < end) {
-            fb = null;
-          }
-        }
-        while(fb == null) {
-          fb = _memBlocks.FirstOrDefault(z => z.start<=end && z.end>=end);
+        end = addr + length - 1;
+        do {
+          fb = _memBlocks.FirstOrDefault(z => z.start <= end && z.end >= start);
           if(fb == null) {
             break;
           }
           _memBlocks.Remove(fb);
+          if(fb.start < start) {
+            _memBlocks.Add(new DP_MemBlock(fb.start, start - 1));
+          }
           if(fb.end > end) {
             _memBlocks.Add(new DP_MemBlock(end + 1, fb.end));
-          } else if(fb.end < end) {
-            fb = null;
           }
-        }
+        } while(fb != null);
       }
+      //{
+      //  StringBuilder sb = new StringBuilder();
+      //  sb.AppendFormat("AllocateMemory({0:X4}{2}, {1:X2})\n", start, length, addr==uint.MaxValue?"*":"");
+      //  foreach(var m in _memBlocks) {
+      //    sb.AppendFormat("  {0:X4}:{1:X4}\n", m.start, m.end);
+      //  }
+      //  Log.Info("{0}", sb.ToString());
+      //}
       return start;
     }
 
@@ -364,11 +372,13 @@ namespace X13.CC {
       }
       return m;
     }
-    private void SafeCodeBlock(CodeNode node) {
+    private void SafeCodeBlock(CodeNode node, int sp=-1) {
       if(node is CodeBlock) {
         node.Visit(this);
       } else {
-        var sp = _sp.Count;
+        if(sp < 0) {
+          sp = _sp.Count;
+        }
         node.Visit(this);
         while(_sp.Count > sp) {
           var d = _sp.Pop();
