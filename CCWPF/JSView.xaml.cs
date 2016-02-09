@@ -103,7 +103,7 @@ namespace X13.CC {
         foreach(var kv in _compiler.Hex) {
           _model.Get<PLC.ByteArray>("pa" + kv.Key.ToString()).value = kv.Value;
         }
-        _model.Get<long>("XD_StackBottom").value = (_compiler.StackBottom-1)/4;
+        _model.Get<long>("XD_StackBottom").value = (_compiler.StackBottom+3)/4;
 	  }
 	}
 

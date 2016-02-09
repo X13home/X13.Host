@@ -144,7 +144,7 @@ namespace X13.CC {
           bytes.Clear();
         }
         Hex = HexN;
-        StackBottom = _memBlocks.Last().start / 8;
+        StackBottom = (_memBlocks.Last().start+7) / 8;
         Log.Info("Used ROM: {0} bytes, RAM: {1} bytes", Hex.Select(z => z.Key + z.Value.GetBytes().Length).Max(), StackBottom);
         success = true;
       }
