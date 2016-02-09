@@ -198,7 +198,19 @@ namespace X13.Periphery {
     private void VarChanged(Topic snd, TopicChanged p) {
       int start;
 	  if(_dev!=null && snd.name=="_vars" && snd.valueType==typeof(JNL.JObject) && snd.GetValue()!=null) {
-		_dev.varMapping=(snd.GetValue() as JNL.JObject).ToObject<SortedList<string, string>>();
+        var nm=(snd.GetValue() as JNL.JObject).ToObject<SortedList<string, string>>();
+        KeyValuePair<string, string>[] om;
+        if(_dev.varMapping != null && (om = _dev.varMapping.Except(nm).ToArray()) != null) {
+          Topic t;
+          foreach(var kv in om) {
+            if(_dev.Owner.Exist(kv.Key, out t)) {
+              t.Remove();
+            }
+          }
+          new System.Threading.Timer(o => _dev.varMapping = nm, null, 250, -1);
+        } else {
+          _dev.varMapping = nm;
+        }
 	  }
       if(!snd.name.StartsWith("pa") || snd.valueType != typeof(PLC.ByteArray) || !int.TryParse(snd.name.Substring(2), out start)) {
         return;

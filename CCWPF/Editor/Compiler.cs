@@ -81,7 +81,7 @@ namespace X13.CC {
         SortedList<uint, PLC.ByteArray> HexN = new SortedList<uint, PLC.ByteArray>();
 
         foreach(var p in _programm) {
-          foreach(var m in p.memory) {
+          foreach(var m in p.memory.OrderByDescending(z=>z.type)) {
             switch(m.type) {
             case DP_Type.BOOL:
               vName = "Mz";
@@ -166,14 +166,13 @@ namespace X13.CC {
       return success;
     }
 
-
     private uint AllocateMemory(uint addr, uint length) {
       DP_MemBlock fb;
       uint start, end;
 
       if(addr == uint.MaxValue) {
         int o;
-        if(length >= 16) {
+        if(length > 16) {
           o = 32;
         } else if(length > 8) {
           o = 16;

@@ -196,11 +196,11 @@ namespace X13.CC {
     UINT16,
     SINT16,
     SINT32,
-    FUNCTION,
-    API,
-    PARAMETER,
-    LOCAL,
     INPUT,
     OUTPUT,
+    PARAMETER,
+    LOCAL,
+    API,
+    FUNCTION,
   }
 }

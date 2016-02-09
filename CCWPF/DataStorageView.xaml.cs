@@ -611,14 +611,14 @@ namespace X13.CC {
 		actions.Add(new ItemActionStr("remove", ItemAction.remove, null));
 	  }
       Topic T_VM;
-      if(ptr.valueType.Name == "MsDevice" && ptr.Exist("pa0/_vars", out T_VM) && T_VM.valueType == typeof(Newtonsoft.Json.Linq.JObject) && T_VM.GetValue() != null) {
+      if(ptr.valueType!=null && ptr.valueType.Name == "MsDevice" && ptr.Exist("pa0/_vars", out T_VM) && T_VM.valueType == typeof(Newtonsoft.Json.Linq.JObject) && T_VM.GetValue() != null) {
         var varMapping = (T_VM.GetValue() as Newtonsoft.Json.Linq.JObject).ToObject<SortedList<string, string>>();
         foreach(var v in varMapping.Where(z=>z.Key!="+")) {
           bool busy = ptr.children.Any(z => z.name == v.Key);
           if(busy) {      // don't show already exist variable
             continue;
           }
-          actions.Add(new ItemActionStr("PLC/" + v.Key, v.Value[1] == 'z' ? ItemAction.createBoolDef : ItemAction.createLongDef, null));
+          actions.Insert(actions.Count()>0?actions.Count-1:0, new ItemActionStr("PLC/" + v.Key, v.Value[1] == 'z' ? ItemAction.createBoolDef : ItemAction.createLongDef, null));
         }
       }
 	  return actions;
