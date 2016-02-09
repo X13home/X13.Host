@@ -35,74 +35,72 @@ namespace X13.CC {
       GetVariable f = node.FirstOperand as GetVariable;
       DP_Inst d;
       if(f != null) {
-        var m = GetMerker(f.Descriptor);
+        var m = GetMerker(f.Descriptor, DP_Type.FUNCTION);
         if(m == null) {
           throw new ArgumentException("Unknown function: " + f.Descriptor.Name);
         }
         if(m.type == DP_Type.API) {
           int i;
-          for(i = m.pIn-1; i >= 0; i--) {
+          for(i = m.pIn - 1; i >= 0; i--) {
             if(i < node.Arguments.Length) {
               node.Arguments[i].Visit(this);
               _sp.Pop();
             } else {
-              cur.code.Add(new DP_Inst(DP_InstCode.LDI_0));
+              cur.AddInst(DP_InstCode.LDI_0);
             }
           }
-          cur.code.Add(d = new DP_Inst(DP_InstCode.API, m, node));
-          for(i = m.pOut - 1; i >= 0; i--) {
-            _sp.Push(d);
-          }
-        } else if(m.type==DP_Type.FUNCTION && m.scope != null) {
-          var al = m.scope.memory.Where(z => z.type == DP_Type.PARAMETER).OrderBy(z => z.Addr).ToArray();
-          if(al.Length == 0) {
-            d = new DP_Inst(DP_InstCode.LDI_0);
-            cur.code.Add(d);
-            _sp.Push(d);
-          } else {
-            for(int i = al.Length - 1; i >= 0; i--) {
-              if(i < node.Arguments.Length) {
-                node.Arguments[i].Visit(this);
-              } else if(al[i].init != null) {  //TODO: check function(a, b=7)
-                al[i].init.Visit(this);
-              } else {
-                d = new DP_Inst(DP_InstCode.LDI_0);
-                cur.code.Add(d);
-                _sp.Push(d);
+          cur.AddInst(new DP_Inst(DP_InstCode.API, m, node), 0, m.pOut);
+          return this;
+        } else if(m.type == DP_Type.FUNCTION) {
+          if(m.scope != null) {
+            var al = m.scope.memory.Where(z => z.type == DP_Type.PARAMETER).OrderBy(z => z.Addr).ToArray();
+            if(al.Length == 0) {
+              d = new DP_Inst(DP_InstCode.LDI_0);
+              cur.AddInst(d);
+              _sp.Push(d);
+            } else {
+              for(int i = al.Length - 1; i >= 0; i--) {
+                if(i < node.Arguments.Length) {
+                  node.Arguments[i].Visit(this);
+                } else if(al[i].init != null) {  //TODO: check function(a, b=7)
+                  al[i].init.Visit(this);
+                } else {
+                  cur.AddInst(DP_InstCode.LDI_0, 0, 1);
+                }
               }
             }
-          }
-          cur.code.Add(new DP_Inst(DP_InstCode.CALL, m));
-          for(int i = al.Length - 1; i > 0; i--) {
-            cur.code.Add(new DP_Inst(DP_InstCode.NIP));
-            d = _sp.Pop();
-            _sp.Pop();
-            _sp.Push(d);
+            cur.AddInst(new DP_Inst(DP_InstCode.CALL, m));
+            for(int i = al.Length - 1; i > 0; i--) {
+              cur.AddInst(DP_InstCode.NIP);
+              d = _sp.Pop();
+              _sp.Pop();
+              _sp.Push(d);
+            }
+            return this;
+          } else if(_final) {
+            throw new ApplicationException("undefined function: " + m.vd.Name);
           }
         } else {
-          throw new ApplicationException("undefined fuction: " + m.vd.Name);
+          throw new ApplicationException(m.vd.Name + " is not function");
         }
+      }
+
+      if(node.Arguments.Length == 0) {
+        cur.AddInst(DP_InstCode.LDI_0, 0, 1);
       } else {
-        if(node.Arguments.Length == 0) {
-          d = new DP_Inst(DP_InstCode.LDI_0);
-          cur.code.Add(d);
-          _sp.Push(d);
-        } else {
-          for(int i = node.Arguments.Length - 1; i >= 0; i--) {
-            node.Arguments[i].Visit(this);
-          }
+        for(int i = node.Arguments.Length - 1; i >= 0; i--) {
+          node.Arguments[i].Visit(this);
         }
+      }
 
-        node.FirstOperand.Visit(this);
-        cur.code.Add(new DP_Inst(DP_InstCode.SCALL));
+      node.FirstOperand.Visit(this);
+      cur.AddInst(DP_InstCode.SCALL, 1);
+
+      for(int i = node.Arguments.Length - 1; i > 0; i--) {
+        cur.AddInst(DP_InstCode.NIP);
+        d = _sp.Pop();
         _sp.Pop();
-
-        for(int i = node.Arguments.Length - 1; i > 0; i--) {
-          cur.code.Add(new DP_Inst(DP_InstCode.NIP));
-          d = _sp.Pop();
-          _sp.Pop();
-          _sp.Push(d);
-        }
+        _sp.Push(d);
       }
       return this;
     }
@@ -116,21 +114,16 @@ namespace X13.CC {
     }
     protected override DP_Compiler Visit(Decrement node) {
       var a = node.FirstOperand as GetVariable;
-      DP_Inst d1, d2;
+      DP_Inst d2;
       if(a != null) {
         a.Visit(this);
-        _sp.Pop();
         if(node.Type == DecrimentType.Predecriment) {
-          d2 = new DP_Inst(DP_InstCode.DUP) { canOptimized = true };
-          _sp.Push(d2);
-          cur.code.Add(d1 = new DP_Inst(DP_InstCode.DEC));
-          _sp.Push(d1);
-          cur.code.Add(d2);
+          _sp.Push(d2 = new DP_Inst(DP_InstCode.DUP) { canOptimized = true });
+          cur.AddInst(DP_InstCode.DEC, 1, 1);
+          cur.AddInst(d2);
         } else {
-          cur.code.Add(d1 = new DP_Inst(DP_InstCode.DUP) { canOptimized = true });
-          _sp.Push(d1);
-          cur.code.Add(d1 = new DP_Inst(DP_InstCode.DEC));
-          _sp.Push(d1);
+          cur.AddInst(new DP_Inst(DP_InstCode.DUP) { canOptimized = true }, 1, 1);
+          cur.AddInst(DP_InstCode.DEC, 0, 1);
         }
         Store(node, a);
       } else {
@@ -160,8 +153,8 @@ namespace X13.CC {
       return Visit(node as CodeNode);
     }
     protected override DP_Compiler Visit(FunctionDefinition node) {
-      ScopePush("Function " + node.Name);
-      var fm = GetMerker(node.Reference.Descriptor);
+      var fm = GetMerker(node.Reference.Descriptor, DP_Type.FUNCTION);
+      ScopePush(fm);
       fm.scope = cur;
       fm.scope.entryPoint = fm;
       for(int i = 0; i < node.Parameters.Count; i++) {
@@ -170,7 +163,7 @@ namespace X13.CC {
       }
       node.Body.Visit(this);
       if(cur.code.Count == 0 || cur.code[cur.code.Count - 1]._code.Length != 1 || cur.code[cur.code.Count - 1]._code[0] != (byte)DP_InstCode.RET) {
-        cur.code.Add(new DP_Inst(DP_InstCode.RET));
+        cur.AddInst(DP_InstCode.RET);
       }
       ScopePop();
       return this;
@@ -213,11 +206,13 @@ namespace X13.CC {
       case DP_Type.LOCAL:
         d = new DP_Inst((DP_InstCode)(DP_InstCode.LD_L0 + (byte)m.Addr));
         break;
+      case DP_Type.FUNCTION:
+        d = new DP_Inst(DP_InstCode.LDI_U2, m, node);
+        break;
       default:
         throw new NotImplementedException(node.ToString());
       }
-      cur.code.Add(d);
-      _sp.Push(d);
+      cur.AddInst(d, 0, 1);
       return this;
     }
     protected override DP_Compiler Visit(VariableReference node) {
@@ -228,21 +223,18 @@ namespace X13.CC {
     }
     protected override DP_Compiler Visit(Increment node) {
       var a = node.FirstOperand as GetVariable;
-      DP_Inst d1, d2;
+      DP_Inst d2;
       if(a != null) {
         a.Visit(this);
         _sp.Pop();
         if(node.Type == IncrimentType.Preincriment) {
           d2 = new DP_Inst(DP_InstCode.DUP) { canOptimized = true };
           _sp.Push(d2);
-          cur.code.Add(d1 = new DP_Inst(DP_InstCode.INC));
-          _sp.Push(d1);
-          cur.code.Add(d2);
+          cur.AddInst(DP_InstCode.INC, 0, 1);
+          cur.AddInst(d2);
         } else {
-          cur.code.Add(d1 = new DP_Inst(DP_InstCode.DUP) { canOptimized = true });
-          _sp.Push(d1);
-          cur.code.Add(d2 = new DP_Inst(DP_InstCode.INC));
-          _sp.Push(d2);
+          cur.AddInst(new DP_Inst(DP_InstCode.DUP) { canOptimized = true }, 0, 1);
+          cur.AddInst(DP_InstCode.INC, 0, 1);
         }
         Store(node, a);
       } else {
@@ -265,51 +257,31 @@ namespace X13.CC {
       return this;
     }
     protected override DP_Compiler Visit(LogicalConjunction node) {
-      DP_Inst d, j1, j2;
+      DP_Inst j1, j2;
       node.FirstOperand.Visit(this);
-      d = new DP_Inst(DP_InstCode.DUP);
-      cur.code.Add(d);
-      _sp.Push(d);
-      j1 = new DP_Inst(DP_InstCode.JZ);
-      cur.code.Add(j1);
+      cur.AddInst(DP_InstCode.DUP, 0, 1);
+      cur.AddInst(j1 = new DP_Inst(DP_InstCode.JZ));
       node.SecondOperand.Visit(this);
-      _sp.Pop();
-      _sp.Pop();
-      d = new DP_Inst(DP_InstCode.AND_L);
-      cur.code.Add(d);
-      _sp.Push(d);
-      j2 = new DP_Inst(DP_InstCode.LABEL);
+      cur.AddInst(DP_InstCode.AND_L, 2, 1);
+      cur.AddInst(j2 = new DP_Inst(DP_InstCode.LABEL));
       j1._ref = j2;
-      cur.code.Add(j2);
       return this;
     }
     protected override DP_Compiler Visit(LogicalNegation node) {
       node.FirstOperand.Visit(this);
-      _sp.Pop();
-      var d = new DP_Inst(DP_InstCode.NOT_L);
-      cur.code.Add(d);
-      _sp.Push(d);
+      cur.AddInst(DP_InstCode.NOT_L, 1, 1);
       return this;
 
     }
     protected override DP_Compiler Visit(LogicalDisjunction node) {
-      DP_Inst d, j1, j2;
+      DP_Inst j1, j2;
       node.FirstOperand.Visit(this);
-      d = new DP_Inst(DP_InstCode.DUP);
-      cur.code.Add(d);
-      _sp.Push(d);
-      j1 = new DP_Inst(DP_InstCode.JNZ);
-      _sp.Pop();
-      cur.code.Add(j1);
+      cur.AddInst(DP_InstCode.DUP, 0, 1);
+      cur.AddInst(j1=new DP_Inst(DP_InstCode.JNZ), 1, 0);
       node.SecondOperand.Visit(this);
-      _sp.Pop();
-      _sp.Pop();
-      d = new DP_Inst(DP_InstCode.OR_L);
-      cur.code.Add(d);
-      _sp.Push(d);
-      j2 = new DP_Inst(DP_InstCode.LABEL);
+      cur.AddInst(DP_InstCode.OR_L, 2, 1);
+      cur.AddInst(j2 = new DP_Inst(DP_InstCode.LABEL));
       j1._ref = j2;
-      cur.code.Add(j2);
       return this;
     }
     protected override DP_Compiler Visit(Modulo node) {
@@ -329,12 +301,8 @@ namespace X13.CC {
       return this;
     }
     protected override DP_Compiler Visit(Negation node) {
-      DP_Inst d;
       node.FirstOperand.Visit(this);
-      _sp.Pop();
-      d = new DP_Inst(DP_InstCode.NEG);
-      cur.code.Add(d);
-      _sp.Push(d);
+      cur.AddInst(DP_InstCode.NEG, 1, 1);
       return this;
     }
     protected override DP_Compiler Visit(New node) {
@@ -344,12 +312,8 @@ namespace X13.CC {
       return Visit(node as Expression);
     }
     protected override DP_Compiler Visit(BitwiseNegation node) {
-      DP_Inst d;
       node.FirstOperand.Visit(this);
-      _sp.Pop();
-      d = new DP_Inst(DP_InstCode.NOT);
-      cur.code.Add(d);
-      _sp.Push(d);
+      cur.AddInst(DP_InstCode.NOT, 1, 1);
       return this;
     }
     protected override DP_Compiler Visit(NotEqual node) {
@@ -392,10 +356,7 @@ namespace X13.CC {
         throw new NotImplementedException(node.ToString());
       } else {
         node.FirstOperand.Visit(this);
-        _sp.Pop();
-        var d = new DP_Inst(DP_InstCode.LSL, null, c);
-        cur.code.Add(d);
-        _sp.Push(d);
+        cur.AddInst(new DP_Inst(DP_InstCode.LSL, null, c), 1, 1);
       }
       return this;
     }
@@ -405,10 +366,7 @@ namespace X13.CC {
         throw new NotImplementedException(node.ToString());
       } else {
         node.FirstOperand.Visit(this);
-        _sp.Pop();
-        var d = new DP_Inst(DP_InstCode.ASR, null, c);
-        cur.code.Add(d);
-        _sp.Push(d);
+        cur.AddInst(new DP_Inst(DP_InstCode.ASR, null, c), 1, 1);
       }
       return this;
     }
@@ -431,24 +389,24 @@ namespace X13.CC {
       DP_Inst j1, j2, j3;
       node.FirstOperand.Visit(this);
       j1 = new DP_Inst(DP_InstCode.JZ, null, node.FirstOperand);
-      cur.code.Add(j1);
+      cur.AddInst(j1);
       _sp.Pop();
       node.Threads[0].Visit(this);
       if(node.Threads.Count > 1) {
         j2 = new DP_Inst(DP_InstCode.JMP);
-        cur.code.Add(j2);
+        cur.AddInst(j2);
         j3 = new DP_Inst(DP_InstCode.LABEL);
         j1._ref = j3;
-        cur.code.Add(j3);
+        cur.AddInst(j3);
         node.Threads[1].Visit(this);
         _sp.Pop();
         j3 = new DP_Inst(DP_InstCode.LABEL);
         j2._ref = j3;
-        cur.code.Add(j3);
+        cur.AddInst(j3);
       } else {
         j3 = new DP_Inst(DP_InstCode.LABEL);
         j1._ref = j3;
-        cur.code.Add(j3);
+        cur.AddInst(j3);
       }
       return this;
     }
@@ -476,10 +434,7 @@ namespace X13.CC {
         throw new NotImplementedException(node.ToString());
       } else {
         node.FirstOperand.Visit(this);
-        _sp.Pop();
-        var d = new DP_Inst(DP_InstCode.LSR, null, c);
-        cur.code.Add(d);
-        _sp.Push(d);
+        cur.AddInst(new DP_Inst(DP_InstCode.LSR, null, c), 1, 1);
       }
       return this;
     }
@@ -504,9 +459,9 @@ namespace X13.CC {
       int tmp = _sp.Count;
       while(tmp > cl.sp1) {
         tmp--;
-        cur.code.Add(new DP_Inst(DP_InstCode.DROP));
+        cur.AddInst(DP_InstCode.DROP);
       }
-      cur.code.Add(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L3 });
+      cur.AddInst(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L3 });
       return this;
     }
     protected override DP_Compiler Visit(CodeBlock node) {
@@ -578,9 +533,7 @@ namespace X13.CC {
             a2.SecondOperand.Visit(this);
             m.initialized = true;
           } else {
-            var d = new DP_Inst(DP_InstCode.LDI_0);
-            cur.code.Add(d);
-            _sp.Push(d);
+            cur.AddInst(DP_InstCode.LDI_0, 0, 1);
           }
         }
       }
@@ -590,8 +543,7 @@ namespace X13.CC {
         SafeCodeBlock(node.Body[i], sp);
       }
       while(_sp.Count > sp2) {
-        var d = _sp.Pop();
-        cur.code.Add(new DP_Inst(DP_InstCode.DROP));
+        cur.AddInst(DP_InstCode.DROP, 1, 0);
         uint idx = (uint)cur.memory.Where(z => z.type == DP_Type.LOCAL).Count();
         if(idx == 0 || cur.memory.RemoveAll(z => z.type == DP_Type.LOCAL && z.Addr == idx - 1) != 1) {
           throw new ApplicationException("Stack error in " + node.ToString());
@@ -614,9 +566,9 @@ namespace X13.CC {
       int tmp = _sp.Count;
       while(tmp > cl.sp2) {
         tmp--;
-        cur.code.Add(new DP_Inst(DP_InstCode.DROP));
+        cur.AddInst(DP_InstCode.DROP);
       }
-      cur.code.Add(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L2 });
+      cur.AddInst(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L2 });
       return this;
     }
     protected override DP_Compiler Visit(Debugger node) {
@@ -626,15 +578,15 @@ namespace X13.CC {
       var cl = new DP_Loop(_sp.Count, node.Labels);
       cur.loops.Push(cl);
 
-      cur.code.Add(cl.L1);
+      cur.AddInst(cl.L1);
 
       cl.sp2 = _sp.Count;
       SafeCodeBlock(node.Body);
 
-      cur.code.Add(cl.L2);
+      cur.AddInst(cl.L2);
       node.Condition.Visit(this);
-      cur.code.Add(new DP_Inst(DP_InstCode.JNZ, null, node.Condition) { _ref = cl.L1 });
-      cur.code.Add(cl.L3);
+      cur.AddInst(new DP_Inst(DP_InstCode.JNZ, null, node.Condition) { _ref = cl.L1 });
+      cur.AddInst(cl.L3);
       _sp.Pop();
       cur.loops.Pop();
 
@@ -656,19 +608,19 @@ namespace X13.CC {
       if(node.Initializator != null) {
         node.Initializator.Visit(this);
       }
-      cur.code.Add(cl.L1);
+      cur.AddInst(cl.L1);
       node.Condition.Visit(this);
-      cur.code.Add(new DP_Inst(DP_InstCode.JZ, null, node.Condition) { _ref = cl.L3 });
+      cur.AddInst(new DP_Inst(DP_InstCode.JZ, null, node.Condition) { _ref = cl.L3 });
       _sp.Pop();
       cl.sp2 = _sp.Count;
       SafeCodeBlock(node.Body);
 
-      cur.code.Add(cl.L2);
+      cur.AddInst(cl.L2);
       if(node.Post != null) {
         node.Post.Visit(this);
       }
-      cur.code.Add(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L1 });
-      cur.code.Add(cl.L3);
+      cur.AddInst(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L1 });
+      cur.AddInst(cl.L3);
 
       cur.loops.Pop();
       return this;
@@ -678,23 +630,23 @@ namespace X13.CC {
       node.Condition.Visit(this);
 
       j1 = new DP_Inst(DP_InstCode.JZ, null, node.Condition);
-      cur.code.Add(j1);
+      cur.AddInst(j1);
       _sp.Pop();
       SafeCodeBlock(node.Then);
       if(node.Else != null) {
         j2 = new DP_Inst(DP_InstCode.JMP);
-        cur.code.Add(j2);
+        cur.AddInst(j2);
         j3 = new DP_Inst(DP_InstCode.LABEL);
         j1._ref = j3;
-        cur.code.Add(j3);
+        cur.AddInst(j3);
         SafeCodeBlock(node.Else);
         j3 = new DP_Inst(DP_InstCode.LABEL);
         j2._ref = j3;
-        cur.code.Add(j3);
+        cur.AddInst(j3);
       } else {
         j3 = new DP_Inst(DP_InstCode.LABEL);
         j1._ref = j3;
-        cur.code.Add(j3);
+        cur.AddInst(j3);
       }
       return this;
     }
@@ -702,14 +654,14 @@ namespace X13.CC {
       var cl = new DP_Loop(_sp.Count, node.Labels);
       cur.loops.Push(cl);
 
-      cur.code.Add(cl.L1);
-      cur.code.Add(cl.L2);
+      cur.AddInst(cl.L1);
+      cur.AddInst(cl.L2);
 
       cl.sp2 = _sp.Count;
       SafeCodeBlock(node.Body);
 
-      cur.code.Add(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L1 });
-      cur.code.Add(cl.L3);
+      cur.AddInst(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L1 });
+      cur.AddInst(cl.L3);
       cur.loops.Pop();
       return this;
     }
@@ -719,10 +671,9 @@ namespace X13.CC {
     protected override DP_Compiler Visit(Return node) {
       if(node.Value != null) {
         node.Value.Visit(this);
-        cur.code.Add(new DP_Inst(DP_InstCode.ST_P0, null, node));
-        _sp.Pop();
+        cur.AddInst(new DP_Inst(DP_InstCode.ST_P0, null, node), 1);
       }
-      cur.code.Add(new DP_Inst(DP_InstCode.RET, null, null));
+      cur.AddInst(DP_InstCode.RET);
       return this;
     }
     protected override DP_Compiler Visit(Switch node) {
@@ -734,14 +685,13 @@ namespace X13.CC {
         labels[j] = new DP_Inst(DP_InstCode.LABEL);
         if(cvs[j].Statement != null) {
           if(j < cvs.Length - 2) {
-            cur.code.Add(new DP_Inst(DP_InstCode.DUP));
+            cur.AddInst(DP_InstCode.DUP);
           }
           cvs[j].Statement.Visit(this);
-          cur.code.Add(new DP_Inst(DP_InstCode.CEQ));
-          cur.code.Add(new DP_Inst(DP_InstCode.JNZ, null, cvs[j].Statement) { _ref = labels[j] });
-          _sp.Pop();
+          cur.AddInst(DP_InstCode.CEQ);
+          cur.AddInst(new DP_Inst(DP_InstCode.JNZ, null, cvs[j].Statement) { _ref = labels[j] }, 1);
         } else {
-          cur.code.Add(new DP_Inst(DP_InstCode.JMP) { _ref = labels[j] });
+          cur.AddInst(new DP_Inst(DP_InstCode.JMP) { _ref = labels[j] });
         }
       }
       _sp.Pop();
@@ -752,15 +702,15 @@ namespace X13.CC {
       j = 0;
       for(i = 0; i < node.Body.Length; i++) {
         if(j < cvs.Length && cvs[j].Index == i) {
-          cur.code.Add(labels[j]);
+          cur.AddInst(labels[j]);
           j++;
         }
         SafeCodeBlock(node.Body[i]);
       }
       while(j < labels.Length) {
-        cur.code.Add(labels[j++]);
+        cur.AddInst(labels[j++]);
       }
-      cur.code.Add(cl.L3);
+      cur.AddInst(cl.L3);
       cur.loops.Pop();
       return this;
     }
@@ -790,17 +740,17 @@ namespace X13.CC {
       var cl = new DP_Loop(_sp.Count, node.Labels);
       cur.loops.Push(cl);
 
-      cur.code.Add(cl.L1);
-      cur.code.Add(cl.L2);
+      cur.AddInst(cl.L1);
+      cur.AddInst(cl.L2);
       node.Condition.Visit(this);
-      cur.code.Add(new DP_Inst(DP_InstCode.JZ, null, node.Condition) { _ref = cl.L3 });
+      cur.AddInst(new DP_Inst(DP_InstCode.JZ, null, node.Condition) { _ref = cl.L3 });
       _sp.Pop();
 
       cl.sp2 = _sp.Count;
       SafeCodeBlock(node.Body, cl.sp2);
 
-      cur.code.Add(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L1 });
-      cur.code.Add(cl.L3);
+      cur.AddInst(new DP_Inst(DP_InstCode.JMP) { _ref = cl.L1 });
+      cur.AddInst(cl.L3);
       cur.loops.Pop();
       return this;
     }

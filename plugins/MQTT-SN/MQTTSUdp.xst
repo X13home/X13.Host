@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root head="/etc/declarers">
   <item name="dev">
+    <item name="A1En12" value="pack://application:,,/CC;component/Images/ty_unode.png" saved="True" type="System.String" ver="3.15.1225">
+      <item name="_proto" value="A1Cn12" saved="True" type="System.String" />
+    </item>
   </item>
   <item name="type">
     <item name="mqtts_cfg" value="pack://application:,,/CC;component/Images/ty_cfg.png" saved="True" type="System.String" ver="0.315.901">
