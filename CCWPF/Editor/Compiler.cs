@@ -137,7 +137,7 @@ namespace X13.CC {
               bytes.AddRange(c._code);
             }
           }
-          HexN[p.code.First().addr] = new PLC.ByteArray(bytes.ToArray()); // { Titel = p.fm!.ToString() };
+          HexN[p.code.First().addr] = new PLC.ByteArray(bytes.ToArray()); // { Titel = p.fm==null?null:p.fm.ToString() };
           if(_verbose.value) {
             Log.Debug("{0}", p.ToString());
           }
@@ -372,9 +372,19 @@ namespace X13.CC {
         m = new DP_Merker() { type = type, vd = v };
         if(type == DP_Type.FUNCTION || type == DP_Type.API) {
           _scope.Last().memory.Add(m);
+        } else if(type==DP_Type.LOCAL){
+          uint addr = (uint)cur.memory.Where(z => z.type == DP_Type.LOCAL).Count();
+          if(addr < 16) {
+            m.Addr = addr;
+          } else {
+            throw new ArgumentOutOfRangeException("Too many local variables: " + v.Name + cur.fm==null?string.Empty:("in " + cur.fm.ToString()));
+          }
+          cur.memory.Add(m);
         } else {
           cur.memory.Add(m);
         }
+      } else if(m.type != type && m.type == DP_Type.NONE) {
+        m.type = type;
       }
       return m;
     }
@@ -393,6 +403,18 @@ namespace X13.CC {
         break;
       case "TwiGetByte":
         m = new DP_Merker() { type = DP_Type.API, Addr = 4, vd = v, pOut = 1 };
+        break;
+      case "NodeStatus":
+        m = new DP_Merker() { type = DP_Type.API, Addr = 5, vd = v, pOut = 1 };
+        break;
+      case "getMilliseconds":
+        m = new DP_Merker() { type = DP_Type.API, Addr = 6, vd = v, pOut = 1 };
+        break;
+      case "getSeconds":
+        m = new DP_Merker() { type = DP_Type.API, Addr = 7, vd = v, pOut = 1 };
+        break;
+      case "Random":
+        m = new DP_Merker() { type = DP_Type.API, Addr = 8, vd = v, pOut = 1 };
         break;
       default:
         return null;

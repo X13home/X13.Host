@@ -512,18 +512,15 @@ namespace X13.CC {
             addr = uint.MaxValue;
           }
         } else if(v.LexicalScope) {
-          addr = (uint)cur.memory.Where(z => z.type == DP_Type.LOCAL).Count();
-          if(addr < 16) {
-            type = DP_Type.LOCAL;
-          } else {
-            throw new ArgumentOutOfRangeException("Too many local variables: " + v.Name + "in \n" + v.Owner.ToString());
-          }
+          type = DP_Type.LOCAL;
         } else {
           type = DP_Type.SINT32;
           addr = uint.MaxValue;
         }
         m = GetMerker(v, type);
-        m.Addr = addr;
+        if(type != DP_Type.LOCAL) {
+          m.Addr = addr;
+        }
 
         if(m.vd.Initializer != null) {
           m.vd.Initializer.Visit(this);

@@ -933,7 +933,8 @@ namespace X13.Periphery {
         if(sendRegister) {
 		  string tpc_n;
 		  if(varMapping!=null && varMapping.TryGetValue(tpc, out tpc_n)) {
-			tpc=tpc_n;
+            Log.Debug("{0}.register {1} as {2}", Owner.path, tpc, tpc_n);
+            tpc = tpc_n;
 		  }
           Send(new MsRegister(rez.TopicId, tpc));
         } else {
