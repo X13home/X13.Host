@@ -10,7 +10,12 @@ using NiL.JS.Statements;
 namespace X13.CC {
   internal partial class DP_Compiler : Visitor<DP_Compiler> {
     protected override DP_Compiler Visit(CodeNode node) {
-      throw new NotSupportedException("Visit(" + node.GetType().Name + " " + node.ToString() + ")");
+      if(_final) {
+        throw new NotSupportedException("Visit(<" + node.GetType().Name + ">" + node.ToString() + ")");
+      } else {
+        Log.Debug("Visit(<{0}>{1})", node.GetType().Name, node.ToString());
+      }
+      return this;
     }
     protected override DP_Compiler Visit(Addition node) {
       AddCommon(node, node.FirstOperand, node.SecondOperand);
@@ -24,79 +29,66 @@ namespace X13.CC {
       return Visit(node as Expression);
     }
     protected override DP_Compiler Visit(Assignment node) {
+      DP_Inst d2 = new DP_Inst(DP_InstCode.DUP) { canOptimized = true };
+      _sp.Push(d2);
       node.SecondOperand.Visit(this);
       Store(node, node.FirstOperand);
+      cur.AddInst(d2);
       return this;
     }
     protected override DP_Compiler Visit(Call node) {
-      if(node.CallMode != CallMode.Regular) {
-        throw new NotSupportedException(node.FirstOperand.ToString() + " Mode: " + node.CallMode.ToString());
-      }
-      GetVariable f = node.FirstOperand as GetVariable;
+      Property p;
+      GetVariable f;
+      DP_Merker m;
+      Constant c;
       DP_Inst d;
-      if(f != null) {
-        var m = GetMerker(f.Descriptor, DP_Type.FUNCTION);
-        if(m == null) {
-          throw new ArgumentException("Unknown function: " + f.Descriptor.Name);
-        }
-        if(m.type == DP_Type.API) {
-          int i;
-          for(i = m.pIn - 1; i >= 0; i--) {
-            if(i < node.Arguments.Length) {
-              node.Arguments[i].Visit(this);
-              _sp.Pop();
-            } else {
-              cur.AddInst(DP_InstCode.LDI_0);
-            }
-          }
-          cur.AddInst(new DP_Inst(DP_InstCode.API, m, node), 0, m.pOut);
+
+      if((p = node.FirstOperand as Property) != null && (p.Source is GetVariable || p.Source is This) && (c = p.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
+        string fn = c.Value.ToString();
+        DP_Merker mf = _programm.Select(z => z.memory.FirstOrDefault(z1 => z1.type == DP_Type.FUNCTION && z1.vd.Name == fn)).FirstOrDefault(z => z != null);
+        if(mf != null && CallFunction(node, mf, p.Source as Expression)) {
           return this;
-        } else if(m.type == DP_Type.FUNCTION) {
-          if(m.scope != null) {
-            var al = m.scope.memory.Where(z => z.type == DP_Type.PARAMETER).OrderBy(z => z.Addr).ToArray();
-            if(al.Length == 0) {
-              d = new DP_Inst(DP_InstCode.LDI_0);
-              cur.AddInst(d);
-              _sp.Push(d);
-            } else {
-              for(int i = al.Length - 1; i >= 0; i--) {
-                if(i < node.Arguments.Length) {
-                  node.Arguments[i].Visit(this);
-                } else if(al[i].init != null) {  //TODO: check function(a, b=7)
-                  al[i].init.Visit(this);
-                } else {
-                  cur.AddInst(DP_InstCode.LDI_0, 0, 1);
-                }
+        }
+      }
+      f = node.FirstOperand as GetVariable;
+      if(f != null) {
+        if(node.CallMode == CallMode.Regular) {
+          m = GetMerker(f.Descriptor, DP_Type.FUNCTION);
+          if(m == null) {
+            throw new ArgumentException("Unknown function: " + f.Descriptor.Name);
+          }
+          if(m.type == DP_Type.API) {
+            int i;
+            for(i = m.pIn - 1; i >= 0; i--) {
+              if(i < node.Arguments.Length) {
+                node.Arguments[i].Visit(this);
+                _sp.Pop();
+              } else {
+                cur.AddInst(DP_InstCode.LDI_0);
               }
             }
-            cur.AddInst(new DP_Inst(DP_InstCode.CALL, m));
-            for(int i = al.Length - 1; i > 0; i--) {
-              cur.AddInst(DP_InstCode.NIP);
-              d = _sp.Pop();
-              _sp.Pop();
-              _sp.Push(d);
-            }
+            cur.AddInst(new DP_Inst(DP_InstCode.API, m, node), 0, m.pOut);
             return this;
-          } else if(_final) {
-            throw new ApplicationException("undefined function: " + m.vd.Name);
+          } else if(m.type == DP_Type.FUNCTION) {
+            if(CallFunction(node, m, null)) {
+              return this;
+            }
+          } else {
+            throw new ApplicationException(m.vd.Name + " is not function");
           }
         } else {
-          throw new ApplicationException(m.vd.Name + " is not function");
+          throw new NotSupportedException("Call(" + node.FirstOperand.ToString() + ") Mode: " + node.CallMode.ToString());
         }
       }
 
-      if(node.Arguments.Length == 0) {
-        cur.AddInst(DP_InstCode.LDI_0, 0, 1);
-      } else {
-        for(int i = node.Arguments.Length - 1; i >= 0; i--) {
-          node.Arguments[i].Visit(this);
-        }
+      for(int i = node.Arguments.Length - 1; i >= 0; i--) {
+        node.Arguments[i].Visit(this);
       }
-
+      cur.AddInst(DP_InstCode.LDI_0, 0, 1);
       node.FirstOperand.Visit(this);
       cur.AddInst(DP_InstCode.SCALL, 1);
 
-      for(int i = node.Arguments.Length - 1; i > 0; i--) {
+      for(int i = node.Arguments.Length - 1; i >= 0; i--) {
         cur.AddInst(DP_InstCode.NIP);
         d = _sp.Pop();
         _sp.Pop();
@@ -113,18 +105,21 @@ namespace X13.CC {
       return this;
     }
     protected override DP_Compiler Visit(Decrement node) {
-      var a = node.FirstOperand as GetVariable;
+      Expression a;
       DP_Inst d2;
-      if(a != null) {
-        a.Visit(this);
-        if(node.Type == DecrimentType.Predecriment) {
-          _sp.Push(d2 = new DP_Inst(DP_InstCode.DUP) { canOptimized = true });
-          cur.AddInst(DP_InstCode.DEC, 1, 1);
-          cur.AddInst(d2);
-        } else {
-          cur.AddInst(new DP_Inst(DP_InstCode.DUP) { canOptimized = true }, 1, 1);
-          cur.AddInst(DP_InstCode.DEC, 0, 1);
-        }
+      node.FirstOperand.Visit(this);
+      _sp.Pop();
+      if(node.Type == DecrimentType.Predecriment) {
+        d2 = new DP_Inst(DP_InstCode.DUP) { canOptimized = true };
+        _sp.Push(d2);
+        cur.AddInst(DP_InstCode.DEC, 0, 1);
+        cur.AddInst(d2);
+      } else {
+        cur.AddInst(new DP_Inst(DP_InstCode.DUP) { canOptimized = true }, 0, 1);
+        cur.AddInst(DP_InstCode.DEC, 0, 1);
+      }
+
+      if((a = node.FirstOperand as Expression) != null) {
         Store(node, a);
       } else {
         throw new NotImplementedException();
@@ -150,6 +145,11 @@ namespace X13.CC {
       if(v != null) {
         return v.Source.Visit(this);
       }
+      var t = node as This;
+      if(t != null) {
+        cur.AddInst(DP_InstCode.LD_P0, 0, 1);
+        return this;
+      }
       return Visit(node as CodeNode);
     }
     protected override DP_Compiler Visit(FunctionDefinition node) {
@@ -158,7 +158,11 @@ namespace X13.CC {
       fm.scope = cur;
       fm.scope.entryPoint = fm;
       for(int i = 0; i < node.Parameters.Count; i++) {
-        var m = new DP_Merker() { Addr = (uint)i, type = DP_Type.PARAMETER, vd = node.Parameters[i], init = node.Parameters[i].Initializer };
+        if(i > 15) {
+          throw new IndexOutOfRangeException(node.Reference.Descriptor.Name + "(.., " + node.Parameters[i].Name + " ..)" + " too many parameters");
+        }
+        var m = GetMerker(node.Parameters[i], DP_Type.PARAMETER);
+        m.Addr = (uint)i + 1;
         cur.memory.Add(m);
       }
       node.Body.Visit(this);
@@ -169,7 +173,88 @@ namespace X13.CC {
       return this;
     }
     protected override DP_Compiler Visit(Property node) {
-      return Visit(node as Expression);
+      GetVariable f;
+      DP_Merker m;
+      Constant c;
+      int len;
+
+      if((f = node.Source as GetVariable) != null && (m = GetMerker(f.Descriptor)).type == DP_Type.REFERENCE) {
+        cur.AddInst(new DP_Inst(DP_InstCode.LDI_S4, m), 0, 1);
+        len = m.pOut;
+        //TODO: LDM_xx_C16  (m.addr+offset)
+      } else if(node.Source is This) {
+        cur.AddInst(DP_InstCode.LD_P0, 0, 1);
+        len = int.MaxValue;
+      } else {
+        throw new NotSupportedException(node.Source.ToString() + " as object");
+      }
+      if((c = node.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
+        string pn = c.Value.ToString();
+        UInt16 addr;
+        int size;
+        int idx;
+        if(pn.Length > 1 && (idx = "zbBwWd".IndexOf(pn[0])) >= 0 && UInt16.TryParse(pn.Substring(1), out addr)) {
+          DP_InstCode cmd;
+          switch(idx * 2 + (addr > 255 ? 1 : 0)) {
+          case 0:
+            cmd = DP_InstCode.LDM_B1_CS8;
+            size = 1;
+            break;
+          case 1:
+            cmd = DP_InstCode.LDM_B1_CS16;
+            size = 1;
+            break;
+          case 2:
+            cmd = DP_InstCode.LDM_S1_CS8;
+            size = 8;
+            break;
+          case 3:
+            cmd = DP_InstCode.LDM_S1_CS16;
+            size = 8;
+            break;
+          case 4:
+            cmd = DP_InstCode.LDM_U1_CS8;
+            size = 8;
+            break;
+          case 5:
+            cmd = DP_InstCode.LDM_U1_CS16;
+            size = 8;
+            break;
+          case 6:
+            cmd = DP_InstCode.LDM_S2_CS8;
+            size = 16;
+            break;
+          case 7:
+            cmd = DP_InstCode.LDM_S2_CS16;
+            size = 16;
+            break;
+          case 8:
+            cmd = DP_InstCode.LDM_U2_CS8;
+            size = 16;
+            break;
+          case 9:
+            cmd = DP_InstCode.LDM_U2_CS16;
+            size = 16;
+            break;
+          case 10:
+            cmd = DP_InstCode.LDM_S4_CS8;
+            size = 32;
+            break;
+          case 11:
+            cmd = DP_InstCode.LDM_S4_CS16;
+            size = 32;
+            break;
+          default:
+            throw new ApplicationException("GetProperty(" + node.ToString() + ") bad index");
+          }
+          if(((addr + 1) * size - 1) / 32 >= len) {
+            throw new IndexOutOfRangeException(node.ToString());
+          }
+          cur.AddInst(new DP_Inst(cmd, new DP_Merker() { Addr = addr }), 1, 1);
+          return this;
+        }
+      }
+      throw new NotSupportedException("Field name in " + node.ToString());
     }
     protected override DP_Compiler Visit(GetVariable node) {
       DP_Merker m = GetMerker(node.Descriptor);
@@ -222,20 +307,21 @@ namespace X13.CC {
       return Visit(node as Expression);
     }
     protected override DP_Compiler Visit(Increment node) {
-      var a = node.FirstOperand as GetVariable;
+      Expression a;
       DP_Inst d2;
-      if(a != null) {
-        a.Visit(this);
-        _sp.Pop();
-        if(node.Type == IncrimentType.Preincriment) {
-          d2 = new DP_Inst(DP_InstCode.DUP) { canOptimized = true };
-          _sp.Push(d2);
-          cur.AddInst(DP_InstCode.INC, 0, 1);
-          cur.AddInst(d2);
-        } else {
-          cur.AddInst(new DP_Inst(DP_InstCode.DUP) { canOptimized = true }, 0, 1);
-          cur.AddInst(DP_InstCode.INC, 0, 1);
-        }
+      node.FirstOperand.Visit(this);
+      _sp.Pop();
+      if(node.Type == IncrimentType.Preincriment) {
+        d2 = new DP_Inst(DP_InstCode.DUP) { canOptimized = true };
+        _sp.Push(d2);
+        cur.AddInst(DP_InstCode.INC, 0, 1);
+        cur.AddInst(d2);
+      } else {
+        cur.AddInst(new DP_Inst(DP_InstCode.DUP) { canOptimized = true }, 0, 1);
+        cur.AddInst(DP_InstCode.INC, 0, 1);
+      }
+
+      if((a = node.FirstOperand as Expression) != null) {
         Store(node, a);
       } else {
         throw new NotImplementedException();
@@ -277,7 +363,7 @@ namespace X13.CC {
       DP_Inst j1, j2;
       node.FirstOperand.Visit(this);
       cur.AddInst(DP_InstCode.DUP, 0, 1);
-      cur.AddInst(j1=new DP_Inst(DP_InstCode.JNZ), 1, 0);
+      cur.AddInst(j1 = new DP_Inst(DP_InstCode.JNZ), 1, 0);
       node.SecondOperand.Visit(this);
       cur.AddInst(DP_InstCode.OR_L, 2, 1);
       cur.AddInst(j2 = new DP_Inst(DP_InstCode.LABEL));
@@ -348,7 +434,13 @@ namespace X13.CC {
       return Visit(node as Expression);
     }
     protected override DP_Compiler Visit(SetProperty node) {
-      return Visit(node as Expression);
+      DP_Inst d2 = new DP_Inst(DP_InstCode.DUP) { canOptimized = true };
+      _sp.Push(d2);
+      node.Value.Visit(this);
+      cur.AddInst(d2);
+
+      StoreProperty(node, node.Source, node.FieldName);
+      return this;
     }
     protected override DP_Compiler Visit(SignedShiftLeft node) {
       var c = node.SecondOperand as Constant;
@@ -466,8 +558,6 @@ namespace X13.CC {
     }
     protected override DP_Compiler Visit(CodeBlock node) {
       DP_Merker m;
-      uint addr;
-      DP_Type type;
       int sp2 = _sp.Count;
 
       List<Assignment> inList = new List<Assignment>();
@@ -476,51 +566,7 @@ namespace X13.CC {
       }
 
       foreach(var v in node.Variables) {
-        m = null;
-        addr = uint.MaxValue;
-        if(v.Initializer != null && v.Initializer is FunctionDefinition) {
-          type = DP_Type.FUNCTION;
-        } else if(v.Name.Length > 2 && _predefs.TryGetValue(v.Name.Substring(0, 2), out type)) {
-          uint mLen;
-          switch(type) {
-          case DP_Type.BOOL:
-            mLen = 1;
-            break;
-          case DP_Type.SINT8:
-          case DP_Type.UINT8:
-            mLen = 8;
-            break;
-          case DP_Type.SINT16:
-          case DP_Type.UINT16:
-            mLen = 16;
-            break;
-          case DP_Type.SINT32:
-            mLen = 32;
-            break;
-          default:
-            mLen = 0;
-            break;
-          }
-          if(UInt32.TryParse(v.Name.Substring(2), out addr)) {
-            addr &= 0xFFFF;
-            if(type == DP_Type.INPUT || type == DP_Type.OUTPUT) {
-              addr = (uint)((uint)(((byte)v.Name[0]) << 24) | (uint)(((byte)v.Name[1]) << 16) | addr);
-            } else if(mLen > 0) {
-              AllocateMemory(addr * mLen, mLen);
-            }
-          } else {
-            addr = uint.MaxValue;
-          }
-        } else if(v.LexicalScope) {
-          type = DP_Type.LOCAL;
-        } else {
-          type = DP_Type.SINT32;
-          addr = uint.MaxValue;
-        }
-        m = GetMerker(v, type);
-        if(type != DP_Type.LOCAL) {
-          m.Addr = addr;
-        }
+        m = GetMerker(v);
 
         if(m.vd.Initializer != null) {
           m.vd.Initializer.Visit(this);
@@ -720,16 +766,44 @@ namespace X13.CC {
     protected override DP_Compiler Visit(VariableDefinition node) {
       int i;
       Assignment a1;
+      DP_Scope tmp;
+      DP_Merker m;
+      List<DP_Merker> tmp2;
+      GetVariable v;
       for(i = 0; i < node.Initializers.Length; i++) {
         if(node.Initializers[i] is GetVariable) {
           continue;
-        } else if((a1 = node.Initializers[i] as Assignment) != null) {
-          var m = GetMerker((a1.FirstOperand as GetVariable).Descriptor);
-          if(m != null && m.initialized) {
+        }
+        if((a1 = node.Initializers[i] as Assignment) != null && (v = a1.FirstOperand as GetVariable) != null) {
+          Call ca;
+          GetVariable f;
+          if((ca = a1.SecondOperand as Call) != null && ca.CallMode == CallMode.Construct && (f = ca.FirstOperand as GetVariable) != null && f.Descriptor.Name == "Int32Array") {
+            Constant len;
+            if(ca.Arguments.Length != 1 || (len = ca.Arguments[0] as Constant) == null || !len.Value.IsNumber) {
+              throw new NotSupportedException("supported only new Int32Array(constant length)");
+            }
+            m = GetMerker(v.Descriptor, DP_Type.REFERENCE);
+            m.type = DP_Type.REFERENCE;
+            m.pOut = (int)len.Value;
             continue;
+          } else {
+            m = GetMerker(v.Descriptor);
+            if(m != null && m.initialized) {
+              continue;
+            }
+            if(m.type != DP_Type.LOCAL && m.type != DP_Type.NONE) {
+              tmp = cur;
+              cur = initBlock;
+              tmp2 = cur.memory;
+              cur.memory = tmp.memory;
+              SafeCodeBlock(node.Initializers[i]);
+              cur.memory = tmp2;
+              cur = tmp;
+              continue;
+            }
           }
         }
-        node.Initializers[i].Visit(this);
+        SafeCodeBlock(node.Initializers[i]);
       }
       return this;
     }

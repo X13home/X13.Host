@@ -36,7 +36,8 @@ namespace X13.CC {
     private List<DP_Scope> _programm;
     private Stack<DP_Scope> _scope;
     private SortedSet<DP_MemBlock> _memBlocks;
-    private DP_Scope cur;
+    private DP_Scope global, cur, initBlock;
+
     private bool _final;
 
     public SortedList<string, string> varList;
@@ -58,8 +59,21 @@ namespace X13.CC {
       _memBlocks.Add(new DP_MemBlock(0, 16384));
       uint addr;
       string vName;
+      DP_Inst ri;
+
       try {
-        ScopePush(null);
+        global = ScopePush(null);
+        initBlock = new DP_Scope(this, null);
+        _programm.Add(initBlock);
+
+        _final = true;
+
+        global.AddInst(new DP_Inst(DP_InstCode.API, new DP_Merker() { type = DP_Type.API, Addr = 5 }), 0, 1);
+        initBlock.AddInst(ri = new DP_Inst(DP_InstCode.LABEL), 0, 0);
+        global.AddInst(DP_InstCode.LDI_M1, 0, 1);
+        global.AddInst(DP_InstCode.CEQ);
+        global.AddInst(new DP_Inst(DP_InstCode.JNZ) { _ref = ri }, 1, 0);
+
         var module = new Module(code, CompilerMessageCallback, Options.SuppressConstantPropogation | Options.SuppressUselessExpressionsElimination);
 
         _final = false;
@@ -69,9 +83,11 @@ namespace X13.CC {
         _sp.Clear();
         module.Root.Visit(this);
 
-        cur = _programm[0];
-        if(cur.code.Count == 0 || cur.code[cur.code.Count - 1]._code.Length != 1 || cur.code[cur.code.Count - 1]._code[0] != (byte)DP_InstCode.RET) {
-          cur.AddInst(DP_InstCode.RET);
+        if(global.code.Count == 0 || (ri = global.code[global.code.Count - 1])._code.Length != 1 || ri._code[0] != (byte)DP_InstCode.RET) {
+          global.AddInst(DP_InstCode.RET);
+        }
+        if(initBlock.code.Count == 0 || (ri = initBlock.code[initBlock.code.Count - 1])._code.Length != 1 || ri._code[0] != (byte)DP_InstCode.RET) {
+          initBlock.AddInst(DP_InstCode.RET);
         }
         varList = new SortedList<string, string>();
         ioList = new List<string>();
@@ -81,7 +97,7 @@ namespace X13.CC {
         SortedList<uint, PLC.ByteArray> HexN = new SortedList<uint, PLC.ByteArray>();
 
         foreach(var p in _programm) {
-          foreach(var m in p.memory.OrderByDescending(z=>z.type)) {
+          foreach(var m in p.memory.OrderBy(z => z.type)) {
             switch(m.type) {
             case DP_Type.BOOL:
               vName = "Mz";
@@ -107,6 +123,10 @@ namespace X13.CC {
               vName = "MW";
               mLen = 16;
               break;
+            case DP_Type.REFERENCE:
+              vName = null;
+              mLen = (uint)m.pOut * 32;
+              break;
             case DP_Type.INPUT:
             case DP_Type.OUTPUT:
               ioList.Add(m.vd.Name);
@@ -115,9 +135,12 @@ namespace X13.CC {
               continue;
             }
             if(m.Addr == uint.MaxValue) {
-              m.Addr = AllocateMemory(uint.MaxValue, mLen) / mLen;
+              m.Addr = AllocateMemory(uint.MaxValue, mLen) / (mLen>=32?32:mLen);
             }
-            varList[m.vd.Name] = vName + m.Addr.ToString();
+            Log.Debug("{0}={1:X4}:{2:X4}", m.vd.Name, m.Addr, mLen);
+            if(p == global && vName != null) {
+              varList[m.vd.Name] = vName + m.Addr.ToString();
+            }
           }
 
           addr += (32 - (addr % 32)) % 32;
@@ -144,7 +167,7 @@ namespace X13.CC {
           bytes.Clear();
         }
         Hex = HexN;
-        StackBottom = (_memBlocks.Last().start+7) / 8;
+        StackBottom = (_memBlocks.Last().start + 7) / 8;
         Log.Info("Used ROM: {0} bytes, RAM: {1} bytes", Hex.Select(z => z.Key + z.Value.GetBytes().Length).Max(), StackBottom);
         success = true;
       }
@@ -244,13 +267,14 @@ namespace X13.CC {
         CMsg(level, coords, message);
       }
     }
-    private void ScopePush(DP_Merker fm) {
+    private DP_Scope ScopePush(DP_Merker fm) {
       cur = _programm.FirstOrDefault(z => z.fm == fm);
       if(cur == null) {
         cur = new DP_Scope(this, fm);
         _programm.Add(cur);
       }
       _scope.Push(cur);
+      return cur;
     }
     private void ScopePop() {
       _scope.Pop();
@@ -290,14 +314,10 @@ namespace X13.CC {
       }
     }
     private void Store(CodeNode node, Expression e) {
-      GetVariable a = e as GetVariable;
-      if(a == null) {
-        AssignmentOperatorCache a2 = e as AssignmentOperatorCache;
-        if(a2 != null) {
-          a = a2.Source as GetVariable;
-        }
-      }
-      if(a != null) {
+      GetVariable a ;
+      AssignmentOperatorCache a2;
+      Property p;
+      if((a= e as GetVariable) != null || ((a2 = e as AssignmentOperatorCache)!=null && (a = a2.Source as GetVariable)!=null) ) {
         var m = GetMerker(a.Descriptor);
         switch(m.type) {
         case DP_Type.BOOL:
@@ -324,11 +344,85 @@ namespace X13.CC {
           cur.AddInst(new DP_Inst(DP_InstCode.OUT, m, node), 1, 0);
           break;
         default:
-          throw new NotImplementedException(node.ToString());
+          throw new NotSupportedException(node.ToString());
         }
+      } else if((p=e as Property)!=null){
+        StoreProperty(node, p.Source as Expression, p.FieldName as Expression);
       } else {
         throw new NotImplementedException(node.ToString());
       }
+    }
+    private void StoreProperty(CodeNode node, Expression src, Expression name) {
+      GetVariable f;
+      DP_Merker m;
+      Constant c;
+      int len;
+
+      if((f = src as GetVariable) != null && (m = GetMerker(f.Descriptor)).type == DP_Type.REFERENCE) {
+        cur.AddInst(new DP_Inst(DP_InstCode.LDI_S4, m), 0, 1);
+        len = m.pOut;
+        //TODO: STM_xx_C16  (m.addr+offset)
+      } else if(src is This) {
+        cur.AddInst(DP_InstCode.LD_P0, 0, 1);
+        len = int.MaxValue;
+      } else {
+        throw new NotSupportedException(src.ToString() + " as object");
+      }
+      if((c = name as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
+        string pn = c.Value.ToString();
+        UInt16 addr;
+        int size;
+        int idx;
+        if(pn.Length > 1 && (idx = "zbBwWd".IndexOf(pn[0])) >= 0 && UInt16.TryParse(pn.Substring(1), out addr)) {
+          DP_InstCode cmd;
+          switch(idx * 2 + (addr > 255 ? 1 : 0)) {
+          case 0:
+            cmd = DP_InstCode.STM_B1_CS8;
+            size = 1;
+            break;
+          case 1:
+            cmd = DP_InstCode.STM_B1_CS16;
+            size = 1;
+            break;
+          case 2:
+          case 4:
+            cmd = DP_InstCode.STM_S1_CS8;
+            size = 8;
+            break;
+          case 3:
+          case 5:
+            cmd = DP_InstCode.STM_S1_CS16;
+            size = 8;
+            break;
+          case 6:
+          case 8:
+            cmd = DP_InstCode.STM_S2_CS8;
+            size = 16;
+            break;
+          case 7:
+          case 9:
+            cmd = DP_InstCode.LDM_S2_CS16;
+            size = 16;
+            break;
+          case 10:
+            cmd = DP_InstCode.STM_S4_CS8;
+            size = 32;
+            break;
+          case 11:
+            cmd = DP_InstCode.STM_S4_CS16;
+            size = 32;
+            break;
+          default:
+            throw new ApplicationException("SetProperty(" + node.ToString() + ") bad index");
+          }
+          if(((addr + 1) * size - 1) / 32 >= len) {
+            throw new IndexOutOfRangeException(node.ToString());
+          }
+          cur.AddInst(new DP_Inst(cmd, new DP_Merker() { Addr = addr }, node), 2, 0);
+          return;
+        }
+      }
+      throw new NotSupportedException("Field name in " + node.ToString());
     }
     private void AddCommon(CodeNode node, Expression a, Expression b) {
       var c1 = a as Constant;
@@ -353,6 +447,44 @@ namespace X13.CC {
         cur.AddInst(DP_InstCode.ADD, 2, 1);
       }
     }
+    private bool CallFunction(Call node, DP_Merker m, Expression This) {
+      DP_Inst d;
+      DP_Merker mt;
+      GetVariable v;
+
+      if(m.scope != null) {
+        var al = m.scope.memory.Where(z => z.type == DP_Type.PARAMETER).OrderBy(z => z.Addr).ToArray();
+        for(int i = al.Length - 1; i >= 0; i--) {
+          if(i < node.Arguments.Length) {
+            node.Arguments[i].Visit(this);
+          } else if(al[i].init != null) {  //TODO: check function(a, b=7)
+            al[i].init.Visit(this);
+          } else {
+            cur.AddInst(DP_InstCode.LDI_0, 0, 1);
+          }
+        }
+        if(This == null) {
+          cur.AddInst(DP_InstCode.LDI_M1, 0, 1);
+        } else if((v = This as GetVariable) != null && (mt = GetMerker(v.Descriptor)).type == DP_Type.REFERENCE) {
+          cur.AddInst(new DP_Inst(DP_InstCode.LDI_S4, mt), 0, 1);
+        } else if(This is This) {
+          cur.AddInst(DP_InstCode.LD_P0, 0, 1);
+        } else {
+          throw new NotSupportedException(This.ToString() + " as this");
+        }
+        cur.AddInst(new DP_Inst(DP_InstCode.CALL, m));
+        for(int i = al.Length - 1; i >= 0; i--) {
+          cur.AddInst(DP_InstCode.NIP);
+          d = _sp.Pop();
+          _sp.Pop();
+          _sp.Push(d);
+        }
+        return true;
+      } else if(_final) {
+        throw new ApplicationException("undefined function: " + m.vd.Name);
+      }
+      return false;
+    }
     private void Arg2Op(Expression node, DP_InstCode c) {
       node.SecondOperand.Visit(this);
       node.FirstOperand.Visit(this);
@@ -360,26 +492,67 @@ namespace X13.CC {
     }
     private DP_Merker GetMerker(VariableDescriptor v, DP_Type type = DP_Type.NONE) {
       DP_Merker m = null;
+      uint addr;
 
       m = cur.memory.FirstOrDefault(z => z.vd == v);
       if(m == null) {
-        m = _scope.Last().memory.FirstOrDefault(z => z.vd == v);
+        m = global.memory.FirstOrDefault(z => z.vd == v);
       }
       if(m == null) {
         m = LoadNativeFunctions(v);
       }
       if(m == null) {
-        m = new DP_Merker() { type = type, vd = v };
-        if(type == DP_Type.FUNCTION || type == DP_Type.API) {
-          _scope.Last().memory.Add(m);
-        } else if(type==DP_Type.LOCAL){
-          uint addr = (uint)cur.memory.Where(z => z.type == DP_Type.LOCAL).Count();
-          if(addr < 16) {
-            m.Addr = addr;
+        addr = uint.MaxValue;
+        if(type == DP_Type.NONE) {
+          if(v.Initializer != null && v.Initializer is FunctionDefinition) {
+            type = DP_Type.FUNCTION;
+          } else if(v.Name.Length > 2 && _predefs.TryGetValue(v.Name.Substring(0, 2), out type)) {
+            uint mLen;
+            switch(type) {
+            case DP_Type.BOOL:
+              mLen = 1;
+              break;
+            case DP_Type.SINT8:
+            case DP_Type.UINT8:
+              mLen = 8;
+              break;
+            case DP_Type.SINT16:
+            case DP_Type.UINT16:
+              mLen = 16;
+              break;
+            case DP_Type.SINT32:
+              mLen = 32;
+              break;
+            default:
+              mLen = 0;
+              break;
+            }
+            if(UInt32.TryParse(v.Name.Substring(2), out addr)) {
+              addr &= 0xFFFF;
+              if(type == DP_Type.INPUT || type == DP_Type.OUTPUT) {
+                addr = (uint)((uint)(((byte)v.Name[0]) << 24) | (uint)(((byte)v.Name[1]) << 16) | addr);
+              } else if(mLen > 0) {
+                AllocateMemory(addr * mLen, mLen);
+              }
+            } else {
+              addr = uint.MaxValue;
+            }
+          } else if(v.LexicalScope) {
+            type = DP_Type.LOCAL;
+            addr = (uint)cur.memory.Where(z => z.type == DP_Type.LOCAL).Count();
+            if(addr > 15) {
+              throw new ArgumentOutOfRangeException("Too many local variables: " + v.Name + cur.fm == null ? string.Empty : ("in " + cur.fm.ToString()));
+            }
           } else {
-            throw new ArgumentOutOfRangeException("Too many local variables: " + v.Name + cur.fm==null?string.Empty:("in " + cur.fm.ToString()));
+            type = DP_Type.SINT32;
+            addr = uint.MaxValue;
           }
-          cur.memory.Add(m);
+
+        }
+        m = new DP_Merker() { type = type, vd = v, Addr = addr, init = v.Initializer };
+
+        if(type == DP_Type.FUNCTION || type == DP_Type.API || type == DP_Type.INPUT || type == DP_Type.OUTPUT) {
+          global.memory.Add(m);
         } else {
           cur.memory.Add(m);
         }
@@ -419,7 +592,7 @@ namespace X13.CC {
       default:
         return null;
       }
-      _programm[0].memory.Add(m);
+      global.memory.Add(m);
       return m;
     }
 
@@ -433,7 +606,7 @@ namespace X13.CC {
         node.Visit(this);
         while(_sp.Count > sp) {
           var d = _sp.Pop();
-          if(d==null || !d.canOptimized || !cur.code.Remove(d)) {
+          if(d == null || !d.canOptimized || !cur.code.Remove(d)) {
             cur.AddInst(DP_InstCode.DROP);
           }
         }
@@ -696,16 +869,51 @@ namespace X13.CC {
           _code[0] = (byte)cmd;
           _code[1] = (byte)((int)((Constant)_cn).Value & 0x1F);
           break;
-        case DP_InstCode.STM_B1_C16:
-        case DP_InstCode.STM_S1_C16:
-        case DP_InstCode.STM_S2_C16:
-        case DP_InstCode.STM_S4_C16:
+        case DP_InstCode.LDM_B1_CS8:
+        case DP_InstCode.STM_B1_CS8:
+
+        case DP_InstCode.LDM_S1_CS8:
+        case DP_InstCode.STM_S1_CS8:
+        case DP_InstCode.LDM_U1_CS8:
+
+        case DP_InstCode.LDM_S2_CS8:
+        case DP_InstCode.STM_S2_CS8:
+        case DP_InstCode.LDM_U2_CS8:
+
+        case DP_InstCode.LDM_S4_CS8:
+        case DP_InstCode.STM_S4_CS8:
+          if(_code == null || _code.Length != 2) {
+            _code = new byte[2];
+          }
+          _code[0] = (byte)cmd;
+          _code[1] = (byte)_param.Addr;
+          break;
         case DP_InstCode.LDM_B1_C16:
+        case DP_InstCode.LDM_B1_CS16:
+        case DP_InstCode.STM_B1_C16:
+        case DP_InstCode.STM_B1_CS16:
+
         case DP_InstCode.LDM_S1_C16:
+        case DP_InstCode.LDM_S1_CS16:
+        case DP_InstCode.STM_S1_C16:
+        case DP_InstCode.STM_S1_CS16:
+
         case DP_InstCode.LDM_S2_C16:
+        case DP_InstCode.LDM_S2_CS16:
+        case DP_InstCode.STM_S2_C16:
+        case DP_InstCode.STM_S2_CS16:
+
         case DP_InstCode.LDM_S4_C16:
+        case DP_InstCode.LDM_S4_CS16:
+        case DP_InstCode.STM_S4_C16:
+        case DP_InstCode.STM_S4_CS16:
+
         case DP_InstCode.LDM_U1_C16:
+        case DP_InstCode.LDM_U1_CS16:
+
         case DP_InstCode.LDM_U2_C16:
+        case DP_InstCode.LDM_U2_CS16:
+
         case DP_InstCode.CALL:
         case DP_InstCode.API:
           if(_code == null || _code.Length != 3) {
@@ -717,15 +925,43 @@ namespace X13.CC {
           break;
         case DP_InstCode.LDI_S1:
         case DP_InstCode.LDI_U1:
+          if(_param != null && (_param.type == DP_Type.REFERENCE || _param.type == DP_Type.FUNCTION)) {
+            if(_param.Addr > 65535) {
+              cmd = DP_InstCode.LDI_S4;
+              goto case DP_InstCode.LDI_S4;
+            } else if(_param.Addr > 255) {
+              cmd = DP_InstCode.LDI_U2;
+              goto case DP_InstCode.LDI_U2;
+            }
+            tmp_d = (int)_param.Addr;
+          } else if((_cn as Constant) != null) {
+            tmp_d = (int)((Constant)_cn).Value;
+          } else {
+            tmp_d = 0;
+          }
           if(_code == null || _code.Length != 2) {
             _code = new byte[2];
           }
           _code[0] = (byte)cmd;
-          _code[1] = (byte)((Constant)_cn).Value;
+          _code[1] = (byte)tmp_d;
           break;
         case DP_InstCode.LDI_S2:
         case DP_InstCode.LDI_U2:
-          tmp_d = (_param!=null && _param.type==DP_Type.FUNCTION)?(int)_param.Addr:(int)((Constant)_cn).Value;
+          if(_param != null && (_param.type == DP_Type.REFERENCE || _param.type == DP_Type.FUNCTION)) {
+            if(_param.Addr < 256) {
+              cmd = DP_InstCode.LDI_U1;
+              goto case DP_InstCode.LDI_U1;
+            } else if(_param.Addr > 65535) {
+              cmd = DP_InstCode.LDI_S4;
+              goto case DP_InstCode.LDI_S4;
+            }
+            tmp_d = (int)_param.Addr;
+          } else if((_cn as Constant) != null) {
+            tmp_d = (int)((Constant)_cn).Value;
+          } else {
+            tmp_d = 0;
+          }
+
           if(_code == null || _code.Length != 3) {
             _code = new byte[3];
           }
@@ -734,7 +970,20 @@ namespace X13.CC {
           _code[2] = (byte)(tmp_d >> 8);
           break;
         case DP_InstCode.LDI_S4:
-          tmp_d = (int)((Constant)_cn).Value;
+          if(_param != null && (_param.type == DP_Type.REFERENCE || _param.type == DP_Type.FUNCTION)) {
+            if(_param.Addr < 256) {
+              cmd = DP_InstCode.LDI_U1;
+              goto case DP_InstCode.LDI_U1;
+            } else if(_param.Addr < 65536) {
+              cmd = DP_InstCode.LDI_U2;
+              goto case DP_InstCode.LDI_U2;
+            }
+            tmp_d = (int)_param.Addr;
+          } else if((_cn as Constant) != null) {
+            tmp_d = (int)((Constant)_cn).Value;
+          } else {
+            tmp_d = 0;
+          }
           if(_code == null || _code.Length != 5) {
             _code = new byte[5];
           }

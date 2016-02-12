@@ -196,6 +196,7 @@ namespace X13.CC {
     UINT16,
     SINT16,
     SINT32,
+    REFERENCE,
     INPUT,
     OUTPUT,
     PARAMETER,
