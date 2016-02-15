@@ -24,7 +24,7 @@ namespace X13.CC {
   public partial class JSView : DocumentView {
     private Topic _model;
 	private DVar<string> _src;
-	private DP_Compiler _compiler;
+	private EP_Compiler _compiler;
     ITextMarkerService textMarkerService;
 
     public JSView(string lName) {
@@ -71,7 +71,7 @@ namespace X13.CC {
 	}
 	private void Compile_Click(object sender, RoutedEventArgs e) {
 	  if(_compiler==null) {
-		_compiler=new DP_Compiler();
+		_compiler=new EP_Compiler();
         _compiler.CMsg += _compiler_CMsg;
 	  }
       textMarkerService.RemoveAll(m => true);
@@ -100,10 +100,10 @@ namespace X13.CC {
         foreach(var t in toDel) {
           t.Remove();
         }
+        _model.Get<long>("XD_StackBottom").value = (_compiler.StackBottom + 3) / 4;
         foreach(var kv in _compiler.Hex) {
           _model.Get<PLC.ByteArray>("pa" + kv.Key.ToString()).value = kv.Value;
         }
-        _model.Get<long>("XD_StackBottom").value = (_compiler.StackBottom+3)/4;
 	  }
 	}
 

@@ -94,7 +94,10 @@ namespace X13.Periphery {
           }
           processed = true;
         }
-      } else if(_st == 7 && msgData[0] == (byte)Cmd.PlcStartResp) {
+      } else if(_st == 7 && msgData[0] == (byte)Cmd.WriteStackBottomResp) {
+        _st = 8;
+        processed = true;
+      } else if(_st == 9 && msgData[0] == (byte)Cmd.PlcStartResp) {
         _st = 0;
         _plcStoped = false;
         processed = true;
@@ -118,7 +121,7 @@ namespace X13.Periphery {
       if(_st == 0) {
         return;
       } else {
-        if(_curChunk == null) {
+        if(_curChunk == null && _st<7) {
           _st = 1;
         }
         if(_st == 1) {
@@ -126,7 +129,8 @@ namespace X13.Periphery {
             _curChunk = _prg.FirstOrDefault(z => z.crcCur != z.crcDev);
             if(_curChunk == null) {
               if(_plcStoped) {
-                buf = new byte[] { (byte)Cmd.PlcStartReq };
+                var sb = _owner.Get<long>("XD_StackBottom", _dev.Owner).value;
+                buf = new byte[] { (byte)Cmd.WriteStackBottomReq, (byte)sb, (byte)(sb >> 8), (byte)(sb >> 16), (byte)(sb >> 24)};
                 _st = 7;
                 _dev.PublishWithPayload(_owner, buf);
               } else {
@@ -161,6 +165,10 @@ namespace X13.Periphery {
 		  if(_verbose.value) {
 			Log.Info("{0}.write 0x{1:X4} {2}", _owner.path, addr, BitConverter.ToString(buf, 3, len));
 		  }
+        } else if(_st == 8) {
+          buf = new byte[] { (byte)Cmd.PlcStartReq };
+          _st = 9;
+          _dev.PublishWithPayload(_owner, buf);
         }
       }
     }
@@ -249,6 +257,8 @@ namespace X13.Periphery {
       WriteBlockResp = 8,   // 8, 0
       EraseBlockReq = 9,    // 9, addrL, addrH, lenL, lenH
       EraseBlockResp = 10,  //10, 0
+      WriteStackBottomReq = 11,   // 11, sizeL, size1, size2, sizeH
+      WriteStackBottomResp = 12,  // 12, 0
     }
     private enum ErrorCode : byte {
       Success = 0x00,

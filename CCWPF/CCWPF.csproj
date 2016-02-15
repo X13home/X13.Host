@@ -105,10 +105,11 @@
       <Link>VersionInfo.cs</Link>
     </Compile>
     <Compile Include="Editor\Compiler.cs" />
-    <Compile Include="Editor\Compiler.visit.cs" />
+    <Compile Include="Editor\EP_VP2.cs" />
     <Compile Include="DocumentView.cs" />
     <Compile Include="Editor\ITextMarker.cs" />
     <Compile Include="Editor\TextMarkerService.cs" />
+    <Compile Include="Editor\EP_VP1.cs" />
     <Compile Include="JSView.xaml.cs">
       <DependentUpon>JSView.xaml</DependentUpon>
     </Compile>
@@ -131,7 +132,7 @@
       <DependentUpon>SetupView.xaml</DependentUpon>
     </Compile>
     <Compile Include="uiItems.cs" />
-    <Compile Include="Editor\VN_Enums.cs" />
+    <Compile Include="Editor\EP_Enums.cs" />
     <Page Include="DataStorageView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 
 namespace X13.CC {
-  internal enum DP_InstCode : byte {
+  internal enum EP_InstCode : byte {
     NOP = 0x00,
 
     DUP = 0x02,
@@ -186,9 +186,7 @@ namespace X13.CC {
     TEST_EQ = 0xFE,
     RET = 0xFF,
   }
-
-
-  internal enum DP_Type {
+  internal enum EP_Type {
     NONE,
     BOOL,
     UINT8,
