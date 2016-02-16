@@ -80,22 +80,16 @@ namespace X13.CC {
     }
     protected override EP_VP1 Visit(FunctionDefinition node) {
       var fm = _compiler.DefineMerker(node.Reference.Descriptor, EP_Type.FUNCTION);
-      fm.scope = _compiler.ScopePush(fm);
-      fm.scope.entryPoint = fm;
-      for(int i = 0; i < node.Parameters.Count; i++) {
-        if(i > 15) {
-          throw new IndexOutOfRangeException(node.Reference.Descriptor.Name + "(.., " + node.Parameters[i].Name + " ..)" + " too many parameters");
-        }
-        var m = _compiler.DefineMerker(node.Parameters[i], EP_Type.PARAMETER);
-        m.Addr = (uint)i + 1;
-      }
-      node.Body.Visit(this);
-      _compiler.ScopePop();
+      DefineFunction(node, fm);
       return this;
     }
     protected override EP_VP1 Visit(Property node) {
       node.Source.Visit(this);
       node.FieldName.Visit(this);
+      Constant c;
+      if(node.FieldName is This && (c = node.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
+        _compiler.cur.GetProperty(c.Value.ToString(), true);
+      }
       return this;
     }
     protected override EP_VP1 Visit(GetVariable node) {
@@ -214,9 +208,19 @@ namespace X13.CC {
       return Visit(node as Expression);
     }
     protected override EP_VP1 Visit(SetProperty node) {
-      node.Value.Visit(this);
-      node.Source.Visit(this);
-      node.FieldName.Visit(this);
+      Constant c;
+      FunctionDefinition fd;
+      if((fd = node.Value as FunctionDefinition) == null) {
+        node.Value.Visit(this);
+      }
+      //node.Source.Visit(this);
+      //node.FieldName.Visit(this);
+      if(node.Source is This && (c = node.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
+        var m=_compiler.cur.GetProperty(c.Value.ToString(), true);
+        if(fd != null) {
+          DefineFunction(fd, m);
+        }
+      }
       return this;
     }
     protected override EP_VP1 Visit(SignedShiftLeft node) {
@@ -392,14 +396,9 @@ namespace X13.CC {
         if((a1 = node.Initializers[i] as Assignment) != null && (v = a1.FirstOperand as GetVariable) != null) {
           Call ca;
           GetVariable f;
-          if((ca = a1.SecondOperand as Call) != null && ca.CallMode == CallMode.Construct && (f = ca.FirstOperand as GetVariable) != null && f.Descriptor.Name == "Int32Array") {
-            Constant len;
-            if(ca.Arguments.Length != 1 || (len = ca.Arguments[0] as Constant) == null || !len.Value.IsNumber) {
-              throw new NotSupportedException("supported only new Int32Array(constant length)");
-            }
+          if((ca = a1.SecondOperand as Call) != null && ca.CallMode == CallMode.Construct && (f = ca.FirstOperand as GetVariable) != null) {
             m = _compiler.DefineMerker(v.Descriptor, EP_Type.REFERENCE);
             m.type = EP_Type.REFERENCE;
-            m.pOut = (int)len.Value;
             continue;
           }
         }
@@ -416,5 +415,21 @@ namespace X13.CC {
     protected override EP_VP1 Visit(With node) {
       return Visit(node as CodeNode);
     }
+
+    private void DefineFunction(FunctionDefinition node, EP_Compiler.Merker fm) {
+      fm.scope = _compiler.ScopePush(fm);
+      fm.scope.entryPoint = fm;
+      for(int i = 0; i < node.Parameters.Count; i++) {
+        if(i > 15) {
+          throw new IndexOutOfRangeException(node.Reference.Descriptor.Name + "(.., " + node.Parameters[i].Name + " ..)" + " too many parameters");
+        }
+        var m = _compiler.DefineMerker(node.Parameters[i], EP_Type.PARAMETER);
+        m.Addr = (uint)i + 1;
+      }
+      node.Body.Visit(this);
+      fm.scope.AllocatFields();
+      _compiler.ScopePop();
+    }
+
   }
 }

@@ -32,8 +32,8 @@ namespace X13.CC {
       EP_Compiler.Instruction d2 = new EP_Compiler.Instruction(EP_InstCode.DUP) { canOptimized = true };
       _compiler._sp.Push(d2);
       node.SecondOperand.Visit(this);
-      Store(node, node.FirstOperand);
       _compiler.cur.AddInst(d2);
+      Store(node, node.FirstOperand);
       return this;
     }
     protected override EP_VP2 Visit(Call node) {
@@ -42,11 +42,14 @@ namespace X13.CC {
       EP_Compiler.Merker m;
       Constant c;
       EP_Compiler.Instruction d;
+      EP_Compiler.Scope sc;
 
-      if((p = node.FirstOperand as Property) != null && (p.Source is GetVariable || p.Source is This) && (c = p.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
-        string fn = c.Value.ToString();
-        EP_Compiler.Merker mf = _compiler._programm.Select(z => z.memory.FirstOrDefault(z1 => z1.type == EP_Type.FUNCTION && z1.vd.Name == fn)).FirstOrDefault(z => z != null);
-        if(mf != null && CallFunction(node, mf, p.Source as Expression)) {
+      if((p = node.FirstOperand as Property) != null 
+        && (((f=p.Source as GetVariable)!=null && (m = _compiler.GetMerker(f.Descriptor))!=null && (sc=m.scope) != null) || (p.Source is This && (sc=_compiler.cur)!=null))
+        && (c = p.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
+        EP_Compiler.Merker mf;
+        if((mf = sc.GetProperty(c.Value.ToString())) != null) {
+          CallFunction(node, mf, p.Source as Expression);
           return this;
         }
       }
@@ -158,104 +161,59 @@ namespace X13.CC {
         throw new ApplicationException("Unknown merker in pass 2: " + node.Reference.Descriptor.Name);
       }
 
-
-      fm.scope = _compiler.ScopePush(fm);
-      fm.scope.entryPoint = fm;
-      for(int i = 0; i < node.Parameters.Count; i++) {
-        if(i > 15) {
-          throw new IndexOutOfRangeException(node.Reference.Descriptor.Name + "(.., " + node.Parameters[i].Name + " ..)" + " too many parameters");
-        }
-        var m = _compiler.GetMerker(node.Parameters[i]);
-        if(m == null || m.type != EP_Type.PARAMETER || m.Addr!=(uint)i + 1) {
-          throw new ApplicationException("Unknown merker in pass 2: " + node.Reference.Descriptor.Name);
-        }
-      }
-      node.Body.Visit(this);
-      if(_compiler.cur.code.Count == 0 || _compiler.cur.code[_compiler.cur.code.Count - 1]._code.Length != 1 || _compiler.cur.code[_compiler.cur.code.Count - 1]._code[0] != (byte)EP_InstCode.RET) {
-        _compiler.cur.AddInst(EP_InstCode.RET);
-      }
-      _compiler.ScopePop();
+      DefineFunction(node, fm);
       return this;
     }
     protected override EP_VP2 Visit(Property node) {
       GetVariable f;
       EP_Compiler.Merker m;
       Constant c;
-      int len;
+      EP_Compiler.Scope sc;
 
       if((f = node.Source as GetVariable) != null && (m = _compiler.GetMerker(f.Descriptor)).type == EP_Type.REFERENCE) {
         _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LDI_S4, m), 0, 1);
-        len = m.pOut;
+        sc=m.scope;
         //TODO: LDM_xx_C16  (m.addr+offset)
       } else if(node.Source is This) {
         _compiler.cur.AddInst(EP_InstCode.LD_P0, 0, 1);
-        len = int.MaxValue;
+        sc=_compiler.cur;
       } else {
         throw new NotSupportedException(node.Source.ToString() + " as object");
       }
       if((c = node.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
         string pn = c.Value.ToString();
-        UInt16 addr;
-        int size;
-        int idx;
-        if(pn.Length > 1 && (idx = "zbBwWd".IndexOf(pn[0])) >= 0 && UInt16.TryParse(pn.Substring(1), out addr)) {
+        m=sc.GetProperty(pn);
+        if(m==null){
+          sc=_compiler._scope.Skip(1).FirstOrDefault();
+          if(sc!=null){
+            m=sc.GetProperty(pn);
+          }
+        }
+        if(m!=null){
           EP_InstCode cmd;
-          switch(idx * 2 + (addr > 255 ? 1 : 0)) {
-          case 0:
-            cmd = EP_InstCode.LDM_B1_CS8;
-            size = 1;
+          switch(m.type){
+          case EP_Type.PropB1:
+            cmd = m.Addr < 256 ? EP_InstCode.LDM_B1_CS8 : EP_InstCode.LDM_B1_CS16;
             break;
-          case 1:
-            cmd = EP_InstCode.LDM_B1_CS16;
-            size = 1;
+          case EP_Type.PropS1:
+            cmd = m.Addr < 256 ? EP_InstCode.LDM_S1_CS8 : EP_InstCode.LDM_S1_CS16;
             break;
-          case 2:
-            cmd = EP_InstCode.LDM_S1_CS8;
-            size = 8;
+          case EP_Type.PropU1:
+            cmd = m.Addr < 256 ? EP_InstCode.LDM_U1_CS8 : EP_InstCode.LDM_U1_CS16;
             break;
-          case 3:
-            cmd = EP_InstCode.LDM_S1_CS16;
-            size = 8;
+          case EP_Type.PropS2:
+            cmd = m.Addr < 256 ? EP_InstCode.LDM_S2_CS8 : EP_InstCode.LDM_S2_CS16;
             break;
-          case 4:
-            cmd = EP_InstCode.LDM_U1_CS8;
-            size = 8;
+          case EP_Type.PropU2:
+            cmd = m.Addr < 256 ? EP_InstCode.LDM_U2_CS8 : EP_InstCode.LDM_U2_CS16;
             break;
-          case 5:
-            cmd = EP_InstCode.LDM_U1_CS16;
-            size = 8;
-            break;
-          case 6:
-            cmd = EP_InstCode.LDM_S2_CS8;
-            size = 16;
-            break;
-          case 7:
-            cmd = EP_InstCode.LDM_S2_CS16;
-            size = 16;
-            break;
-          case 8:
-            cmd = EP_InstCode.LDM_U2_CS8;
-            size = 16;
-            break;
-          case 9:
-            cmd = EP_InstCode.LDM_U2_CS16;
-            size = 16;
-            break;
-          case 10:
-            cmd = EP_InstCode.LDM_S4_CS8;
-            size = 32;
-            break;
-          case 11:
-            cmd = EP_InstCode.LDM_S4_CS16;
-            size = 32;
+          case EP_Type.PropS4:
+            cmd = m.Addr < 256 ? EP_InstCode.LDM_S4_CS8 : EP_InstCode.LDM_S4_CS16;
             break;
           default:
-            throw new ApplicationException("GetProperty(" + node.ToString() + ") bad index");
+            throw new ApplicationException("Merker " + m.ToString() + " is not property");
           }
-          if(((addr + 1) * size - 1) / 32 >= len) {
-            throw new IndexOutOfRangeException(node.ToString());
-          }
-          _compiler.cur.AddInst(new EP_Compiler.Instruction(cmd, new EP_Compiler.Merker() { Addr = addr }), 1, 1);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(cmd, m), 1, 1);
           return this;
         }
       }
@@ -439,12 +397,21 @@ namespace X13.CC {
       return Visit(node as Expression);
     }
     protected override EP_VP2 Visit(SetProperty node) {
-      EP_Compiler.Instruction d2 = new EP_Compiler.Instruction(EP_InstCode.DUP) { canOptimized = true };
-      _compiler._sp.Push(d2);
-      node.Value.Visit(this);
-      _compiler.cur.AddInst(d2);
+      FunctionDefinition fd;
+      if((fd = node.Value as FunctionDefinition) == null) {
+        EP_Compiler.Instruction d2 = new EP_Compiler.Instruction(EP_InstCode.DUP) { canOptimized = true };
+        _compiler._sp.Push(d2);
+        node.Value.Visit(this);
+        _compiler.cur.AddInst(d2);
 
-      StoreProperty(node, node.Source, node.FieldName);
+        StoreProperty(node, node.Source, node.FieldName);
+      } else {
+        Constant c;
+        if(node.Source is This && (c = node.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
+          var m = _compiler.cur.GetProperty(c.Value.ToString(), false);
+          DefineFunction(fd, m);
+        }
+      }
       return this;
     }
     protected override EP_VP2 Visit(SignedShiftLeft node) {
@@ -783,16 +750,28 @@ namespace X13.CC {
         if((a1 = node.Initializers[i] as Assignment) != null && (v = a1.FirstOperand as GetVariable) != null) {
           Call ca;
           GetVariable f;
-          if((ca = a1.SecondOperand as Call) != null && ca.CallMode == CallMode.Construct && (f = ca.FirstOperand as GetVariable) != null && f.Descriptor.Name == "Int32Array") {
-            Constant len;
-            if(ca.Arguments.Length != 1 || (len = ca.Arguments[0] as Constant) == null || !len.Value.IsNumber) {
-              throw new NotSupportedException("supported only new Int32Array(constant length)");
-            }
+          if((ca = a1.SecondOperand as Call) != null && ca.CallMode == CallMode.Construct && (f = ca.FirstOperand as GetVariable) != null) {
             m = _compiler.GetMerker(v.Descriptor);
             if(m == null || m.type != EP_Type.REFERENCE) {
               throw new ApplicationException("Unknown merker in pass 2: " + v.Descriptor.Name);
             }
-            m.pOut = (int)len.Value;
+            var mf = _compiler.GetMerker(f.Descriptor);
+            if(mf == null || mf.type != EP_Type.FUNCTION) {
+              throw new ApplicationException("Unknown merker in pass 2: " + f.Descriptor.Name);
+            }
+            m.scope = mf.scope;
+            m.pOut = (int)(m.scope.memBlocks.Last().start + 31) / 32;
+
+            tmp = _compiler.cur;
+            _compiler.cur = _compiler.initBlock;
+            tmp2 = _compiler.cur.memory;
+            _compiler.cur.memory = tmp.memory;
+
+            CallFunction(ca, mf, v);    // Call in INIT section
+            _compiler.cur.AddInst(EP_InstCode.DROP, 1, 0);
+            _compiler.cur.memory = tmp2;
+            _compiler.cur = tmp;
+
             continue;
           } else {
             m = _compiler.GetMerker(v.Descriptor);
@@ -913,69 +892,48 @@ namespace X13.CC {
       GetVariable f;
       EP_Compiler.Merker m;
       Constant c;
-      int len;
+      EP_Compiler.Scope sc;
 
       if((f = src as GetVariable) != null && (m = _compiler.GetMerker(f.Descriptor)).type == EP_Type.REFERENCE) {
         _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LDI_S4, m), 0, 1);
-        len = m.pOut;
-        //TODO: STM_xx_C16  (m.addr+offset)
+        sc = m.scope;
+        //TODO: STM_xx_C16  (m.addr*size+offset)
       } else if(src is This) {
         _compiler.cur.AddInst(EP_InstCode.LD_P0, 0, 1);
-        len = int.MaxValue;
+        sc = _compiler.cur;
       } else {
         throw new NotSupportedException(src.ToString() + " as object");
       }
       if((c = name as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
         string pn = c.Value.ToString();
-        UInt16 addr;
-        int size;
-        int idx;
-        if(pn.Length > 1 && (idx = "zbBwWd".IndexOf(pn[0])) >= 0 && UInt16.TryParse(pn.Substring(1), out addr)) {
+        m = sc.GetProperty(pn);
+        if(m == null) {
+          sc = _compiler._scope.Skip(1).FirstOrDefault();
+          if(sc != null) {
+            m = sc.GetProperty(pn);
+          }
+        }
+        if(m != null) {
           EP_InstCode cmd;
-          switch(idx * 2 + (addr > 255 ? 1 : 0)) {
-          case 0:
-            cmd = EP_InstCode.STM_B1_CS8;
-            size = 1;
+          switch(m.type) {
+          case EP_Type.PropB1:
+            cmd = m.Addr < 256 ? EP_InstCode.STM_B1_CS8 : EP_InstCode.STM_B1_CS16;
             break;
-          case 1:
-            cmd = EP_InstCode.STM_B1_CS16;
-            size = 1;
+          case EP_Type.PropS1:
+          case EP_Type.PropU1:
+            cmd = m.Addr < 256 ? EP_InstCode.STM_S1_CS8 : EP_InstCode.STM_S1_CS16;
             break;
-          case 2:
-          case 4:
-            cmd = EP_InstCode.STM_S1_CS8;
-            size = 8;
+          case EP_Type.PropS2:
+          case EP_Type.PropU2:
+            cmd = m.Addr < 256 ? EP_InstCode.STM_S2_CS8 : EP_InstCode.STM_S2_CS16;
             break;
-          case 3:
-          case 5:
-            cmd = EP_InstCode.STM_S1_CS16;
-            size = 8;
-            break;
-          case 6:
-          case 8:
-            cmd = EP_InstCode.STM_S2_CS8;
-            size = 16;
-            break;
-          case 7:
-          case 9:
-            cmd = EP_InstCode.LDM_S2_CS16;
-            size = 16;
-            break;
-          case 10:
-            cmd = EP_InstCode.STM_S4_CS8;
-            size = 32;
-            break;
-          case 11:
-            cmd = EP_InstCode.STM_S4_CS16;
-            size = 32;
+          case EP_Type.PropS4:
+            cmd = m.Addr < 256 ? EP_InstCode.STM_S4_CS8 : EP_InstCode.STM_S4_CS16;
             break;
           default:
-            throw new ApplicationException("SetProperty(" + node.ToString() + ") bad index");
+            throw new ApplicationException("Merker " + m.ToString() + " is not property");
           }
-          if(((addr + 1) * size - 1) / 32 >= len) {
-            throw new IndexOutOfRangeException(node.ToString());
-          }
-          _compiler.cur.AddInst(new EP_Compiler.Instruction(cmd, new EP_Compiler.Merker() { Addr = addr }, node), 2, 0);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(cmd, m, node), 2, 0);
           return;
         }
       }
@@ -1029,7 +987,7 @@ namespace X13.CC {
         } else {
           throw new NotSupportedException(This.ToString() + " as this");
         }
-        _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.CALL, m));
+        _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.CALL, m, node));
         for(int i = al.Length - 1; i >= 0; i--) {
           _compiler.cur.AddInst(EP_InstCode.NIP);
           d = _compiler._sp.Pop();
@@ -1061,6 +1019,24 @@ namespace X13.CC {
           }
         }
       }
+    }
+    private void DefineFunction(FunctionDefinition node, EP_Compiler.Merker fm) {
+      fm.scope = _compiler.ScopePush(fm);
+      fm.scope.entryPoint = fm;
+      for(int i = 0; i < node.Parameters.Count; i++) {
+        if(i > 15) {
+          throw new IndexOutOfRangeException(node.Reference.Descriptor.Name + "(.., " + node.Parameters[i].Name + " ..)" + " too many parameters");
+        }
+        var m = _compiler.GetMerker(node.Parameters[i]);
+        if(m == null || m.type != EP_Type.PARAMETER || m.Addr != (uint)i + 1) {
+          throw new ApplicationException("Unknown merker in pass 2: " + node.Reference.Descriptor.Name);
+        }
+      }
+      node.Body.Visit(this);
+      if(_compiler.cur.code.Count == 0 || _compiler.cur.code[_compiler.cur.code.Count - 1]._code.Length != 1 || _compiler.cur.code[_compiler.cur.code.Count - 1]._code[0] != (byte)EP_InstCode.RET) {
+        _compiler.cur.AddInst(EP_InstCode.RET);
+      }
+      _compiler.ScopePop();
     }
 
     internal class Loop {

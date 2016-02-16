@@ -34,8 +34,7 @@ namespace X13.CC {
 
     internal Stack<Instruction> _sp;
     internal List<Scope> _programm;
-    private Stack<Scope> _scope;
-    private SortedSet<DP_MemBlock> _memBlocks;
+    internal Stack<Scope> _scope;
     public Scope global, cur, initBlock;
 
     public SortedList<string, string> varList;
@@ -53,8 +52,6 @@ namespace X13.CC {
       _scope = new Stack<Scope>();
       _programm = new List<Scope>();
       _sp = new Stack<Instruction>();
-      _memBlocks = new SortedSet<DP_MemBlock>();
-      _memBlocks.Add(new DP_MemBlock(0, 16384));
       uint addr;
       string vName;
       Instruction ri;
@@ -129,7 +126,7 @@ namespace X13.CC {
               continue;
             }
             if(m.Addr == uint.MaxValue) {
-              m.Addr = AllocateMemory(uint.MaxValue, mLen) / (mLen>=32?32:mLen);
+              m.Addr = global.AllocateMemory(uint.MaxValue, mLen) / (mLen>=32?32:mLen);
             }
             Log.Debug("{0}={1:X4}:{2:X4}", m.vd.Name, m.Addr, mLen);
             if(p == global && vName != null) {
@@ -161,7 +158,7 @@ namespace X13.CC {
           bytes.Clear();
         }
         Hex = HexN;
-        StackBottom = (_memBlocks.Last().start + 7) / 8;
+        StackBottom = (global.memBlocks.Last().start + 7) / 8;
         Log.Info("Used ROM: {0} bytes, RAM: {1} bytes", Hex.Select(z => z.Key + z.Value.GetBytes().Length).Max(), StackBottom);
         success = true;
       }
@@ -235,7 +232,7 @@ namespace X13.CC {
               if(type == EP_Type.INPUT || type == EP_Type.OUTPUT) {
                 addr = (uint)((uint)(((byte)v.Name[0]) << 24) | (uint)(((byte)v.Name[1]) << 16) | addr);
               } else if(mLen > 0) {
-                AllocateMemory(addr * mLen, mLen);
+                global.AllocateMemory(addr * mLen, mLen);
               }
             } else {
               addr = uint.MaxValue;
@@ -311,62 +308,6 @@ namespace X13.CC {
       global.memory.Add(m);
       return m;
     }
-    private uint AllocateMemory(uint addr, uint length) {
-      DP_MemBlock fb;
-      uint start, end;
-
-      if(addr == uint.MaxValue) {
-        int o;
-        if(length > 16) {
-          o = 32;
-        } else if(length > 8) {
-          o = 16;
-        } else if(length > 1) {
-          o = 8;
-        } else {
-          o = 1;
-        }
-
-        fb = _memBlocks.FirstOrDefault(z => z.Check(length, o));
-        if(fb == null) {
-          throw new ArgumentOutOfRangeException("Not enough memory");
-        }
-        _memBlocks.Remove(fb);
-        start = (uint)(fb.start + (o - (fb.start % o)) % o);
-        end = start + length - 1;
-        if(fb.start < start) {
-          _memBlocks.Add(new DP_MemBlock(fb.start, start - 1));
-        }
-        if(fb.end > end) {
-          _memBlocks.Add(new DP_MemBlock(end + 1, fb.end));
-        }
-      } else {
-        start = addr;
-        end = addr + length - 1;
-        do {
-          fb = _memBlocks.FirstOrDefault(z => z.start <= end && z.end >= start);
-          if(fb == null) {
-            break;
-          }
-          _memBlocks.Remove(fb);
-          if(fb.start < start) {
-            _memBlocks.Add(new DP_MemBlock(fb.start, start - 1));
-          }
-          if(fb.end > end) {
-            _memBlocks.Add(new DP_MemBlock(end + 1, fb.end));
-          }
-        } while(fb != null);
-      }
-      //{
-      //  StringBuilder sb = new StringBuilder();
-      //  sb.AppendFormat("AllocateMemory({0:X4}{2}, {1:X2})\n", start, length, addr==uint.MaxValue?"*":"");
-      //  foreach(var m in _memBlocks) {
-      //    sb.AppendFormat("  {0:X4}:{1:X4}\n", m.start, m.end);
-      //  }
-      //  Log.Info("{0}", sb.ToString());
-      //}
-      return start;
-    }
     private void CompilerMessageCallback(MessageLevel level, CodeCoordinates coords, string message) {
       var msg = string.Format("[{0}, {1}] {2}", coords.Line, coords.Column, message);
       switch(level) {
@@ -413,8 +354,9 @@ namespace X13.CC {
       public bool initialized;
       public int pIn;
       public int pOut;
+      public string pName;
       public override string ToString() {
-        return vd.Name;
+        return vd==null?pName:vd.Name;
       }
     }
     internal class Scope {
@@ -424,10 +366,14 @@ namespace X13.CC {
       public Merker entryPoint;
       public Stack<EP_VP2.Loop> loops;
       public Merker fm;
+      public SortedSet<DP_MemBlock> memBlocks;
+
 
       public Scope(EP_Compiler c, Merker fm) {
         _compiler = c;
         this.fm = fm;
+        memBlocks = new SortedSet<DP_MemBlock>();
+        memBlocks.Add(new DP_MemBlock(0, 16384));
         code = new List<Instruction>();
         memory = new List<Merker>();
         loops = new Stack<EP_VP2.Loop>();
@@ -452,8 +398,63 @@ namespace X13.CC {
         for(i = 0; i < push; i++) {
           _compiler._sp.Push(inst);
         }
-      }
+      }                
+      public uint AllocateMemory(uint addr, uint length) {
+        DP_MemBlock fb;
+        uint start, end;
 
+        if(addr == uint.MaxValue) {
+          int o;
+          if(length > 16) {
+            o = 32;
+          } else if(length > 8) {
+            o = 16;
+          } else if(length > 1) {
+            o = 8;
+          } else {
+            o = 1;
+          }
+
+          fb = memBlocks.FirstOrDefault(z => z.Check(length, o));
+          if(fb == null) {
+            throw new ArgumentOutOfRangeException("Not enough memory");
+          }
+          memBlocks.Remove(fb);
+          start = (uint)(fb.start + (o - (fb.start % o)) % o);
+          end = start + length - 1;
+          if(fb.start < start) {
+            memBlocks.Add(new DP_MemBlock(fb.start, start - 1));
+          }
+          if(fb.end > end) {
+            memBlocks.Add(new DP_MemBlock(end + 1, fb.end));
+          }
+        } else {
+          start = addr;
+          end = addr + length - 1;
+          do {
+            fb = memBlocks.FirstOrDefault(z => z.start <= end && z.end >= start);
+            if(fb == null) {
+              break;
+            }
+            memBlocks.Remove(fb);
+            if(fb.start < start) {
+              memBlocks.Add(new DP_MemBlock(fb.start, start - 1));
+            }
+            if(fb.end > end) {
+              memBlocks.Add(new DP_MemBlock(end + 1, fb.end));
+            }
+          } while(fb != null);
+        }
+        //{
+        //  StringBuilder sb = new StringBuilder();
+        //  sb.AppendFormat("AllocateMemory({0:X4}{2}, {1:X2})\n", start, length, addr==uint.MaxValue?"*":"");
+        //  foreach(var m in global.memBlocks) {
+        //    sb.AppendFormat("  {0:X4}:{1:X4}\n", m.start, m.end);
+        //  }
+        //  Log.Info("{0}", sb.ToString());
+        //}
+        return start;
+      }
       public override string ToString() {
         var sb = new StringBuilder();
         int ls = 0;
@@ -487,6 +488,61 @@ namespace X13.CC {
           ls = sb.Length;
         }
         return sb.ToString();
+      }
+      public Merker GetProperty(string name, bool create=false) {
+        Merker m;
+        m = memory.FirstOrDefault(z => z.pName == name);
+        if(create && m == null && !string.IsNullOrEmpty(name)) {
+          EP_Type type = EP_Type.NONE;
+          switch(name[0]) {
+          case 'z':
+            type = EP_Type.PropB1;
+            break;
+          case 'B':
+            type = EP_Type.PropU1;
+            break;
+          case 'b':
+            type = EP_Type.PropS1;
+            break;
+          case 'W':
+            type = EP_Type.PropU2;
+            break;
+          case 'w':
+            type = EP_Type.PropS2;
+            break;
+          default:
+            type = EP_Type.PropS4;
+            break;
+          }
+          m = new Merker() { pName = name, type = type };
+          memory.Add(m);
+        }
+        return m;
+      }
+      public void AllocatFields() {
+        uint mLen;
+        foreach(var m in memory.OrderBy(z => z.type)) {
+          switch(m.type) {
+          case EP_Type.PropB1:
+            mLen = 1;
+            break;
+          case EP_Type.PropU1:
+          case EP_Type.PropS1:
+            mLen = 8;
+            break;
+          case EP_Type.PropU2:
+          case EP_Type.PropS2:
+            mLen = 16;
+            break;
+          case EP_Type.PropS4:
+            mLen = 32;
+            break;
+          default:
+            continue;
+          }
+          m.Addr = AllocateMemory(uint.MaxValue, mLen) / (mLen >= 32 ? 32 : mLen);
+          Log.Debug("{0}={1:X4}:{2:X4}", (entryPoint==null?"":entryPoint.ToString()+".")+m.pName, m.Addr, mLen);
+        }
       }
     }
     internal class Instruction {
