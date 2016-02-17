@@ -126,7 +126,7 @@ namespace X13.CC {
               continue;
             }
             if(m.Addr == uint.MaxValue) {
-              m.Addr = global.AllocateMemory(uint.MaxValue, mLen) / (mLen>=32?32:mLen);
+              m.Addr = global.AllocateMemory(uint.MaxValue, mLen) / (mLen >= 32 ? 32 : mLen);
             }
             Log.Debug("{0}={1:X4}:{2:X4}", m.vd.Name, m.Addr, mLen);
             if(p == global && vName != null) {
@@ -356,7 +356,7 @@ namespace X13.CC {
       public int pOut;
       public string pName;
       public override string ToString() {
-        return vd==null?pName:vd.Name;
+        return vd == null ? pName : vd.Name;
       }
     }
     internal class Scope {
@@ -398,7 +398,7 @@ namespace X13.CC {
         for(i = 0; i < push; i++) {
           _compiler._sp.Push(inst);
         }
-      }                
+      }
       public uint AllocateMemory(uint addr, uint length) {
         DP_MemBlock fb;
         uint start, end;
@@ -489,7 +489,7 @@ namespace X13.CC {
         }
         return sb.ToString();
       }
-      public Merker GetProperty(string name, bool create=false) {
+      public Merker GetProperty(string name, bool create = false) {
         Merker m;
         m = memory.FirstOrDefault(z => z.pName == name);
         if(create && m == null && !string.IsNullOrEmpty(name)) {
@@ -541,7 +541,7 @@ namespace X13.CC {
             continue;
           }
           m.Addr = AllocateMemory(uint.MaxValue, mLen) / (mLen >= 32 ? 32 : mLen);
-          Log.Debug("{0}={1:X4}:{2:X4}", (entryPoint==null?"":entryPoint.ToString()+".")+m.pName, m.Addr, mLen);
+          Log.Debug("{0}={1:X4}:{2:X4}", (entryPoint == null ? "" : entryPoint.ToString() + ".") + m.pName, m.Addr, mLen);
         }
       }
     }
@@ -560,7 +560,7 @@ namespace X13.CC {
         Prepare(cmd);
       }
       public bool Link() {
-        if(_code.Length <= 1 || (_param == null && _ref == null)) {
+        if(_param == null && _ref == null) {
           return true;
         }
         Prepare((EP_InstCode)_code[0]);
@@ -604,9 +604,6 @@ namespace X13.CC {
         case EP_InstCode.AND_L:
         case EP_InstCode.OR_L:
         case EP_InstCode.XOR_L:
-        case EP_InstCode.LDI_0:
-        case EP_InstCode.LDI_1:
-        case EP_InstCode.LDI_M1:
         case EP_InstCode.LD_P0:
         case EP_InstCode.LD_P1:
         case EP_InstCode.LD_P2:
@@ -752,38 +749,15 @@ namespace X13.CC {
           _code[1] = (byte)_param.Addr;
           _code[2] = (byte)(_param.Addr >> 8);
           break;
+        case EP_InstCode.LDI_0:
+        case EP_InstCode.LDI_1:
+        case EP_InstCode.LDI_M1:
         case EP_InstCode.LDI_S1:
         case EP_InstCode.LDI_U1:
-          if(_param != null && (_param.type == EP_Type.REFERENCE || _param.type == EP_Type.FUNCTION)) {
-            if(_param.Addr > 65535) {
-              cmd = EP_InstCode.LDI_S4;
-              goto case EP_InstCode.LDI_S4;
-            } else if(_param.Addr > 255) {
-              cmd = EP_InstCode.LDI_U2;
-              goto case EP_InstCode.LDI_U2;
-            }
-            tmp_d = (int)_param.Addr;
-          } else if((_cn as Constant) != null) {
-            tmp_d = (int)((Constant)_cn).Value;
-          } else {
-            tmp_d = 0;
-          }
-          if(_code == null || _code.Length != 2) {
-            _code = new byte[2];
-          }
-          _code[0] = (byte)cmd;
-          _code[1] = (byte)tmp_d;
-          break;
         case EP_InstCode.LDI_S2:
         case EP_InstCode.LDI_U2:
+        case EP_InstCode.LDI_S4:
           if(_param != null && (_param.type == EP_Type.REFERENCE || _param.type == EP_Type.FUNCTION)) {
-            if(_param.Addr < 256) {
-              cmd = EP_InstCode.LDI_U1;
-              goto case EP_InstCode.LDI_U1;
-            } else if(_param.Addr > 65535) {
-              cmd = EP_InstCode.LDI_S4;
-              goto case EP_InstCode.LDI_S4;
-            }
             tmp_d = (int)_param.Addr;
           } else if((_cn as Constant) != null) {
             tmp_d = (int)((Constant)_cn).Value;
@@ -791,36 +765,45 @@ namespace X13.CC {
             tmp_d = 0;
           }
 
-          if(_code == null || _code.Length != 3) {
-            _code = new byte[3];
-          }
-          _code[0] = (byte)cmd;
-          _code[1] = (byte)tmp_d;
-          _code[2] = (byte)(tmp_d >> 8);
-          break;
-        case EP_InstCode.LDI_S4:
-          if(_param != null && (_param.type == EP_Type.REFERENCE || _param.type == EP_Type.FUNCTION)) {
-            if(_param.Addr < 256) {
-              cmd = EP_InstCode.LDI_U1;
-              goto case EP_InstCode.LDI_U1;
-            } else if(_param.Addr < 65536) {
-              cmd = EP_InstCode.LDI_U2;
-              goto case EP_InstCode.LDI_U2;
+          if(tmp_d == 0) {
+            if(_code == null || _code.Length != 1) {
+              _code = new byte[1];
             }
-            tmp_d = (int)_param.Addr;
-          } else if((_cn as Constant) != null) {
-            tmp_d = (int)((Constant)_cn).Value;
+            _code[0]=(byte)EP_InstCode.LDI_0;
+          } else if(tmp_d == 1) {
+            if(_code == null || _code.Length != 1) {
+              _code = new byte[1];
+            }
+            _code[0] = (byte)EP_InstCode.LDI_1;
+          } else if(tmp_d == -1) {
+            if(_code == null || _code.Length != 1) {
+              _code = new byte[1];
+            }
+            _code[0] = (byte)EP_InstCode.LDI_M1;
+          } else if(tmp_d > -128 && tmp_d < 256) {
+            if(_code == null || _code.Length != 2) {
+              _code = new byte[2];
+            }
+            _code[0] = (byte)(tmp_d < 0 ? EP_InstCode.LDI_S1 : EP_InstCode.LDI_U1);
+            _code[1] = (byte)tmp_d;
+          } else if(tmp_d > -32768 && tmp_d < 65536) {
+            if(_code == null || _code.Length != 3) {
+              _code = new byte[3];
+            }
+            _code[0] = (byte)(tmp_d < 0 ? EP_InstCode.LDI_S2 : EP_InstCode.LDI_U2);
+            _code[1] = (byte)tmp_d;
+            _code[2] = (byte)(tmp_d >> 8);
+
           } else {
-            tmp_d = 0;
+            if(_code == null || _code.Length != 5) {
+              _code = new byte[5];
+            }
+            _code[0] = (byte)EP_InstCode.LDI_S4;
+            _code[1] = (byte)tmp_d;
+            _code[2] = (byte)(tmp_d >> 8);
+            _code[3] = (byte)(tmp_d >> 16);
+            _code[4] = (byte)(tmp_d >> 24);
           }
-          if(_code == null || _code.Length != 5) {
-            _code = new byte[5];
-          }
-          _code[0] = (byte)cmd;
-          _code[1] = (byte)tmp_d;
-          _code[2] = (byte)(tmp_d >> 8);
-          _code[3] = (byte)(tmp_d >> 16);
-          _code[4] = (byte)(tmp_d >> 24);
           break;
         case EP_InstCode.OUT:
         case EP_InstCode.IN:

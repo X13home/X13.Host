@@ -818,11 +818,11 @@ namespace X13.CC {
 
     private void LoadConstant(CodeNode node, int v) {
       if(v == 0) {
-        _compiler.cur.AddInst(EP_InstCode.LDI_0, 0, 1);
+        _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LDI_0, null, node), 0, 1);
       } else if(v > 0) {
         if(v < 256) {
           if(v == 1) {
-            _compiler.cur.AddInst(EP_InstCode.LDI_1, 0, 1);
+            _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LDI_1, null, node), 0, 1);
           } else {
             _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LDI_U1, null, node), 0, 1);
           }
@@ -836,7 +836,7 @@ namespace X13.CC {
       } else {
         if(v > -128) {
           if(v == -1) {
-            _compiler.cur.AddInst(EP_InstCode.LDI_M1, 0, 1);
+            _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LDI_M1, null, node), 0, 1);
           } else {
             _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LDI_S1, null, node), 0, 1);
           }

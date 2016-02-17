@@ -210,16 +210,32 @@ namespace X13.CC {
     protected override EP_VP1 Visit(SetProperty node) {
       Constant c;
       FunctionDefinition fd;
+      GetVariable f;
+      EP_Compiler.Merker m;
+      EP_Compiler.Scope sc;
+
+      if((f = node.Source as GetVariable) != null && (m = _compiler.GetMerker(f.Descriptor)).type == EP_Type.REFERENCE) {
+        sc = m.scope;
+      } else if(node.Source is This) {
+        sc = _compiler.cur;
+      } else {
+        throw new NotSupportedException(node.Source.ToString() + " as object");
+      }
+      if((c = node.FieldName as Constant) == null || c.Value == null || c.Value.ValueType != JSValueType.String) {
+        throw new NotSupportedException(node.Source.ToString()+"."+node.FieldName.ToString()+ " as FieldName");
+      }
+
       if((fd = node.Value as FunctionDefinition) == null) {
         node.Value.Visit(this);
-      }
-      //node.Source.Visit(this);
-      //node.FieldName.Visit(this);
-      if(node.Source is This && (c = node.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
-        var m=_compiler.cur.GetProperty(c.Value.ToString(), true);
-        if(fd != null) {
-          DefineFunction(fd, m);
+        sc.GetProperty(c.Value.ToString(), true);
+      } else {
+        string name=c.Value.ToString();
+        m = sc.memory.FirstOrDefault(z => z.pName == name);
+        if(m==null){
+          m = new EP_Compiler.Merker() { pName = name, type = EP_Type.FUNCTION };
+          sc.memory.Add(m);
         }
+        DefineFunction(fd, m);
       }
       return this;
     }
