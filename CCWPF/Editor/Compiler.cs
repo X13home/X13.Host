@@ -22,12 +22,6 @@ namespace X13.CC {
       _predefs["In"] = EP_Type.INPUT;
       _predefs["Av"] = EP_Type.INPUT;
       _predefs["Ai"] = EP_Type.INPUT;
-      _predefs["Mz"] = EP_Type.BOOL;
-      _predefs["Mb"] = EP_Type.SINT8;
-      _predefs["MB"] = EP_Type.UINT8;
-      _predefs["Mw"] = EP_Type.SINT16;
-      _predefs["MW"] = EP_Type.UINT16;
-      _predefs["Md"] = EP_Type.SINT32;
 
       _verbose = Topic.root.Get<bool>("/etc/MQTT-SN/PLC/verbose");
     }
@@ -196,6 +190,7 @@ namespace X13.CC {
     internal Merker DefineMerker(VariableDescriptor v, EP_Type type = EP_Type.NONE) {
       Merker m = null;
       uint addr;
+      EP_Type ioType;
 
       m = cur.memory.FirstOrDefault(z => z.vd == v);
       if(m == null) {
@@ -203,40 +198,12 @@ namespace X13.CC {
       }
       if(m == null) {
         addr = uint.MaxValue;
-        if(type == EP_Type.NONE) {
+        if(v.Name.Length > 2 && _predefs.TryGetValue(v.Name.Substring(0, 2), out ioType) && UInt32.TryParse(v.Name.Substring(2), out addr)) {
+          addr = (uint)((uint)(((byte)v.Name[0]) << 24) | (uint)(((byte)v.Name[1]) << 16) | addr & 0xFFFF);
+          type = ioType;
+        } else if(type == EP_Type.NONE) {
           if(v.Initializer != null && v.Initializer is FunctionDefinition) {
             type = EP_Type.FUNCTION;
-          } else if(v.Name.Length > 2 && _predefs.TryGetValue(v.Name.Substring(0, 2), out type)) {
-            uint mLen;
-            switch(type) {
-            case EP_Type.BOOL:
-              mLen = 1;
-              break;
-            case EP_Type.SINT8:
-            case EP_Type.UINT8:
-              mLen = 8;
-              break;
-            case EP_Type.SINT16:
-            case EP_Type.UINT16:
-              mLen = 16;
-              break;
-            case EP_Type.SINT32:
-              mLen = 32;
-              break;
-            default:
-              mLen = 0;
-              break;
-            }
-            if(UInt32.TryParse(v.Name.Substring(2), out addr)) {
-              addr &= 0xFFFF;
-              if(type == EP_Type.INPUT || type == EP_Type.OUTPUT) {
-                addr = (uint)((uint)(((byte)v.Name[0]) << 24) | (uint)(((byte)v.Name[1]) << 16) | addr);
-              } else if(mLen > 0) {
-                global.AllocateMemory(addr * mLen, mLen);
-              }
-            } else {
-              addr = uint.MaxValue;
-            }
           } else if(v.LexicalScope) {
             type = EP_Type.LOCAL;
             addr = (uint)cur.memory.Where(z => z.type == EP_Type.LOCAL).Count();
@@ -489,31 +456,10 @@ namespace X13.CC {
         }
         return sb.ToString();
       }
-      public Merker GetProperty(string name, bool create = false) {
+      public Merker GetProperty(string name, EP_Type type= EP_Type.NONE) {
         Merker m;
         m = memory.FirstOrDefault(z => z.pName == name);
-        if(create && m == null && !string.IsNullOrEmpty(name)) {
-          EP_Type type = EP_Type.NONE;
-          switch(name[0]) {
-          case 'z':
-            type = EP_Type.PropB1;
-            break;
-          case 'B':
-            type = EP_Type.PropU1;
-            break;
-          case 'b':
-            type = EP_Type.PropS1;
-            break;
-          case 'W':
-            type = EP_Type.PropU2;
-            break;
-          case 'w':
-            type = EP_Type.PropS2;
-            break;
-          default:
-            type = EP_Type.PropS4;
-            break;
-          }
+        if(type!=EP_Type.NONE && m == null && !string.IsNullOrEmpty(name)) {
           m = new Merker() { pName = name, type = type };
           memory.Add(m);
         }

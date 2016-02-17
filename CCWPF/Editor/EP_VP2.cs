@@ -44,8 +44,8 @@ namespace X13.CC {
       EP_Compiler.Instruction d;
       EP_Compiler.Scope sc;
 
-      if((p = node.FirstOperand as Property) != null 
-        && (((f=p.Source as GetVariable)!=null && (m = _compiler.GetMerker(f.Descriptor))!=null && (sc=m.scope) != null) || (p.Source is This && (sc=_compiler.cur)!=null))
+      if((p = node.FirstOperand as Property) != null
+        && (((f = p.Source as GetVariable) != null && (m = _compiler.GetMerker(f.Descriptor)) != null && (sc = m.scope) != null) || (p.Source is This && (sc = _compiler.cur) != null))
         && (c = p.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
         EP_Compiler.Merker mf;
         if((mf = sc.GetProperty(c.Value.ToString())) != null) {
@@ -57,7 +57,7 @@ namespace X13.CC {
       if(f != null) {
         if(node.CallMode == CallMode.Regular) {
           m = _compiler.GetMerker(f.Descriptor);
-          if(m == null || (m.type !=EP_Type.FUNCTION && m.type!=EP_Type.API)) {
+          if(m == null || (m.type != EP_Type.FUNCTION && m.type != EP_Type.API)) {
             throw new ArgumentException("Unknown function: " + f.Descriptor.Name);
           }
           if(m.type == EP_Type.API) {
@@ -172,26 +172,26 @@ namespace X13.CC {
 
       if((f = node.Source as GetVariable) != null && (m = _compiler.GetMerker(f.Descriptor)).type == EP_Type.REFERENCE) {
         _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LDI_S4, m), 0, 1);
-        sc=m.scope;
+        sc = m.scope;
         //TODO: LDM_xx_C16  (m.addr+offset)
       } else if(node.Source is This) {
         _compiler.cur.AddInst(EP_InstCode.LD_P0, 0, 1);
-        sc=_compiler.cur;
+        sc = _compiler.cur;
       } else {
         throw new NotSupportedException(node.Source.ToString() + " as object");
       }
       if((c = node.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
         string pn = c.Value.ToString();
-        m=sc.GetProperty(pn);
-        if(m==null){
-          sc=_compiler._scope.Skip(1).FirstOrDefault();
-          if(sc!=null){
-            m=sc.GetProperty(pn);
+        m = sc.GetProperty(pn);
+        if(m == null) {
+          sc = _compiler._scope.Skip(1).FirstOrDefault();
+          if(sc != null) {
+            m = sc.GetProperty(pn);
           }
         }
-        if(m!=null){
+        if(m != null) {
           EP_InstCode cmd;
-          switch(m.type){
+          switch(m.type) {
           case EP_Type.PropB1:
             cmd = m.Addr < 256 ? EP_InstCode.LDM_B1_CS8 : EP_InstCode.LDM_B1_CS16;
             break;
@@ -398,17 +398,30 @@ namespace X13.CC {
     }
     protected override EP_VP2 Visit(SetProperty node) {
       FunctionDefinition fd;
+      GetVariable f;
+      EP_Compiler.Merker m;
+      Call ca;
+
       if((fd = node.Value as FunctionDefinition) == null) {
         EP_Compiler.Instruction d2 = new EP_Compiler.Instruction(EP_InstCode.DUP) { canOptimized = true };
         _compiler._sp.Push(d2);
-        node.Value.Visit(this);
+        if((ca = node.Value as Call) != null && (f = ca.FirstOperand as GetVariable) != null && (new string[] { "Boolean", "Int8", "UInt8", "Int16", "UInt16", "Int32" }).Any(z => z == f.Name)) {
+          if(ca.Arguments.Length > 0) {
+            ca.Arguments[0].Visit(this);
+          } else {
+			_compiler._sp.Pop();
+			return this;
+          }
+        } else {
+          node.Value.Visit(this);
+        }
         _compiler.cur.AddInst(d2);
 
         StoreProperty(node, node.Source, node.FieldName);
       } else {
         Constant c;
         if(node.Source is This && (c = node.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
-          var m = _compiler.cur.GetProperty(c.Value.ToString(), false);
+          m = _compiler.cur.GetProperty(c.Value.ToString());
           DefineFunction(fd, m);
         }
       }
@@ -740,7 +753,7 @@ namespace X13.CC {
       int i;
       Assignment a1;
       EP_Compiler.Scope tmp;
-      EP_Compiler.Merker m;
+      EP_Compiler.Merker m, mf;
       List<EP_Compiler.Merker> tmp2;
       GetVariable v;
       for(i = 0; i < node.Initializers.Length; i++) {
@@ -752,23 +765,33 @@ namespace X13.CC {
           GetVariable f;
           if((ca = a1.SecondOperand as Call) != null && ca.CallMode == CallMode.Construct && (f = ca.FirstOperand as GetVariable) != null) {
             m = _compiler.GetMerker(v.Descriptor);
-            if(m == null || m.type != EP_Type.REFERENCE) {
+            if(m == null) {
               throw new ApplicationException("Unknown merker in pass 2: " + v.Descriptor.Name);
             }
-            var mf = _compiler.GetMerker(f.Descriptor);
-            if(mf == null || mf.type != EP_Type.FUNCTION) {
-              throw new ApplicationException("Unknown merker in pass 2: " + f.Descriptor.Name);
+            if((new string[] { "Boolean", "Int8", "UInt8", "Int16", "UInt16", "Int32" }).Any(z => z == f.Name)) {
+              mf = null;
+            } else {
+              mf = _compiler.GetMerker(f.Descriptor);
+              if(mf == null || mf.type != EP_Type.FUNCTION) {
+                throw new ApplicationException("Unknown merker in pass 2: " + f.Descriptor.Name);
+              }
+              m.scope = mf.scope;
+              m.pOut = (int)(m.scope.memBlocks.Last().start + 31) / 32;
             }
-            m.scope = mf.scope;
-            m.pOut = (int)(m.scope.memBlocks.Last().start + 31) / 32;
 
             tmp = _compiler.cur;
             _compiler.cur = _compiler.initBlock;
             tmp2 = _compiler.cur.memory;
             _compiler.cur.memory = tmp.memory;
-
-            CallFunction(ca, mf, v);    // Call in INIT section
-            _compiler.cur.AddInst(EP_InstCode.DROP, 1, 0);
+            if(mf != null) {
+              CallFunction(ca, mf, v);    // Call in INIT section
+              _compiler.cur.AddInst(EP_InstCode.DROP, 1, 0);
+            } else {
+              if(ca.Arguments.Length > 0) {
+                ca.Arguments[0].Visit(this);
+                Store(a1, f);
+              }
+            }
             _compiler.cur.memory = tmp2;
             _compiler.cur = tmp;
 
@@ -995,7 +1018,7 @@ namespace X13.CC {
           _compiler._sp.Push(d);
         }
         return true;
-      } else{
+      } else {
         throw new ApplicationException("undefined function: " + m.vd.Name);
       }
     }

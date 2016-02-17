@@ -85,11 +85,11 @@ namespace X13.CC {
     }
     protected override EP_VP1 Visit(Property node) {
       node.Source.Visit(this);
-      node.FieldName.Visit(this);
-      Constant c;
-      if(node.FieldName is This && (c = node.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
-        _compiler.cur.GetProperty(c.Value.ToString(), true);
-      }
+      //node.FieldName.Visit(this);
+      //Constant c;
+      //if(node.FieldName is This && (c = node.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
+      //  _compiler.cur.GetProperty(c.Value.ToString());
+      //}
       return this;
     }
     protected override EP_VP1 Visit(GetVariable node) {
@@ -208,11 +208,12 @@ namespace X13.CC {
       return Visit(node as Expression);
     }
     protected override EP_VP1 Visit(SetProperty node) {
-      Constant c;
+      Constant c, c1;
       FunctionDefinition fd;
       GetVariable f;
       EP_Compiler.Merker m;
       EP_Compiler.Scope sc;
+      Call ca;
 
       if((f = node.Source as GetVariable) != null && (m = _compiler.GetMerker(f.Descriptor)).type == EP_Type.REFERENCE) {
         sc = m.scope;
@@ -222,20 +223,52 @@ namespace X13.CC {
         throw new NotSupportedException(node.Source.ToString() + " as object");
       }
       if((c = node.FieldName as Constant) == null || c.Value == null || c.Value.ValueType != JSValueType.String) {
-        throw new NotSupportedException(node.Source.ToString()+"."+node.FieldName.ToString()+ " as FieldName");
+        throw new NotSupportedException(node.Source.ToString() + "." + node.FieldName.ToString() + " as FieldName");
       }
 
-      if((fd = node.Value as FunctionDefinition) == null) {
-        node.Value.Visit(this);
-        sc.GetProperty(c.Value.ToString(), true);
-      } else {
-        string name=c.Value.ToString();
-        m = sc.memory.FirstOrDefault(z => z.pName == name);
-        if(m==null){
-          m = new EP_Compiler.Merker() { pName = name, type = EP_Type.FUNCTION };
-          sc.memory.Add(m);
+      if((ca = node.Value as Call) != null && (f = ca.FirstOperand as GetVariable) != null) {
+        EP_Type t;
+        switch(f.Name) {
+        case "Boolean":
+          t = EP_Type.PropB1;
+          break;
+        case "Int8":
+          t = EP_Type.PropS1;
+          break;
+        case "UInt8":
+          t = EP_Type.PropU1;
+          break;
+        case "Int16":
+          t = EP_Type.PropS2;
+          break;
+        case "UInt16":
+          t = EP_Type.PropU2;
+          break;
+        case "Int32":
+          t = EP_Type.PropS4;
+          break;
+        default:
+          t = EP_Type.NONE;
+          break;
         }
+        if(t == EP_Type.NONE && ca.CallMode == CallMode.Construct) {
+          throw new NotSupportedException("enclosed constructor"+ node.ToString());
+        } else {
+          if(t == EP_Type.NONE) {
+            t = EP_Type.PropS4;
+          }
+          sc.GetProperty(c.Value.ToString(), t);
+        }
+      } else if((c1 = node.Value as Constant) != null && c1.Value != null && c1.Value.ValueType == JSValueType.Boolean) {
+        sc.GetProperty(c.Value.ToString(), EP_Type.PropB1);
+      } else if((fd = node.Value as FunctionDefinition) != null) {
+        m=sc.GetProperty(c.Value.ToString(), EP_Type.FUNCTION);
         DefineFunction(fd, m);
+        m.scope.memory.RemoveAll(z => z.type == EP_Type.PropB1 || z.type == EP_Type.PropS1 || z.type == EP_Type.PropS2 || z.type == EP_Type.PropS4 || z.type == EP_Type.PropU1 || z.type == EP_Type.PropU2);
+        m.scope.memory.AddRange(sc.memory.Where(z => z.type == EP_Type.PropB1 || z.type == EP_Type.PropS1 || z.type == EP_Type.PropS2 || z.type == EP_Type.PropS4 || z.type == EP_Type.PropU1 || z.type == EP_Type.PropU2));
+      } else {
+        node.Value.Visit(this);
+        sc.GetProperty(c.Value.ToString(), EP_Type.PropS4);
       }
       return this;
     }
@@ -308,14 +341,18 @@ namespace X13.CC {
       return this;
     }
     protected override EP_VP1 Visit(CodeBlock node) {
-      EP_Compiler.Merker m;
+      //EP_Compiler.Merker m;
+      FunctionDefinition fd;
 
       foreach(var v in node.Variables) {
-        m = _compiler.DefineMerker(v);
-
-        if(m.vd.Initializer != null) {
-          m.vd.Initializer.Visit(this);
+        if((fd = v.Initializer as FunctionDefinition) != null) {
+          var fm = _compiler.DefineMerker(v, EP_Type.FUNCTION);
+          DefineFunction(fd, fm);
         }
+        //m = _compiler.DefineMerker(v);
+        //if(m.vd.Initializer != null) {
+        //  m.vd.Initializer.Visit(this);
+        //}
       }
 
       for(var i = 0; i < node.Body.Length; i++) {
@@ -406,16 +443,48 @@ namespace X13.CC {
       GetVariable v;
 
       for(i = 0; i < node.Initializers.Length; i++) {
-        if(node.Initializers[i] is GetVariable) {
+        if((v=node.Initializers[i] as GetVariable)!=null) {
+          m = _compiler.DefineMerker(v.Descriptor);
           continue;
         }
-        if((a1 = node.Initializers[i] as Assignment) != null && (v = a1.FirstOperand as GetVariable) != null) {
+        if((a1 = node.Initializers[i] as Assignment) != null && (v = a1.FirstOperand as GetVariable) != null && !v.Descriptor.LexicalScope) {
           Call ca;
           GetVariable f;
-          if((ca = a1.SecondOperand as Call) != null && ca.CallMode == CallMode.Construct && (f = ca.FirstOperand as GetVariable) != null) {
-            m = _compiler.DefineMerker(v.Descriptor, EP_Type.REFERENCE);
-            m.type = EP_Type.REFERENCE;
-            continue;
+          Constant c;
+          if((ca = a1.SecondOperand as Call) != null && (f = ca.FirstOperand as GetVariable) != null) {
+            EP_Type t;
+            switch(f.Name) {
+            case "Boolean":
+              t = EP_Type.BOOL;
+              break;
+            case "Int8":
+              t = EP_Type.SINT8;
+              break;
+            case "UInt8":
+              t = EP_Type.UINT8;
+              break;
+            case "Int16":
+              t = EP_Type.SINT16;
+              break;
+            case "UInt16":
+              t = EP_Type.UINT16;
+              break;
+            case "Int32":
+              t = EP_Type.SINT32;
+              break;
+            default:
+              t = EP_Type.NONE;
+              break;
+            }
+            if(t == EP_Type.NONE && ca.CallMode == CallMode.Construct) {
+              m = _compiler.DefineMerker(v.Descriptor, EP_Type.REFERENCE);
+              m.type = EP_Type.REFERENCE;
+              continue;
+            } else {
+              m = _compiler.DefineMerker(v.Descriptor, t);
+            }
+          } else if((c = a1.SecondOperand as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.Boolean) {
+            m = _compiler.DefineMerker(v.Descriptor, EP_Type.BOOL);
           }
         }
 
