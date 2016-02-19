@@ -207,5 +207,6 @@ namespace X13.CC {
     LOCAL,
     API,
     FUNCTION,
+    CLASS,
   }
 }

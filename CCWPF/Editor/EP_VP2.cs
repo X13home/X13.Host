@@ -100,7 +100,25 @@ namespace X13.CC {
       return this;
     }
     protected override EP_VP2 Visit(ClassDefinition node) {
-      return Visit(node as Expression);
+      var mc = _compiler.GetMerker(node.Reference.Descriptor);
+      if(mc == null || mc.type != EP_Type.CLASS) {
+        throw new ApplicationException("Unknown merker in pass 2: " + node.Reference.Descriptor.Name);
+      }
+      mc.scope = _compiler.ScopePush(mc);
+      var ctor = _compiler.GetMerker(node.Constructor.Reference.Descriptor);
+      if(ctor == null || ctor.type != EP_Type.FUNCTION) {
+        throw new ApplicationException("Unknown merker in pass 2: " + node.Constructor.Reference.Descriptor.Name);
+      }
+      DefineFunction(node.Constructor, ctor);
+      foreach(var fv in node.Members.Where(z => z.Value is FunctionDefinition && z.Name is Constant)) {
+        var fm = mc.scope.GetProperty((fv.Name as Constant).Value.ToString(), EP_Type.FUNCTION);
+        if(fm == null || fm.type != EP_Type.FUNCTION) {
+          throw new ApplicationException("Unknown merker in pass 2: "+ mc.fName+ "." + (fv.Name as Constant).Value.ToString());
+        }
+        DefineFunction(fv.Value as FunctionDefinition, fm);
+      }
+      _compiler.ScopePop();
+      return this;
     }
     protected override EP_VP2 Visit(Constant node) {
       int v = node.Value == null ? 0 : (int)node.Value;
@@ -551,8 +569,13 @@ namespace X13.CC {
       }
 
       foreach(var v in node.Variables) {
+        if(v.Initializer is ClassDefinition) {
+          continue;
+        }
         m = _compiler.GetMerker(v);
-
+        if(m == null) {
+          throw new ApplicationException("Unknown Merker in Pass2: " + v.Name);
+        }
         if(m.vd.Initializer != null) {
           m.vd.Initializer.Visit(this);
         } else if(m.type == EP_Type.LOCAL) {
@@ -763,19 +786,29 @@ namespace X13.CC {
         if((a1 = node.Initializers[i] as Assignment) != null && (v = a1.FirstOperand as GetVariable) != null) {
           Call ca;
           GetVariable f;
+          m = _compiler.GetMerker(v.Descriptor);
+          if(m == null) {
+            throw new ApplicationException("Unknown merker in pass 2: " + v.Descriptor.Name);
+          }
+          if(m.initialized) {
+            continue;
+          }
           if((ca = a1.SecondOperand as Call) != null && ca.CallMode == CallMode.Construct && (f = ca.FirstOperand as GetVariable) != null) {
-            m = _compiler.GetMerker(v.Descriptor);
-            if(m == null) {
-              throw new ApplicationException("Unknown merker in pass 2: " + v.Descriptor.Name);
-            }
             if((new string[] { "Boolean", "Int8", "UInt8", "Int16", "UInt16", "Int32" }).Any(z => z == f.Name)) {
               mf = null;
             } else {
               mf = _compiler.GetMerker(f.Descriptor);
-              if(mf == null || mf.type != EP_Type.FUNCTION) {
+              if(mf == null ||( mf.type != EP_Type.FUNCTION && mf.type!=EP_Type.CLASS)) {
                 throw new ApplicationException("Unknown merker in pass 2: " + f.Descriptor.Name);
               }
               m.scope = mf.scope;
+              if(mf.type == EP_Type.CLASS) {
+                var mc = mf.scope.GetProperty("constructor");
+                if(mc == null || mc.type != EP_Type.FUNCTION) {
+                  throw new ApplicationException("Unknown merker in pass 2: " + f.Descriptor.Name + ".constructor");
+                }
+                mf = mc;
+              }
               m.pOut = (int)(m.scope.memBlocks.Last().start + 31) / 32;
             }
 
@@ -797,10 +830,6 @@ namespace X13.CC {
 
             continue;
           } else {
-            m = _compiler.GetMerker(v.Descriptor);
-            if(m != null && m.initialized) {
-              continue;
-            }
             if(m.type != EP_Type.LOCAL && m.type != EP_Type.NONE) {
               tmp = _compiler.cur;
               _compiler.cur = _compiler.initBlock;
@@ -1045,7 +1074,6 @@ namespace X13.CC {
     }
     private void DefineFunction(FunctionDefinition node, EP_Compiler.Merker fm) {
       fm.scope = _compiler.ScopePush(fm);
-      fm.scope.entryPoint = fm;
       for(int i = 0; i < node.Parameters.Count; i++) {
         if(i > 15) {
           throw new IndexOutOfRangeException(node.Reference.Descriptor.Name + "(.., " + node.Parameters[i].Name + " ..)" + " too many parameters");

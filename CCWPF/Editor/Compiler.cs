@@ -59,7 +59,7 @@ namespace X13.CC {
         global.AddInst(new Instruction(EP_InstCode.JMP) { _ref = ri });
         global.AddInst(EP_InstCode.NOP);
 
-        var module = new Module(code, CompilerMessageCallback, Options.SuppressConstantPropogation | Options.SuppressUselessExpressionsElimination);
+        var module = new Module(code, CompilerMessageCallback, Options.SuppressConstantPropogation);  //  | Options.SuppressUselessExpressionsElimination
 
         var p1 = new EP_VP1(this);
         module.Root.Visit(p1);
@@ -122,15 +122,15 @@ namespace X13.CC {
             if(m.Addr == uint.MaxValue) {
               m.Addr = global.AllocateMemory(uint.MaxValue, mLen) / (mLen >= 32 ? 32 : mLen);
             }
-            Log.Debug("{0}={1:X4}:{2:X4}", m.vd.Name, m.Addr, mLen);
+            Log.Debug("{0}={1:X4}:{2:X4}", m.vd.Name, m.Addr * (mLen >= 32 ? 32 : mLen), mLen);
             if(p == global && vName != null) {
               varList[m.vd.Name] = vName + m.Addr.ToString();
             }
           }
 
           addr += (32 - (addr % 32)) % 32;
-          if(p.entryPoint != null) {
-            p.entryPoint.Addr = addr;
+          if(p.fm != null) {
+            p.fm.Addr = addr;
           }
           foreach(var c in p.code) {
             c.addr = addr;
@@ -145,9 +145,11 @@ namespace X13.CC {
               bytes.AddRange(c._code);
             }
           }
-          HexN[p.code.First().addr] = new PLC.ByteArray(bytes.ToArray());
-          if(_verbose.value) {
-            Log.Debug("{0}", p.ToString());
+          if(bytes.Count > 0) {
+            HexN[p.code.First().addr] = new PLC.ByteArray(bytes.ToArray());
+            if(_verbose.value) {
+              Log.Debug("{0}", p.ToString());
+            }
           }
           bytes.Clear();
         }
@@ -216,13 +218,16 @@ namespace X13.CC {
           }
 
         }
-        m = new Merker() { type = type, vd = v, Addr = addr, init = v.Initializer };
+        m = new Merker() { type = type, vd = v, pName=v.Name, Addr = addr, init = v.Initializer };
 
-        if(type == EP_Type.FUNCTION || type == EP_Type.API || type == EP_Type.INPUT || type == EP_Type.OUTPUT) {
+        if(type == EP_Type.API || type == EP_Type.INPUT || type == EP_Type.OUTPUT) {
           global.memory.Add(m);
+          m.fName = v.Name;
         } else {
           cur.memory.Add(m);
+          m.fName = (cur == global ? v.Name : cur.fm.fName + (cur.fm.type==EP_Type.FUNCTION?"+":".") + v.Name);
         }
+        
       } else if(m.type != type && m.type == EP_Type.NONE) {
         m.type = type;
       }
@@ -322,15 +327,15 @@ namespace X13.CC {
       public int pIn;
       public int pOut;
       public string pName;
+      public string fName;
       public override string ToString() {
-        return vd == null ? pName : vd.Name;
+        return fName;
       }
     }
     internal class Scope {
       private EP_Compiler _compiler;
       public List<Instruction> code;
       public List<Merker> memory;
-      public Merker entryPoint;
       public Stack<EP_VP2.Loop> loops;
       public Merker fm;
       public SortedSet<DP_MemBlock> memBlocks;
@@ -458,9 +463,10 @@ namespace X13.CC {
       }
       public Merker GetProperty(string name, EP_Type type= EP_Type.NONE) {
         Merker m;
+        string fName = fm.fName + "." + name;
         m = memory.FirstOrDefault(z => z.pName == name);
         if(type!=EP_Type.NONE && m == null && !string.IsNullOrEmpty(name)) {
-          m = new Merker() { pName = name, type = type };
+          m = new Merker() { fName = fName, pName=name, type = type };
           memory.Add(m);
         }
         return m;
@@ -487,7 +493,7 @@ namespace X13.CC {
             continue;
           }
           m.Addr = AllocateMemory(uint.MaxValue, mLen) / (mLen >= 32 ? 32 : mLen);
-          Log.Debug("{0}={1:X4}:{2:X4}", (entryPoint == null ? "" : entryPoint.ToString() + ".") + m.pName, m.Addr, mLen);
+          Log.Debug("{0}= +{1:X4}:{2:X4}", m.fName, m.Addr * (mLen >= 32 ? 32 : mLen), mLen);
         }
       }
     }

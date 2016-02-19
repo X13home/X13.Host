@@ -43,7 +43,23 @@ namespace X13.CC {
       return this;
     }
     protected override EP_VP1 Visit(ClassDefinition node) {
-      return Visit(node as Expression);
+      var mc = _compiler.DefineMerker(node.Reference.Descriptor, EP_Type.CLASS);
+      mc.scope = _compiler.ScopePush(mc);
+      var ctor = _compiler.DefineMerker(node.Constructor.Reference.Descriptor, EP_Type.FUNCTION);
+      DefineFunction(node.Constructor, ctor, mc.scope.memory);
+      foreach(var m in ctor.scope.memory.Where(z=>IsProperty(z.type))){
+        int idx=m.fName.IndexOf(".constructor");
+        m.fName=m.fName.Remove(idx, 12);
+      }
+      mc.scope.memory.AddRange(ctor.scope.memory.Where(z => IsProperty(z.type)));
+      mc.scope.AllocatFields();
+      
+      foreach(var fv in node.Members.Where(z => z.Value is FunctionDefinition && z.Name is Constant)) {
+        var fm = mc.scope.GetProperty((fv.Name as Constant).Value.ToString(), EP_Type.FUNCTION);
+        DefineFunction(fv.Value as FunctionDefinition, fm, mc.scope.memory);
+      }
+      _compiler.ScopePop();
+      return this;
     }
     protected override EP_VP1 Visit(Constant node) {
       return this;
@@ -80,7 +96,7 @@ namespace X13.CC {
     }
     protected override EP_VP1 Visit(FunctionDefinition node) {
       var fm = _compiler.DefineMerker(node.Reference.Descriptor, EP_Type.FUNCTION);
-      DefineFunction(node, fm);
+      DefineFunction(node, fm, null);
       return this;
     }
     protected override EP_VP1 Visit(Property node) {
@@ -263,9 +279,7 @@ namespace X13.CC {
         sc.GetProperty(c.Value.ToString(), EP_Type.PropB1);
       } else if((fd = node.Value as FunctionDefinition) != null) {
         m=sc.GetProperty(c.Value.ToString(), EP_Type.FUNCTION);
-        DefineFunction(fd, m);
-        m.scope.memory.RemoveAll(z => z.type == EP_Type.PropB1 || z.type == EP_Type.PropS1 || z.type == EP_Type.PropS2 || z.type == EP_Type.PropS4 || z.type == EP_Type.PropU1 || z.type == EP_Type.PropU2);
-        m.scope.memory.AddRange(sc.memory.Where(z => z.type == EP_Type.PropB1 || z.type == EP_Type.PropS1 || z.type == EP_Type.PropS2 || z.type == EP_Type.PropS4 || z.type == EP_Type.PropU1 || z.type == EP_Type.PropU2));
+        DefineFunction(fd, m, sc.memory);
       } else {
         node.Value.Visit(this);
         sc.GetProperty(c.Value.ToString(), EP_Type.PropS4);
@@ -347,7 +361,7 @@ namespace X13.CC {
       foreach(var v in node.Variables) {
         if((fd = v.Initializer as FunctionDefinition) != null) {
           var fm = _compiler.DefineMerker(v, EP_Type.FUNCTION);
-          DefineFunction(fd, fm);
+          DefineFunction(fd, fm, null);
         }
         //m = _compiler.DefineMerker(v);
         //if(m.vd.Initializer != null) {
@@ -447,44 +461,50 @@ namespace X13.CC {
           m = _compiler.DefineMerker(v.Descriptor);
           continue;
         }
-        if((a1 = node.Initializers[i] as Assignment) != null && (v = a1.FirstOperand as GetVariable) != null && !v.Descriptor.LexicalScope) {
-          Call ca;
-          GetVariable f;
-          Constant c;
-          if((ca = a1.SecondOperand as Call) != null && (f = ca.FirstOperand as GetVariable) != null) {
-            EP_Type t;
-            switch(f.Name) {
-            case "Boolean":
-              t = EP_Type.BOOL;
-              break;
-            case "Int8":
-              t = EP_Type.SINT8;
-              break;
-            case "UInt8":
-              t = EP_Type.UINT8;
-              break;
-            case "Int16":
-              t = EP_Type.SINT16;
-              break;
-            case "UInt16":
-              t = EP_Type.UINT16;
-              break;
-            case "Int32":
-              t = EP_Type.SINT32;
-              break;
-            default:
-              t = EP_Type.NONE;
-              break;
+        if((a1 = node.Initializers[i] as Assignment) != null && (v = a1.FirstOperand as GetVariable) != null) {
+          if(v.Descriptor.LexicalScope) {
+            _compiler.DefineMerker(v.Descriptor);  // Local
+            a1.SecondOperand.Visit(this);
+            continue;
+          } else {
+            Call ca;
+            GetVariable f;
+            Constant c;
+            if((ca = a1.SecondOperand as Call) != null && (f = ca.FirstOperand as GetVariable) != null) {
+              EP_Type t;
+              switch(f.Name) {
+              case "Boolean":
+                t = EP_Type.BOOL;
+                break;
+              case "Int8":
+                t = EP_Type.SINT8;
+                break;
+              case "UInt8":
+                t = EP_Type.UINT8;
+                break;
+              case "Int16":
+                t = EP_Type.SINT16;
+                break;
+              case "UInt16":
+                t = EP_Type.UINT16;
+                break;
+              case "Int32":
+                t = EP_Type.SINT32;
+                break;
+              default:
+                t = EP_Type.NONE;
+                break;
+              }
+              if(t == EP_Type.NONE && ca.CallMode == CallMode.Construct) {
+                m = _compiler.DefineMerker(v.Descriptor, EP_Type.REFERENCE);
+                m.type = EP_Type.REFERENCE;
+                continue;
+              } else {
+                m = _compiler.DefineMerker(v.Descriptor, t);
+              }
+            } else if((c = a1.SecondOperand as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.Boolean) {
+              m = _compiler.DefineMerker(v.Descriptor, EP_Type.BOOL);
             }
-            if(t == EP_Type.NONE && ca.CallMode == CallMode.Construct) {
-              m = _compiler.DefineMerker(v.Descriptor, EP_Type.REFERENCE);
-              m.type = EP_Type.REFERENCE;
-              continue;
-            } else {
-              m = _compiler.DefineMerker(v.Descriptor, t);
-            }
-          } else if((c = a1.SecondOperand as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.Boolean) {
-            m = _compiler.DefineMerker(v.Descriptor, EP_Type.BOOL);
           }
         }
 
@@ -501,9 +521,12 @@ namespace X13.CC {
       return Visit(node as CodeNode);
     }
 
-    private void DefineFunction(FunctionDefinition node, EP_Compiler.Merker fm) {
+    private void DefineFunction(FunctionDefinition node, EP_Compiler.Merker fm, List<EP_Compiler.Merker> parentMemory) {
       fm.scope = _compiler.ScopePush(fm);
-      fm.scope.entryPoint = fm;
+      if(parentMemory != null) {
+        fm.scope.memory.AddRange(parentMemory.Where(z => IsProperty(z.type)));
+      }
+
       for(int i = 0; i < node.Parameters.Count; i++) {
         if(i > 15) {
           throw new IndexOutOfRangeException(node.Reference.Descriptor.Name + "(.., " + node.Parameters[i].Name + " ..)" + " too many parameters");
@@ -512,8 +535,13 @@ namespace X13.CC {
         m.Addr = (uint)i + 1;
       }
       node.Body.Visit(this);
-      fm.scope.AllocatFields();
+      if(parentMemory==null) {
+        fm.scope.AllocatFields();
+      }
       _compiler.ScopePop();
+    }
+    private static bool IsProperty(EP_Type type) {
+      return type == EP_Type.PropB1 || type == EP_Type.PropS1 || type == EP_Type.PropS2 || type == EP_Type.PropS4 || type == EP_Type.PropU1 || type == EP_Type.PropU2;
     }
 
   }
