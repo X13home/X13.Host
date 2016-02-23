@@ -52,14 +52,14 @@ namespace X13.CC {
 
       try {
         global = ScopePush(null);
-        initBlock = new Scope(this, null);
+        initBlock = new Scope(this, null, null);
         _programm.Add(initBlock);
 
         initBlock.AddInst(ri = new Instruction(EP_InstCode.LABEL));
         global.AddInst(new Instruction(EP_InstCode.JMP) { _ref = ri });
         global.AddInst(EP_InstCode.NOP);
 
-        var module = new Module(code, CompilerMessageCallback, Options.SuppressConstantPropogation);  //  | Options.SuppressUselessExpressionsElimination
+        var module = new Module(code, CompilerMessageCallback, Options.SuppressConstantPropogation | Options.SuppressUselessExpressionsElimination);
 
         var p1 = new EP_VP1(this);
         module.Root.Visit(p1);
@@ -177,9 +177,10 @@ namespace X13.CC {
     }
 
     internal Scope ScopePush(Merker fm) {
+      var tmp = cur;
       cur = _programm.FirstOrDefault(z => z.fm == fm);
       if(cur == null) {
-        cur = new Scope(this, fm);
+        cur = new Scope(this, fm, tmp);
         _programm.Add(cur);
       }
       _scope.Push(cur);
@@ -334,6 +335,7 @@ namespace X13.CC {
     }
     internal class Scope {
       private EP_Compiler _compiler;
+      private Scope _parent;
       public List<Instruction> code;
       public List<Merker> memory;
       public Stack<EP_VP2.Loop> loops;
@@ -341,8 +343,9 @@ namespace X13.CC {
       public SortedSet<DP_MemBlock> memBlocks;
 
 
-      public Scope(EP_Compiler c, Merker fm) {
+      public Scope(EP_Compiler c, Merker fm, Scope parent) {
         _compiler = c;
+        _parent = parent;
         this.fm = fm;
         memBlocks = new SortedSet<DP_MemBlock>();
         memBlocks.Add(new DP_MemBlock(0, 16384));
@@ -465,6 +468,9 @@ namespace X13.CC {
         Merker m;
         string fName = fm.fName + "." + name;
         m = memory.FirstOrDefault(z => z.pName == name);
+        if(m == null && _parent != null) {
+          m = _parent.memory.FirstOrDefault(z => z.pName == name);
+        }
         if(type!=EP_Type.NONE && m == null && !string.IsNullOrEmpty(name)) {
           m = new Merker() { fName = fName, pName=name, type = type };
           memory.Add(m);

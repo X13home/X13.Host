@@ -327,7 +327,7 @@ namespace X13.CC {
       EP_Compiler.Instruction j1, j2;
       node.FirstOperand.Visit(this);
       _compiler.cur.AddInst(EP_InstCode.DUP, 0, 1);
-      _compiler.cur.AddInst(j1 = new EP_Compiler.Instruction(EP_InstCode.JZ));
+      _compiler.cur.AddInst(j1 = new EP_Compiler.Instruction(EP_InstCode.JZ), 1);
       node.SecondOperand.Visit(this);
       _compiler.cur.AddInst(EP_InstCode.AND_L, 2, 1);
       _compiler.cur.AddInst(j2 = new EP_Compiler.Instruction(EP_InstCode.LABEL));
@@ -682,8 +682,7 @@ namespace X13.CC {
       node.Condition.Visit(this);
 
       j1 = new EP_Compiler.Instruction(EP_InstCode.JZ, null, node.Condition);
-      _compiler.cur.AddInst(j1);
-      _compiler._sp.Pop();
+      _compiler.cur.AddInst(j1, 1);
       SafeCodeBlock(node.Then);
       if(node.Else != null) {
         j2 = new EP_Compiler.Instruction(EP_InstCode.JMP);

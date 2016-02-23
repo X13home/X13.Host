@@ -61,7 +61,7 @@ namespace X13.Periphery {
           } else {
             _st = _plcStoped ? 5 : 3;
 			if(_verbose.value) {
-			  Log.Info("{0}.crc differ 0x{1:X4}:{2:X4}", _owner.path, _curChunk.offset, _curChunk.Data.Length);
+			  Log.Info("{0}.crc differ 0x{1:X4}:{2:X4}  cur={3:X4}, dev={4:X4}", _owner.path, _curChunk.offset, _curChunk.Data.Length, _curChunk.crcCur, _curChunk.crcDev);
 			}
           }
           processed = true;
