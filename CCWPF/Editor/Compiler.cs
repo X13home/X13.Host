@@ -122,9 +122,42 @@ namespace X13.CC {
             if(m.Addr == uint.MaxValue) {
               m.Addr = global.AllocateMemory(uint.MaxValue, mLen) / (mLen >= 32 ? 32 : mLen);
             }
-            Log.Debug("{0}={1:X4}:{2:X4}", m.vd.Name, m.Addr * (mLen >= 32 ? 32 : mLen), mLen);
-            if(p == global && vName != null) {
-              varList[m.vd.Name] = vName + m.Addr.ToString();
+            if(p == global) {
+              if(vName != null) {
+                varList[m.vd.Name] = vName + m.Addr.ToString();
+              } else {    // REFERENCE
+                foreach(var m1 in m.scope.memory) {
+                  switch(m1.type) {
+                  case EP_Type.PropB1:
+                    vName = "Mz";
+                    mLen = 1;
+                    break;
+                  case EP_Type.PropS1:
+                    vName = "Mb";
+                    mLen = 8;
+                    break;
+                  case EP_Type.PropS2:
+                    vName = "Mw";
+                    mLen = 16;
+                    break;
+                  case EP_Type.PropS4:
+                    vName = "Md";
+                    mLen = 32;
+                    break;
+                  case EP_Type.PropU1:
+                    vName = "MB";
+                    mLen = 8;
+                    break;
+                  case EP_Type.PropU2:
+                    vName = "MW";
+                    mLen = 16;
+                    break;
+                  default:
+                    continue;
+                  }
+                  varList[m.vd.Name+"."+m1.pName] = vName + (m.Addr*32/mLen+m1.Addr).ToString();
+                }
+              }
             }
           }
 
@@ -219,16 +252,16 @@ namespace X13.CC {
           }
 
         }
-        m = new Merker() { type = type, vd = v, pName=v.Name, Addr = addr, init = v.Initializer };
+        m = new Merker() { type = type, vd = v, pName = v.Name, Addr = addr, init = v.Initializer };
 
         if(type == EP_Type.API || type == EP_Type.INPUT || type == EP_Type.OUTPUT) {
           global.memory.Add(m);
           m.fName = v.Name;
         } else {
           cur.memory.Add(m);
-          m.fName = (cur == global ? v.Name : cur.fm.fName + (cur.fm.type==EP_Type.FUNCTION?"+":".") + v.Name);
+          m.fName = (cur == global ? v.Name : cur.fm.fName + (cur.fm.type == EP_Type.FUNCTION ? "+" : ".") + v.Name);
         }
-        
+
       } else if(m.type != type && m.type == EP_Type.NONE) {
         m.type = type;
       }
@@ -464,15 +497,15 @@ namespace X13.CC {
         }
         return sb.ToString();
       }
-      public Merker GetProperty(string name, EP_Type type= EP_Type.NONE) {
+      public Merker GetProperty(string name, EP_Type type = EP_Type.NONE) {
         Merker m;
         string fName = fm.fName + "." + name;
         m = memory.FirstOrDefault(z => z.pName == name);
         if(m == null && _parent != null) {
           m = _parent.memory.FirstOrDefault(z => z.pName == name);
         }
-        if(type!=EP_Type.NONE && m == null && !string.IsNullOrEmpty(name)) {
-          m = new Merker() { fName = fName, pName=name, type = type };
+        if(type != EP_Type.NONE && m == null && !string.IsNullOrEmpty(name)) {
+          m = new Merker() { fName = fName, pName = name, type = type };
           memory.Add(m);
         }
         return m;
@@ -499,7 +532,6 @@ namespace X13.CC {
             continue;
           }
           m.Addr = AllocateMemory(uint.MaxValue, mLen) / (mLen >= 32 ? 32 : mLen);
-          Log.Debug("{0}= +{1:X4}:{2:X4}", m.fName, m.Addr * (mLen >= 32 ? 32 : mLen), mLen);
         }
       }
     }
@@ -636,6 +668,7 @@ namespace X13.CC {
         case EP_InstCode.STM_S1_S:
         case EP_InstCode.STM_S2_S:
         case EP_InstCode.STM_S4_S:
+        case EP_InstCode.LDI_MIN:
         case EP_InstCode.SJMP:
         case EP_InstCode.SCALL:
         case EP_InstCode.RET:
@@ -727,7 +760,7 @@ namespace X13.CC {
             if(_code == null || _code.Length != 1) {
               _code = new byte[1];
             }
-            _code[0]=(byte)EP_InstCode.LDI_0;
+            _code[0] = (byte)EP_InstCode.LDI_0;
           } else if(tmp_d == 1) {
             if(_code == null || _code.Length != 1) {
               _code = new byte[1];

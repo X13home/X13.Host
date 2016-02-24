@@ -268,7 +268,6 @@ namespace X13.Periphery {
     private byte[] Addr { get; set; }
     [Newtonsoft.Json.JsonProperty]
     private string backName { get; set; }
-	public SortedList<string, string> varMapping;
 
 	public void AddNode(MsDevice dev) {
       if(_nodes==null) {
@@ -849,16 +848,7 @@ namespace X13.Periphery {
         Send(new MsPublish(rez.topic, rez.TopicId, param.Subscription.qos));
       } else {          // Remove by device
         if(rez.it==TopicIdType.Normal) {
-          string tpc, tpc_n;
-          if(rez.path.StartsWith(Owner.path)) {
-            tpc = rez.path.Substring(Owner.path.Length + 1);
-            if(varMapping != null && varMapping.TryGetValue(tpc, out tpc_n)) {
-              tpc = tpc_n;
-            }
-          } else {
-            tpc = rez.path;
-          }
-          Send(new MsRegister(0xFFFF, tpc));
+          Send(new MsRegister(0xFFFF, rez.subIdx));
         }
         _topics.Remove(rez);
       }
@@ -881,6 +871,22 @@ namespace X13.Periphery {
       //  Log.Debug("{0}.Snd {1}", t.name, BitConverter.ToString(payload));
       //}
       Send(new MsPublish(rez.topic, rez.TopicId, QoS.AtLeastOnce) { Data=payload });
+    }
+    internal void UpdateMapping(Topic topic) {
+      TopicInfo rez = null;
+      for(int i = _topics.Count - 1; i >= 0; i--) {
+        if(_topics[i].path == topic.path) {
+          rez = _topics[i];
+          break;
+        }
+      }
+      if(rez != null) {
+        if(rez.it == TopicIdType.Normal) {
+          Send(new MsRegister(0xFFFF, rez.subIdx));
+        }
+        _topics.Remove(rez);
+      }
+      rez = GetTopicInfo(topic, true);
     }
 
     /// <summary>Find or create TopicInfo by Topic</summary>
@@ -927,16 +933,19 @@ namespace X13.Periphery {
             rez.it=TopicIdType.Normal;
           }
         }
+        if(rez.subIdx == null) {
+          string tpc_n;
+          Topic map;
+          if(Owner.Exist("pa0/_map", out map) && map != null && map.Exist(tpc, out map) && map != null && map.valueType == typeof(string) && (tpc_n = map.GetValue() as string) != null) {
+            tpc = tpc_n;
+          }
+          rez.subIdx = tpc;
+        }
         _topics.Add(rez);
       }
       if(!rez.registred) {
         if(sendRegister) {
-		  string tpc_n;
-		  if(varMapping!=null && varMapping.TryGetValue(tpc, out tpc_n)) {
-            Log.Debug("{0}.register {1} as {2}", Owner.path, tpc, tpc_n);
-            tpc = tpc_n;
-		  }
-          Send(new MsRegister(rez.TopicId, tpc));
+          Send(new MsRegister(rez.TopicId, rez.subIdx));
         } else {
           rez.registred=true;
         }
@@ -960,12 +969,13 @@ namespace X13.Periphery {
       var rec=_NTTable.FirstOrDefault(z => cName.StartsWith(z.name));
       TopicInfo ret;
       if(rec.name!=null && !path.StartsWith("/local")) {
-		KeyValuePair<string, string> kv;
-		if(varMapping!=null && (kv=varMapping.FirstOrDefault(z=>z.Value==cName)).Value==cName){
+        Topic map;
+        DVar<string> kv;
+        if(Owner.Exist("pa0/_map", out map) && map!=null && (kv=map.children.Select(z=>z as DVar<string>).FirstOrDefault(z=>z!=null && z.value==cName))!=null ) {
 		  if(idx>0) {
-			path=path.Substring(0, idx)+kv.Key;
+			path=path.Substring(0, idx)+kv.name;
 		  } else {
-			path=kv.Key;
+			path=kv.name;
 		  }
 		}
         cur=Topic.GetP(path, rec.type, Owner, Owner);
@@ -1260,6 +1270,7 @@ namespace X13.Periphery {
       public TopicIdType it;
       public bool registred;
       public string path;
+      public string subIdx;
     }
     private static NTRecord[] _NTTable= new NTRecord[]{ 
       new NTRecord("In", typeof(bool)),

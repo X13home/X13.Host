@@ -178,7 +178,7 @@ namespace X13.Periphery {
       }
       if(_owner != null) {
         if(Topic.brokerMode) {
-          _owner.Unsubscribe("+", VarChanged);
+          _owner.Unsubscribe("#", VarChanged);
         }
       }
       if(_dev != null) {
@@ -191,7 +191,7 @@ namespace X13.Periphery {
             _dev = (_owner.parent as DVar<MsDevice>).value;
           }
           _owner.Get<string>("_declarer", _owner).value = "DevicePLC";
-          _owner.Subscribe("+", VarChanged);
+          _owner.Subscribe("#", VarChanged);
           if(_dev != null) {
             _dev.Pool += Pool;
             Reset();
@@ -205,20 +205,16 @@ namespace X13.Periphery {
 
     private void VarChanged(Topic snd, TopicChanged p) {
       int start;
-	  if(p.Art==TopicChanged.ChangeArt.Value && _dev!=null && snd.name=="_vars" && snd.valueType==typeof(JNL.JObject) && snd.GetValue()!=null) {
-        var nm=(snd.GetValue() as JNL.JObject).ToObject<SortedList<string, string>>();
-        KeyValuePair<string, string>[] om;
-        if(_dev.varMapping != null && (om = _dev.varMapping.Except(nm).ToArray()) != null) {
-          Topic t;
-          foreach(var kv in om) {
-            if(_dev.Owner.Exist(kv.Key, out t)) {
-              t.Remove();
-            }
+	  if(_dev!=null && snd.valueType==typeof(string) && snd.parent!=null && snd.parent.name=="_map" && p.Art!=TopicChanged.ChangeArt.Add) {
+        Topic r;
+        if(_dev.Owner.Exist(snd.name, out r)) {
+          if(p.Art == TopicChanged.ChangeArt.Remove) {
+            r.Remove();
+          } else {
+            _dev.UpdateMapping(r);
           }
-          new System.Threading.Timer(o => _dev.varMapping = nm, null, 250, -1);
-        } else {
-          _dev.varMapping = nm;
         }
+        return;
 	  }
       if(!snd.name.StartsWith("pa") || snd.valueType != typeof(PLC.ByteArray) || !int.TryParse(snd.name.Substring(2), out start)) {
         return;

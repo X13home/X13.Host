@@ -504,6 +504,8 @@ namespace X13.CC {
               }
             } else if((c = a1.SecondOperand as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.Boolean) {
               m = _compiler.DefineMerker(v.Descriptor, EP_Type.BOOL);
+            } else {
+              m = _compiler.DefineMerker(v.Descriptor, EP_Type.SINT32);
             }
           }
         }

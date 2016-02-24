@@ -1030,7 +1030,7 @@ namespace X13.CC {
           }
         }
         if(This == null) {
-          _compiler.cur.AddInst(EP_InstCode.LDI_M1, 0, 1);
+          _compiler.cur.AddInst(EP_InstCode.LDI_MIN, 0, 1);
         } else if((v = This as GetVariable) != null && (mt = _compiler.GetMerker(v.Descriptor)).type == EP_Type.REFERENCE) {
           _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LDI_S4, mt), 0, 1);
         } else if(This is This) {

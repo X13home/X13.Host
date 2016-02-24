@@ -87,14 +87,15 @@ namespace X13.CC {
 		  }
 		}
 		if(_compiler.varList!=null) {
-		  JObject o = new JObject();
-		  o["+"]="Newtonsoft.Json.Linq.JObject";
-		  foreach(var kv in _compiler.varList) {
-			o[kv.Key]=kv.Value;
-		  }
-		  _model.Get<JObject>("_vars").value=o;
+          var maping = _model.Get("_map");
+          var toRemove = maping.children.Where(z => z != null && z.valueType == typeof(string)).Select(z => z.name).Except(_compiler.varList.Select(z => z.Key)).ToArray();
+          for(var i = 0; i < toRemove.Length; i++) {
+            maping.Get(toRemove[i]).Remove();
+          }
+          foreach(var kv in _compiler.varList) {
+            maping.Get<string>(kv.Key).value = kv.Value;
+          }
 		}
-		//_model.Get<PLC.ByteArray>("pa0").value=new PLC.ByteArray(bytes);
         uint addr;
         var toDel = _model.children.Where(z => z.valueType == typeof(PLC.ByteArray) && z.name.StartsWith("pa") && uint.TryParse(z.name.Substring(2), out addr) && !_compiler.Hex.ContainsKey(addr)).ToArray();
         foreach(var t in toDel) {

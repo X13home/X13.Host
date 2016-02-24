@@ -127,6 +127,7 @@ namespace X13.CC {
     LDM_S4_S,
     LDM_U1_S,
     LDM_U2_S,
+    LDI_MIN = 0x87,
 
     LDM_B1_CS8 = 0x88,
     LDM_S1_CS8,
