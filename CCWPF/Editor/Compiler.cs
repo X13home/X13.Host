@@ -316,6 +316,9 @@ namespace X13.CC {
     }
     private void CompilerMessageCallback(MessageLevel level, CodeCoordinates coords, string message) {
       var msg = string.Format("[{0}, {1}] {2}", coords.Line, coords.Column, message);
+      if(message == "Type of an expression is ambiguous") {
+        return;
+      }
       switch(level) {
       case MessageLevel.Error:
       case MessageLevel.CriticalWarning:
