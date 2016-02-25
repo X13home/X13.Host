@@ -37,11 +37,7 @@ namespace X13.CC {
     CGE,
     CLT,
     CLE,
-
-    NOT_L = 0x28,
-    AND_L,
-    OR_L,
-    XOR_L,
+    CZE,
 
     LDI_0 = 0x38,
     LDI_S1,

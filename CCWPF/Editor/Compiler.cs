@@ -593,10 +593,7 @@ namespace X13.CC {
         case EP_InstCode.CGE:
         case EP_InstCode.CLT:
         case EP_InstCode.CLE:
-        case EP_InstCode.NOT_L:
-        case EP_InstCode.AND_L:
-        case EP_InstCode.OR_L:
-        case EP_InstCode.XOR_L:
+        case EP_InstCode.CZE:
         case EP_InstCode.LD_P0:
         case EP_InstCode.LD_P1:
         case EP_InstCode.LD_P2:
@@ -735,13 +732,19 @@ namespace X13.CC {
         case EP_InstCode.LDM_U2_CS16:
 
         case EP_InstCode.CALL:
-        case EP_InstCode.API:
           if(_code == null || _code.Length != 3) {
             _code = new byte[3];
           }
           _code[0] = (byte)cmd;
           _code[1] = (byte)_param.Addr;
           _code[2] = (byte)(_param.Addr >> 8);
+          break;
+        case EP_InstCode.API:
+          if(_code == null || _code.Length != 2) {
+            _code = new byte[2];
+          }
+          _code[0] = (byte)cmd;
+          _code[1] = (byte)_param.Addr;
           break;
         case EP_InstCode.LDI_0:
         case EP_InstCode.LDI_1:

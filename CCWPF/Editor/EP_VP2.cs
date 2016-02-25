@@ -328,15 +328,15 @@ namespace X13.CC {
       node.FirstOperand.Visit(this);
       _compiler.cur.AddInst(EP_InstCode.DUP, 0, 1);
       _compiler.cur.AddInst(j1 = new EP_Compiler.Instruction(EP_InstCode.JZ), 1);
+      _compiler.cur.AddInst(EP_InstCode.DROP, 1, 0);
       node.SecondOperand.Visit(this);
-      _compiler.cur.AddInst(EP_InstCode.AND_L, 2, 1);
       _compiler.cur.AddInst(j2 = new EP_Compiler.Instruction(EP_InstCode.LABEL));
       j1._ref = j2;
       return this;
     }
     protected override EP_VP2 Visit(LogicalNegation node) {
       node.FirstOperand.Visit(this);
-      _compiler.cur.AddInst(EP_InstCode.NOT_L, 1, 1);
+      _compiler.cur.AddInst(EP_InstCode.CZE, 1, 1);
       return this;
 
     }
@@ -345,8 +345,8 @@ namespace X13.CC {
       node.FirstOperand.Visit(this);
       _compiler.cur.AddInst(EP_InstCode.DUP, 0, 1);
       _compiler.cur.AddInst(j1 = new EP_Compiler.Instruction(EP_InstCode.JNZ), 1, 0);
+      _compiler.cur.AddInst(EP_InstCode.DROP, 1, 0);
       node.SecondOperand.Visit(this);
-      _compiler.cur.AddInst(EP_InstCode.OR_L, 2, 1);
       _compiler.cur.AddInst(j2 = new EP_Compiler.Instruction(EP_InstCode.LABEL));
       j1._ref = j2;
       return this;
@@ -1008,8 +1008,8 @@ namespace X13.CC {
         a.Visit(this);
         _compiler.cur.AddInst(EP_InstCode.DEC, 1, 1);
       } else {
-        b.Visit(this);
         a.Visit(this);
+        b.Visit(this);
         _compiler.cur.AddInst(EP_InstCode.ADD, 2, 1);
       }
     }
@@ -1051,8 +1051,8 @@ namespace X13.CC {
       }
     }
     private void Arg2Op(Expression node, EP_InstCode c) {
-      node.SecondOperand.Visit(this);
       node.FirstOperand.Visit(this);
+      node.SecondOperand.Visit(this);
       _compiler.cur.AddInst(c, 2, 1);
     }
     private void SafeCodeBlock(CodeNode node, int sp = -1) {
