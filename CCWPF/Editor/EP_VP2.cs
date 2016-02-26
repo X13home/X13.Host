@@ -821,7 +821,7 @@ namespace X13.CC {
             } else {
               if(ca.Arguments.Length > 0) {
                 ca.Arguments[0].Visit(this);
-                Store(a1, f);
+                Store(a1, v);
               }
             }
             _compiler.cur.memory = tmp2;
@@ -906,6 +906,9 @@ namespace X13.CC {
       Property p;
       if((a = e as GetVariable) != null || ((a2 = e as AssignmentOperatorCache) != null && (a = a2.Source as GetVariable) != null)) {
         var m = _compiler.GetMerker(a.Descriptor);
+        if(m == null) {
+          throw new ApplicationException("Unknown variable: " + a.Descriptor.Name);
+        }
         switch(m.type) {
         case EP_Type.BOOL:
           _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.STM_B1_C16, m, node), 1, 0);

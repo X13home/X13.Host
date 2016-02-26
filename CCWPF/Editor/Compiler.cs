@@ -56,8 +56,9 @@ namespace X13.CC {
         _programm.Add(initBlock);
 
         initBlock.AddInst(ri = new Instruction(EP_InstCode.LABEL));
-        global.AddInst(new Instruction(EP_InstCode.JMP) { _ref = ri });
         global.AddInst(EP_InstCode.NOP);
+        global.AddInst(new Instruction(EP_InstCode.JMP) { _ref = ri });
+        global.AddInst(EP_InstCode.LABEL);
 
         var module = new Module(code, CompilerMessageCallback, Options.SuppressConstantPropogation | Options.SuppressUselessExpressionsElimination);
 
@@ -68,12 +69,6 @@ namespace X13.CC {
         var p2 = new EP_VP2(this);
         module.Root.Visit(p2);
 
-        if(global.code.Count == 0 || (ri = global.code[global.code.Count - 1])._code.Length != 1 || ri._code[0] != (byte)EP_InstCode.RET) {
-          global.AddInst(EP_InstCode.RET);
-        }
-        if(initBlock.code.Count == 0 || (ri = initBlock.code[initBlock.code.Count - 1])._code.Length != 1 || ri._code[0] != (byte)EP_InstCode.RET) {
-          initBlock.AddInst(EP_InstCode.RET);
-        }
         varList = new SortedList<string, string>();
         ioList = new List<string>();
         uint mLen;
@@ -155,12 +150,12 @@ namespace X13.CC {
                   default:
                     continue;
                   }
-                  varList[m.vd.Name+"."+m1.pName] = vName + (m.Addr*32/mLen+m1.Addr).ToString();
+                  varList[m.vd.Name + "." + m1.pName] = vName + (m.Addr * 32 / mLen + m1.Addr).ToString();
                 }
               }
             }
           }
-
+          p.Optimize();
           addr += (32 - (addr % 32)) % 32;
           if(p.fm != null) {
             p.fm.Addr = addr;
@@ -537,6 +532,72 @@ namespace X13.CC {
           m.Addr = AllocateMemory(uint.MaxValue, mLen) / (mLen >= 32 ? 32 : mLen);
         }
       }
+      public void Optimize() {
+        int i, j, cnt;
+        Instruction i0, i1;
+        if(code.Count == 0) {
+          return;
+        }
+        if((i0 = code[code.Count - 1])._code.Length != 1 || i0._code[0] != (byte)EP_InstCode.RET) {
+          AddInst(EP_InstCode.RET);
+        }
+        // remove unreachable code
+        bool fl = false;
+        for(i = 0; i < code.Count; ) {
+          i0 = code[i];
+          if(fl) {
+            if(i0._code.Length == 0) {
+              fl = false;
+            } else {
+              code.RemoveAt(i);
+              continue;
+            }
+          } else if(i0._code.Length > 0 && (i0._code[0] == (byte)EP_InstCode.RET || i0._code[0] == (byte)EP_InstCode.JMP)) {
+            fl = true;
+          }
+          i++;
+        }
+        do {
+          cnt = 0;
+          i = 0;
+          while(i < code.Count) {
+            i0 = code[i];
+            // enclosed jump  {jmp l0 ... :l0 jmp l1}
+            if(i0._code.Length == 3 && (i0._code[0] == (byte)EP_InstCode.JMP || i0._code[0] == (byte)EP_InstCode.JZ || i0._code[0] == (byte)EP_InstCode.JNZ)) {
+              for(j = 0; j < code.Count; j++) {
+                if(code[j] == i0._ref) {
+                  do {
+                    j++;
+                    i1 = code[j];
+                  } while(i1._code.Length == 0);
+
+                  if(i1._code.Length == 3 && i1._code[0] == (byte)EP_InstCode.JMP) {
+                    i0._ref = i1._ref;
+                    cnt++;
+                  } else if(i1._code.Length == 1 && i1._code[0] == (byte)EP_InstCode.RET && i0._code[0] == (byte)EP_InstCode.JMP) {
+                    code[i] = i0 = new Instruction(EP_InstCode.RET);
+                  }
+                  break;
+                }
+              }
+            }
+            // remove all DROP & NIP before RET
+            if(i0._code.Length == 1 && i0._code[0] == (byte)EP_InstCode.RET) {
+              for(j = i - 1; j >= 0; j--) {
+                i1 = code[j];
+                if(i1._code.Length == 1 && (i1._code[0] == (byte)EP_InstCode.DROP || i1._code[0] == (byte)EP_InstCode.NIP)) {
+                  code.RemoveAt(j);
+                  i--;
+                  cnt++;
+                } else if(i1._code.Length != 0) {   // !label
+                  break;
+                }
+              }
+            }
+            i++;
+          }
+        } while(cnt > 0);
+      }
     }
     internal class Instruction {
       internal uint addr;
@@ -808,10 +869,10 @@ namespace X13.CC {
             _code = new byte[5];
           }
           _code[0] = (byte)cmd;
-          _code[1] = (byte)_param.Addr;
-          _code[2] = (byte)(_param.Addr >> 8);
-          _code[3] = (byte)(_param.Addr >> 16);
-          _code[4] = (byte)(_param.Addr >> 24);
+          _code[1] = (byte)(_param.Addr >> 24);     // Place
+          _code[2] = (byte)(_param.Addr >> 16);     // Type
+          _code[3] = (byte)_param.Addr;             // Base low
+          _code[4] = (byte)(_param.Addr >> 8);      // Base high
           break;
 
         case EP_InstCode.JZ:
