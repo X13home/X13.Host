@@ -88,6 +88,7 @@ namespace X13.CC {
 		}
 		if(_compiler.varList!=null) {
           var maping = _model.Get("_map");
+          maping.Get<long>("revision").value++;
           var toRemove = maping.children.Where(z => z != null && z.valueType == typeof(string)).Select(z => z.name).Except(_compiler.varList.Select(z => z.Key)).ToArray();
           for(var i = 0; i < toRemove.Length; i++) {
             maping.Get(toRemove[i]).Remove();
