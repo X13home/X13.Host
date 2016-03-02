@@ -33,7 +33,7 @@ namespace X13.Agent2 {
       _st=State.Connecting;
       _reconn = new Timer(CheckState);
       _rccnt = 1;
-      _verbose=true;
+      _verbose=false;
       _subs=new Dictionary<string, Action<string, string>>();
       Connect();
     }

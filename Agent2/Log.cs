@@ -25,7 +25,8 @@ namespace X13 {
 
     static Log() {
       _useDiagnostic=System.Diagnostics.Debugger.IsAttached;
-      _useConsole=Environment.UserInteractive;
+      try { int window_height = Console.WindowHeight; _useConsole=true;}
+      catch { _useConsole = false; }
       _records=new System.Collections.Concurrent.ConcurrentQueue<LogRecord>();
       _kickEv=new AutoResetEvent(false);
       _wh=ThreadPool.RegisterWaitForSingleObject(_kickEv, Process, null, -1, false);
