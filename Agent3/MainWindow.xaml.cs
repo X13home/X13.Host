@@ -26,14 +26,24 @@ namespace X13.Agent3 {
   public partial class MainWindow : Window {
     private Timer _1sek;
     private bool _setted;
+	private string _lfPath;
+	private DateTime _firstDT;
 
     public MainWindow() {
+	  if(!Directory.Exists("../log")) {
+		Directory.CreateDirectory("../log");
+	  }
+	  Log.Write+=Log_Write;
+	  AppDomain.CurrentDomain.UnhandledException+=new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+
       TopicSrc.Get("/local");
       InitializeComponent();
       _1sek = new Timer(Tick, null, 500, 1000);
     }
 
     private void Window_Closed(object sender, EventArgs e) {
+	  TopicSrc.Close();
+	  Thread.Sleep(100);
       Log.Finish();
     }
 
@@ -414,5 +424,58 @@ namespace X13.Agent3 {
       }
     }
 
+	private void Log_Write(LogLevel ll, DateTime dt, string msg) {
+	  char ll_c;
+	  switch(ll) {
+	  case LogLevel.Error:
+		ll_c='E';
+		break;
+	  case LogLevel.Warning:
+		ll_c='W';
+		break;
+	  case LogLevel.Info:
+		ll_c='I';
+		break;
+	  default:
+		ll_c='D';
+		break;
+	  }
+	  string rez=string.Concat(dt.ToString("HH:mm:ss.ff"), "[", ll_c, "] ", msg);
+	  LogLevel lt=LogLevel.Debug;
+	  if((int)ll>=(int)lt) {
+		if(_lfPath==null || _firstDT!=dt.Date) {
+		  _firstDT=dt.Date;
+		  try {
+			foreach(string f in Directory.GetFiles("../log/", "*.log", SearchOption.TopDirectoryOnly)) {
+			  if(File.GetLastWriteTime(f).AddDays(20)<_firstDT)
+				File.Delete(f);
+			}
+		  }
+		  catch(System.IO.IOException) {
+		  }
+		  _lfPath="../log/"+_firstDT.ToString("yyMMdd")+"_a3.log";
+		}
+		for(int i=2;i>=0;i--) {
+		  try {
+			using(FileStream fs=File.Open(_lfPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite)) {
+			  fs.Seek(0, SeekOrigin.End);
+			  byte[] ba=Encoding.UTF8.GetBytes(rez+"\r\n");
+			  fs.Write(ba, 0, ba.Length);
+			}
+			break;
+		  }
+		  catch(System.IO.IOException) {
+			Thread.Sleep(15);
+		  }
+		}
+	  }
+	}
+	private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e) {
+	  try {
+		Log.Error("unhandled Exception {0}", e.ExceptionObject.ToString());
+	  }
+	  catch {
+	  }
+	}
   }
 }

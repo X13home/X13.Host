@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
         xmlns:my="clr-namespace:X13.Agent3"
-        Title="X13.Home user agent" Height="550" Width="1100" FontFamily="Arial" FontSize="12" Closed="Window_Closed" Icon="logo64.ico" TextOptions.TextFormattingMode="Display">
+        Title="X13.Home user agent" FontFamily="Arial" FontSize="12" Closed="Window_Closed" Icon="logo64.ico" TextOptions.TextFormattingMode="Display"
+	    WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" WindowState="Maximized">
     <Grid>
     <StackPanel Name="content">
       <StackPanel.Resources>
@@ -167,7 +168,7 @@
           <Grid.Resources>
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wtCur">
               <ObjectDataProvider.ConstructorParameters>
-                <system:String>/var/Outdoor/Temperatur</system:String>
+                <system:String>/var/Outdoor/T_Mid</system:String>
               </ObjectDataProvider.ConstructorParameters>
             </ObjectDataProvider>
             <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wtCurDelta">

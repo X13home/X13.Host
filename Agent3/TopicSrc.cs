@@ -28,7 +28,12 @@ namespace X13.Agent3 {
       }
       _cl = new Client(new Uri(url));
     }
-
+	public static void Close() {
+	  if(_cl!=null) {
+		_cl.Close();
+		_cl=null;
+	  }
+	}
     private static void Import(string fileName) {
       try {
         using(StreamReader reader = File.OpenText(fileName)) {
