@@ -410,7 +410,6 @@ namespace X13.Agent3 {
         Grid.SetRow(wt, i);
       }
     }
-
     private void MonthColor(DateTime cur, DateTime DT, out Brush mBrush, out Brush fBrush) {
       switch((cur.Year * 12 + cur.Month) - (DT.Year * 12 + DT.Month)) {
       case -1:
@@ -442,7 +441,17 @@ namespace X13.Agent3 {
     }
     private void Day_MouseDown(object sender, MouseButtonEventArgs e) {
       DateTime cur = (DateTime)((sender as Label).Tag);
+      EventDlg dlg = new EventDlg(cur);
+      var h=Holiday.Find(cur);
+      if(h != null && h.type==Holiday.HolidayType.memo) {
+        dlg.Memo = h.titel;
+      }
+      if(dlg.ShowDialog() == true) {
+        Holiday.Add(cur, dlg.Memo);
+        DrawCalender(_today);
+      }
     }
+
 	private void Log_Write(LogLevel ll, DateTime dt, string msg) {
 	  char ll_c;
 	  switch(ll) {

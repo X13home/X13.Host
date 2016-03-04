@@ -23,16 +23,16 @@ namespace X13.Agent3 {
     }
 
     public static Holiday Find(DateTime dt) {
-      Holiday ret=null;
-      foreach(Holiday h in _list) {
-        if(h.begin<=dt && h.end>=dt) {
-          if(ret==null || ret.type==HolidayType.school || h.type==HolidayType.legal) {
-            ret=h;
-          }
-        }
-      }
-
+      Holiday ret=_list.FirstOrDefault(z=>z.begin<=dt && z.end>=dt && z.type!=HolidayType.none);
       return ret;
+    }
+    public static void Add(DateTime dt, string titel) {
+      var m = new Holiday(dt, titel);
+      _list.RemoveAll(z => z.begin <= dt && z.end >= dt && z.type == HolidayType.memo);
+      _list.Add(m);
+      var t = TopicSrc.Get(m.path, true);
+      t.saved = true;
+      t.value = m.titel;
     }
 
     [Flags]
@@ -53,6 +53,12 @@ namespace X13.Agent3 {
         end=begin.AddSeconds(24*60*60-1);
       }
     }
+    private Holiday(DateTime dt, string memo) {
+      titel = memo;
+      begin = dt;
+      end = begin.AddSeconds(24 * 60 * 60 - 1);
+      type = HolidayType.memo;
+    }
     public override string ToString() {
       StringBuilder sb=new StringBuilder();
       sb.AppendFormat("{0:dd.MM.yyyy}", this.begin);
@@ -66,5 +72,13 @@ namespace X13.Agent3 {
     public readonly DateTime end;
     public readonly string titel;
     public readonly HolidayType type;
+    public string path {
+      get {
+        if(end > begin.AddDays(1)) {
+          return string.Format("/local/cfg/Holidays/{0:00}{1:00}{2:00}{3}{4:00}{5:00}{6:00}", begin.Year%100, begin.Month, begin.Day, (int)type, end.Year%100, end.Month, end.Day);
+        }
+        return string.Format("/local/cfg/Holidays/{0:00}{1:00}{2:00}{3}", begin.Year%100, begin.Month, begin.Day, (int)type);
+      }
+    }
   }
 }

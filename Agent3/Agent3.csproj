@@ -65,9 +65,16 @@
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
     <Compile Include="CubicSpline.cs" />
+    <Compile Include="EventDlg.xaml.cs">
+      <DependentUpon>EventDlg.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Holiday.cs" />
     <Compile Include="TopicSrc.cs" />
     <Compile Include="Transport.cs" />
+    <Page Include="EventDlg.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
