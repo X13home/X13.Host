@@ -26,15 +26,16 @@ namespace X13.Agent3 {
   public partial class MainWindow : Window {
     private Timer _1sek;
     private bool _setted;
-	private string _lfPath;
-	private DateTime _firstDT;
+    private DateTime _today;
+    private string _lfPath;
+    private DateTime _firstDT;
 
     public MainWindow() {
-	  if(!Directory.Exists("../log")) {
-		Directory.CreateDirectory("../log");
-	  }
-	  Log.Write+=Log_Write;
-	  AppDomain.CurrentDomain.UnhandledException+=new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+      if(!Directory.Exists("../log")) {
+        Directory.CreateDirectory("../log");
+      }
+      Log.Write += Log_Write;
+      AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
       TopicSrc.Get("/local");
       InitializeComponent();
@@ -42,8 +43,8 @@ namespace X13.Agent3 {
     }
 
     private void Window_Closed(object sender, EventArgs e) {
-	  TopicSrc.Close();
-	  Thread.Sleep(100);
+      TopicSrc.Close();
+      Thread.Sleep(100);
       Log.Finish();
     }
 
@@ -67,7 +68,8 @@ namespace X13.Agent3 {
           ThreadPool.QueueUserWorkItem(GetWeatherForecast);
           if(nowDT.Hour == 0 || !_setted) {
             TopicSrc.Get("/local/vars/DateLong", true).value = nowDT.ToLongDateString();
-            this.Dispatcher.Invoke(new Action<DateTime>(this.DrawCalender), nowDT.Date);
+            _today = nowDT.Date;
+            this.Dispatcher.Invoke(new Action<DateTime>(this.DrawCalender), _today);
             if(!_setted) {
               _setted = true;
             }
@@ -263,8 +265,9 @@ namespace X13.Agent3 {
 
     }
 
-    private void DrawCalender(DateTime _today) {
-      DateTime cur = new DateTime(_today.AddMonths(-1).Year, _today.AddMonths(-1).Month, 1);
+    private void DrawCalender(DateTime DT) {
+      DateTime today = DateTime.Now.Date;
+      DateTime cur = new DateTime(DT.AddMonths(-1).Year, DT.AddMonths(-1).Month, 1);
       List<Holiday> holidays = new List<Holiday>(8);
       cur = cur.AddDays(1 - (cur.DayOfWeek == DayOfWeek.Sunday ? 7 : (double)cur.DayOfWeek));
       int month = 0;
@@ -272,7 +275,7 @@ namespace X13.Agent3 {
 
       Brush bBrush;
       Brush fBrush;
-      MonthColor(cur, out bBrush, out fBrush);
+      MonthColor(cur, DT, out bBrush, out fBrush);
 
       Label wt;
       grCalender.Children.Clear();
@@ -288,7 +291,7 @@ namespace X13.Agent3 {
             Grid.SetRow(wt, i + 1);
           }
           if(cur.Day == 1) {
-            MonthColor(cur, out bBrush, out fBrush);
+            MonthColor(cur, DT, out bBrush, out fBrush);
           }
 
           if(i == 0 && cur.Month != month) {
@@ -298,11 +301,14 @@ namespace X13.Agent3 {
               wt.SetValue(Label.ContentProperty, (object)(cur.AddMonths(-1).ToString("MMMM yy")));
               wt.SetValue(Label.HorizontalContentAlignmentProperty, (object)HorizontalAlignment.Center);
               Brush f, b;
-              MonthColor(cur.AddMonths(-1), out b, out f);
+              MonthColor(cur.AddMonths(-1), DT, out b, out f);
               wt.Foreground = f;
               wt.Background = b;
               wt.BorderBrush = Brushes.Black;
               wt.BorderThickness = new Thickness(1.0, 0, 0, 0);
+              wt.MouseDown += Month_MouseDown;
+              wt.Tag = (cur.Year - DT.Year) * 12 + cur.Month - DT.Month - 1;
+              
               grCalender.Children.Add(wt);
               Grid.SetColumn(wt, jPrev);
               Grid.SetRow(wt, 0);
@@ -349,9 +355,11 @@ namespace X13.Agent3 {
           } else if(cur.Day < 8) {
             wt.BorderThickness = new Thickness(1.0, 0, 0, 0);
           }
-          if(_today == cur) {
+          if(today == cur) {
             wt.BorderThickness = new Thickness(1);
           }
+          wt.Tag = cur;
+          wt.MouseDown += Day_MouseDown;
           grCalender.Children.Add(wt);
           Grid.SetColumn(wt, j + 1);
           Grid.SetRow(wt, i + 1);
@@ -392,7 +400,7 @@ namespace X13.Agent3 {
           wt.BorderBrush = Brushes.Black;
           wt.BorderThickness = new Thickness(0, 0, 0, 0.8);
         }
-        if(holidays[j].begin <= _today && holidays[j].end >= _today) {
+        if(holidays[j].begin <= today && holidays[j].end >= today) {
           wt.FontWeight = FontWeights.UltraBlack;
           wt.Background = Brushes.LightGoldenrodYellow;
         }
@@ -402,9 +410,9 @@ namespace X13.Agent3 {
         Grid.SetRow(wt, i);
       }
     }
-    private void MonthColor(DateTime cur, out Brush mBrush, out Brush fBrush) {
-      DateTime _today = DateTime.Today;
-      switch((cur.Year * 12 + cur.Month) - (_today.Year * 12 + _today.Month)) {
+
+    private void MonthColor(DateTime cur, DateTime DT, out Brush mBrush, out Brush fBrush) {
+      switch((cur.Year * 12 + cur.Month) - (DT.Year * 12 + DT.Month)) {
       case -1:
         fBrush = Brushes.Black;
         mBrush = new SolidColorBrush(Color.FromRgb(0xBE, 0xE0, 0xFF));
@@ -423,7 +431,18 @@ namespace X13.Agent3 {
         break;
       }
     }
-
+    private void Month_MouseDown(object sender, MouseButtonEventArgs e) {
+      int offset = (int)((sender as Label).Tag);
+      if(offset == 0) {
+        _today = DateTime.Now.Date;
+      } else {
+        _today = _today.AddMonths(offset);
+      }
+      DrawCalender(_today);
+    }
+    private void Day_MouseDown(object sender, MouseButtonEventArgs e) {
+      DateTime cur = (DateTime)((sender as Label).Tag);
+    }
 	private void Log_Write(LogLevel ll, DateTime dt, string msg) {
 	  char ll_c;
 	  switch(ll) {
