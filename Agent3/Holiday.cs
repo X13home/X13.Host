@@ -22,25 +22,25 @@ namespace X13.Agent3 {
       }
     }
 
-    public static Holiday Find(DateTime dt) {
-      Holiday ret=_list.FirstOrDefault(z=>z.begin<=dt && z.end>=dt && z.type!=HolidayType.none);
+    public static Holiday Find(DateTime dt, bool create=false) {
+      Holiday ret=_list.Where(z=>z.begin<=dt && z.end>=dt && z.type!=HolidayType.none).OrderBy(z=>z.type==HolidayType.school?HolidayType.max:z.type).FirstOrDefault();
+      if(ret == null && create) {
+        ret = new Holiday(dt, string.Empty);
+        _list.Add(ret);
+      }
       return ret;
     }
-    public static void Add(DateTime dt, string titel) {
-      var m = new Holiday(dt, titel);
-      _list.RemoveAll(z => z.begin <= dt && z.end >= dt && z.type == HolidayType.memo);
-      _list.Add(m);
-      var t = TopicSrc.Get(m.path, true);
-      t.saved = true;
-      t.value = m.titel;
+    public static void Remove(Holiday h) {
+      _list.Remove(h);
     }
 
-    [Flags]
     public enum HolidayType {
       none=0,
       legal=1,
       school=2,
-      memo=4
+      termin = 3,
+      memo = 4,
+      max=256,
     }
 
     private Holiday(string name, string value) {
@@ -57,7 +57,7 @@ namespace X13.Agent3 {
       titel = memo;
       begin = dt;
       end = begin.AddSeconds(24 * 60 * 60 - 1);
-      type = HolidayType.memo;
+      type = HolidayType.termin;
     }
     public override string ToString() {
       StringBuilder sb=new StringBuilder();
@@ -68,10 +68,21 @@ namespace X13.Agent3 {
       sb.AppendFormat(" {0}", this.titel);
       return sb.ToString();
     }
+    public string ToString(bool fl) {
+      StringBuilder sb = new StringBuilder();
+      sb.AppendFormat("{0:dd.MM.yyyy}", this.begin);
+      if(begin < end.Date) {
+        sb.AppendFormat(" - {0:dd.MM.yyyy}", this.end);
+      }
+      return sb.ToString();
+     
+    }
     public readonly DateTime begin;
     public readonly DateTime end;
-    public readonly string titel;
     public readonly HolidayType type;
+
+    public string titel;
+    public bool edited;
     public string path {
       get {
         if(end > begin.AddDays(1)) {
@@ -80,5 +91,6 @@ namespace X13.Agent3 {
         return string.Format("/local/cfg/Holidays/{0:00}{1:00}{2:00}{3}", begin.Year%100, begin.Month, begin.Day, (int)type);
       }
     }
+
   }
 }

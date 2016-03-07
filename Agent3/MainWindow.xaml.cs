@@ -296,23 +296,30 @@ namespace X13.Agent3 {
 
           if(i == 0 && cur.Month != month) {
             if(month != 0) {  // && cur.Month>=_today.Month
-              wt = new Label();
-              wt.FontWeight = FontWeights.Heavy;
-              wt.SetValue(Label.ContentProperty, (object)(cur.AddMonths(-1).ToString("MMMM yy")));
-              wt.SetValue(Label.HorizontalContentAlignmentProperty, (object)HorizontalAlignment.Center);
+              var bu = new Button();
+              int offset = (cur.Year - DT.Year) * 12 + cur.Month - DT.Month - 1;
+              bu.FontWeight = FontWeights.Heavy;
+              if(offset < 0) {
+                bu.Content = "◄  " + cur.AddMonths(-1).ToString("MMMM yy");
+              } else if(offset > 0) {
+                bu.Content = cur.AddMonths(-1).ToString("MMMM yy") + "  ►";
+              } else {
+                bu.Content = cur.AddMonths(-1).ToString("MMMM yy");
+              }
+              bu.SetValue(Label.HorizontalContentAlignmentProperty, (object)HorizontalAlignment.Center);
               Brush f, b;
               MonthColor(cur.AddMonths(-1), DT, out b, out f);
-              wt.Foreground = f;
-              wt.Background = b;
-              wt.BorderBrush = Brushes.Black;
-              wt.BorderThickness = new Thickness(1.0, 0, 0, 0);
-              wt.MouseDown += Month_MouseDown;
-              wt.Tag = (cur.Year - DT.Year) * 12 + cur.Month - DT.Month - 1;
-              
-              grCalender.Children.Add(wt);
-              Grid.SetColumn(wt, jPrev);
-              Grid.SetRow(wt, 0);
-              Grid.SetColumnSpan(wt, j - jPrev + 1);
+              bu.Foreground = f;
+              bu.Background = b;
+              bu.BorderBrush = Brushes.Black;
+              bu.BorderThickness = new Thickness(0, 0, 0, 0);
+              bu.Click += Month_Click;
+              bu.Tag = offset;
+
+              grCalender.Children.Add(bu);
+              Grid.SetColumn(bu, jPrev);
+              Grid.SetRow(bu, 0);
+              Grid.SetColumnSpan(bu, j - jPrev + 1);
             }
             month = cur.Month;
             jPrev = j + 1;
@@ -339,14 +346,22 @@ namespace X13.Agent3 {
           wt = new Label();
           wt.SetValue(Label.ContentProperty, (object)(cur.ToString("dd")));
           wt.SetValue(Label.HorizontalContentAlignmentProperty, (object)HorizontalAlignment.Center);
-          if((hType & Holiday.HolidayType.legal) != Holiday.HolidayType.none) {
+          switch(hType) {
+          case Holiday.HolidayType.legal:
             wt.Foreground = new SolidColorBrush(Colors.Red);
-          } else if((hType & Holiday.HolidayType.memo) != Holiday.HolidayType.none) {
-            wt.Foreground = new SolidColorBrush(Colors.Orange);
-          } else if((hType & Holiday.HolidayType.school) != Holiday.HolidayType.none) {
+            break;
+          case Holiday.HolidayType.school:
             wt.Foreground = new SolidColorBrush(Colors.Blue);
-          } else {
+            break;
+          case Holiday.HolidayType.memo:
+            wt.Foreground = new SolidColorBrush(Colors.Green);
+            break;
+          case Holiday.HolidayType.termin:
+            wt.Foreground = new SolidColorBrush(Colors.Orange);
+            break;
+          default:
             wt.Foreground = fBrush;
+            break;
           }
           wt.Background = bBrush;
           wt.BorderBrush = Brushes.Black;
@@ -385,29 +400,99 @@ namespace X13.Agent3 {
         j++;
       }
       for(; j < holidays.Count && i < 8; j++, i++) {
-        wt = new Label();
-        wt.FontSize = 12;
-        wt.SetValue(Label.ContentProperty, holidays[j].ToString());
-        wt.SetValue(Label.HorizontalContentAlignmentProperty, (object)HorizontalAlignment.Left);
-        if((holidays[j].type & Holiday.HolidayType.legal) != Holiday.HolidayType.none) {
-          wt.Foreground = new SolidColorBrush(Colors.Red);
-        } else if((holidays[j].type & Holiday.HolidayType.memo) != Holiday.HolidayType.none) {
+        var h = holidays[j];
+        if(h.edited) {
+          var gr = new Grid();
+          ColumnDefinition c1 = new ColumnDefinition();
+          c1.Width = new GridLength(1, GridUnitType.Auto);
+          gr.ColumnDefinitions.Add(c1);
+          c1 = new ColumnDefinition();
+          c1.Width = new GridLength(1, GridUnitType.Star);
+          gr.ColumnDefinitions.Add(c1);
+          c1 = new ColumnDefinition();
+          c1.Width = new GridLength(1, GridUnitType.Auto);
+          gr.ColumnDefinitions.Add(c1);
+          c1 = new ColumnDefinition();
+          c1.Width = new GridLength(1, GridUnitType.Auto);
+          gr.ColumnDefinitions.Add(c1);
+          wt = new Label();
+          wt.FontSize = 16;
+          wt.Content = holidays[j].ToString(true);
+          wt.SetValue(Label.HorizontalContentAlignmentProperty, (object)HorizontalAlignment.Left);
           wt.Foreground = new SolidColorBrush(Colors.Orange);
-        } else if((holidays[j].type & Holiday.HolidayType.school) != Holiday.HolidayType.none) {
-          wt.Foreground = new SolidColorBrush(Colors.Blue);
-        }
-        if(i < 7) {
-          wt.BorderBrush = Brushes.Black;
-          wt.BorderThickness = new Thickness(0, 0, 0, 0.8);
-        }
-        if(holidays[j].begin <= today && holidays[j].end >= today) {
-          wt.FontWeight = FontWeights.UltraBlack;
-          wt.Background = Brushes.LightGoldenrodYellow;
-        }
 
-        grCalender.Children.Add(wt);
-        Grid.SetColumn(wt, 16);
-        Grid.SetRow(wt, i);
+          gr.Children.Add(wt);
+          Grid.SetColumn(wt, 0);
+
+          var ed = new TextBox();
+          ed.Text = h.titel;
+          ed.Tag = h;
+          ed.VerticalContentAlignment = System.Windows.VerticalAlignment.Center;
+          gr.Children.Add(ed);
+          Grid.SetColumn(ed, 1);
+          Grid.SetRow(ed, 0);
+
+          var b1 = new Button();
+          b1.Content = new Image() { Source = new BitmapImage(new Uri("pack://application:,,,/Agent3;component/Images/ok.png")), Width = 22, Height = 22 };
+          b1.Tag = ed;
+          b1.Margin = new Thickness(5, 1, 5, 1);
+          b1.Click += AddMemo_Click;
+          b1.Background = Brushes.White;
+          gr.Children.Add(b1);
+          Grid.SetColumn(b1, 2);
+          Grid.SetRow(b1, 0);
+
+          var b2 = new Button();
+          b2.Content = new Image() { Source = new BitmapImage(new Uri("pack://application:,,,/Agent3;component/Images/cancel.png")), Width = 22, Height = 22 };
+          b2.Tag = ed;
+          b2.Margin = new Thickness(15, 1, 15, 1);
+          b2.Background = Brushes.White;
+          b2.Click += DelMemo_Click;
+          gr.Children.Add(b2);
+          Grid.SetColumn(b2, 3);
+          Grid.SetRow(b2, 0);
+
+          grCalender.Children.Add(gr);
+          Grid.SetColumn(gr, 16);
+          Grid.SetRow(gr, i);
+
+          ed.SelectAll();
+          ed.Focus();
+        } else {
+          wt = new Label();
+          wt.FontSize = 12;
+          wt.SetValue(Label.ContentProperty, h.ToString());
+          wt.SetValue(Label.HorizontalContentAlignmentProperty, (object)HorizontalAlignment.Left);
+          switch(h.type) {
+          case Holiday.HolidayType.legal:
+            wt.Foreground = new SolidColorBrush(Colors.Red);
+            break;
+          case Holiday.HolidayType.school:
+            wt.Foreground = new SolidColorBrush(Colors.Blue);
+            break;
+          case Holiday.HolidayType.memo:
+            wt.Foreground = new SolidColorBrush(Colors.Green);
+            break;
+          case Holiday.HolidayType.termin:
+            wt.Foreground = new SolidColorBrush(Colors.Orange);
+            break;
+          default:
+            wt.Foreground = fBrush;
+            break;
+          }
+          if(i < 7) {
+            wt.BorderBrush = Brushes.Black;
+            wt.BorderThickness = new Thickness(0, 0, 0, 0.8);
+          }
+          if(holidays[j].begin <= today && holidays[j].end >= today) {
+            wt.FontWeight = FontWeights.UltraBlack;
+            wt.Background = Brushes.MistyRose;
+          }
+
+          grCalender.Children.Add(wt);
+          Grid.SetColumn(wt, 16);
+          Grid.SetRow(wt, i);
+        }
       }
     }
     private void MonthColor(DateTime cur, DateTime DT, out Brush mBrush, out Brush fBrush) {
@@ -430,8 +515,8 @@ namespace X13.Agent3 {
         break;
       }
     }
-    private void Month_MouseDown(object sender, MouseButtonEventArgs e) {
-      int offset = (int)((sender as Label).Tag);
+    private void Month_Click(object sender, RoutedEventArgs e) {
+      int offset = (int)((sender as Button).Tag);
       if(offset == 0) {
         _today = DateTime.Now.Date;
       } else {
@@ -441,69 +526,87 @@ namespace X13.Agent3 {
     }
     private void Day_MouseDown(object sender, MouseButtonEventArgs e) {
       DateTime cur = (DateTime)((sender as Label).Tag);
-      EventDlg dlg = new EventDlg(cur);
-      var h=Holiday.Find(cur);
-      if(h != null && h.type==Holiday.HolidayType.memo) {
-        dlg.Memo = h.titel;
+      var h = Holiday.Find(cur, true);
+      h.edited = true;
+      DrawCalender(_today);
+    }
+    private void AddMemo_Click(object sender, RoutedEventArgs e) {
+      var ed = ((sender as Button).Tag as TextBox);
+      Holiday h;
+      if(ed != null && (h = ed.Tag as Holiday) != null) {
+        h.titel = ed.Text;
+        h.edited = false;
+        var t = TopicSrc.Get(h.path, true);
+        t.saved = true;
+        t.value = h.titel;
       }
-      if(dlg.ShowDialog() == true) {
-        Holiday.Add(cur, dlg.Memo);
-        DrawCalender(_today);
+      DrawCalender(_today);
+    }
+    private void DelMemo_Click(object sender, RoutedEventArgs e) {
+      var ed = ((sender as Button).Tag as TextBox);
+      Holiday h;
+      if(ed != null && (h = ed.Tag as Holiday) != null) {
+        Holiday.Remove(h);
+        var t = TopicSrc.Get(h.path, false);
+        if(t != null) {
+          t.Remove();
+        }
       }
+      DrawCalender(_today);
     }
 
-	private void Log_Write(LogLevel ll, DateTime dt, string msg) {
-	  char ll_c;
-	  switch(ll) {
-	  case LogLevel.Error:
-		ll_c='E';
-		break;
-	  case LogLevel.Warning:
-		ll_c='W';
-		break;
-	  case LogLevel.Info:
-		ll_c='I';
-		break;
-	  default:
-		ll_c='D';
-		break;
-	  }
-	  string rez=string.Concat(dt.ToString("HH:mm:ss.ff"), "[", ll_c, "] ", msg);
-	  LogLevel lt=LogLevel.Debug;
-	  if((int)ll>=(int)lt) {
-		if(_lfPath==null || _firstDT!=dt.Date) {
-		  _firstDT=dt.Date;
-		  try {
-			foreach(string f in Directory.GetFiles("../log/", "*.log", SearchOption.TopDirectoryOnly)) {
-			  if(File.GetLastWriteTime(f).AddDays(20)<_firstDT)
-				File.Delete(f);
-			}
-		  }
-		  catch(System.IO.IOException) {
-		  }
-		  _lfPath="../log/"+_firstDT.ToString("yyMMdd")+"_a3.log";
-		}
-		for(int i=2;i>=0;i--) {
-		  try {
-			using(FileStream fs=File.Open(_lfPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite)) {
-			  fs.Seek(0, SeekOrigin.End);
-			  byte[] ba=Encoding.UTF8.GetBytes(rez+"\r\n");
-			  fs.Write(ba, 0, ba.Length);
-			}
-			break;
-		  }
-		  catch(System.IO.IOException) {
-			Thread.Sleep(15);
-		  }
-		}
-	  }
-	}
-	private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e) {
-	  try {
-		Log.Error("unhandled Exception {0}", e.ExceptionObject.ToString());
-	  }
-	  catch {
-	  }
-	}
+    private void Log_Write(LogLevel ll, DateTime dt, string msg) {
+      char ll_c;
+      switch(ll) {
+      case LogLevel.Error:
+        ll_c = 'E';
+        break;
+      case LogLevel.Warning:
+        ll_c = 'W';
+        break;
+      case LogLevel.Info:
+        ll_c = 'I';
+        break;
+      default:
+        ll_c = 'D';
+        break;
+      }
+      string rez = string.Concat(dt.ToString("HH:mm:ss.ff"), "[", ll_c, "] ", msg);
+      LogLevel lt = LogLevel.Debug;
+      if((int)ll >= (int)lt) {
+        if(_lfPath == null || _firstDT != dt.Date) {
+          _firstDT = dt.Date;
+          try {
+            foreach(string f in Directory.GetFiles("../log/", "*.log", SearchOption.TopDirectoryOnly)) {
+              if(File.GetLastWriteTime(f).AddDays(20) < _firstDT)
+                File.Delete(f);
+            }
+          }
+          catch(System.IO.IOException) {
+          }
+          _lfPath = "../log/" + _firstDT.ToString("yyMMdd") + "_a3.log";
+        }
+        for(int i = 2; i >= 0; i--) {
+          try {
+            using(FileStream fs = File.Open(_lfPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.ReadWrite)) {
+              fs.Seek(0, SeekOrigin.End);
+              byte[] ba = Encoding.UTF8.GetBytes(rez + "\r\n");
+              fs.Write(ba, 0, ba.Length);
+            }
+            break;
+          }
+          catch(System.IO.IOException) {
+            Thread.Sleep(15);
+          }
+        }
+      }
+    }
+    private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e) {
+      try {
+        Log.Error("unhandled Exception {0}", e.ExceptionObject.ToString());
+      }
+      catch {
+      }
+    }
   }
 }

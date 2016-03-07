@@ -45,6 +45,7 @@ namespace X13.Agent3 {
         }
         value = doc.Root.Attribute("value") != null ? doc.Root.Attribute("value").Value : null;
         var cur = new TopicSrc(path, value);
+        cur.saved = value != null;
         foreach(var xNext in doc.Root.Elements("item")) {
           Import(xNext, path + "/");
         }
@@ -60,6 +61,7 @@ namespace X13.Agent3 {
       string path = oPath + xElement.Attribute("name").Value;
       string value = xElement.Attribute("value") != null ? xElement.Attribute("value").Value : null;
       var cur = new TopicSrc(path, value);
+      cur.saved = value != null;
       foreach(var xNext in xElement.Elements("item")) {
         Import(xNext, path + "/");
       }
@@ -83,6 +85,9 @@ namespace X13.Agent3 {
         for(; i < ns.Length; i++) {
           next = cur.Elements("item").FirstOrDefault(z => z.Attribute("name")!=null && z.Attribute("name").Value == ns[i]);
           if(next == null) {
+            if(t.removed) {
+              return;
+            }
             next=new XElement("item", new XAttribute("name", ns[i]));
             var ch = cur.Elements("item").LastOrDefault(z => z.Attribute("name") != null && string.Compare(z.Attribute("name").Value, ns[i]) < 0);
             if(ch == null) {
@@ -92,7 +97,11 @@ namespace X13.Agent3 {
             }
           }
           if(i == ns.Length - 1) {
-            next.SetAttributeValue("value", json);
+            if(t.removed) {
+              next.Remove();
+            } else {
+              next.SetAttributeValue("value", json);
+            }
           }
           cur=next;
         }
@@ -130,6 +139,7 @@ namespace X13.Agent3 {
     public readonly string name;
     public readonly string path;
     public bool saved;
+    public bool removed;
 
     public TopicSrc(string path)
       : this(path, string.IsNullOrEmpty(path) || path.StartsWith("/local")) {
@@ -199,6 +209,14 @@ namespace X13.Agent3 {
           PropertyChanged(this, new PropertyChangedEventArgs("value"));
         }
       }
+    }
+    public void Remove() {
+      removed = true;
+      if(_parent != null) {
+        _parent._children.Remove(name);
+      }
+      _rep.Remove(this.path);
+      Write(this);
     }
 
     public IEnumerable<TopicSrc> children { get { return _children.Values; } }

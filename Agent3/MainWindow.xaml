@@ -136,6 +136,39 @@
           <TextBlock Text="{Binding Source={StaticResource DateLong}, Path=value}"  FontSize="28" Grid.Column="2" Grid.Row="5" Grid.RowSpan="2" TextAlignment="Center" Background="White" Padding="0" Margin="12,0,12,2"/>
         </Grid>
       </Border>
+      <Border Name="boCalender">
+        <Grid Name="grCalender" ShowGridLines="False">
+          <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+            <RowDefinition />
+          </Grid.RowDefinitions>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="29*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="26*"/>
+            <ColumnDefinition Width="419*"/>
+          </Grid.ColumnDefinitions>
+        </Grid>
+      </Border>
       <Border Name="boWeather">
         <Grid>
           <Grid.RowDefinitions>
@@ -271,39 +304,6 @@
           <TextBlock Name="tbWeath10" Grid.Column="10" Grid.Row="9" />
           <TextBlock Name="tbWeath11" Grid.Column="11" Grid.Row="9" />
           <TextBlock Name="tbWeath12" Grid.Column="12" Grid.Row="9" />
-        </Grid>
-      </Border>
-      <Border Name="boCalender">
-        <Grid Name="grCalender" ShowGridLines="False">
-          <Grid.RowDefinitions>
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-          </Grid.RowDefinitions>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="29*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="419*"/>
-          </Grid.ColumnDefinitions>
         </Grid>
       </Border>
     </StackPanel>
