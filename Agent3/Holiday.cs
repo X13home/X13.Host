@@ -24,7 +24,7 @@ namespace X13.Agent3 {
 
     public static Holiday Find(DateTime dt, bool create=false) {
       Holiday ret=_list.Where(z=>z.begin<=dt && z.end>=dt && z.type!=HolidayType.none).OrderBy(z=>z.type==HolidayType.school?HolidayType.max:z.type).FirstOrDefault();
-      if(ret == null && create) {
+      if((ret == null || ret.type!=HolidayType.termin) && create) {
         ret = new Holiday(dt, string.Empty);
         _list.Add(ret);
       }

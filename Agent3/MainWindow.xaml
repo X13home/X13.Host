@@ -4,7 +4,7 @@
         xmlns:system="clr-namespace:System;assembly=mscorlib"
         xmlns:my="clr-namespace:X13.Agent3"
         Title="X13.Home user agent" FontFamily="Arial" FontSize="12" Closed="Window_Closed" Icon="logo64.ico" TextOptions.TextFormattingMode="Display"
-	    WindowStyle="None" ResizeMode="NoResize" WindowStartupLocation="CenterScreen" WindowState="Maximized">
+	    WindowStartupLocation="CenterScreen" WindowState="Maximized">
     <Grid>
     <StackPanel Name="content">
       <StackPanel.Resources>
@@ -15,127 +15,6 @@
           <Setter Property="Margin" Value="3" />
         </Style>
       </StackPanel.Resources>
-      <Border Name="boTime" >
-        <Grid>
-          <Grid.RowDefinitions>
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-          </Grid.RowDefinitions>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="5*" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="6*" />
-          </Grid.ColumnDefinitions>
-          <Grid.Resources>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="TimeLong">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/TimeLong</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="DateLong">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/DateLong</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route0Info">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route0Info</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route0Wait">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route0Wait</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route1Info">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route1Info</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route1Wait">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route1Wait</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route2Info">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route2Info</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route2Wait">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route2Wait</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route3Info">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route3Info</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route3Wait">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route3Wait</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route4Info">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route4Info</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route4Wait">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route4Wait</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route5Info">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route5Info</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route5Wait">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route5Wait</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route6Info">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route6Info</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route6Wait">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/Route6Wait</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <Style TargetType="TextBlock">
-              <Setter Property="Padding" Value="7,3,7,3"/>
-              <Setter Property="VerticalAlignment" Value="Stretch"/>
-              <Setter Property="FontSize" Value="12"/>
-            </Style>
-          </Grid.Resources>
-          <TextBlock Text="{Binding Source={StaticResource Route0Info}, Path=value}" Grid.Column="0" />
-          <TextBlock Text="{Binding Source={StaticResource Route0Wait}, Path=value}" Grid.Column="1" TextAlignment="Right" />
-          <TextBlock Text="{Binding Source={StaticResource Route1Info}, Path=value}" Grid.Column="0" Grid.Row="1" Background="AliceBlue" />
-          <TextBlock Text="{Binding Source={StaticResource Route1Wait}, Path=value}" Grid.Column="1" Grid.Row="1" Background="AliceBlue" TextAlignment="Right" />
-          <TextBlock Text="{Binding Source={StaticResource Route2Info}, Path=value}" Grid.Column="0" Grid.Row="2" />
-          <TextBlock Text="{Binding Source={StaticResource Route2Wait}, Path=value}" Grid.Column="1" Grid.Row="2" TextAlignment="Right" />
-          <TextBlock Text="{Binding Source={StaticResource Route3Info}, Path=value}" Grid.Column="0" Grid.Row="3" Background="AliceBlue" />
-          <TextBlock Text="{Binding Source={StaticResource Route3Wait}, Path=value}" Grid.Column="1" Grid.Row="3" Background="AliceBlue" TextAlignment="Right" />
-          <TextBlock Text="{Binding Source={StaticResource Route4Info}, Path=value}" Grid.Column="0" Grid.Row="4" />
-          <TextBlock Text="{Binding Source={StaticResource Route4Wait}, Path=value}" Grid.Column="1" Grid.Row="4" TextAlignment="Right" />
-          <TextBlock Text="{Binding Source={StaticResource Route5Info}, Path=value}" Grid.Column="0" Grid.Row="5" Background="AliceBlue" />
-          <TextBlock Text="{Binding Source={StaticResource Route5Wait}, Path=value}" Grid.Column="1" Grid.Row="5" Background="AliceBlue" TextAlignment="Right" />
-          <TextBlock Text="{Binding Source={StaticResource Route6Info}, Path=value}" Grid.Column="0" Grid.Row="6" />
-          <TextBlock Text="{Binding Source={StaticResource Route6Wait}, Path=value}" Grid.Column="1" Grid.Row="6" TextAlignment="Right" />
-          <TextBlock Text="{Binding Source={StaticResource TimeLong}, Path=value}" FontSize="72"  Grid.Column="2" Grid.Row="0" Grid.RowSpan="5" TextAlignment="Center" Background="AliceBlue" FontWeight="ExtraBlack" Padding="0" Margin="12,2,12,0"/>
-          <TextBlock Text="{Binding Source={StaticResource DateLong}, Path=value}"  FontSize="28" Grid.Column="2" Grid.Row="5" Grid.RowSpan="2" TextAlignment="Center" Background="White" Padding="0" Margin="12,0,12,2"/>
-        </Grid>
-      </Border>
       <Border Name="boCalender">
         <Grid Name="grCalender" ShowGridLines="False">
           <Grid.RowDefinitions>
@@ -306,6 +185,127 @@
           <TextBlock Name="tbWeath12" Grid.Column="12" Grid.Row="9" />
         </Grid>
       </Border>
-    </StackPanel>
+			<Border Name="boTime" >
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+					</Grid.RowDefinitions>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="5*" />
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="6*" />
+					</Grid.ColumnDefinitions>
+					<Grid.Resources>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="TimeLong">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/TimeLong</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="DateLong">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/DateLong</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route0Info">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route0Info</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route0Wait">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route0Wait</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route1Info">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route1Info</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route1Wait">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route1Wait</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route2Info">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route2Info</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route2Wait">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route2Wait</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route3Info">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route3Info</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route3Wait">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route3Wait</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route4Info">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route4Info</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route4Wait">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route4Wait</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route5Info">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route5Info</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route5Wait">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route5Wait</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route6Info">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route6Info</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="Route6Wait">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/Route6Wait</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<Style TargetType="TextBlock">
+							<Setter Property="Padding" Value="7,3,7,3"/>
+							<Setter Property="VerticalAlignment" Value="Stretch"/>
+							<Setter Property="FontSize" Value="12"/>
+						</Style>
+					</Grid.Resources>
+					<TextBlock Text="{Binding Source={StaticResource Route0Info}, Path=value}" Grid.Column="0" />
+					<TextBlock Text="{Binding Source={StaticResource Route0Wait}, Path=value}" Grid.Column="1" TextAlignment="Right" />
+					<TextBlock Text="{Binding Source={StaticResource Route1Info}, Path=value}" Grid.Column="0" Grid.Row="1" Background="AliceBlue" />
+					<TextBlock Text="{Binding Source={StaticResource Route1Wait}, Path=value}" Grid.Column="1" Grid.Row="1" Background="AliceBlue" TextAlignment="Right" />
+					<TextBlock Text="{Binding Source={StaticResource Route2Info}, Path=value}" Grid.Column="0" Grid.Row="2" />
+					<TextBlock Text="{Binding Source={StaticResource Route2Wait}, Path=value}" Grid.Column="1" Grid.Row="2" TextAlignment="Right" />
+					<TextBlock Text="{Binding Source={StaticResource Route3Info}, Path=value}" Grid.Column="0" Grid.Row="3" Background="AliceBlue" />
+					<TextBlock Text="{Binding Source={StaticResource Route3Wait}, Path=value}" Grid.Column="1" Grid.Row="3" Background="AliceBlue" TextAlignment="Right" />
+					<TextBlock Text="{Binding Source={StaticResource Route4Info}, Path=value}" Grid.Column="0" Grid.Row="4" />
+					<TextBlock Text="{Binding Source={StaticResource Route4Wait}, Path=value}" Grid.Column="1" Grid.Row="4" TextAlignment="Right" />
+					<TextBlock Text="{Binding Source={StaticResource Route5Info}, Path=value}" Grid.Column="0" Grid.Row="5" Background="AliceBlue" />
+					<TextBlock Text="{Binding Source={StaticResource Route5Wait}, Path=value}" Grid.Column="1" Grid.Row="5" Background="AliceBlue" TextAlignment="Right" />
+					<TextBlock Text="{Binding Source={StaticResource Route6Info}, Path=value}" Grid.Column="0" Grid.Row="6" />
+					<TextBlock Text="{Binding Source={StaticResource Route6Wait}, Path=value}" Grid.Column="1" Grid.Row="6" TextAlignment="Right" />
+					<TextBlock Text="{Binding Source={StaticResource TimeLong}, Path=value}" FontSize="72"  Grid.Column="2" Grid.Row="0" Grid.RowSpan="5" TextAlignment="Center" Background="AliceBlue" FontWeight="ExtraBlack" Padding="0" Margin="12,2,12,0"/>
+					<TextBlock Text="{Binding Source={StaticResource DateLong}, Path=value}"  FontSize="28" Grid.Column="2" Grid.Row="5" Grid.RowSpan="2" TextAlignment="Center" Background="White" Padding="0" Margin="12,0,12,2"/>
+				</Grid>
+			</Border>
+		</StackPanel>
   </Grid>
 </Window>

@@ -529,7 +529,8 @@ namespace X13.Agent3 {
       var h = Holiday.Find(cur, true);
       h.edited = true;
       DrawCalender(_today);
-    }
+	  System.Diagnostics.Process.Start(Environment.GetFolderPath(Environment.SpecialFolder.System) + System.IO.Path.DirectorySeparatorChar + "osk.exe");
+	}
     private void AddMemo_Click(object sender, RoutedEventArgs e) {
       var ed = ((sender as Button).Tag as TextBox);
       Holiday h;
