@@ -1,5 +1,5 @@
 #region license
-//Copyright (c) 2011-2013 <comparator@gmx.de>; Wassili Hense
+//Copyright (c) 2011-2016 <comparator@gmx.de>; Wassili Hense
 
 //This file is part of the X13.Home project.
 //https://github.com/X13home
@@ -17,7 +17,11 @@ using System.Windows;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
+#if EmbeddedJS
+[assembly: AssemblyTitle("CC_EJS")]
+#else
 [assembly: AssemblyTitle("CCWPF")]
+#endif
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCulture("")]
