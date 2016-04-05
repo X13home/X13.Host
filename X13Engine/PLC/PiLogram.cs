@@ -16,7 +16,7 @@ using X13.MQTT;
 
 namespace X13.PLC {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
-  public class PiLogram : ITopicOwned {
+  public class PiLogram : ITopicOwned, IPiDocument {
     private static DVar<string> _id;
     private static DVar<string> _defPLC;
     private static DVar<bool> _viasEnabled;
@@ -35,7 +35,7 @@ namespace X13.PLC {
     }
 
     public DVar<PiLogram> Owner { get; private set; }
-
+    public string View { get { return "Logram"; } }
     public bool exec { get { return ((_via!=null && _via.value==_id.value) || (_plcEnabled && !_viasEnabled.value)); } }
 
     private void _via_changed(Topic sender, TopicChanged arg) {
@@ -80,5 +80,6 @@ namespace X13.PLC {
 
     [Newtonsoft.Json.JsonProperty]
     internal string declarer { get { return Owner.Get<string>("_declarer").value; } set { } }
+
   }
 }

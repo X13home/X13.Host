@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <root head="/etc/declarers">
-  <item name="ui" ver="0.3.1426.1">
+  <item name="ui" ver="0.316.405.1">
     <item name="ui_root" value="/HttpServer;component/Images/root.png" saved="True" type="System.String">
       <item name="Create page" value="1N⌂ui_page" saved="True" type="System.String" />
     </item>
@@ -9,15 +9,15 @@
       <item name="bool">
         <item name="button" value="2Z⌂ui_button" saved="True" type="System.String" />
         <item name="checkbox" value="3Z⌂ui_checkbox" saved="True" type="System.String" />
-        <item name="var" value="4Z⌂ui_var" saved="True" type="System.String" />
+        <item name="varB" value="4Z⌂ui_var" saved="True" type="System.String" />
       </item>
       <item name="long">
-        <item name="var" value="5I⌂ui_var" saved="True" type="System.String" />
+        <item name="varL" value="5I⌂ui_var" saved="True" type="System.String" />
         <item name="color picker" value="6I⌂ui_colorpicker" saved="True" type="System.String" />
         <item name="range" value="7I⌂ui_range" saved="True" type="System.String" />
       </item>
       <item name="double">
-        <item name="var" value="8G⌂ui_var" saved="True" type="System.String" />
+        <item name="varD" value="8G⌂ui_var" saved="True" type="System.String" />
         <item name="range" value="9G⌂ui_rangeF" saved="True" type="System.String" />
       </item>
       <item name="string" value="9S⌂ui_var" saved="True" type="System.String" />

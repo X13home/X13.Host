@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 namespace X13.CC {
   /// <summary>Interaction logic for LogramView.xaml</summary>
-  public partial class LogramView : DocumentContent {
+  public partial class LogramView : DocumentView {
     #region Settings
     private static Topic _settings;
     private static Lazy<Typeface> _ftFont=new Lazy<Typeface>(() => new Typeface("Times New Roman"));
@@ -87,12 +87,13 @@ namespace X13.CC {
     }
 
     private static List<StatementDescription> _statements;
-
-    public DVar<PiLogram> model { get { return uiLogram.model; } }
+    public override Topic model {
+      get { return uiLogram.model; }
+    }
 
     public LogramView(string lName) {
       this.Name=lName;
-      DVar<PiLogram> m=Topic.root.Get("/plc").Get<PiLogram>(ExConverter.Name2String2(lName));
+      DVar<PiLogram> m = Topic.root.Get("/plc").Get<PiLogram>(ExConverter.Name2String2("L_", lName));
       if(m.value==null) {
         m.saved=true;
         m.value=new PiLogram();
@@ -112,7 +113,7 @@ namespace X13.CC {
 
     private void ModelChanged(Topic sender, TopicChanged param) {
       if(param.Art==TopicChanged.ChangeArt.Add) {   // rename
-        Dispatcher.BeginInvoke(new Action(() => { this.Title=model.name; this.Name=ExConverter.String2Name(model.path); }), System.Windows.Threading.DispatcherPriority.Background);
+        Dispatcher.BeginInvoke(new Action(() => { this.Title = model.name; this.Name = ExConverter.String2Name("L_", model.path); }), System.Windows.Threading.DispatcherPriority.Background);
       }
     }
 

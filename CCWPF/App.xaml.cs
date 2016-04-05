@@ -25,25 +25,39 @@ namespace X13.CC {
   /// </summary>
   public partial class App : Application {
     internal static MainWindow mainWindow { get; set; }
-    internal static DVar<PiLogram> currentLogram { get; set; }
-    internal static void OpenLogram(DVar<PiLogram> doc) {
-      var c=mainWindow.dockManager.Documents.Where(z => z is LogramView).Cast<LogramView>().FirstOrDefault(z => z.model==doc);
-      if(c==null) {
-        c=new LogramView(ExConverter.String2Name(doc.path));
+    internal static Topic currentDocument { get; set; }
+    internal static void OpenLogram(Topic doc) {
+      var c = mainWindow.dockManager.Documents.Where(z => z is DocumentView).Cast<DocumentView>().FirstOrDefault(z => z.model == doc);
+      if(c == null) {
+        var d = doc.GetValue() as X13.PLC.IPiDocument;
+        if(d != null) {
+          if(d.View == "Logram") {
+            c = new LogramView(ExConverter.String2Name("L_", doc.path));
+#if EmbeddedJS
+          } else if(d.View == "JavaScript") {
+            c = new JSView(ExConverter.String2Name("JS_", doc.parent.path));
+#endif
+          } else {
+            Log.Warning("Unknown document view : {0}", d.View);
+            return;
+          }
+        } else {
+          throw new ApplicationException("OpenDocument(" + doc.valueType.FullName + ")");
+        }
       }
       c.Show(mainWindow.dockManager);
       c.Activate();
-      
+
     }
     internal static void CloseLogram(DVar<PiLogram> doc) {
-      var c=mainWindow.dockManager.Documents.Where(z => z is LogramView).Cast<LogramView>().FirstOrDefault(z => z.model==doc);
-      if(c!=null) {
+      var c = mainWindow.dockManager.Documents.Where(z => z is LogramView).Cast<LogramView>().FirstOrDefault(z => z.model == doc);
+      if(c != null) {
         c.Close();
       }
     }
 
     public App() {
-      AppDomain.CurrentDomain.UnhandledException+=new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
+      AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
     }
 
     private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e) {
@@ -52,13 +66,13 @@ namespace X13.CC {
     private void Application_Startup(object sender, StartupEventArgs e) {
       string cfgPath;
       if(e.Args.Length == 1) {
-        cfgPath=e.Args[0];
+        cfgPath = e.Args[0];
       } else {
-        cfgPath="../data/CC.xst";
+        cfgPath = "../data/CC.xst";
       }
 
-      mainWindow=new MainWindow(cfgPath);
-      
+      mainWindow = new MainWindow(cfgPath);
+
       mainWindow.Show();
     }
   }

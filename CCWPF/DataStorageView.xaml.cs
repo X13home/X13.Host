@@ -28,699 +28,717 @@ namespace X13.CC {
   /// </summary>
   public partial class DataStorageView : DockableContent {
 
-    public DataStorageView() {
-      InitializeComponent();
-      this.DataContext = this;
+	public DataStorageView() {
+	  InitializeComponent();
+	  this.DataContext = this;
 
-      DVar<bool> av=Topic.root.Get<bool>("/etc/CC/DSView/_advancedView");
-      TopicView._advancedView=av.value;
-      av.changed+=new Action<Topic, TopicChanged>(av_changed);
+	  DVar<bool> av=Topic.root.Get<bool>("/etc/CC/DSView/_advancedView");
+	  TopicView._advancedView=av.value;
+	  av.changed+=new Action<Topic, TopicChanged>(av_changed);
 
-      Topic _root=Topic.root;
-      _root.Subscribe("/#", _root_changed);
-      {
-        var ro_ch=TopicView.root.children;
-        //var tv1=TopicView.root.Get(_root.Get("/local/cfg"), true);
-        //var tv1_ch=tv1.children;
-        //tv1.Get(_root.Get("/local/cfg"));
-      }
-      TopicView.root.IsExpanded=true;
-      TopicView.root.Get(Topic.root.Get("/plc")).IsExpanded=true;
-      RootNodes=new ObservableCollection<TopicView>();
-      RootNodes.Add(TopicView.root);
-    }
+	  Topic _root=Topic.root;
+	  _root.Subscribe("/#", _root_changed);
+	  {
+		var ro_ch=TopicView.root.children;
+		//var tv1=TopicView.root.Get(_root.Get("/local/cfg"), true);
+		//var tv1_ch=tv1.children;
+		//tv1.Get(_root.Get("/local/cfg"));
+	  }
+	  TopicView.root.IsExpanded=true;
+	  TopicView.root.Get(Topic.root.Get("/plc")).IsExpanded=true;
+	  RootNodes=new ObservableCollection<TopicView>();
+	  RootNodes.Add(TopicView.root);
+	}
 
-    public ObservableCollection<TopicView> RootNodes {
-      get { return (ObservableCollection<TopicView>)GetValue(rootNodes); }
-      set { SetValue(rootNodes, value); }
-    }
+	public ObservableCollection<TopicView> RootNodes {
+	  get { return (ObservableCollection<TopicView>)GetValue(rootNodes); }
+	  set { SetValue(rootNodes, value); }
+	}
 
-    public static readonly DependencyProperty rootNodes =
+	public static readonly DependencyProperty rootNodes =
             DependencyProperty.Register("RootNodes", typeof(ObservableCollection<TopicView>), typeof(DataStorageView), new UIPropertyMetadata(null));
 
-    public Topic Selected {
-      get {
-        TopicView s=tvDataStorage.SelectedItem as TopicView;
-        return s!=null?s.ptr:Topic.root;
-      }
-    }
-    private void av_changed(Topic sender, TopicChanged param) {
-      DVar<bool> av=sender as DVar<bool>;
-      if(av==null || param.Art!=TopicChanged.ChangeArt.Value) {
-        return;
-      }
-      av.saved=true;
-      TopicView._advancedView=av.value;
-      this.Dispatcher.BeginInvoke(new Action(TopicView.root.Refresh), System.Windows.Threading.DispatcherPriority.Background);
-    }
+	public Topic Selected {
+	  get {
+		TopicView s=tvDataStorage.SelectedItem as TopicView;
+		return s!=null?s.ptr:Topic.root;
+	  }
+	}
+	private void av_changed(Topic sender, TopicChanged param) {
+	  DVar<bool> av=sender as DVar<bool>;
+	  if(av==null || param.Art!=TopicChanged.ChangeArt.Value) {
+		return;
+	  }
+	  av.saved=true;
+	  TopicView._advancedView=av.value;
+	  this.Dispatcher.BeginInvoke(new Action(TopicView.root.Refresh), System.Windows.Threading.DispatcherPriority.Background);
+	}
 
-    private void _root_changed(Topic sender, TopicChanged param) {
-      this.Dispatcher.BeginInvoke(new Action<Topic, TopicChanged.ChangeArt>(ProccessChanges), System.Windows.Threading.DispatcherPriority.Background, sender, param.Art);
-    }
-    private void ProccessChanges(Topic oCur, TopicChanged.ChangeArt art) {
-      if(oCur.path.StartsWith("/local")) {
-        return;
-      }
-      TopicView parent=TopicView.root.Get(oCur.parent, true, art!=TopicChanged.ChangeArt.Remove);
-      if(parent!=null) {
-        if(oCur.name=="_declarer" && art==TopicChanged.ChangeArt.Value) {
-          parent.AttrChanged(oCur);
-        } else {
-          TopicView cur=parent.Get(oCur, false, art!=TopicChanged.ChangeArt.Remove);
-          if(cur!=null) {
-            if(art==TopicChanged.ChangeArt.Add) {
-              cur.OnPropertyChanged("name");
-            } else if(art==TopicChanged.ChangeArt.Remove) {
-              parent.children.Remove(cur);
-            }
-          }
-        }
-      }
-    }
-    private void tvDataStorage_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
-      TopicView s=tvDataStorage.SelectedItem as TopicView;
-      if(s!=null) {
-        PropertyView.Selected=s.ptr;
-      }
-    }
+	private void _root_changed(Topic sender, TopicChanged param) {
+	  this.Dispatcher.BeginInvoke(new Action<Topic, TopicChanged.ChangeArt>(ProccessChanges), System.Windows.Threading.DispatcherPriority.Background, sender, param.Art);
+	}
+	private void ProccessChanges(Topic oCur, TopicChanged.ChangeArt art) {
+	  if(oCur.path.StartsWith("/local")) {
+		return;
+	  }
+	  TopicView parent=TopicView.root.Get(oCur.parent, true, art!=TopicChanged.ChangeArt.Remove);
+	  if(parent!=null) {
+		if(oCur.name=="_declarer" && art==TopicChanged.ChangeArt.Value) {
+		  parent.AttrChanged(oCur);
+		} else {
+		  TopicView cur=parent.Get(oCur, false, art!=TopicChanged.ChangeArt.Remove);
+		  if(cur!=null) {
+			if(art==TopicChanged.ChangeArt.Add) {
+			  cur.OnPropertyChanged("name");
+			} else if(art==TopicChanged.ChangeArt.Remove) {
+			  parent.children.Remove(cur);
+			}
+		  }
+		}
+	  }
+	}
+	private void tvDataStorage_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e) {
+	  TopicView s=tvDataStorage.SelectedItem as TopicView;
+	  if(s!=null) {
+		PropertyView.Selected=s.ptr;
+	  }
+	}
 
-    private void StackPanel_ContextMenuOpening(object sender, ContextMenuEventArgs e) {
-      StackPanel p;
-      TopicView cur;
-      if((p=sender as StackPanel)!=null && (cur=p.DataContext as TopicView)!=null) {
-        PropertyView.Selected=cur.ptr;
-        var actions=cur.GetActions();
-        p.ContextMenu.Items.Clear();
+	private void StackPanel_ContextMenuOpening(object sender, ContextMenuEventArgs e) {
+	  StackPanel p;
+	  TopicView cur;
+	  if((p=sender as StackPanel)!=null && (cur=p.DataContext as TopicView)!=null) {
+		PropertyView.Selected=cur.ptr;
+		var actions=cur.GetActions();
+		p.ContextMenu.Items.Clear();
 
-        ItemCollection items;
-        for(int i=0; i<actions.Count; i++) {
-          items=p.ContextMenu.Items;
-          string[] lvls=actions[i].menuItem.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-          for(int j=0; j<lvls.Length; j++) {
-            MenuItem mi = FindMenuItem(items, lvls[j]);
-            if(mi==null) {
-              mi=new MenuItem();
-              mi.Header=lvls[j];
-              mi.DataContext=sender;
-              items.Add(mi);
-            }
+		ItemCollection items;
+		for(int i=0;i<actions.Count;i++) {
+		  items=p.ContextMenu.Items;
+		  string[] lvls=actions[i].menuItem.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+		  for(int j=0;j<lvls.Length;j++) {
+			MenuItem mi = FindMenuItem(items, lvls[j]);
+			if(mi==null) {
+			  mi=new MenuItem();
+			  mi.Header=lvls[j];
+			  mi.DataContext=sender;
+			  items.Add(mi);
+			}
 
-            if(j==lvls.Length-1) {
-              mi.Tag=actions[i];
-              mi.Click+=new RoutedEventHandler(mi_Click);
-              mi.ToolTip=actions[i].description;
-            }
-            items=mi.Items;
-          }
-        }
+			if(j==lvls.Length-1) {
+			  mi.Tag=actions[i];
+			  mi.Click+=new RoutedEventHandler(mi_Click);
+			  mi.ToolTip=actions[i].description;
+			}
+			items=mi.Items;
+		  }
+		}
 
-        if(p.ContextMenu.Items.Count==0) {
-          e.Handled=true;
-        }
-      } else {
-        e.Handled=true;
-      }
-    }
-    internal static MenuItem FindMenuItem(ItemCollection items, string name) {
-      MenuItem rez=null;
+		if(p.ContextMenu.Items.Count==0) {
+		  e.Handled=true;
+		}
+	  } else {
+		e.Handled=true;
+	  }
+	}
+	internal static MenuItem FindMenuItem(ItemCollection items, string name) {
+	  MenuItem rez=null;
 
-      foreach(var cur in items) {
-        rez=cur as MenuItem;
-        if(rez!=null && (rez.Header as string)==name) {
-          return rez;
-        }
-      }
-      return null;
-    }
-    private void mi_Click(object sender, RoutedEventArgs e) {
-      e.Handled=true;
-      MenuItem ci=sender as MenuItem;
-      if(ci==null) {
-        return;
-      }
-      Topic cur=((ci.DataContext as StackPanel).DataContext as TopicView).ptr;
-      Topic next=null;
-      switch(((TopicView.ItemActionStr)ci.Tag).action) {
-      case ItemAction.createNodeMask:
-      case ItemAction.createBoolMask:
-      case ItemAction.createLongMask:
-      case ItemAction.createDoubleMask:
-      case ItemAction.createStringMask:
-      case ItemAction.createByteArrMask:
-      case ItemAction.createLogramMask:
-        AddItem(ci.DataContext as StackPanel, ((TopicView.ItemActionStr)ci.Tag));
-        break;
-      case ItemAction.createNodeDef:
-        next=cur.Get(ci.Header as string);
-        break;
-      case ItemAction.createBoolDef:
-        next=cur.Get<bool>(ci.Header as string);
-        break;
-      case ItemAction.createLongDef:
-        next=cur.Get<long>(ci.Header as string);
-        break;
-      case ItemAction.createDoubleDef:
-        next=cur.Get<double>(ci.Header as string);
-        break;
-      case ItemAction.createStringDef:
-        next=cur.Get<string>(ci.Header as string);
-        break;
-      case ItemAction.createByteArrDef:
-        next=cur.Get<ByteArray>(ci.Header as string);
-        break;
-      case ItemAction.createObjectDef:
-        next=cur.Get<object>(ci.Header as string);
-        break;
-      case ItemAction.open:
-        if(cur!=null && cur.valueType==typeof(PiLogram)) {
-          App.OpenLogram(cur as DVar<PiLogram>);
-        }
-        break;
-      case ItemAction.addToLogram:
-        AddToLogram(cur);
-        break;
-      case ItemAction.remove:
-        if(cur!=null && MessageBox.Show(string.Format("Remove {0}[{1}]", cur.path, cur.valueType!=null?cur.valueType.Name:"Topic"), "Remove item", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.RightAlign)==MessageBoxResult.Yes) {
-          if(cur.valueType==typeof(PiLogram)) {
-            App.CloseLogram(cur as DVar<PiLogram>);
-          }
-          cur.Remove();
-        }
-        break;
-      }
-      if(next!=null && !string.IsNullOrEmpty(((TopicView.ItemActionStr)ci.Tag).declarer)) {
-        next.Get<string>("_declarer").value=((TopicView.ItemActionStr)ci.Tag).declarer;
-      }
-    }
-    private void tvDataStorage_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
-      TreeView p;
-      TopicView cur;
-      if((p=sender as TreeView)!=null && p.Items.Count>0 && (cur=p.SelectedItem as TopicView)!=null) {
-        PropertyView.Selected=cur.ptr;
-        var actions=cur.GetActions();
-        if(cur!=null && cur.ptr!=null && cur.ptr.valueType==typeof(PiLogram) && actions.Any(z => z.action==ItemAction.open)) {
-          App.OpenLogram(cur.ptr as DVar<PiLogram>);
-        } else if(cur!=null && cur.ptr!=null && actions.Any(z => z.action==ItemAction.addToLogram)) {
-          AddToLogram(cur.ptr);
-        }
-      }
-    }
-    private void StackPanel_MouseLeave(object sender, MouseEventArgs e) {
-      var cur=tvDataStorage.SelectedItem as TopicView;
-      if(e.LeftButton==MouseButtonState.Pressed && cur!=null && cur.ptr!=null && cur.GetActions().Any(z => z.action==ItemAction.addToLogram)) {
-          DragDrop.DoDragDrop(tvDataStorage, cur.ptr.path, DragDropEffects.Link);
-      }
-    }
+	  foreach(var cur in items) {
+		rez=cur as MenuItem;
+		if(rez!=null && (rez.Header as string)==name) {
+		  return rez;
+		}
+	  }
+	  return null;
+	}
+	private void mi_Click(object sender, RoutedEventArgs e) {
+	  e.Handled=true;
+	  MenuItem ci=sender as MenuItem;
+	  if(ci==null) {
+		return;
+	  }
+	  Topic cur=((ci.DataContext as StackPanel).DataContext as TopicView).ptr;
+	  Topic next=null;
+	  switch(((TopicView.ItemActionStr)ci.Tag).action) {
+	  case ItemAction.createNodeMask:
+	  case ItemAction.createBoolMask:
+	  case ItemAction.createLongMask:
+	  case ItemAction.createDoubleMask:
+	  case ItemAction.createStringMask:
+	  case ItemAction.createByteArrMask:
+	  case ItemAction.createLogramMask:
+		AddItem(ci.DataContext as StackPanel, ((TopicView.ItemActionStr)ci.Tag));
+		break;
+	  case ItemAction.createNodeDef:
+		next=cur.Get(ci.Header as string);
+		break;
+	  case ItemAction.createBoolDef:
+		next=cur.Get<bool>(ci.Header as string);
+		break;
+	  case ItemAction.createLongDef:
+		next=cur.Get<long>(ci.Header as string);
+		break;
+	  case ItemAction.createDoubleDef:
+		next=cur.Get<double>(ci.Header as string);
+		break;
+	  case ItemAction.createStringDef:
+		next=cur.Get<string>(ci.Header as string);
+		break;
+	  case ItemAction.createByteArrDef:
+		next=cur.Get<ByteArray>(ci.Header as string);
+		break;
+	  case ItemAction.createObjectDef:
+		next=cur.Get<object>(ci.Header as string);
+		break;
+	  case ItemAction.open:
+		if(cur!=null && typeof(X13.PLC.IPiDocument).IsAssignableFrom(cur.valueType)) {
+		  App.OpenLogram(cur);
+		}
+		break;
+	  case ItemAction.addToLogram:
+		AddToLogram(cur);
+		break;
+	  case ItemAction.remove:
+		if(cur!=null && MessageBox.Show(string.Format("Remove {0}[{1}]", cur.path, cur.valueType!=null?cur.valueType.Name:"Topic"), "Remove item", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.RightAlign)==MessageBoxResult.Yes) {
+		  if(cur.valueType==typeof(PiLogram)) {
+			App.CloseLogram(cur as DVar<PiLogram>);
+		  }
+		  cur.Remove();
+		}
+		break;
+	  }
+	  if(next!=null && !string.IsNullOrEmpty(((TopicView.ItemActionStr)ci.Tag).declarer)) {
+		next.Get<string>("_declarer").value=((TopicView.ItemActionStr)ci.Tag).declarer;
+	  }
+	}
+	private void tvDataStorage_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
+	  TreeView p;
+	  TopicView cur;
+	  if((p=sender as TreeView)!=null && p.Items.Count>0 && (cur=p.SelectedItem as TopicView)!=null) {
+		PropertyView.Selected=cur.ptr;
+		var actions=cur.GetActions();
+		if(cur!=null && cur.ptr!=null && typeof(X13.PLC.IPiDocument).IsAssignableFrom(cur.ptr.valueType) && actions.Any(z => z.action==ItemAction.open)) {
+		  App.OpenLogram(cur.ptr);
+		} else if(cur!=null && cur.ptr!=null && actions.Any(z => z.action==ItemAction.addToLogram)) {
+		  AddToLogram(cur.ptr);
+		}
+	  }
+	}
+	private void StackPanel_MouseLeave(object sender, MouseEventArgs e) {
+	  var cur=tvDataStorage.SelectedItem as TopicView;
+	  if(e.LeftButton==MouseButtonState.Pressed && cur!=null && cur.ptr!=null && cur.GetActions().Any(z => z.action==ItemAction.addToLogram)) {
+		DragDrop.DoDragDrop(tvDataStorage, cur.ptr.path, DragDropEffects.Link);
+	  }
+	}
 
 
-    private static void AddToLogram(Topic cur) {
-      if(cur!=null && App.currentLogram!=null) {
-        string name=cur.name;
-        int i=1;
-        while(App.currentLogram.Exist(name)) {
-          name=string.Format("{0}_{1}", cur.name, i++);
-        }
-        var it=App.currentLogram.Get<Topic>(name);
-        it.saved=true;
-        it.value=cur;
-      }
-    }
-    private void AddItem(StackPanel sp, TopicView.ItemActionStr act) {
-      TopicView vo=sp.DataContext as TopicView;
-      TreeViewItem to=FindAncestorOrSelf<TreeViewItem>(sp);
+	private static void AddToLogram(Topic cur) {
+	  if(cur!=null && App.currentDocument!=null) {
+		string name=cur.name;
+		int i=1;
+		while(App.currentDocument.Exist(name)) {
+		  name=string.Format("{0}_{1}", cur.name, i++);
+		}
+		var it=App.currentDocument.Get<Topic>(name);
+		it.saved=true;
+		it.value=cur;
+	  }
+	}
+	private void AddItem(StackPanel sp, TopicView.ItemActionStr act) {
+	  TopicView vo=sp.DataContext as TopicView;
+	  TreeViewItem to=FindAncestorOrSelf<TreeViewItem>(sp);
 
-      if(vo!=null && to!=null) {
-        vo.IsExpanded=true;
-        TopicView vc=new TopicView(act, vo);
-        to.BringIntoView();
-      }
-    }
+	  if(vo!=null && to!=null) {
+		vo.IsExpanded=true;
+		TopicView vc=new TopicView(act, vo);
+		to.BringIntoView();
+	  }
+	}
 
-    private void TextBox_Loaded(object sender, RoutedEventArgs e) {
-      (sender as TextBox).SelectAll();
-      (sender as TextBox).Focus();
-    }
-    private void TextBox_LostFocus(object sender, RoutedEventArgs e) {
-      TextBox tb;
-      TopicView tv;
-      if((tb=sender as TextBox)!=null && (tv=tb.DataContext as TopicView)!=null) {
-        tv.Remove();
-      }
-    }
-    private void TextBox_PreviewKeyDown(object sender, KeyEventArgs e) {
-      TextBox tb;
-      TopicView tv;
-      if((tb=sender as TextBox)==null || (tv=tb.DataContext as TopicView)==null) {
-        return;
-      }
-      if(e.Key==Key.Escape) {
-        TextBox_LostFocus(sender, null);
-        e.Handled=true;
-      } else if(e.Key==Key.Enter) {
-        try {
-          tv.Create(tb.Text);
-        }
-        catch(ArgumentException ex) {
-          Log.Error(ex.Message);
-        }
-        e.Handled=true;
-      }
-    }
+	private void TextBox_Loaded(object sender, RoutedEventArgs e) {
+	  (sender as TextBox).SelectAll();
+	  (sender as TextBox).Focus();
+	}
+	private void TextBox_LostFocus(object sender, RoutedEventArgs e) {
+	  TextBox tb;
+	  TopicView tv;
+	  if((tb=sender as TextBox)!=null && (tv=tb.DataContext as TopicView)!=null) {
+		tv.Remove();
+	  }
+	}
+	private void TextBox_PreviewKeyDown(object sender, KeyEventArgs e) {
+	  TextBox tb;
+	  TopicView tv;
+	  if((tb=sender as TextBox)==null || (tv=tb.DataContext as TopicView)==null) {
+		return;
+	  }
+	  if(e.Key==Key.Escape) {
+		TextBox_LostFocus(sender, null);
+		e.Handled=true;
+	  } else if(e.Key==Key.Enter) {
+		try {
+		  tv.Create(tb.Text);
+		}
+		catch(ArgumentException ex) {
+		  Log.Error(ex.Message);
+		}
+		e.Handled=true;
+	  }
+	}
 
-    public static DependencyObject GetParent(DependencyObject obj) {
-      if(obj == null)
-        return null;
+	public static DependencyObject GetParent(DependencyObject obj) {
+	  if(obj == null)
+		return null;
 
-      ContentElement ce = obj as ContentElement;
-      if(ce != null) {
-        DependencyObject parent = ContentOperations.GetParent(ce);
-        if(parent != null)
-          return parent;
+	  ContentElement ce = obj as ContentElement;
+	  if(ce != null) {
+		DependencyObject parent = ContentOperations.GetParent(ce);
+		if(parent != null)
+		  return parent;
 
-        FrameworkContentElement fce = ce as FrameworkContentElement;
-        return fce != null ? fce.Parent : null;
-      }
+		FrameworkContentElement fce = ce as FrameworkContentElement;
+		return fce != null ? fce.Parent : null;
+	  }
 
-      return VisualTreeHelper.GetParent(obj);
-    }
-    public static T FindAncestorOrSelf<T>(DependencyObject obj)
-        where T : DependencyObject {
-      while(obj != null) {
-        T objTest = obj as T;
-        if(objTest != null)
-          return objTest;
-        obj = GetParent(obj);
-      }
+	  return VisualTreeHelper.GetParent(obj);
+	}
+	public static T FindAncestorOrSelf<T>(DependencyObject obj)
+		where T : DependencyObject {
+	  while(obj != null) {
+		T objTest = obj as T;
+		if(objTest != null)
+		  return objTest;
+		obj = GetParent(obj);
+	  }
 
-      return null;
-    }
+	  return null;
+	}
   }
   public class TopicView : INotifyPropertyChanged {
-    internal static bool _advancedView;
+	internal static bool _advancedView;
 
-    public static TopicView root { get; private set; }
-    static TopicView() {
-      root=new TopicView(Topic.root);
-    }
+	public static TopicView root { get; private set; }
+	static TopicView() {
+	  root=new TopicView(Topic.root);
+	}
 
-    private ObservableCollection<TopicView> _children;
-    private ItemActionStr _action;
-    private TopicView _parent;
-    private DVar<string> _declarer;
-    private ICollectionView _childrenView;
+	private ObservableCollection<TopicView> _children;
+	private ItemActionStr _action;
+	private TopicView _parent;
+	private DVar<string> _declarer;
+	private ICollectionView _childrenView;
 
-    private TopicView(Topic origin) {
-      this.ptr=origin;
-      DefDeclarer();
-    }
+	private TopicView(Topic origin) {
+	  this.ptr=origin;
+	  DefDeclarer();
+	}
 
-    private void DefDeclarer() {
-      Topic dt;
-      if(ptr.Exist("_declarer", out dt)) {
-        string dp;
-        int i=3;
-        while((dp=(dt as DVar<string>).value)==null && i-->0) {
-          Thread.Sleep(50);
-        }
-        if(string.IsNullOrEmpty(dp)) {
-          return;
-        }
-        i=dp.LastIndexOf('.');
-        if(i>0) {
-          dp=dp.Substring(0, i);
-        }
-        Topic ds=Topic.root.Get("/etc/declarers");
-        if(!string.IsNullOrEmpty(dp)) {
-          if((ptr.valueType==typeof(PiStatement) && ds.Get("func").Exist(dp, out dt)) || ds.Exist(dp, out dt)) {
-            _declarer=dt as DVar<string>;
-          } else {
-            foreach(var ds1 in ds.children.Where(z => z.name!="func" && z.valueType!=typeof(string))) {
-              if(ds1.Exist(dp, out dt)) {
-                _declarer=dt as DVar<string>;
-                break;
-              }
-            }
-          }
-        }
-      }
-    }
-    internal TopicView(ItemActionStr act, TopicView parent) {
-      _parent=parent;
-      _action=act;
-      ptr=null;
-      edited=true;
-      _parent.children.Insert(0, this);
-    }
+	private void DefDeclarer() {
+	  Topic dt;
+	  if(ptr.Exist("_declarer", out dt)) {
+		string dp;
+		int i=3;
+		while((dp=(dt as DVar<string>).value)==null && i-->0) {
+		  Thread.Sleep(50);
+		}
+		if(string.IsNullOrEmpty(dp)) {
+		  return;
+		}
+		i=dp.LastIndexOf('.');
+		if(i>0) {
+		  dp=dp.Substring(0, i);
+		}
+		Topic ds=Topic.root.Get("/etc/declarers");
+		if(!string.IsNullOrEmpty(dp)) {
+		  if((ptr.valueType==typeof(PiStatement) && ds.Get("func").Exist(dp, out dt)) || ds.Exist(dp, out dt)) {
+			_declarer=dt as DVar<string>;
+		  } else {
+			foreach(var ds1 in ds.children.Where(z => z.name!="func" && z.valueType!=typeof(string))) {
+			  if(ds1.Exist(dp, out dt)) {
+				_declarer=dt as DVar<string>;
+				break;
+			  }
+			}
+		  }
+		}
+	  }
+	}
+	internal TopicView(ItemActionStr act, TopicView parent) {
+	  _parent=parent;
+	  _action=act;
+	  ptr=null;
+	  edited=true;
+	  _parent.children.Insert(0, this);
+	}
 
-    public TopicView Get(Topic oCur, bool createChildren=false, bool create=true) {
-      if(oCur==null || oCur==Topic.root || oCur.path.StartsWith("/local") || oCur.name==("_declarer") || oCur.name=="_location") {  // || oCur.name.StartsWith("_")
-        return root;
-      }
-      TopicView cur=root;
-      TopicView next=null;
-      List<Topic> originPath=new List<Topic>();
-      Topic tmp=oCur;
-      while(tmp!=Topic.root) {
-        if(tmp==null) {
-          return null;
-        }
-        if(tmp==this.ptr) {
-          cur=this;
-          break;
-        }
-        originPath.Insert(0, tmp);
-        tmp=tmp.parent;
-      }
+	public TopicView Get(Topic oCur, bool createChildren=false, bool create=true) {
+	  if(oCur==null || oCur==Topic.root || oCur.path.StartsWith("/local") || oCur.name==("_declarer") || oCur.name=="_location") {  // || oCur.name.StartsWith("_")
+		return root;
+	  }
+	  TopicView cur=root;
+	  TopicView next=null;
+	  List<Topic> originPath=new List<Topic>();
+	  Topic tmp=oCur;
+	  while(tmp!=Topic.root) {
+		if(tmp==null) {
+		  return null;
+		}
+		if(tmp==this.ptr) {
+		  cur=this;
+		  break;
+		}
+		originPath.Insert(0, tmp);
+		tmp=tmp.parent;
+	  }
 
-      for(int i=0; i<originPath.Count; i++, cur=next) {
-        if(!createChildren && cur._children==null) {
-          return null;
-        }
-        next=cur.children.FirstOrDefault(tv => tv.ptr!=null && tv.ptr.name==originPath[i].name);
-        if(next==null) {
-          if(!create) {
-            return null;
-          }
-          next=new TopicView(originPath[i]);
-          next._parent=cur;
-          int j;
-          for(j=0; j<cur.children.Count; j++) {
-            if(next.name.CompareTo(cur.children[j].name)<0) {
-              break;
-            }
-          }
-          cur.children.Insert(j, next);
-        } else if(next.ptr!=originPath[i]) {
-          next.ptr=originPath[i];
-        }
-      }
-      return cur;
-    }
-    public Topic ptr;
-    public string name { get { return ptr!=null?(ptr==Topic.root?"/":ptr.name):"new item"; } set { } }
-    public string image {
-      get {
-        if(_declarer!=null && !string.IsNullOrEmpty(_declarer.value)) {
-          return _declarer.value;
-        }
-        if(ptr!=null) {
-          TypeCode typeCode=Type.GetTypeCode(ptr.valueType);
-          switch(typeCode) {
-          case TypeCode.Object:
-            if(ptr.valueType==typeof(Topic)) {
-              return "pack://application:,,/CC;component/Images/ty_ref.png";
-            } else if(ptr.valueType==typeof(PiStatement)) {
-              return "pack://application:,,/CC;component/Images/ty_func.png";
-            } else if(ptr.valueType==typeof(ByteArray)) {
-              return "pack://application:,,/CC;component/Images/ty_ByteArray.png";
-            }
-            break;
-          case TypeCode.Boolean:
-            return "pack://application:,,/CC;component/Images/ty_bool.png";
-          case TypeCode.Byte:
-          case TypeCode.Int16:
-          case TypeCode.SByte:
-          case TypeCode.UInt16:
-          case TypeCode.UInt32:
-          case TypeCode.Int32:
-          case TypeCode.UInt64:
-          case TypeCode.Int64:
-            return "pack://application:,,/CC;component/Images/ty_i64.png";
-          case TypeCode.Single:
-          case TypeCode.Double:
-          case TypeCode.Decimal:
-            return "pack://application:,,/CC;component/Images/ty_f02.png";
-          case TypeCode.String:
-            return "pack://application:,,/CC;component/Images/ty_str.png";
-          case TypeCode.Empty:
-            return "pack://application:,,/CC;component/Images/ty_topic.png";
-          case TypeCode.DateTime:
-            return "pack://application:,,/CC;component/Images/ty_dt.png";
-          }
-        }
-        return "pack://application:,,/CC;component/Images/ty_obj.png";
-      }
-    }
-    public string description {
-      get {
-        string decl;
-        string ret=string.Empty;
-        Topic dt;
-        if(ptr.Exist("_description", out dt)) {
-          ret=dt as DVar<string>;
-        }else if(_declarer!=null && _declarer.Exist("_description", out dt)) {
-          ret=dt as DVar<string>;
-        } else if(ptr.parent!=null && ptr.parent.Exist("_declarer", out dt) && !string.IsNullOrWhiteSpace(decl=(dt as DVar<string>))) {
-          string dp=(dt as DVar<string>).value;
-          int i=dp.LastIndexOf('.');
-          if(i>0) {
-            dp=dp.Substring(0, i);
-          }
-          Topic td=null;
-          if(!string.IsNullOrEmpty(dp)) {
-            Topic ds=Topic.root.Get("/etc/declarers");
-            if((ptr.valueType==typeof(PiStatement) && ds.Get("func").Exist(dp, out dt)) || ds.Exist(dp, out dt)) {
-              td=dt as DVar<string>;
-            } else {
-              foreach(var ds1 in ds.children.Where(z => z.name!="func" && z.valueType!=typeof(string))) {
-                if(ds1.Exist(dp, out dt)) {
-                  td=dt as DVar<string>;
-                  break;
-                }
-              }
-            }
-          }
-          if(td!=null) {
-            DVar<string> ti=td.all.FirstOrDefault(z => z.name==ptr.name && z.valueType==typeof(string)) as DVar<string>;
-            if(ti!=null && ti.Exist("_description", out dt)) {
-              ret=dt as DVar<string>;
-            }
-          }
-        }
-        return ret;
-      }
-    }
-    public ObservableCollection<TopicView> children {
-      get {
-        if(_children==null) {
-          _children=new ObservableCollection<TopicView>();
-          if(ptr!=null) {
-            foreach(Topic t in ptr.children.Where(t1 => !t1.path.StartsWith("/local") && t1.name!="_declarer")) {
-              TopicView cur=new TopicView(t);
-              cur._parent=this;
-              _children.Add(cur);
-            }
-          }
-          _childrenView=System.Windows.Data.CollectionViewSource.GetDefaultView(_children);
-          _childrenView.Filter=Filter;
-        }
-        return _children;
-      }
-    }
-    private bool Filter(object item) {
-      if(_advancedView) {
-        return true;
-      }
-      if(ptr!=null && ptr.valueType==typeof(PiLogram)) {
-        return false;
-      }
-      TopicView t=item as TopicView;
-      return (t!=null && !t.name.StartsWith("_"));
-    }
-    internal void Refresh() {
-      if(_children!=null) {
-        _childrenView.Refresh();
-        foreach(var tv in _children) {
-          tv.Refresh();
-        }
-      }
-    }
-    public bool edited { get; private set; }
-    internal List<ItemActionStr> GetActions() {
-      List<ItemActionStr> actions=new List<ItemActionStr>();
+	  for(int i=0;i<originPath.Count;i++, cur=next) {
+		if(!createChildren && cur._children==null) {
+		  return null;
+		}
+		next=cur.children.FirstOrDefault(tv => tv.ptr!=null && tv.ptr.name==originPath[i].name);
+		if(next==null) {
+		  if(!create) {
+			return null;
+		  }
+		  next=new TopicView(originPath[i]);
+		  next._parent=cur;
+		  int j;
+		  for(j=0;j<cur.children.Count;j++) {
+			if(next.name.CompareTo(cur.children[j].name)<0) {
+			  break;
+			}
+		  }
+		  cur.children.Insert(j, next);
+		} else if(next.ptr!=originPath[i]) {
+		  next.ptr=originPath[i];
+		}
+	  }
+	  return cur;
+	}
+	public Topic ptr;
+	public string name { get { return ptr!=null?(ptr==Topic.root?"/":ptr.name):"new item"; } set { } }
+	public string image {
+	  get {
+		if(_declarer!=null && !string.IsNullOrEmpty(_declarer.value)) {
+		  return _declarer.value;
+		}
+		if(ptr!=null) {
+		  TypeCode typeCode=Type.GetTypeCode(ptr.valueType);
+		  switch(typeCode) {
+		  case TypeCode.Object:
+			if(ptr.valueType==typeof(Topic)) {
+			  return "pack://application:,,/CC;component/Images/ty_ref.png";
+			} else if(ptr.valueType==typeof(PiStatement)) {
+			  return "pack://application:,,/CC;component/Images/ty_func.png";
+			} else if(ptr.valueType==typeof(ByteArray)) {
+			  return "pack://application:,,/CC;component/Images/ty_ByteArray.png";
+			}
+			break;
+		  case TypeCode.Boolean:
+			return "pack://application:,,/CC;component/Images/ty_bool.png";
+		  case TypeCode.Byte:
+		  case TypeCode.Int16:
+		  case TypeCode.SByte:
+		  case TypeCode.UInt16:
+		  case TypeCode.UInt32:
+		  case TypeCode.Int32:
+		  case TypeCode.UInt64:
+		  case TypeCode.Int64:
+			return "pack://application:,,/CC;component/Images/ty_i64.png";
+		  case TypeCode.Single:
+		  case TypeCode.Double:
+		  case TypeCode.Decimal:
+			return "pack://application:,,/CC;component/Images/ty_f02.png";
+		  case TypeCode.String:
+			return "pack://application:,,/CC;component/Images/ty_str.png";
+		  case TypeCode.Empty:
+			return "pack://application:,,/CC;component/Images/ty_topic.png";
+		  case TypeCode.DateTime:
+			return "pack://application:,,/CC;component/Images/ty_dt.png";
+		  }
+		}
+		return "pack://application:,,/CC;component/Images/ty_obj.png";
+	  }
+	}
+	public string description {
+	  get {
+		string decl;
+		string ret=string.Empty;
+		Topic dt;
+		if(ptr.Exist("_description", out dt)) {
+		  ret=dt as DVar<string>;
+		} else if(_declarer!=null && _declarer.Exist("_description", out dt)) {
+		  ret=dt as DVar<string>;
+		} else if(ptr.parent!=null && ptr.parent.Exist("_declarer", out dt) && !string.IsNullOrWhiteSpace(decl=(dt as DVar<string>))) {
+		  string dp=(dt as DVar<string>).value;
+		  int i=dp.LastIndexOf('.');
+		  if(i>0) {
+			dp=dp.Substring(0, i);
+		  }
+		  Topic td=null;
+		  if(!string.IsNullOrEmpty(dp)) {
+			Topic ds=Topic.root.Get("/etc/declarers");
+			if((ptr.valueType==typeof(PiStatement) && ds.Get("func").Exist(dp, out dt)) || ds.Exist(dp, out dt)) {
+			  td=dt as DVar<string>;
+			} else {
+			  foreach(var ds1 in ds.children.Where(z => z.name!="func" && z.valueType!=typeof(string))) {
+				if(ds1.Exist(dp, out dt)) {
+				  td=dt as DVar<string>;
+				  break;
+				}
+			  }
+			}
+		  }
+		  if(td!=null) {
+			DVar<string> ti=td.all.FirstOrDefault(z => z.name==ptr.name && z.valueType==typeof(string)) as DVar<string>;
+			if(ti!=null && ti.Exist("_description", out dt)) {
+			  ret=dt as DVar<string>;
+			}
+		  }
+		}
+		return ret;
+	  }
+	}
+	public ObservableCollection<TopicView> children {
+	  get {
+		if(_children==null) {
+		  _children=new ObservableCollection<TopicView>();
+		  if(ptr!=null) {
+			foreach(Topic t in ptr.children.Where(t1 => !t1.path.StartsWith("/local") && t1.name!="_declarer")) {
+			  TopicView cur=new TopicView(t);
+			  cur._parent=this;
+			  _children.Add(cur);
+			}
+		  }
+		  _childrenView=System.Windows.Data.CollectionViewSource.GetDefaultView(_children);
+		  _childrenView.Filter=Filter;
+		}
+		return _children;
+	  }
+	}
+	private bool Filter(object item) {
+	  if(_advancedView) {
+		return true;
+	  }
+	  if(ptr!=null && typeof(IPiDocument).IsAssignableFrom(ptr.valueType)) {
+		return false;
+	  }
+	  TopicView t=item as TopicView;
+	  return (t!=null && !t.name.StartsWith("_"));
+	}
+	internal void Refresh() {
+	  if(_children!=null) {
+		_childrenView.Refresh();
+		foreach(var tv in _children) {
+		  tv.Refresh();
+		}
+	  }
+	}
+	public bool edited { get; private set; }
+	internal List<ItemActionStr> GetActions() {
+	  List<ItemActionStr> actions=new List<ItemActionStr>();
 
-      if(_declarer!=null) {
-        List<RcUse> resource=new List<RcUse>();
-        var ar=uiItem.GetDItems(_declarer);
+	  if(_declarer!=null) {
+		List<RcUse> resource=new List<RcUse>();
+		var ar=uiItem.GetDItems(_declarer);
 
-        foreach(var ch in ptr.children) {   // check used resources
-          var dec=ar.FirstOrDefault(z => z.name==ch.name);
-          if(dec!=null) {
-            string rcInfo=dec.value.Substring(2);
-            int tPos=rcInfo.IndexOf('⌂');
-            if(tPos>=0) {
-              rcInfo=rcInfo.Substring(0, tPos);
-            }
-            foreach(string curRC in rcInfo.Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
-              int pos;
-              if(!int.TryParse(curRC.Substring(1), out pos)) {
-                continue;
-              }
-              for(int i=pos-resource.Count; i>=0; i--) {
-                resource.Add(RcUse.None);
-              }
-              if(curRC[0]!=(char)RcUse.None && (curRC[0]!=(char)RcUse.Shared || resource[pos]!=RcUse.None)) {
-                resource[pos]=(RcUse)curRC[0];
-              }
-            }
-          }
-        }
+		foreach(var ch in ptr.children) {   // check used resources
+		  var dec=ar.FirstOrDefault(z => z.name==ch.name);
+		  if(dec!=null) {
+			string rcInfo=dec.value.Substring(2);
+			int tPos=rcInfo.IndexOf('⌂');
+			if(tPos>=0) {
+			  rcInfo=rcInfo.Substring(0, tPos);
+			}
+			foreach(string curRC in rcInfo.Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
+			  int pos;
+			  if(!int.TryParse(curRC.Substring(1), out pos)) {
+				continue;
+			  }
+			  for(int i=pos-resource.Count;i>=0;i--) {
+				resource.Add(RcUse.None);
+			  }
+			  if(curRC[0]!=(char)RcUse.None && (curRC[0]!=(char)RcUse.Shared || resource[pos]!=RcUse.None)) {
+				resource[pos]=(RcUse)curRC[0];
+			  }
+			}
+		  }
+		}
 
-        foreach(var tpI in ar) {
-          bool busy=ptr.children.Any(z => z.name==tpI.name);
+		foreach(var tpI in ar) {
+		  bool busy=ptr.children.Any(z => z.name==tpI.name);
+		  if(busy) {      // don't show already exist variable
+			continue;
+		  }
+		  string decl=null;
+		  string rcInfo=tpI.value.Substring(2);
+		  int tPos=rcInfo.IndexOf('⌂');
+		  if(tPos>=0) {
+			decl=rcInfo.Substring(tPos+1);
+			rcInfo=rcInfo.Substring(0, tPos);
+		  }
+		  foreach(string curRC in rcInfo.Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
+			int pos;
+			if(!int.TryParse(curRC.Substring(1), out pos)) {
+			  continue;
+			}
+			if(pos<resource.Count 
+               && ((curRC[0]==(char)RcUse.Exclusive && resource[pos]!=RcUse.None) 
+                 || (curRC[0]==(char)RcUse.Shared && resource[pos]!=RcUse.None && resource[pos]!=RcUse.Shared))) {
+			  busy=true;
+			  break;
+			}
+
+		  }
+		  if(!busy) {
+			Topic dt;
+			string ptc=tpI.path.Substring(_declarer.path.Length);
+			string desc=tpI.Exist("_description", out dt)?(dt as DVar<string>).value:string.Empty;
+			actions.Add(new ItemActionStr(ptc, (ItemAction)tpI.value[1], desc, decl));
+		  }
+		}
+	  } else {
+		actions.Add(new ItemActionStr("Add/Node", ItemAction.createNodeMask, null));
+		actions.Add(new ItemActionStr("Add/bool", ItemAction.createBoolMask, null));
+		actions.Add(new ItemActionStr("Add/long", ItemAction.createLongMask, null));
+		actions.Add(new ItemActionStr("Add/double", ItemAction.createDoubleMask, null));
+		actions.Add(new ItemActionStr("Add/string", ItemAction.createStringMask, null));
+		actions.Add(new ItemActionStr("Add/byteArray", ItemAction.createByteArrMask, null));
+		if(ptr.valueType!=null && (ptr.valueType==typeof(ByteArray) || Type.GetTypeCode(ptr.valueType)!=TypeCode.Object)) {
+		  actions.Add(new ItemActionStr("Attach to Logram", ItemAction.addToLogram, null));
+		}
+		actions.Add(new ItemActionStr("remove", ItemAction.remove, null));
+	  }
+      Topic T_VM;
+      if(ptr.valueType!=null && ptr.valueType.Name == "MsDevice" && ptr.Exist("pa0/_map", out T_VM)) {
+        string path;
+        int idx;
+        foreach(var v in T_VM.children.Select(z => z as DVar<string>).Where(z => z!=null && z.value!=null && z.value.Length>2)) {
+          bool busy = ptr.children.Any(z => z.name == v.name);
           if(busy) {      // don't show already exist variable
             continue;
           }
-          string decl=null;
-          string rcInfo=tpI.value.Substring(2);
-          int tPos=rcInfo.IndexOf('⌂');
-          if(tPos>=0) {
-            decl=rcInfo.Substring(tPos+1);
-            rcInfo=rcInfo.Substring(0, tPos);
+          idx = v.name.IndexOf(".");
+          if(idx > 0) {
+            path = "PLC/" + v.name.Substring(0, idx) + "/" + v.name;
+          } else {
+            path = "PLC/" + v.name;
           }
-          foreach(string curRC in rcInfo.Split(',').Where(z => !string.IsNullOrWhiteSpace(z) && z.Length>1)) {
-            int pos;
-            if(!int.TryParse(curRC.Substring(1), out pos)) {
-              continue;
-            }
-            if(pos<resource.Count 
-               && ((curRC[0]==(char)RcUse.Exclusive && resource[pos]!=RcUse.None) 
-                 || (curRC[0]==(char)RcUse.Shared && resource[pos]!=RcUse.None && resource[pos]!=RcUse.Shared))) {
-              busy=true;
-              break;
-            }
+          actions.Insert(actions.Count()>0?actions.Count-1:0, new ItemActionStr(path, v.value[1] == 'z' ? ItemAction.createBoolDef : ItemAction.createLongDef, null));
+        }
+      }
+	  return actions;
+	}
+	private bool isExpanded;
+	public bool IsExpanded {
+	  get { return isExpanded; }
+	  set {
+		isExpanded = value;
+		OnPropertyChanged("IsExpanded");
+	  }
+	}
+	private enum RcUse : ushort {
+	  None='0',
+	  Baned='B',
+	  Shared='S',
+	  Exclusive='X',
+	}
+	public void Remove() {
+	  if(_parent!=null) {
+		_parent.children.Remove(this);
+		if(ptr!=null) {
+		  _parent.Get(ptr);
+		}
+	  }
+	}
+	public void Create(string name) {
+	  if(_parent!=null && _action.action !=ItemAction.empty) {
+		this.Remove();
+		Topic cur=null;
+		switch(_action.action) {
+		case ItemAction.createNodeMask:
+		  cur=_parent.ptr.Get(name);
+		  break;
+		case ItemAction.createBoolMask:
+		  cur=_parent.ptr.Get<bool>(name);
+		  break;
+		case ItemAction.createLongMask:
+		  cur=_parent.ptr.Get<long>(name);
+		  break;
+		case ItemAction.createDoubleMask:
+		  cur=_parent.ptr.Get<double>(name);
+		  break;
+		case ItemAction.createStringMask:
+		  cur=_parent.ptr.Get<string>(name);
+		  break;
+		case ItemAction.createByteArrMask:
+		  cur=_parent.ptr.Get<ByteArray>(name);
+		  break;
+		case ItemAction.createLogramMask:
+		  cur=_parent.ptr.Get<PiLogram>(name);
+		  if(cur.GetValue()==null) {
+			(cur as DVar<PiLogram>).value=new PiLogram();
+			var via=cur.Get<string>("_via");
+			via.saved=true;
+			via.value=Topic.root.Get<string>("/etc/PLC/default").value;
+		  }
+		  App.OpenLogram(cur as DVar<PiLogram>);
+		  break;
+		}
+		if(cur!=null && !string.IsNullOrEmpty(_action.declarer)) {
+		  cur.Get<string>("_declarer").value=_action.declarer;
+		}
+	  }
+	}
 
-          }
-          if(!busy) {
-            Topic dt;
-            string ptc=tpI.path.Substring(_declarer.path.Length);
-            string desc=tpI.Exist("_description", out dt)?(dt as DVar<string>).value:string.Empty;
-            actions.Add(new ItemActionStr(ptc, (ItemAction)tpI.value[1], desc, decl));
-          }
-        }
-      } else {
-        actions.Add(new ItemActionStr("Add/Node", ItemAction.createNodeMask, null));
-        actions.Add(new ItemActionStr("Add/bool", ItemAction.createBoolMask, null));
-        actions.Add(new ItemActionStr("Add/long", ItemAction.createLongMask, null));
-        actions.Add(new ItemActionStr("Add/double", ItemAction.createDoubleMask, null));
-        actions.Add(new ItemActionStr("Add/string", ItemAction.createStringMask, null));
-        actions.Add(new ItemActionStr("Add/byteArray", ItemAction.createByteArrMask, null));
-        if(ptr.valueType!=null && (ptr.valueType==typeof(ByteArray) || Type.GetTypeCode(ptr.valueType)!=TypeCode.Object)) {
-          actions.Add(new ItemActionStr("Attach to Logram", ItemAction.addToLogram, null));
-        }
-        actions.Add(new ItemActionStr("remove", ItemAction.remove, null));
-      }
-      return actions;
-    }
-    private bool isExpanded;
-    public bool IsExpanded {
-      get { return isExpanded; }
-      set {
-        isExpanded = value;
-        OnPropertyChanged("IsExpanded");
-      }
-    }
-    private enum RcUse : ushort {
-      None='0',
-      Baned='B',
-      Shared='S',
-      Exclusive='X',
-    }
-    public void Remove() {
-      if(_parent!=null) {
-        _parent.children.Remove(this);
-        if(ptr!=null) {
-          _parent.Get(ptr);
-        }
-      }
-    }
-    public void Create(string name) {
-      if(_parent!=null && _action.action !=ItemAction.empty) {
-        this.Remove();
-        Topic cur=null;
-        switch(_action.action) {
-        case ItemAction.createNodeMask:
-          cur=_parent.ptr.Get(name);
-          break;
-        case ItemAction.createBoolMask:
-          cur=_parent.ptr.Get<bool>(name);
-          break;
-        case ItemAction.createLongMask:
-          cur=_parent.ptr.Get<long>(name);
-          break;
-        case ItemAction.createDoubleMask:
-          cur=_parent.ptr.Get<double>(name);
-          break;
-        case ItemAction.createStringMask:
-          cur=_parent.ptr.Get<string>(name);
-          break;
-        case ItemAction.createByteArrMask:
-          cur=_parent.ptr.Get<ByteArray>(name);
-          break;
-        case ItemAction.createLogramMask:
-          cur=_parent.ptr.Get<PiLogram>(name);
-          if(cur.GetValue()==null) {
-            (cur as DVar<PiLogram>).value=new PiLogram();
-            var via=cur.Get<string>("_via");
-            via.saved=true;
-            via.value=Topic.root.Get<string>("/etc/PLC/default").value;
-          }
-          App.OpenLogram(cur as DVar<PiLogram>);
-          break;
-        }
-        if(cur!=null && !string.IsNullOrEmpty(_action.declarer)) {
-          cur.Get<string>("_declarer").value=_action.declarer;
-        }
-      }
-    }
+	internal struct ItemActionStr {
+	  public ItemActionStr(string menuItem, ItemAction action, string desc, string decl=null) {
+		this.menuItem=menuItem;
+		this.action=action;
+		this.description=desc;
+		this.declarer=decl;
+	  }
+	  public readonly string declarer;
+	  public readonly string menuItem;
+	  public readonly ItemAction action;
+	  public readonly string description;
+	}
+	internal void OnPropertyChanged(string name) {
+	  if(PropertyChanged!=null) {
+		PropertyChanged(this, new PropertyChangedEventArgs(name));
+	  }
+	}
 
-    internal struct ItemActionStr {
-      public ItemActionStr(string menuItem, ItemAction action, string desc, string decl=null) {
-        this.menuItem=menuItem;
-        this.action=action;
-        this.description=desc;
-        this.declarer=decl;
-      }
-      public readonly string declarer;
-      public readonly string menuItem;
-      public readonly ItemAction action;
-      public readonly string description;
-    }
-    internal void OnPropertyChanged(string name) {
-      if(PropertyChanged!=null) {
-        PropertyChanged(this, new PropertyChangedEventArgs(name));
-      }
-    }
+	public event PropertyChangedEventHandler PropertyChanged;
 
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    internal void AttrChanged(Topic oCur) {
-      if(oCur.name=="_declarer") {
-        DefDeclarer();
-        OnPropertyChanged("image");
-      }
-    }
+	internal void AttrChanged(Topic oCur) {
+	  if(oCur.name=="_declarer") {
+		DefDeclarer();
+		OnPropertyChanged("image");
+	  }
+	}
   }
   public enum ItemAction : ushort {
-    empty=' ',
-    createNodeMask='N',
-    createBoolMask='Z',
-    createLongMask='I',
-    createDoubleMask='G',
-    createStringMask='S',
-    createByteArrMask='B',
-    createLogramMask='L',
+	empty=' ',
+	createNodeMask='N',
+	createBoolMask='Z',
+	createLongMask='I',
+	createDoubleMask='G',
+	createStringMask='S',
+	createByteArrMask='B',
+	createLogramMask='L',
 
-    createNodeDef='n',
-    createBoolDef='z',
-    createLongDef='i',
-    createDoubleDef='g',
-    createStringDef='s',
-    createByteArrDef='b',
-    createObjectDef='o',
+	createNodeDef='n',
+	createBoolDef='z',
+	createLongDef='i',
+	createDoubleDef='g',
+	createStringDef='s',
+	createByteArrDef='b',
+	createObjectDef='o',
 
-    addToLogram='A',
-    remove='D',
-    open='O',
+	addToLogram='A',
+	remove='D',
+	open='O',
   }
 }

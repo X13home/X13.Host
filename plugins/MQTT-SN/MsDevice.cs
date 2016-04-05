@@ -268,7 +268,8 @@ namespace X13.Periphery {
     private byte[] Addr { get; set; }
     [Newtonsoft.Json.JsonProperty]
     private string backName { get; set; }
-    public void AddNode(MsDevice dev) {
+
+	public void AddNode(MsDevice dev) {
       if(_nodes==null) {
         _nodes=new List<MsDevice>();
       }
@@ -403,6 +404,13 @@ namespace X13.Periphery {
                 } else {
                   (ti.topic as DVar<TWIDriver>).value.Reset();
                 }
+              } else if(ti.topic.valueType==typeof(DevicePLC)) {
+                if(ti.topic.GetValue()==null) {
+                  ti.topic.SetValue(new DevicePLC(ti.topic), new TopicChanged(TopicChanged.ChangeArt.Value, Owner));
+                } else {
+                  (ti.topic as DVar<DevicePLC>).value.Reset();
+                }
+
               }
             }
             Send(new MsRegAck(ti.TopicId, tmp.MessageId, MsReturnCode.Accepted));
@@ -731,6 +739,17 @@ namespace X13.Periphery {
               return;
             }
             break;
+          } else if(ti.topic.valueType==typeof(DevicePLC)) {
+            var plc=(ti.topic.GetValue() as DevicePLC);
+            if(plc==null) {
+              plc=new DevicePLC(ti.topic);
+              plc.Recv(msgData);
+              val=plc;
+            } else {
+              plc.Recv(msgData);
+              return;
+            }
+            break;
           } else {
             return;
           }
@@ -787,6 +806,9 @@ namespace X13.Periphery {
         if(topic.valueType==typeof(TWIDriver)) {  //  || (topic.parent!=null && topic.parent.valueType==typeof(TWIDriver))
           return;   // processed from TWIDriver
         }
+        if(topic.valueType==typeof(DevicePLC)) {
+          return;   // processed from DevicePLC
+        }
         GetTopicInfo(topic);
         return;
       }
@@ -806,6 +828,9 @@ namespace X13.Periphery {
       if(topic.valueType==typeof(TWIDriver)) {  //  || (topic.parent!=null && topic.parent.valueType==typeof(TWIDriver))
         return;   // processed from TWIDriver
       }
+      if(topic.valueType==typeof(DevicePLC)) {
+        return;   // processed from DevicePLC
+      }
       TopicInfo rez=null;
       for(int i=_topics.Count-1; i>=0; i--) {
         if(_topics[i].path==topic.path) {
@@ -823,7 +848,7 @@ namespace X13.Periphery {
         Send(new MsPublish(rez.topic, rez.TopicId, param.Subscription.qos));
       } else {          // Remove by device
         if(rez.it==TopicIdType.Normal) {
-          Send(new MsRegister(0xFFFF, rez.path.StartsWith(Owner.path)?rez.path.Remove(0, Owner.path.Length+1):rez.path));
+          Send(new MsRegister(0xFFFF, rez.subIdx));
         }
         _topics.Remove(rez);
       }
@@ -847,6 +872,22 @@ namespace X13.Periphery {
       //}
       Send(new MsPublish(rez.topic, rez.TopicId, QoS.AtLeastOnce) { Data=payload });
     }
+    internal void UpdateMapping(Topic topic) {
+      TopicInfo rez = null;
+      for(int i = _topics.Count - 1; i >= 0; i--) {
+        if(_topics[i].path == topic.path) {
+          rez = _topics[i];
+          break;
+        }
+      }
+      if(rez != null) {
+        if(rez.it == TopicIdType.Normal) {
+          Send(new MsRegister(0xFFFF, rez.subIdx));
+        }
+        _topics.Remove(rez);
+      }
+      rez = GetTopicInfo(topic, true);
+    }
 
     /// <summary>Find or create TopicInfo by Topic</summary>
     /// <param name="tp">Topic as key</param>
@@ -863,7 +904,7 @@ namespace X13.Periphery {
           break;
         }
       }
-      string tpc=(tp.path.StartsWith(Owner.path))?tp.path.Remove(0, Owner.path.Length+1):tp.path;
+      string tpc=(tp.path.StartsWith(Owner.path))?tp.path.Substring(Owner.path.Length+1):tp.path;
       if(rez==null) {
         rez=new TopicInfo();
         rez.topic=tp;
@@ -877,7 +918,7 @@ namespace X13.Periphery {
           Topic tmp=tp.parent;
           bool ignory=false;
           while(tmp!=null && tmp.valueType!=typeof(MsDevice)) {
-            if(tmp.valueType==typeof(SmartTwi) || tmp.valueType==typeof(TWIDriver)) {
+            if(tmp.valueType==typeof(SmartTwi) || tmp.valueType==typeof(TWIDriver) || tmp.valueType==typeof(DevicePLC)) {
               ignory=true;
               break;
             }
@@ -892,11 +933,19 @@ namespace X13.Periphery {
             rez.it=TopicIdType.Normal;
           }
         }
+        if(rez.subIdx == null) {
+          string tpc_n;
+          Topic map;
+          if(Owner.Exist("pa0/_map", out map) && map != null && map.Exist(tpc, out map) && map != null && map.valueType == typeof(string) && (tpc_n = map.GetValue() as string) != null) {
+            tpc = tpc_n;
+          }
+          rez.subIdx = tpc;
+        }
         _topics.Add(rez);
       }
       if(!rez.registred) {
         if(sendRegister) {
-          Send(new MsRegister(rez.TopicId, tpc));
+          Send(new MsRegister(rez.TopicId, rez.subIdx));
         } else {
           rez.registred=true;
         }
@@ -920,6 +969,15 @@ namespace X13.Periphery {
       var rec=_NTTable.FirstOrDefault(z => cName.StartsWith(z.name));
       TopicInfo ret;
       if(rec.name!=null && !path.StartsWith("/local")) {
+        Topic map;
+        DVar<string> kv;
+        if(Owner.Exist("pa0/_map", out map) && map!=null && (kv=map.children.Select(z=>z as DVar<string>).FirstOrDefault(z=>z!=null && z.value==cName))!=null ) {
+		  if(idx>0) {
+			path=path.Substring(0, idx)+kv.name;
+		  } else {
+			path=kv.name;
+		  }
+		}
         cur=Topic.GetP(path, rec.type, Owner, Owner);
         ret=GetTopicInfo(cur, sendRegister);
       } else {
@@ -1212,6 +1270,7 @@ namespace X13.Periphery {
       public TopicIdType it;
       public bool registred;
       public string path;
+      public string subIdx;
     }
     private static NTRecord[] _NTTable= new NTRecord[]{ 
       new NTRecord("In", typeof(bool)),
@@ -1265,27 +1324,11 @@ namespace X13.Periphery {
       new NTRecord("Mq", typeof(long)),   //int64
       new NTRecord("Ms", typeof(string)),
       new NTRecord("Ma", typeof(PLC.ByteArray)),  // Merkers
+      new NTRecord("pa", typeof(DevicePLC)),    // Program
       new NTRecord("_declarer", typeof(string)),
       new NTRecord("present", typeof(bool)),
     };
     internal static Dictionary<string, ushort> PredefinedTopics=new Dictionary<string, ushort>(){
-      {"Pa0000",        0x0000},
-      {"Pa0001",        0x0001},
-      {"Pa0002",        0x0002},
-      {"Pa0003",        0x0003},
-      {"Pa0004",        0x0004},
-      {"Pa0005",        0x0005},
-      {"Pa0006",        0x0006},
-      {"Pa0007",        0x0007},
-      {"Pa0008",        0x0008},
-      {"Pa0009",        0x0009},
-      {"Pa000A",        0x000A},
-      {"Pa000B",        0x000B},
-      {"Pa000C",        0x000C},
-      {"Pa000D",        0x000D},
-      {"Pa000E",        0x000E},
-      {"Pa000F",        0x000F},
-
       {"_sName",             0xFF00},
       {".cfg/XD_SleepTime",  0xFF01},
       {".cfg/XD_ADCintegrate",   0xFF08},
@@ -1312,13 +1355,13 @@ namespace X13.Periphery {
       {".cfg/_state",        0xFFD1},
       {"present",            0xFFD2},
       {".cfg/_via",          0xFFD3},
+      {"pa0/XD_StackBottom", 0xFFD4},
 
       {"_logD",              LOG_D_ID},
       {"_logI",              LOG_I_ID},
       {"_logW",              LOG_W_ID},
       {"_logE",              LOG_E_ID},
     };
-
     private struct NTRecord {
       public NTRecord(string name, Type type) {
         this.name=name;

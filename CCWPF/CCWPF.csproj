@@ -32,29 +32,38 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <OutputPath>..\bin\</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug _HTTP|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug_ejs|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>..\bin\</OutputPath>
-    <DefineConstants>TRACE;DEBUG</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;EmbeddedJS</DefineConstants>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Mono|AnyCPU'">
-    <OutputPath>bin\Mono\</OutputPath>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release_ejs|AnyCPU'">
+    <OutputPath>..\bin\</OutputPath>
+    <DefineConstants>EmbeddedJS</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Accessibility" />
     <Reference Include="AvalonDock, Version=1.3.3571.0, Culture=neutral, PublicKeyToken=85a1e0ada7ec13e4, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\bin\AvalonDock.dll</HintPath>
+      <HintPath>bin\AvalonDock.dll</HintPath>
     </Reference>
-    <Reference Include="AvalonDock.Themes">
-      <HintPath>..\bin\AvalonDock.Themes.dll</HintPath>
+    <Reference Include="AvalonDock.Themes, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\AvalonDock.Themes.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.AvalonEdit, Version=5.0.1.0, Culture=neutral, PublicKeyToken=9cc39be672370310, processorArchitecture=MSIL" Condition="'$(Configuration)'=='Release_ejs' Or '$(Configuration)'=='Debug_ejs'">
+      <HintPath>..\packages\AvalonEdit.5.0.2\lib\Net40\ICSharpCode.AvalonEdit.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="NiL.JS, Version=2.1.883.0, Culture=neutral, PublicKeyToken=f1426dd7ad77fce3, processorArchitecture=MSIL" Condition="'$(Configuration)'=='Release_ejs' Or '$(Configuration)'=='Debug_ejs'">
+      <HintPath>..\packages\NiL.JS.2.1.883.0\lib\net40\NiL.JS.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="PresentationUI, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="ReachFramework" />
@@ -84,6 +93,21 @@
       <HintPath>..\bin\WPFToolkit.Extended.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)'=='Release_ejs' Or '$(Configuration)'=='Debug_ejs'">
+    <Compile Include="Editor\Compiler.cs" />
+    <Compile Include="Editor\EP_VP2.cs" />
+    <Compile Include="Editor\ITextMarker.cs" />
+    <Compile Include="Editor\TextMarkerService.cs" />
+    <Compile Include="Editor\EP_VP1.cs" />
+    <Page Include="JSView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Compile Include="JSView.xaml.cs">
+      <DependentUpon>JSView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Editor\EP_Enums.cs" />
+  </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -92,6 +116,7 @@
     <Compile Include="..\X13Engine\Properties\VersionInfo.cs">
       <Link>VersionInfo.cs</Link>
     </Compile>
+    <Compile Include="DocumentView.cs" />
     <Compile Include="PriorityQueue.cs" />
     <Compile Include="Schema.cs" />
     <Compile Include="DataStorageView.xaml.cs">
@@ -170,6 +195,7 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <None Include="CCWPF.cd" />
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -195,34 +221,21 @@
     <Resource Include="Images\bi_shl.png" />
     <Resource Include="Images\bi_shr.png" />
     <Resource Include="Images\bi_xor.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ar_div.png" />
     <Resource Include="Images\ar_mod.png" />
     <Resource Include="Images\ar_mul.png" />
     <Resource Include="Images\ar_sub.png" />
     <Resource Include="Images\ar_sum.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ar_comp_gr.png" />
     <Resource Include="Images\ar_comp_le.png" />
     <Resource Include="Images\ar_eq.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ar_avr.png" />
     <Resource Include="Images\ar_pile.png" />
     <Resource Include="Images\ar_switch.png" />
-  </ItemGroup>
-  <ItemGroup>
+    <Resource Include="Images\Run.png" />
     <Resource Include="Images\ty_str.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ty_f02.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ty_bool.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\bi_counter.png" />
     <Resource Include="Images\bi_oscillator.png" />
     <Resource Include="Images\ty_func.png" />
@@ -235,63 +248,33 @@
     <Resource Include="Images\ty_ref.png" />
     <Resource Include="Images\ty_topic.png" />
     <Resource Include="Images\ty_wire.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\bi_triger.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\bi_impulse.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\log_err.png" />
     <Resource Include="Images\log_info.png" />
     <Resource Include="Images\log_warn.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\log_deb.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\fu_cosm.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\st_fmt.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\fu_exec.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ar_breaker.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ar_zbuffer.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ty_i64.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ty_dt.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ty_cfg.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ty_etc.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\bi_delay.png" />
     <Resource Include="Images\ty_ugate.png" />
     <Resource Include="Images\ty_unode.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\ar_pid.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Images\fu_BAGetL.png" />
     <Resource Include="Images\fu_BAInsertL.png" />
     <Resource Include="Images\fu_BALength.png" />
     <Resource Include="Images\ty_ByteArray.png" />
-  </ItemGroup>
-  <ItemGroup>
+    <Resource Include="Images\fu_NarodMon.png" />
+    <Resource Include="Images\Redo.png" />
+    <Resource Include="Images\Undo.png" />
+    <Resource Include="Images\Save.png" />
     <Resource Include="Images\fu_BAGetS.png" />
     <Resource Include="Images\fu_BAInsertS.png" />
   </ItemGroup>
@@ -299,9 +282,6 @@
     <None Include="bin\AvalonDock.dll" />
     <None Include="bin\AvalonDock.Themes.dll" />
     <None Include="bin\WPFToolkit.Extended.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Images\fu_NarodMon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

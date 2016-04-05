@@ -28,8 +28,14 @@ namespace X13 {
         return false;
       }
       Log.Debug("Import {0}", fileName);
-      using(StreamReader reader = File.OpenText(fileName)) {
-        Import(reader, path);
+      try {
+        using(StreamReader reader = File.OpenText(fileName)) {
+          Import(reader, path);
+        }
+      }
+      catch(Exception ex) {
+        Log.Warning("Import {0} FAILED. {1}", fileName, ex.Message);
+        return false;
       }
       return true;
     }
