@@ -82,7 +82,10 @@ namespace X13.Plugins {
     }
 
     private void SubChanged(Topic t, TopicChanged a) {
-      if(t.path.StartsWith("/local") || a.Visited(_ses.owner, true) || !MQTT.MqBroker.CheckAcl(_ses.userName, t, TopicAcl.Subscribe)) {
+      if(a.Visited(_ses.owner, true)) {
+        return;
+      }
+      if(t.path.StartsWith("/local") || !MQTT.MqBroker.CheckAcl(_ses.userName, t, TopicAcl.Subscribe)) {
         if(_verbose.value) {
           X13.Log.Warning("ws.snd({0}) - subscribe:access denied", t.path);
         }

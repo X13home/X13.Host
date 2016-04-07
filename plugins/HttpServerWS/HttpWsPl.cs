@@ -172,7 +172,8 @@ namespace X13.Plugins {
             res.ContentType=Ext2ContentType(Path.GetExtension(path));
             rsc.Item1.Position=0;
             rsc.Item1.CopyTo(res.OutputStream);
-            statusCode=HttpStatusCode.OK;
+            res.ContentLength64 = rsc.Item1.Length;
+            statusCode = HttpStatusCode.OK;
           }
         } else {
           FileInfo f = new FileInfo(Path.Combine(_sv.RootPath, path.Substring(1)));
@@ -189,6 +190,7 @@ namespace X13.Plugins {
               res.ContentType=Ext2ContentType(f.Extension);
               using(var fs=f.OpenRead()) {
                 fs.CopyTo(res.OutputStream);
+                res.ContentLength64 = fs.Length;
               }
               statusCode=HttpStatusCode.OK;
             }
