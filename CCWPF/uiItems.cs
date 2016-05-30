@@ -28,7 +28,8 @@ namespace X13.CC {
         DVar<string> tmp;
         Topic tt;
         do {
-          ar.AddRange(tdecl.all.Where(z => z!=null && z!=tdecl && z.name!="_description" && z.name!="_ver" && z.name!="_proto" && ar.All(z1 => z1.name!=z.name) && z.valueType==typeof(string)).Cast<DVar<string>>().Where(z => z.value!=null && z.value.Length>=2));
+          ar.AddRange(tdecl.all.Where(z => z != null && z != tdecl && z.name != "_description" && z.name != "_ver" && z.name != "_proto" && z.valueType == typeof(string)).Cast<DVar<string>>().
+            Where(z => z.value != null && z.value.Length >= 2 && ar.All(z1 => z1.name != z.name || z.value[1]!=z1.value[1])));
           if(tdecl.Exist("_proto", out tt) && (tmp = tt as DVar<string>)!=null && !string.IsNullOrEmpty(tmp.value) && tdecl.parent.Exist(tmp.value, out tt)) {
             tdecl=tt as DVar<string>;
           } else {
