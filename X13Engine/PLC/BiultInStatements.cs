@@ -136,7 +136,7 @@ namespace X13.PLC {
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
         long ret=-1;  // 0xFFFFFFFF
-        foreach(DVar<long> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(long) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<long>>()) {
+        foreach(DVar<long> pin in model.children.OfType<DVar<long>>().Where(z => (z.name.Length == 1 && z.name[0] >= 'A' && z.name[0] <= 'H'))) {
           ret&=pin.value;
         }
         _q.value=ret;
@@ -168,7 +168,7 @@ namespace X13.PLC {
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
         long ret=0;
-        foreach(DVar<long> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(long) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<long>>()) {
+        foreach(DVar<long> pin in model.children.OfType<DVar<long>>().Where(z => (z.name.Length == 1 && z.name[0] >= 'A' && z.name[0] <= 'H'))) {
           ret|=pin;
         }
         _q.value=ret;
@@ -200,7 +200,7 @@ namespace X13.PLC {
 
       public void Calculate(DVar<PiStatement> model, Topic source) {
         long ret=0;
-        foreach(DVar<long> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(long) && z.name[0]>='A' && z.name[0]<='H')).Cast<DVar<long>>()) {
+        foreach(DVar<long> pin in model.children.OfType<DVar<long>>().Where(z => (z.name.Length == 1 && z.name[0] >= 'A' && z.name[0] <= 'H'))) {
           ret^=pin;
         }
         _q.value=ret;
@@ -846,7 +846,7 @@ namespace X13.PLC {
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         double ret=model.Get<double>("A");
-        foreach(DVar<double> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(double) && z.name[0]>'A' && z.name[0]<='H')).Cast<DVar<double>>()) {
+        foreach(DVar<double> pin in model.children.OfType<DVar<double>>().Where(z => (z.name.Length == 1 && z.name[0] > 'A' && z.name[0] <= 'H'))) {
           ret+=pin.value;
           //ret-=pin.value;
           //ret*=pin.value;
@@ -882,7 +882,7 @@ namespace X13.PLC {
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         double ret=model.Get<double>("A");
-        foreach(DVar<double> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(double) && z.name[0]>'A' && z.name[0]<='H')).Cast<DVar<double>>()) {
+        foreach(DVar<double> pin in model.children.OfType<DVar<double>>().Where(z => (z.name.Length == 1 && z.name[0] > 'A' && z.name[0] <= 'H'))) {
           ret-=pin.value;
         }
         DVar<double> outp=model.Get<double>("Q");
@@ -908,7 +908,7 @@ namespace X13.PLC {
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         double ret=model.Get<double>("A");
-        foreach(DVar<double> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(double) && z.name[0]>'A' && z.name[0]<='H')).Cast<DVar<double>>()) {
+        foreach(DVar<double> pin in model.children.OfType<DVar<double>>().Where(z => (z.name.Length == 1 && z.name[0] > 'A' && z.name[0] <= 'H'))) {
           ret*=pin.value;
         }
         DVar<double> outp=model.Get<double>("Q");
@@ -934,7 +934,7 @@ namespace X13.PLC {
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         double ret=model.Get<double>("A");
-        foreach(DVar<double> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(double) && z.name[0]>'A' && z.name[0]<='H')).Cast<DVar<double>>()) {
+        foreach(DVar<double> pin in model.children.OfType<DVar<double>>().Where(z => (z.name.Length == 1  && z.name[0] > 'A' && z.name[0] <= 'H'))) {
           if(pin.value!=0) {
             ret/=pin.value;
           }
@@ -962,7 +962,7 @@ namespace X13.PLC {
       }
       public void Calculate(DVar<PiStatement> model, Topic source) {
         double ret=model.Get<double>("A");
-        foreach(DVar<double> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(double) && z.name[0]>'A' && z.name[0]<='H')).Cast<DVar<double>>()) {
+        foreach(DVar<double> pin in model.children.OfType<DVar<double>>().Where(z => (z.name.Length == 1 && z.name[0] > 'A' && z.name[0] <= 'H'))) {
           if(pin.value!=0) {
             ret%=pin.value;
           }
@@ -1045,7 +1045,7 @@ namespace X13.PLC {
         for(int i=0; i<8; i++) {
           inp[i]=null;
         }
-        foreach(DVar<object> pin in model.children.Where(z => (z.name.Length==1 && z.valueType==typeof(object) && z.name[0]>='0' && z.name[0]<='7')).Cast<DVar<object>>()) {
+        foreach(DVar<object> pin in model.children.OfType<DVar<object>>().Where(z => (z.name.Length == 1 && z.name[0] >= '0' && z.name[0] <= '7'))) {
           inp[(int)(pin.name[0]-'0')]=pin.value;
         }
         string fmt=Newtonsoft.Json.JsonConvert.DeserializeObject<string>(string.Format("\"{0}\"", _dFmt.value));
@@ -1347,7 +1347,7 @@ namespace X13.PLC {
         }
         if(source==_push) {
           StringBuilder sb=new StringBuilder();
-          foreach(var inp in model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
+          foreach(var inp in model.children.OfType<DVar<double>>().Where(z => z.name.Length == 1 && z.name[0] >= 'A' && z.name[0] <= 'G')) {
             string valS=inp.value.ToString(CultureInfo.InvariantCulture);
             {
               int i=Math.Max(valS.IndexOf('.'), 6);
@@ -1478,7 +1478,7 @@ namespace X13.PLC {
         StringBuilder sb=new StringBuilder();
         sb.Append("#");
         sb.Append(_mac.value);
-        foreach(var inp in model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
+        foreach(var inp in model.children.OfType<DVar<double>>().Where(z => z.name.Length == 1 && z.name[0] >= 'A' && z.name[0] <= 'G')) {
           if((_fl & (1<<(int)(inp.name[0]-'A')))!=0) {
             sb.AppendFormat("\n#{0}{1}#{2}", _mac.value, inp.name, inp.value.ToString(CultureInfo.InvariantCulture));
           }
@@ -1572,7 +1572,7 @@ namespace X13.PLC {
         string header="DT";
         string cur=DateTime.Now.ToString(_model.Get<string>("_XFormat").value);
         string valS;
-        foreach(var inp in _model.children.Where(z => z is DVar<double> && z.name.Length==1 && z.name[0]>='A' && z.name[0]<='G').Cast<DVar<double>>()) {
+        foreach(var inp in _model.children.OfType<DVar<double>>().Where(z => z.name.Length == 1 && z.name[0] >= 'A' && z.name[0] <= 'G')) {
           var id=_model.Get<string>(string.Format("_id_{0}", inp.name)).value;
           if(string.IsNullOrEmpty(id)) {
             id=inp.name;

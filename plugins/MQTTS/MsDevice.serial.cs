@@ -90,7 +90,7 @@ namespace X13.Periphery {
         List<string> pns=new List<string>();
         Topic dev=Topic.root.Get("/dev");
         lock(dev) {
-          var ifs=dev.children.Where(z => z.valueType==typeof(MsDevice)).Cast<DVar<MsDevice>>().Where(z => z.value!=null).Select(z => z.value).ToArray();
+          var ifs=dev.children.OfType<DVar<MsDevice>>().Where(z => z.value!=null).Select(z => z.value).ToArray();
           foreach(var devSer in ifs) {
             cnt++;
             if(devSer.state==State.Connected) {

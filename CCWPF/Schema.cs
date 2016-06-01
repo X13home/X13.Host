@@ -145,7 +145,7 @@ namespace X13.CC {
         this.Height=h.value*LogramView.CellSize;
         _map.Clear();
         DrawingVisual cur;
-        foreach(var p in model.children.Where(z => z.valueType==typeof(Topic)).Cast<DVar<Topic>>()) {
+        foreach(var p in model.children.OfType<DVar<Topic>>()) {
           try {
             cur=new uiAlias(p, this);
           }
@@ -153,7 +153,7 @@ namespace X13.CC {
             Log.Error("create uiAlias({0}) - {1}", p.path, ex.ToString());
           }
         }
-        foreach(var p in model.children.Where(z => z.valueType==typeof(PiStatement)).Cast<DVar<PiStatement>>()) {
+        foreach(var p in model.children.OfType<DVar<PiStatement>>()) {
           try {
           cur=new uiStatement(p, this);
           }
@@ -161,7 +161,7 @@ namespace X13.CC {
             Log.Error("create uiStatement({0}) - {1}", p.path, ex.ToString());
           }
         }
-        foreach(var p in model.children.Where(z => z.valueType==typeof(PiWire)).Cast<DVar<PiWire>>()) {
+        foreach(var p in model.children.OfType<DVar<PiWire>>()) {
           try {
           cur=new uiWire(p, this);
           }
@@ -169,7 +169,7 @@ namespace X13.CC {
             Log.Error("create uiWire({0}) - {1}", p.path, ex.ToString());
           }
         }
-        foreach(var p in model.children.Where(z => z.valueType==typeof(PiTracer)).Cast<DVar<PiTracer>>()) {
+        foreach(var p in model.children.OfType<DVar<PiTracer>>()) {
           try {
           cur=new uiTracer(p, this);
           }
@@ -283,21 +283,21 @@ namespace X13.CC {
             }
             this.Height=h.value*LogramView.CellSize;
           } else if(source.valueType==typeof(Topic)) {
-            if(!_visuals.Where(z => z is uiAlias).Cast<uiAlias>().Any(z => z.model==source)) {
+            if(!_visuals.OfType<uiAlias>().Any(z => z.model==source)) {
               cur=new uiAlias(source as DVar<Topic>, this);
             }
           } else if(source.valueType==typeof(PiStatement)) {
-            if(!_visuals.Where(z => z is uiStatement).Cast<uiStatement>().Any(z => z.model==source)) {
+            if(!_visuals.OfType<uiStatement>().Any(z => z.model==source)) {
               System.Threading.Thread.Sleep(180);     // filling of the fields executed by the broker
               cur=new uiStatement(source as DVar<PiStatement>, this);
             }
 
           } else if(source.valueType==typeof(PiWire)) {
-            if(!_visuals.Where(z => z is uiWire).Cast<uiWire>().Any(z => z.GetModel()==source)) {
+            if(!_visuals.OfType<uiWire>().Any(z => z.GetModel()==source)) {
               cur=new uiWire(source as DVar<PiWire>, this);
             }
           } else if(source.valueType==typeof(PiTracer)) {
-            if(!_visuals.Where(z => z is uiTracer).Cast<uiTracer>().Any(z => z.GetModel()==source)) {
+            if(!_visuals.OfType<uiTracer>().Any(z => z.GetModel()==source)) {
               cur=new uiTracer(source as DVar<PiTracer>, this);
             }
           }
@@ -672,7 +672,7 @@ namespace X13.CC {
       foreach(var t in ms) {
         Topic.Export(doc.Root, t);
       }
-      var ws=this.model.children.Where(z => z.valueType==typeof(PiWire)).Cast<DVar<PiWire>>().Where(z => z!=null);
+      var ws=this.model.children.OfType<DVar<PiWire>>().Where(z => z!=null);
       foreach(var w in ws.Where(z => (ms.Any(z1 => z1==z.value.A) || ms.Any(z1 => z1==z.value.A.parent)) && (ms.Any(z2 => z2==z.value.B) || ms.Any(z2 => z2==z.value.B.parent)))) {
         Topic.Export(doc.Root, w);
       }

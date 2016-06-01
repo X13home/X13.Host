@@ -27,7 +27,7 @@ namespace X13.CC {
     internal static MainWindow mainWindow { get; set; }
     internal static Topic currentDocument { get; set; }
     internal static void OpenLogram(Topic doc) {
-      var c = mainWindow.dockManager.Documents.Where(z => z is DocumentView).Cast<DocumentView>().FirstOrDefault(z => z.model == doc);
+      var c = mainWindow.dockManager.Documents.OfType<DocumentView>().FirstOrDefault(z => z.model == doc);
       if(c == null) {
         var d = doc.GetValue() as X13.PLC.IPiDocument;
         if(d != null) {
@@ -50,7 +50,7 @@ namespace X13.CC {
 
     }
     internal static void CloseLogram(DVar<PiLogram> doc) {
-      var c = mainWindow.dockManager.Documents.Where(z => z is LogramView).Cast<LogramView>().FirstOrDefault(z => z.model == doc);
+      var c = mainWindow.dockManager.Documents.OfType<LogramView>().FirstOrDefault(z => z.model == doc);
       if(c != null) {
         c.Close();
       }
