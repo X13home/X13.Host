@@ -27,7 +27,7 @@ namespace X13.CC {
     public static readonly Pen SelectionPen=new Pen(Brushes.Orange, 1);
     #endregion Settings
 
-    private double _zoom=100.0;
+    private double _zoom;
     private Point ScreenStartPoint;
     private Point startOffset;
     private TransformGroup _transformGroup;
@@ -61,11 +61,12 @@ namespace X13.CC {
     public DVar<PiLogram> model { get; private set; }
 
     public Schema() {
+	  _zoom=1;
       _visuals=new List<Visual>();
       _backgroundVisual = new DrawingVisual();
       _mSelectVisual=new DrawingVisual();
       _translateTransform = new TranslateTransform();
-      _zoomTransform = new ScaleTransform() { ScaleX=_zoom/100, ScaleY=_zoom/100 };
+      _zoomTransform = new ScaleTransform() { ScaleX=_zoom, ScaleY=_zoom };
       _transformGroup = new TransformGroup();
 
       _transformGroup.Children.Add(_zoomTransform);
@@ -345,15 +346,15 @@ namespace X13.CC {
     }
     protected override void OnMouseWheel(MouseWheelEventArgs e) {
       if(Keyboard.IsKeyDown(Key.LeftCtrl)) {
-        if(e.Delta<0?_zoom>40:_zoom<250) {
-          var p=e.GetPosition(this);
-          _zoom+=e.Delta/30.0;
-          _zoomTransform.CenterX=p.X;
-          _zoomTransform.CenterY=p.Y;
-          _zoomTransform.ScaleY=_zoom/100.0;
-          _zoomTransform.ScaleX=_zoom/100.0;
-        }
-        e.Handled = true;
+      if(e.Delta < 0 ? _zoom > 0.4 : _zoom < 2.5) {
+        var p = e.GetPosition(this);
+        _zoom += e.Delta / 3000.0;
+        _translateTransform.X = p.X * (_zoomTransform.ScaleX - _zoom) + _translateTransform.X;
+        _translateTransform.Y = p.Y * (_zoomTransform.ScaleY - _zoom) + _translateTransform.Y;
+        _zoomTransform.ScaleY = _zoom;
+        _zoomTransform.ScaleX = _zoom;
+      }
+      e.Handled = true;
       } else {
         base.OnMouseWheel(e);
       }
