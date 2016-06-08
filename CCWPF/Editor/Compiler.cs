@@ -303,6 +303,12 @@ namespace X13.CC {
       case "Random":
         m = new Merker() { type = EP_Type.API, Addr = 8, vd = v, pOut = 1 };
         break;
+      case "NowSeconds":    // total seconds since 0:00:00
+        m = new Merker() { type = EP_Type.API, Addr = 9, vd = v, pOut = 1 };
+        break;
+      case "Today":         //  (year[0..99]<<24) | (month[1..12]<<16) | (day[1..31]<<8) | (dayOfWeek[1-Monday..7-Sunday]) 
+        m = new Merker() { type = EP_Type.API, Addr = 10, vd = v, pOut = 1 };
+        break;
       default:
         return null;
       }

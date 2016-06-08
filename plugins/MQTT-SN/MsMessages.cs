@@ -430,16 +430,20 @@ namespace X13.Periphery {
       this._val=val;
       Topic dev=val;
       string lPath;
-      while(dev != null && dev.valueType != typeof(MsDevice)) {
-        dev = dev.parent;
-      }
-      if(dev != null) {
-        lPath = val.path.Substring(dev.path.Length + 1);
+      if(val == null) {
+        this.topicIdType = TopicIdType.PreDefined;
       } else {
-        lPath = val.path;
-      }
-      if(MsDevice.PredefinedTopics.ContainsValue(topicId) && (_val==null || MsDevice.PredefinedTopics.ContainsKey(lPath))) {
-        this.topicIdType=TopicIdType.PreDefined;
+        while(dev != null && dev.valueType != typeof(MsDevice)) {
+          dev = dev.parent;
+        }
+        if(dev != null) {
+          lPath = val.path.Substring(dev.path.Length + 1);
+        } else {
+          lPath = val.path;
+        }
+        if(MsDevice.PredefinedTopics.ContainsValue(topicId) && (_val == null || MsDevice.PredefinedTopics.ContainsKey(lPath))) {
+          this.topicIdType = TopicIdType.PreDefined;
+        }
       }
     }
     public MsPublish(byte[] buf, int start, int end)
