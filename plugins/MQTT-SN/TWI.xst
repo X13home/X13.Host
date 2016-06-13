@@ -2,7 +2,7 @@
 <!-- device configuration file for TWI  -->
 <root head="/etc/declarers">
   <item name="type">
-    <item name="TWI" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.315.1203.11">
+    <item name="TWI" value="pack://application:,,/MQTT-SN;component/Images/ty_TWI.png" saved="True" type="System.String" ver="0.316.0613.100">
       <item name="Blinky" value="" saved="True" type="System.String">
         <item name="BLINKM_8" value="an" saved="True" type="System.String" />
         <item name="BLINKM_9" value="an" saved="True" type="System.String" />
@@ -20,13 +20,22 @@
         </item>
       </item>
       <item name="BME280" value="" saved="True" type="System.String">
-        <item name="BME280_T" value="0g" saved="True" type="System.String">
+        <item name="BME280#0_T" value="0g" saved="True" type="System.String">
           <item name="_description" value="Temperature °C" saved="True" type="System.String" />
         </item>
-        <item name="BME280_H" value="1g" saved="True" type="System.String">
+        <item name="BME280#0_H" value="1g" saved="True" type="System.String">
           <item name="_description" value="Humidity %" saved="True" type="System.String" />
         </item>
-        <item name="BME280_P" value="2i" saved="True" type="System.String">
+        <item name="BME280#0_P" value="2i" saved="True" type="System.String">
+          <item name="_description" value="Pressure Pa" saved="True" type="System.String" />
+        </item>
+        <item name="BME280#1_T" value="0g" saved="True" type="System.String">
+          <item name="_description" value="Temperature °C" saved="True" type="System.String" />
+        </item>
+        <item name="BME280#1_H" value="1g" saved="True" type="System.String">
+          <item name="_description" value="Humidity %" saved="True" type="System.String" />
+        </item>
+        <item name="BME280#1_P" value="2i" saved="True" type="System.String">
           <item name="_description" value="Pressure Pa" saved="True" type="System.String" />
         </item>
       </item>

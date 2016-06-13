@@ -168,7 +168,13 @@ namespace X13.Periphery {
       case "BME280_T":
       case "BME280_P":
       case "BME280_H":
-        drv=new BME280(snd);
+      case "BME280#0_T":
+      case "BME280#0_P":
+      case "BME280#0_H":
+      case "BME280#1_T":
+      case "BME280#1_P":
+      case "BME280#1_H":
+        drv = new BME280(snd);
         break;
       case "BLINKM_8":
       case "BLINKM_9":
@@ -939,7 +945,7 @@ namespace X13.Periphery {
       }
     }
     private class BME280 : TWICommon {
-      private const byte ADDR=0x76;
+      private byte ADDR;
       private DVar<double> _T;
       private DVar<double> _H;
       private DVar<long> _P;
@@ -977,6 +983,7 @@ namespace X13.Periphery {
           if(_T==null) {
             throw new ArgumentException();
           }
+          ADDR = 0x76;
           _P=_T.parent.Get<long>("BME280_P");
           _H=_T.parent.Get<double>("BME280_H");
         } else if(pin.name=="BME280_P") {
@@ -984,16 +991,67 @@ namespace X13.Periphery {
           if(_P==null) {
             throw new ArgumentException();
           }
-          _T=_P.parent.Get<double>("BME280_T");
+          ADDR = 0x76;
+          _T = _P.parent.Get<double>("BME280_T");
           _H=_P.parent.Get<double>("BME280_H");
         } else if(pin.name=="BME280_H") {
           _H=pin as DVar<double>;
           if(_H==null) {
             throw new ArgumentException();
           }
-          _P=_H.parent.Get<long>("BME280_P");
+          ADDR = 0x76;
+          _P = _H.parent.Get<long>("BME280_P");
           _T=_H.parent.Get<double>("BME280_T");
-        } else {
+        } else if(pin.name == "BME280#0_T") {
+          _T = pin as DVar<double>;
+          if(_T == null) {
+            throw new ArgumentException();
+          }
+          ADDR = 0x76;
+          _P = _T.parent.Get<long>("BME280#0_P");
+          _H = _T.parent.Get<double>("BME280#0_H");
+        } else if(pin.name == "BME280#0_P") {
+          _P = pin as DVar<long>;
+          if(_P == null) {
+            throw new ArgumentException();
+          }
+          ADDR = 0x76;
+          _T = _P.parent.Get<double>("BME280#0_T");
+          _H = _P.parent.Get<double>("BME280#0_H");
+        } else if(pin.name == "BME280#0_H") {
+          _H = pin as DVar<double>;
+          if(_H == null) {
+            throw new ArgumentException();
+          }
+          ADDR = 0x76;
+          _P = _H.parent.Get<long>("BME280#0_P");
+          _T = _H.parent.Get<double>("BME280#0_T");
+        } else if(pin.name == "BME280#1_T") {
+          _T = pin as DVar<double>;
+          if(_T == null) {
+            throw new ArgumentException();
+          }
+          ADDR = 0x77;
+          _P = _T.parent.Get<long>("BME280#1_P");
+          _H = _T.parent.Get<double>("BME280#1_H");
+        } else if(pin.name == "BME280#1_P") {
+          _P = pin as DVar<long>;
+          if(_P == null) {
+            throw new ArgumentException();
+          }
+          ADDR = 0x77;
+          _T = _P.parent.Get<double>("BME280#1_T");
+          _H = _P.parent.Get<double>("BME280#1_H");
+        } else if(pin.name == "BME280#1_H") {
+          _H = pin as DVar<double>;
+          if(_H == null) {
+            throw new ArgumentException();
+          }
+          ADDR = 0x77;
+          _P = _H.parent.Get<long>("BME280#1_P");
+          _T = _H.parent.Get<double>("BME280#1_T");
+        }
+        else {
           throw new ArgumentException();
         }
         _present=_T.Get<bool>("present");
