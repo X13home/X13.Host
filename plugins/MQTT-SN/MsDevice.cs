@@ -1372,6 +1372,7 @@ namespace X13.Periphery {
       {".cfg/XD_GroupID",    0xFF11},
       {".cfg/XD_Channel",    0xFF12},
       {".cfg/XD_GateId",     0xFF14},
+      {".cfg/Xa_Key",        0xFF18},
 
       {".cfg/Xa_MACAddr",    0xFF20},
       {".cfg/Xa_IPAddr",     0xFF21},
