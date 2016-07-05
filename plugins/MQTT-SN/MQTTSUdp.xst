@@ -9,7 +9,8 @@
 	<item name="mqtts_cfg" value="pack://application:,,/CC;component/Images/ty_cfg.png" saved="True" type="System.String" ver="0.316.617.1">
 	  <item name="XD_SleepTime" value="4i" saved="True" type="System.String" />
 	  <item name="XD_ADCintegrate" value="4i" saved="True" type="System.String" />
-	  <item name="XD_GroupID" value="4i" saved="True" type="System.String" />
+      <item name="Xa_InMute" value="4b" saved="True" type="System.String" />
+      <item name="XD_GroupID" value="4i" saved="True" type="System.String" />
 	  <item name="XD_Channel" value="4i" saved="True" type="System.String" />
 	  <item name="XD_GateId" value="4i" saved="True" type="System.String" />
 	  <item name="XD_Power" value="4i" saved="True" type="System.String" />

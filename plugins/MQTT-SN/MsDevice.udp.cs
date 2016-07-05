@@ -30,24 +30,17 @@ namespace X13.Periphery {
       if(Topic.root.Exist("/local/cfg/MQTTS.udp/enable", out old) && old.valueType==typeof(bool)) {
         (old as DVar<bool>).value=false;
       }
-
-      Topic.root.Subscribe("/etc/MQTT-SN/#", Dummy);
-      Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
     }
     public void Start() {
       using(var sr=new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTSUdp.xst"))) {
         Topic.Import(sr, null);
       }
-      TWIDriver.Load();
+      MsDevice.Open();
       MsDevice.MsGUdp.Open();
     }
 
-    void Dummy(Topic src, TopicChanged arg) {
-    }
-
     public void Stop() {
-      Topic.root.Unsubscribe("/etc/MQTT-SN/#", Dummy);
-      Topic.root.Unsubscribe("/etc/declarers/#", Dummy);
+      MsDevice.Close();
       MsDevice.MsGUdp.Close();
     }
   }

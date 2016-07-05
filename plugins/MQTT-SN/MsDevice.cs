@@ -27,15 +27,59 @@ namespace X13.Periphery {
     private static DVar<bool> _statistic;
     private static List<IMsGate> _gates;
     private static Random _rand;
+    private static int _isOpened;
+    private static Dictionary<Topic, List<Topic>> _inputReferences;
 
     static MsDevice() {
       _verbose = Topic.root.Get<bool>("/etc/MQTT-SN/verbose");
       _statistic = Topic.root.Get<bool>("/etc/MQTT-SN/statistic");
       _gates = new List<IMsGate>();
       _rand = new Random((int)DateTime.Now.Ticks);
+      _isOpened = 0;
+      _inputReferences = new Dictionary<Topic, List<Topic>>();
     }
     internal static void Open() {
-      //MsGUdp.Open();
+      if(Interlocked.CompareExchange(ref _isOpened, 1, 0) == 0) {
+        Topic.root.Subscribe("/etc/MQTT-SN/#", Dummy);
+        Topic.root.Subscribe("/etc/declarers/dev/#", Dummy);
+        Topic.root.Subscribe("/plc/#", TopicPtrChanged);
+        TWIDriver.Load();
+      }
+    }
+    private static void Dummy(Topic src, TopicChanged arg) {
+    }
+    private static void TopicPtrChanged(Topic src, TopicChanged arg) {
+      Topic t, p;
+      MsDevice dev;
+      if(src != null && src.valueType == typeof(Topic) && (t = (src as DVar<Topic>).value) != null && t.path.StartsWith("/dev")
+        && t.name.Length > 2 && (t.name[0] == 'I' || t.name[0] == 'A')
+        && (p = t.parent) != null && p.valueType == typeof(MsDevice) && (dev = p.GetValue() as MsDevice) != null) {
+        List<Topic> lp;
+        if(!_inputReferences.TryGetValue(t, out lp)) {
+          if(arg.Art == TopicChanged.ChangeArt.Remove) {
+            return;
+          }
+          lp = new List<Topic>();
+          lp.Add(src);
+          _inputReferences[t] = lp;
+        } else if(arg.Art == TopicChanged.ChangeArt.Remove) {
+          lp.Remove(src);
+          if(lp.Count == 0) {
+            _inputReferences.Remove(t);
+          }
+        } else if(!lp.Contains(src)) {
+          lp.Add(src);
+        }
+        dev.UpdateInMute();
+      }
+    }
+
+    internal static void Close() {
+      if(Interlocked.CompareExchange(ref _isOpened, 0, 1) == 1) {
+        Topic.root.Unsubscribe("/etc/MQTT-SN/#", Dummy);
+        Topic.root.Unsubscribe("/etc/declarers/#", Dummy);
+        Topic.root.Unsubscribe("/plc/#", TopicPtrChanged);
+      }
     }
     internal static byte[] Serialize(Topic t) {
       List<byte> ret = new List<byte>();
@@ -452,6 +496,7 @@ namespace X13.Periphery {
             Log.Warning("{0} registred failed: {1}", ti.path, tmp.RetCode.ToString());
             _topics.Remove(ti);
             ti.topic.Remove();
+            UpdateInMute();
           }
         }
         break;
@@ -878,6 +923,40 @@ namespace X13.Periphery {
           Send(new MsRegister(0xFFFF, rez.subIdx));
         }
         _topics.Remove(rez);
+        UpdateInMute();
+      }
+    }
+    private void UpdateInMute() {
+      if(!Owner.Exist("pa0")) {
+        return;
+      }
+      List<ushort> muted = new List<ushort>();
+      TopicInfo rez;
+      ushort id;
+      for(int i = _topics.Count - 1; i >= 0; i--) {
+        rez = _topics[i];
+        if(rez.subIdx == null || rez.subIdx.Length < 3 || (rez.subIdx[0] != 'I' && rez.subIdx[0] != 'A')) {
+          continue;
+        }
+        if(!_inputReferences.ContainsKey(rez.topic)) {
+          if(ushort.TryParse(rez.subIdx.Substring(2), out id)) {
+            muted.Add(id);
+          }
+        }
+      }
+      byte[] ra;
+      if(muted.Count == 0) {
+        ra = new byte[] { 0 };
+      } else {
+        int len = 1 + (muted.Max() / 8);
+        ra = new byte[len];
+        foreach(var i in muted) {
+          ra[i / 8] |= (byte)(1 << (i % 7));
+        }
+      }
+      DVar<PLC.ByteArray> rt = Owner.Get<PLC.ByteArray>(".cfg/Xa_InMute", Owner);
+      if(rt.value == null || rt.value.GetBytes() == null || rt.value.GetBytes().Length == 0 || !ra.SequenceEqual(rt.value.GetBytes())) {
+        rt.value = new PLC.ByteArray(ra);
       }
     }
     internal void PublishWithPayload(Topic t, byte[] payload) {
@@ -912,6 +991,7 @@ namespace X13.Periphery {
           Send(new MsRegister(0xFFFF, rez.subIdx));
         }
         _topics.Remove(rez);
+        UpdateInMute();
       }
       rez = GetTopicInfo(topic, true);
     }
@@ -969,6 +1049,7 @@ namespace X13.Periphery {
           rez.subIdx = tpc;
         }
         _topics.Add(rez);
+        UpdateInMute();
       }
       if(!rez.registred) {
         if(sendRegister) {
@@ -1367,6 +1448,7 @@ namespace X13.Periphery {
       {".cfg/XD_SleepTime",  0xFF01},
       //{".cfg/_a_RTC",        RTC_EXCH},  // 0xFF07
       {".cfg/XD_ADCintegrate",   0xFF08},
+      {".cfg/Xa_InMute",     0xFF09},
 
       {".cfg/XD_DeviceAddr", 0xFF10},
       {".cfg/XD_GroupID",    0xFF11},

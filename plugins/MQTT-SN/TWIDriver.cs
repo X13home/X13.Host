@@ -21,17 +21,11 @@ namespace X13.Periphery {
   [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptIn)]
   public class TWIDriver : ITopicOwned {
     private static DVar<bool> _verbose;
-    private static bool _loaded;
 
     static TWIDriver() {
       _verbose=Topic.root.Get<bool>("/etc/TWI/verbose");
-      _loaded=false;
     }
     public static void Load() {
-      if(_loaded) {
-        return;
-      }
-      _loaded=true;
       using(var sr=new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.TWI.xst"))) {
         Topic.Import(sr, null);
       }
