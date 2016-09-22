@@ -43,6 +43,11 @@ namespace X13.Agent2 {
 		Send("S\t"+path);
 	  }
 	}
+	public void Publish(string path, string value) {
+	  if(_st==State.Ready) {
+		Send("P\t"+path+"\t"+value);
+	  }
+	}
 	public void Close() {
 	  if(_ws!=null) {
 		if(_ws.IsAlive) {

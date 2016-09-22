@@ -5,186 +5,190 @@
         xmlns:my="clr-namespace:X13.Agent3"
         Title="X13.Home user agent" FontFamily="Arial" FontSize="12" Closed="Window_Closed" Icon="logo64.ico" TextOptions.TextFormattingMode="Display"
 	    WindowStartupLocation="CenterScreen" WindowState="Maximized">
-    <Grid>
-    <StackPanel Name="content">
-      <StackPanel.Resources>
-        <Style TargetType="Border">
-          <Setter Property="BorderThickness" Value="1" />
-          <Setter Property="BorderBrush" Value="Black" />
-          <Setter Property="CornerRadius" Value="10" />
-          <Setter Property="Margin" Value="3" />
-        </Style>
-      </StackPanel.Resources>
-      <Border Name="boCalender">
-        <Grid Name="grCalender" ShowGridLines="False">
-          <Grid.RowDefinitions>
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-          </Grid.RowDefinitions>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="29*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="26*"/>
-            <ColumnDefinition Width="419*"/>
-          </Grid.ColumnDefinitions>
-        </Grid>
-      </Border>
-      <Border Name="boWeather">
-        <Grid>
-          <Grid.RowDefinitions>
-            <RowDefinition />
-            <RowDefinition Height="5" />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition />
-            <RowDefinition Height="5" />
-            <RowDefinition />
-          </Grid.RowDefinitions>
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="40" />
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition Width="40" />
-          </Grid.ColumnDefinitions>
-          <Grid.Resources>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wtCur">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/var/Outdoor/T_Mid</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wtCurDelta">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/var/Outdoor/TemperaturDelta</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wpCur">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/var/Outdoor/Pressure</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wpCurDelta">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/var/Outdoor/PressureDelta</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf0img">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/weather/wf0img</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf1img">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/weather/wf1img</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf2img">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/weather/wf2img</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf3img">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/weather/wf3img</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf0w">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/weather/wf0w</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf1w">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/weather/wf1w</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf2w">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/weather/wf2w</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf3w">
-              <ObjectDataProvider.ConstructorParameters>
-                <system:String>/local/vars/weather/wf3w</system:String>
-              </ObjectDataProvider.ConstructorParameters>
-            </ObjectDataProvider>
-            <Style TargetType="TextBlock">
-              <Setter Property="FontSize" Value="12"/>
-              <Setter Property="TextAlignment" Value="Center" />
-            </Style>
-          </Grid.Resources>
-          <TextBlock Text="{Binding Source={StaticResource wtCur}, Path=value, StringFormat=\{0:F1\} °C}" Grid.Column="5" Grid.Row="0" FontWeight="Bold" FontSize="14" Background="Gainsboro" />
-          <TextBlock Text="{Binding Source={StaticResource wtCurDelta}, Path=value, StringFormat=\{0:F1\}}" Grid.Column="6" Grid.Row="0" Background="Gainsboro" />
-          <TextBlock Text="{Binding Source={StaticResource wpCur}, Path=value, StringFormat=\{0:F1\} mm}" Grid.Column="7" Grid.Row="0" FontSize="14" FontWeight="Bold" Background="Gainsboro" />
-          <TextBlock Text="{Binding Source={StaticResource wpCurDelta}, Path=value, StringFormat=\{0:F1\}}" Grid.Column="8" Grid.Row="0" Background="Gainsboro" />
-          <Image Source="{Binding Source={StaticResource wf0img}, Path=value}" Stretch="None" Grid.Row="2" Grid.Column="9" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" />
-          <Image Source="{Binding Source={StaticResource wf1img}, Path=value}" Stretch="None" Grid.Row="2" Grid.Column="10" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" />
-          <Image Source="{Binding Source={StaticResource wf2img}, Path=value}" Stretch="None" Grid.Row="2" Grid.Column="11" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" />
-          <Image Source="{Binding Source={StaticResource wf3img}, Path=value}" Stretch="None" Grid.Row="2" Grid.Column="12" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" />
-          <TextBlock Text="{Binding Source={StaticResource wf0w}, Path=value}" Grid.Column="9" Grid.Row="6"/>
-          <TextBlock Text="{Binding Source={StaticResource wf1w}, Path=value}" Grid.Column="10" Grid.Row="6" />
-          <TextBlock Text="{Binding Source={StaticResource wf2w}, Path=value}" Grid.Column="11" Grid.Row="6" />
-          <TextBlock Text="{Binding Source={StaticResource wf3w}, Path=value}" Grid.Column="12" Grid.Row="6" />
-          <Viewbox Panel.ZIndex="2" HorizontalAlignment="Stretch" Grid.Row="1" Grid.ColumnSpan="14" Grid.RowSpan="7"  Height="110" Stretch="Fill">
-            <Canvas Name="wtDiagram" Height="110" Width="784" >
-              <Canvas.Background>
-                <LinearGradientBrush EndPoint="0.96,0.5" StartPoint="0.0397,0.5" Opacity="0.2">
-                  <GradientStop Color="#FFF5FDFF" Offset="0" />
-                  <GradientStop Color="#FF3E9D93" Offset="0.28" />
-                  <GradientStop Color="#FF3E9D93" Offset="0.33332" />
-                  <GradientStop Color="#FFC7E4EB" Offset="0.33333" />
-                  <GradientStop Color="#FF038CFC" Offset="0.6" />
-                  <GradientStop Color="#FF038CFC" Offset="0.66665" />
-                  <GradientStop Color="#FFF5FDFF" Offset="0.66666" />
-                  <GradientStop Color="#FF578CFC" Offset="0.85" />
-                </LinearGradientBrush>
-              </Canvas.Background>
-            </Canvas>
-          </Viewbox>
-          <TextBlock Name="tbWeath1" Grid.Column="1" Grid.Row="9" />
-          <TextBlock Name="tbWeath2" Grid.Column="2" Grid.Row="9" />
-          <TextBlock Name="tbWeath3" Grid.Column="3" Grid.Row="9" />
-          <TextBlock Name="tbWeath4" Grid.Column="4" Grid.Row="9" />
-          <TextBlock Name="tbWeath5" Grid.Column="5" Grid.Row="9" />
-          <TextBlock Name="tbWeath6" Grid.Column="6" Grid.Row="9" />
-          <TextBlock Name="tbWeath7" Grid.Column="7" Grid.Row="9" />
-          <TextBlock Name="tbWeath8" Grid.Column="8" Grid.Row="9" />
-          <TextBlock Name="tbWeath9" Grid.Column="9" Grid.Row="9" />
-          <TextBlock Name="tbWeath10" Grid.Column="10" Grid.Row="9" />
-          <TextBlock Name="tbWeath11" Grid.Column="11" Grid.Row="9" />
-          <TextBlock Name="tbWeath12" Grid.Column="12" Grid.Row="9" />
-        </Grid>
-      </Border>
+	<Grid>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition />
+			<ColumnDefinition Width="66px" />
+		</Grid.ColumnDefinitions>
+		<StackPanel Name="content">
+			<StackPanel.Resources>
+				<Style TargetType="Border">
+					<Setter Property="BorderThickness" Value="1" />
+					<Setter Property="BorderBrush" Value="Black" />
+					<Setter Property="CornerRadius" Value="10" />
+					<Setter Property="Margin" Value="3" />
+				</Style>
+			</StackPanel.Resources>
+			<Border Name="boCalender">
+				<Grid Name="grCalender" ShowGridLines="False">
+					<Grid.RowDefinitions>
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+					</Grid.RowDefinitions>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="29*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="26*"/>
+						<ColumnDefinition Width="419*"/>
+					</Grid.ColumnDefinitions>
+				</Grid>
+			</Border>
+			<Border Name="boWeather">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition />
+						<RowDefinition Height="5" />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition />
+						<RowDefinition Height="5" />
+						<RowDefinition />
+					</Grid.RowDefinitions>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="40" />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition />
+						<ColumnDefinition Width="40" />
+					</Grid.ColumnDefinitions>
+					<Grid.Resources>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wtCur">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/var/Outdoor/Temperatur</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wtCurDelta">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/var/Outdoor/TemperaturDelta</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wpCur">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/var/Outdoor/Pressure</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wpCurDelta">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/var/Outdoor/PressureDelta</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf0img">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/weather/wf0img</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf1img">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/weather/wf1img</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf2img">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/weather/wf2img</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf3img">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/weather/wf3img</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf0w">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/weather/wf0w</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf1w">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/weather/wf1w</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf2w">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/weather/wf2w</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="wf3w">
+							<ObjectDataProvider.ConstructorParameters>
+								<system:String>/local/vars/weather/wf3w</system:String>
+							</ObjectDataProvider.ConstructorParameters>
+						</ObjectDataProvider>
+						<Style TargetType="TextBlock">
+							<Setter Property="FontSize" Value="12"/>
+							<Setter Property="TextAlignment" Value="Center" />
+						</Style>
+					</Grid.Resources>
+					<TextBlock Text="{Binding Source={StaticResource wtCur}, Path=value, StringFormat=\{0:F1\} °C}" Grid.Column="5" Grid.Row="0" FontWeight="Bold" FontSize="14" Background="Gainsboro" />
+					<TextBlock Text="{Binding Source={StaticResource wtCurDelta}, Path=value, StringFormat=\{0:F1\}}" Grid.Column="6" Grid.Row="0" Background="Gainsboro" />
+					<TextBlock Text="{Binding Source={StaticResource wpCur}, Path=value, StringFormat=\{0:F1\} mm}" Grid.Column="7" Grid.Row="0" FontSize="14" FontWeight="Bold" Background="Gainsboro" />
+					<TextBlock Text="{Binding Source={StaticResource wpCurDelta}, Path=value, StringFormat=\{0:F1\}}" Grid.Column="8" Grid.Row="0" Background="Gainsboro" />
+					<Image Source="{Binding Source={StaticResource wf0img}, Path=value}" Stretch="None" Grid.Row="2" Grid.Column="9" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" />
+					<Image Source="{Binding Source={StaticResource wf1img}, Path=value}" Stretch="None" Grid.Row="2" Grid.Column="10" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" />
+					<Image Source="{Binding Source={StaticResource wf2img}, Path=value}" Stretch="None" Grid.Row="2" Grid.Column="11" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" />
+					<Image Source="{Binding Source={StaticResource wf3img}, Path=value}" Stretch="None" Grid.Row="2" Grid.Column="12" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Top" />
+					<TextBlock Text="{Binding Source={StaticResource wf0w}, Path=value}" Grid.Column="9" Grid.Row="6"/>
+					<TextBlock Text="{Binding Source={StaticResource wf1w}, Path=value}" Grid.Column="10" Grid.Row="6" />
+					<TextBlock Text="{Binding Source={StaticResource wf2w}, Path=value}" Grid.Column="11" Grid.Row="6" />
+					<TextBlock Text="{Binding Source={StaticResource wf3w}, Path=value}" Grid.Column="12" Grid.Row="6" />
+					<Viewbox Panel.ZIndex="2" HorizontalAlignment="Stretch" Grid.Row="1" Grid.ColumnSpan="14" Grid.RowSpan="7"  Height="110" Stretch="Fill">
+						<Canvas Name="wtDiagram" Height="110" Width="784" >
+							<Canvas.Background>
+								<LinearGradientBrush EndPoint="0.96,0.5" StartPoint="0.0397,0.5" Opacity="0.2">
+									<GradientStop Color="#FFF5FDFF" Offset="0" />
+									<GradientStop Color="#FF3E9D93" Offset="0.28" />
+									<GradientStop Color="#FF3E9D93" Offset="0.33332" />
+									<GradientStop Color="#FFC7E4EB" Offset="0.33333" />
+									<GradientStop Color="#FF038CFC" Offset="0.6" />
+									<GradientStop Color="#FF038CFC" Offset="0.66665" />
+									<GradientStop Color="#FFF5FDFF" Offset="0.66666" />
+									<GradientStop Color="#FF578CFC" Offset="0.85" />
+								</LinearGradientBrush>
+							</Canvas.Background>
+						</Canvas>
+					</Viewbox>
+					<TextBlock Name="tbWeath1" Grid.Column="1" Grid.Row="9" />
+					<TextBlock Name="tbWeath2" Grid.Column="2" Grid.Row="9" />
+					<TextBlock Name="tbWeath3" Grid.Column="3" Grid.Row="9" />
+					<TextBlock Name="tbWeath4" Grid.Column="4" Grid.Row="9" />
+					<TextBlock Name="tbWeath5" Grid.Column="5" Grid.Row="9" />
+					<TextBlock Name="tbWeath6" Grid.Column="6" Grid.Row="9" />
+					<TextBlock Name="tbWeath7" Grid.Column="7" Grid.Row="9" />
+					<TextBlock Name="tbWeath8" Grid.Column="8" Grid.Row="9" />
+					<TextBlock Name="tbWeath9" Grid.Column="9" Grid.Row="9" />
+					<TextBlock Name="tbWeath10" Grid.Column="10" Grid.Row="9" />
+					<TextBlock Name="tbWeath11" Grid.Column="11" Grid.Row="9" />
+					<TextBlock Name="tbWeath12" Grid.Column="12" Grid.Row="9" />
+				</Grid>
+			</Border>
 			<Border Name="boTime" >
 				<Grid>
 					<Grid.RowDefinitions>
@@ -307,5 +311,30 @@
 				</Grid>
 			</Border>
 		</StackPanel>
-  </Grid>
+		<StackPanel Grid.Column="1" Orientation="Vertical">
+			<StackPanel.Resources>
+				<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="DoorState">
+					<ObjectDataProvider.ConstructorParameters>
+						<system:String>/var/Hall/Door</system:String>
+					</ObjectDataProvider.ConstructorParameters>
+				</ObjectDataProvider>
+				<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="DoorQuit">
+					<ObjectDataProvider.ConstructorParameters>
+						<system:String>/var/Hall/DoorQuit</system:String>
+					</ObjectDataProvider.ConstructorParameters>
+				</ObjectDataProvider>
+				<Style TargetType="Image">
+					<Setter Property="Opacity" Value="1" />
+					<Style.Triggers>
+						<Trigger Property="IsEnabled" Value="False">
+							<Setter Property="Opacity" Value="0.3" />
+						</Trigger>
+					</Style.Triggers>
+				</Style>
+			</StackPanel.Resources>
+			<Image Name="imDoor" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" Source="Images/Door.png" 
+					   MouseDown="imDoor_MouseDown" MouseUp="imDoor_MouseUp"
+					   IsEnabled="{Binding Source={StaticResource DoorState}, Path=value}" DataContext="{Binding Source={StaticResource DoorQuit}}" />
+		</StackPanel>
+	</Grid>
 </Window>

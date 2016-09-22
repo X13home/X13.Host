@@ -200,7 +200,7 @@ namespace X13.Agent3 {
         _value = value;
 
         if(!_local) {
-          //_cl.Send(_path, Newtonsoft.Json.JsonConvert.SerializeObject(_value);
+          _cl.Publish(path, Newtonsoft.Json.JsonConvert.SerializeObject(_value));
         } else if(saved) {
           Write(this);
         }

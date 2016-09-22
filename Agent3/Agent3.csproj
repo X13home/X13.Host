@@ -118,7 +118,9 @@
   <ItemGroup>
     <Resource Include="logo64.ico" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Resource Include="Images\Door.png" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\cancel.png" />
     <Resource Include="Images\ok.png" />

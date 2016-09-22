@@ -609,5 +609,21 @@ namespace X13.Agent3 {
       catch {
       }
     }
+
+	private void imDoor_MouseDown(object sender, MouseButtonEventArgs e) {
+	  var im=sender as FrameworkElement;
+	  TopicSrc t;
+	  if(im!=null && (t=im.DataContext as TopicSrc)!=null) {
+		t.value=true;
+	  }
+	}
+
+	private void imDoor_MouseUp(object sender, MouseButtonEventArgs e) {
+	  var im=sender as FrameworkElement;
+	  TopicSrc t;
+	  if(im!=null && (t=im.DataContext as TopicSrc)!=null) {
+		t.value=false;
+	  }
+	}
   }
 }
