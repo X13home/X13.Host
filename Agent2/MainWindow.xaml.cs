@@ -45,7 +45,8 @@ namespace X13.Agent2 {
       _cl.Subscribe("/var/events/saytime", (p, j) => { if(j=="true") { _st.SayTime(); } });
       _cl.Subscribe("/var/events/door41/opened", (p, j) => { if(j=="true") { SayTimeRu.PlayWav("Door41Opened"); } });
       _cl.Subscribe("/var/events/door41/closed", (p, j) => { if(j=="true") { SayTimeRu.PlayWav("Door41Closed"); } });
-    }
+	  _cl.Subscribe("/var/Hall/muted", (p, j) => { SayTimeRu.instance.Muted=(j=="true"); });
+	}
 
     void notifyIcon_Click(object sender, EventArgs e) {
       if(this.WindowState == WindowState.Minimized) {

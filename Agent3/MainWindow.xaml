@@ -8,7 +8,7 @@
 	<Grid>
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition />
-			<ColumnDefinition Width="66px" />
+			<ColumnDefinition Width="70" />
 		</Grid.ColumnDefinitions>
 		<StackPanel Name="content">
 			<StackPanel.Resources>
@@ -312,29 +312,7 @@
 			</Border>
 		</StackPanel>
 		<StackPanel Grid.Column="1" Orientation="Vertical">
-			<StackPanel.Resources>
-				<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="DoorState">
-					<ObjectDataProvider.ConstructorParameters>
-						<system:String>/var/Hall/Door</system:String>
-					</ObjectDataProvider.ConstructorParameters>
-				</ObjectDataProvider>
-				<ObjectDataProvider ObjectType="{x:Type my:TopicSrc}" x:Key="DoorQuit">
-					<ObjectDataProvider.ConstructorParameters>
-						<system:String>/var/Hall/DoorQuit</system:String>
-					</ObjectDataProvider.ConstructorParameters>
-				</ObjectDataProvider>
-				<Style TargetType="Image">
-					<Setter Property="Opacity" Value="1" />
-					<Style.Triggers>
-						<Trigger Property="IsEnabled" Value="False">
-							<Setter Property="Opacity" Value="0.3" />
-						</Trigger>
-					</Style.Triggers>
-				</Style>
-			</StackPanel.Resources>
-			<Image Name="imDoor" Stretch="Fill" Height="64" Width="64" HorizontalAlignment="Right" Margin="0,5" Source="Images/Door.png" 
-					   MouseDown="imDoor_MouseDown" MouseUp="imDoor_MouseUp"
-					   IsEnabled="{Binding Source={StaticResource DoorState}, Path=value}" DataContext="{Binding Source={StaticResource DoorQuit}}" />
+			<my:DataButton ImageTrue="Images/mute.png" ImageFalse="Images/unmute.png" PathOnClick="/var/Hall/mute" PathValue="/var/Hall/muted" />
 		</StackPanel>
 	</Grid>
 </Window>

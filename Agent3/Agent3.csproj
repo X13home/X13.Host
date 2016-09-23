@@ -28,14 +28,14 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\packages\Newtonsoft.Json.8.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -66,6 +66,7 @@
     </Compile>
     <Compile Include="CubicSpline.cs" />
     <Compile Include="Holiday.cs" />
+    <Compile Include="DataButton.cs" />
     <Compile Include="TopicSrc.cs" />
     <Compile Include="Transport.cs" />
     <Page Include="MainWindow.xaml">
@@ -124,6 +125,10 @@
   <ItemGroup>
     <Resource Include="Images\cancel.png" />
     <Resource Include="Images\ok.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\mute.png" />
+    <Resource Include="Images\unmute.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
