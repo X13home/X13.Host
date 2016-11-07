@@ -430,7 +430,9 @@ namespace X13.Periphery {
               if(len==5 && buf[1]==(byte)MsMessageType.SUBSCRIBE) {
                 _advTick=DateTime.Now.AddMilliseconds(100);   // Send Advertise
               }
-              MsDevice.ProcessInPacket(this, _gateAddr, buf, 0, len);
+              if (!MsDevice.ProcessInPacket(this, _gateAddr, buf, 0, len)){
+                _port.DiscardInBuffer();
+              }
               cnt=-1;
               msg=null;
               continue;

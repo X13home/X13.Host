@@ -112,16 +112,16 @@ namespace X13.Periphery {
       }
       return ret.ToArray();
     }
-    public static void ProcessInPacket(IMsGate gate, byte[] addr, byte[] buf, int start, int end) {
+    public static bool ProcessInPacket(IMsGate gate, byte[] addr, byte[] buf, int start, int end) {
       var msg = MsMessage.Parse(buf, start, end);
       if(msg == null) {
         if(_verbose.value) {
           Log.Warning("r {0}: {1}  bad message", gate.Addr2If(addr), BitConverter.ToString(buf, start, end - start));
         }
-        return;
+        return false;
       }
       if(msg.MsgTyp == MsMessageType.ADVERTISE || msg.MsgTyp == MsMessageType.GWINFO) {
-        return;
+        return true;
       }
       if(_verbose.value) {
         Log.Debug("r {0}: {1}  {2}", gate.Addr2If(addr), BitConverter.ToString(buf, start, end - start), msg.ToString());
@@ -130,7 +130,7 @@ namespace X13.Periphery {
         if((msg as MsSearchGW).radius == 0 || (msg as MsSearchGW).radius == gate.gwRadius) {
           gate.SendGw((MsDevice)null, new MsGwInfo(gate.gwIdx));
         }
-        return;
+        return true;
       }
       Topic devR = Topic.root.Get("/dev");
       if(msg.MsgTyp == MsMessageType.DHCP_REQ) {
@@ -174,7 +174,7 @@ namespace X13.Periphery {
             gate.SendGw((MsDevice)null, new MsDhcpAck(gate.gwIdx, dr.xId, ackAddr.ToArray()));
           }
         }
-        return;
+        return true;
       }
       if(msg.MsgTyp == MsMessageType.CONNECT) {
         var cm = msg as MsConnect;
@@ -209,6 +209,7 @@ namespace X13.Periphery {
           }
         }
       }
+      return true;
     }
 
     private int _duration = 3000;
