@@ -393,6 +393,18 @@ namespace X13.Periphery {
       d.saved = false;
       d.value++;
     }
+    private void StatConnectTime() {
+      if(Owner == null) {
+        return;
+      }
+      string p = string.Concat("/var/stat/MQTT-SN/", Owner.name);
+      Topic pa = Topic.root.Get(p);
+      pa.saved = false;
+      var d = pa.Get<DateTime>("_LastConnect");
+      d.saved = false;
+      d.value=DateTime.Now;
+
+    }
 
     internal void ProcessInPacket(MsMessage msg) {
       if(_statistic.value && msg.MsgTyp != MsMessageType.EncapsulatedMessage && msg.MsgTyp != MsMessageType.PUBLISH) {
@@ -738,6 +750,9 @@ namespace X13.Periphery {
           _sendQueue.Clear();
         }
         _waitAck = false;
+        if(_statistic.value) {
+          StatConnectTime();
+        }
       }
       _duration = msg.Duration * 1100;
       ResetTimer();
