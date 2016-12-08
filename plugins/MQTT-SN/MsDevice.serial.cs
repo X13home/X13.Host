@@ -26,12 +26,12 @@ namespace X13.Periphery {
   public class MQTTSGate : IPlugModul {
     public void Init() {
       Topic old;
-      if(Topic.root.Exist("/local/cfg/MQTTS.Gate/enable", out old) && old.valueType==typeof(bool)) {
-        (old as DVar<bool>).value=false;
+      if(Topic.root.Exist("/local/cfg/MQTTS.Gate/enable", out old) && old.valueType == typeof(bool)) {
+        (old as DVar<bool>).value = false;
       }
     }
     public void Start() {
-      using(var sr=new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTSRf.xst"))) {
+      using(var sr = new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("X13.Periphery.MQTTSRf.xst"))) {
         Topic.Import(sr, null);
       }
       MsDevice.Open();
@@ -53,29 +53,29 @@ namespace X13.Periphery {
       private static int _scanBusy;
 
       static MsGSerial() {
-        _startScan=new AutoResetEvent(false);
-        _scanBusy=0;
+        _startScan = new AutoResetEvent(false);
+        _scanBusy = 0;
 
         ThreadPool.RegisterWaitForSingleObject(_startScan, ScanPorts, null, 45000, false);
       }
 
       public static void Open() {
         Log.Info("Search for MQTT-SN.serial devices");
-        Topic dev=Topic.root.Get("/dev");
-        dev.Get<string>("_declarer").value="DevFolder";
-        _scanAllPorts=true;
+        Topic dev = Topic.root.Get("/dev");
+        dev.Get<string>("_declarer").value = "DevFolder";
+        _scanAllPorts = true;
         ScanPorts(null, false);
       }
       public static void Rescan() {
-        if(_scanBusy==0) {
+        if(_scanBusy == 0) {
           _startScan.Set();
         }
       }
       public static void Close() {
-        if(_gates!=null) {
+        if(_gates != null) {
           lock(_gates) {
-            var gates=_gates.Select(z => z as MsGSerial).Where(z => z!=null).ToArray();
-            for(int i=0; i<gates.Length; i++) {
+            var gates = _gates.Select(z => z as MsGSerial).Where(z => z != null).ToArray();
+            for(int i = 0; i < gates.Length; i++) {
               gates[i].Stop();
             }
           }
@@ -84,101 +84,142 @@ namespace X13.Periphery {
       }
 
       private static void ScanPorts(object o, bool b) {
-        if(Interlocked.Exchange(ref _scanBusy, 1)!=0) {
+        if(Interlocked.Exchange(ref _scanBusy, 1) != 0) {
           return;
         }
 
-        byte[] buf=new byte[64];
-        byte[] tmpBuf=new byte[64];
-        byte[] disconnectAll=(new MsDisconnect()).GetBytes();
+        byte[] buf = new byte[64];
+        byte[] tmpBuf = new byte[64];
+        byte[] disconnectAll = new byte[] { 0x02, 0x02, 0x18, 0xC0 };
         bool escChar;
-        int cnt=0, tryCnt;
-        SerialPort port=null;
-        int length;
+        int cnt = 0, tryCnt, length;
+        SerialPort port = null;
         bool found;
+        DateTime to;
 
-        List<string> pns=new List<string>();
-        Topic dev=Topic.root.Get("/dev");
+        List<string> pns = new List<string>();
+        Topic dev = Topic.root.Get("/dev");
         lock(dev) {
-          var ifs=dev.children.OfType<DVar<MsDevice>>().Where(z => z.value!=null).Select(z => z.value).ToArray();
+          var ifs = dev.children.OfType<DVar<MsDevice>>().Where(z => z.value != null).Select(z => z.value).ToArray();
           foreach(var devSer in ifs) {
             cnt++;
-            if(devSer.state==State.Connected) {
+            if(devSer.state == State.Connected) {
               continue;
             }
             if(string.IsNullOrWhiteSpace(devSer.via)) {
-              _scanAllPorts=true;
+              _scanAllPorts = true;
               break;
             }
-            string via=devSer.via;
-            if(via!="offline" && !pns.Exists(z => string.Equals(z, via, StringComparison.InvariantCultureIgnoreCase))) {
+            string via = devSer.via;
+            if(via != "offline" && !pns.Exists(z => string.Equals(z, via, StringComparison.InvariantCultureIgnoreCase))) {
               pns.Add(via);
             }
           }
         }
-        if(_scanAllPorts || cnt==0) {
-          _scanAllPorts=false;
+        if(_scanAllPorts || cnt == 0) {
+          _scanAllPorts = false;
           pns.Clear();
           pns.AddRange(SerialPort.GetPortNames());
         } else {
-          pns=pns.Intersect(SerialPort.GetPortNames()).ToList();
+          pns = pns.Intersect(SerialPort.GetPortNames()).ToList();
         }
         Topic tmp;
         if(Topic.root.Exist("/local/cfg/MQTT-SN.Serial/whitelist", out tmp)) {
-          var whl=tmp as DVar<string>;
-          if(whl!=null && !string.IsNullOrEmpty(whl.value)) {
-            var wps=whl.value.Split(';', ',');
-            if(wps!=null && wps.Length>0) {
-              pns=pns.Intersect(wps).ToList();
+          var whl = tmp as DVar<string>;
+          if(whl != null && !string.IsNullOrEmpty(whl.value)) {
+            var wps = whl.value.Split(';', ',');
+            if(wps != null && wps.Length > 0) {
+              pns = pns.Intersect(wps).ToList();
             }
           }
         }
         if(Topic.root.Exist("/local/cfg/MQTT-SN.Serial/blacklist", out tmp)) {
-          var bll=tmp as DVar<string>;
-          if(bll!=null && !string.IsNullOrEmpty(bll.value)) {
-            var bps=bll.value.Split(';', ',');
-            if(bps!=null && bps.Length>0) {
-              pns=pns.Except(bps).ToList();
+          var bll = tmp as DVar<string>;
+          if(bll != null && !string.IsNullOrEmpty(bll.value)) {
+            var bps = bll.value.Split(';', ',');
+            if(bps != null && bps.Length > 0) {
+              pns = pns.Except(bps).ToList();
             }
           }
         }
-        for(int i=0; i<pns.Count; i++) {
-          if(_gates.Exists(z => z.name==pns[i])) {
+        for(int i = 0; i < pns.Count; i++) {
+          if(_gates.Exists(z => z.name == pns[i])) {
             continue;
           }
 
           try {
-            port=new SerialPort(pns[i], 38400, Parity.None, 8, StopBits.One);
-            port.ReadBufferSize=300;
-            port.WriteBufferSize=300;
+            port = new SerialPort(pns[i], 38400, Parity.None, 8, StopBits.One);
+            port.ReadBufferSize = 300;
+            port.WriteBufferSize = 300;
+            port.ReadTimeout = 5;
             port.Open();
-            port.DiscardInBuffer();
-            SendRaw(port, disconnectAll, tmpBuf); // Send Disconnect
-            Thread.Sleep(500);
-            cnt=-1;
-            tryCnt=30;
-            escChar=false;
-            length=-1;
-            found=false;
-            while(--tryCnt>0) {
-              if(GetPacket(port, ref length, buf, ref cnt, ref escChar)) {
-                var msgTyp=(MsMessageType)(buf[0]>1?buf[1]:buf[3]);
-                if(msgTyp==MsMessageType.SEARCHGW || msgTyp==MsMessageType.DHCP_REQ) {   // Received Ack
-                  found=true;
-                  MsGSerial gw;
-                  lock(_gates) {
-                    gw=new MsGSerial(port);
-                    _gates.Add(gw);
+            tryCnt = 3;
+            found = false;
+            do {
+              to = DateTime.Now.AddMilliseconds(1100);
+              cnt = -1;
+              length = -1;
+
+              port.DiscardInBuffer();
+              port.Write(disconnectAll, 0, disconnectAll.Length);   // Send Disconnect
+              if(_verbose.value) {
+                Log.Debug("s {0}: {1}  DISCONNECT", port.PortName, BitConverter.ToString(disconnectAll, 0, disconnectAll.Length));
+              }
+
+              while(to > DateTime.Now) {
+                if(port.BytesToRead > 0) {
+                  to = DateTime.Now.AddMilliseconds(100);
+                  if(cnt >= 0) {
+                    buf[cnt] = (byte)port.ReadByte();
+                  } else {
+                    length = port.ReadByte();
                   }
-                  MsDevice.ProcessInPacket(gw, gw._gateAddr, buf, 0, cnt);
-                  break;
-                } else if(_verbose.value) {
+                  cnt++;
+                }
+                Thread.Sleep(0);
+              }
+
+              if(cnt > 2 && cnt >= length) {
+                var msgTyp = (MsMessageType)(buf[0] > 1 ? buf[1] : buf[3]);
+                if(msgTyp == MsMessageType.SEARCHGW || msgTyp == MsMessageType.DHCP_REQ) {   // Received Ack
+                  escChar = false;
+                  if(cnt > length && buf[cnt - 1] == 0xC0) {
+                    int j, k = -1;
+                    for(j = 0; j < cnt; j++) {
+                      if(buf[j] == 0xDB) {
+                        escChar = true;
+                        continue;
+                      }
+                      if(escChar) {
+                        buf[++k] = (byte)(buf[j] ^ 0x20);
+                        escChar = false;
+                      } else {
+                        buf[++k] = buf[j];
+                      }
+                    }
+                    escChar = true;
+                    cnt = k;
+                  }
+                  if(cnt == length) {
+                    found = true;
+                    MsGSerial gw;
+                    lock(_gates) {
+                      gw = new MsGSerial(port);
+                      _gates.Add(gw);
+                    }
+                    gw._useSlip = escChar;
+                    Log.Debug("I {0}: SLIP={1}", port.PortName, escChar);
+                    MsDevice.ProcessInPacket(gw, gw._gateAddr, buf, 0, cnt);
+                    break;
+                  }
+                }
+                if(_verbose.value) {
                   Log.Debug("r {0}: {1}  {2}", pns[i], BitConverter.ToString(buf, 0, cnt), msgTyp);
                 }
-                SendRaw(port, disconnectAll, tmpBuf); // Send Disconnect
               }
               Thread.Sleep(90);
-            }
+            } while(--tryCnt > 0);
+
             if(!found) {
               port.Close();
               continue;
@@ -189,8 +230,8 @@ namespace X13.Periphery {
               Log.Debug("MQTT-SN.Serial search on {0} - {1}", pns[i], ex.Message);
             }
             try {
-              if(port!=null) {
-                if(port!=null && port.IsOpen) {
+              if(port != null) {
+                if(port != null && port.IsOpen) {
                   port.Close();
                 }
                 port.Dispose();
@@ -199,141 +240,9 @@ namespace X13.Periphery {
             catch(Exception) {
             }
           }
-          port=null;
+          port = null;
         }
-        _scanBusy=0;
-      }
-      private static bool GetPacket(SerialPort port, ref int length, byte[] buf, ref int cnt, ref bool escChar) {
-        int b;
-        if(port==null || !port.IsOpen) {
-          return false;
-        }
-        while(port.BytesToRead>0) {
-          b=port.ReadByte();
-          if(b<0) {
-            break;
-          }
-#if !UART_RAW_MQTTSN
-          if(b==0xC0) {
-            escChar=false;
-            if(cnt>1 && cnt==length) {
-              return true;
-            } else {
-              if(cnt>1) {
-                Log.Warning("r  {0}: {1}  size mismatch: {2}/{3}", port.PortName, BitConverter.ToString(buf, 0, cnt), cnt, length);
-              }
-              cnt=-1;
-            }
-            continue;
-          }
-          if(b==0xDB) {
-            escChar=true;
-            continue;
-          }
-          if(escChar) {
-            b^=0x20;
-            escChar=false;
-          }
-          if(cnt==0x100) {
-            cnt=-1;
-            continue;
-          }
-#endif
-          if(cnt>=0) {
-            buf[cnt++]=(byte)b;
-#if UART_RAW_MQTTSN
-            if(cnt==length) {
-              return true;
-            }
-#endif
-          } else {
-#if UART_RAW_MQTTSN
-            if(b<2 && b>MsMessage.MSG_MAX_LENGTH) {
-              if(_verbose.value) {
-                Log.Warning("r {0}:0x{1:X2} wrong length of the packet", port.PortName, b);
-              }
-              cnt=-1;
-              port.DiscardInBuffer();
-              return false;
-            }
-#endif
-            length=b;
-            cnt++;
-          }
-        }
-        return false;
-      }
-      private static void SendRaw(SerialPort port, byte[] buf, byte[] tmp) {
-        if(port==null || !port.IsOpen) {
-          return;
-        }
-        int i, j=0;
-        byte b;
-        b=(byte)buf.Length;
-#if UART_RAW_MQTTSN
-        tmp[j++]=b;
-        for(i=0; i<buf.Length; i++) {
-          tmp[j++]=buf[i];
-        }
-#else
-        tmp[j++]=0xC0;
-        if(b==0xC0 || b==0xDB) {
-          tmp[j++]=0xDB;
-          tmp[j++]=(byte)(b ^ 0x20);
-        } else {
-          tmp[j++]=b;
-        }
-        for(i=0; i<buf.Length; i++) {
-          if(buf[i]==0xC0 || buf[i]==0xDB) {
-            tmp[j++]=0xDB;
-            tmp[j++]=(byte)(buf[i] ^ 0x20);
-          } else {
-            tmp[j++]=buf[i];
-          }
-        }
-        tmp[j++]=0xC0;
-#endif
-        port.Write(tmp, 0, j);
-        if(_verbose.value) {
-          Log.Debug("s {0}: {1}  {2}", port.PortName, BitConverter.ToString(buf, 0, buf.Length), MsMessage.Parse(buf, 0, buf.Length));
-        }
-      }
-      private static void SendRaw(MsGSerial g, MsMessage msg, byte[] tmp) {
-        if(g==null || g._port==null || !g._port.IsOpen || msg==null) {
-          return;
-        }
-        byte[] buf=msg.GetBytes();
-        int i, j=0;
-        byte b;
-        b=(byte)buf.Length;
-#if UART_RAW_MQTTSN
-        tmp[j++]=b;
-        for(i=0; i<buf.Length; i++) {
-          tmp[j++]=buf[i];
-        }
-#else
-        tmp[j++]=0xC0;
-        if(b==0xC0 || b==0xDB) {
-          tmp[j++]=0xDB;
-          tmp[j++]=(byte)(b ^ 0x20);
-        } else {
-          tmp[j++]=b;
-        }
-        for(i=0; i<buf.Length; i++) {
-          if(buf[i]==0xC0 || buf[i]==0xDB) {
-            tmp[j++]=0xDB;
-            tmp[j++]=(byte)(buf[i] ^ 0x20);
-          } else {
-            tmp[j++]=buf[i];
-          }
-        }
-        tmp[j++]=0xC0;
-#endif
-        g._port.Write(tmp, 0, j);
-
-        if(_verbose.value) {
-          Log.Debug("s {0}: {1}  {2}", g._port.PortName, BitConverter.ToString(buf), msg.ToString());
-        }
+        _scanBusy = 0;
       }
       #endregion static
 
@@ -346,32 +255,33 @@ namespace X13.Periphery {
       private DateTime _advTick;
       private List<MsDevice> _nodes;
       private byte _gwRadius;
+      private bool _useSlip;
 
       public MsGSerial(SerialPort port) {
-        _nodes=new List<MsDevice>();
-        _port=port;
-        byte i=1;
+        _nodes = new List<MsDevice>();
+        _port = port;
+        byte i = 1;
         foreach(var g in _gates) {
-          i=g.gwIdx>=i?(byte)(g.gwIdx+1):i;
+          i = g.gwIdx >= i ? (byte)(g.gwIdx + 1) : i;
         }
-        gwIdx=i;
+        gwIdx = i;
         int tmpAddr;
-        if(!int.TryParse(new string(_port.PortName.Where(z => char.IsDigit(z)).ToArray()), out tmpAddr) || tmpAddr==0 || tmpAddr>254) {
-          tmpAddr=(byte)(new Random()).Next(1, 254);
+        if(!int.TryParse(new string(_port.PortName.Where(z => char.IsDigit(z)).ToArray()), out tmpAddr) || tmpAddr == 0 || tmpAddr > 254) {
+          tmpAddr = (byte)(new Random()).Next(1, 254);
         }
-        _gateAddr=new byte[] { gwIdx, (byte)tmpAddr };
-        _sendQueue=new Queue<MsMessage>();
-        _sndBuf=new byte[384];
-        _advTick=DateTime.Now.AddSeconds(31.3);
+        _gateAddr = new byte[] { gwIdx, (byte)tmpAddr };
+        _sendQueue = new Queue<MsMessage>();
+        _sndBuf = new byte[384];
+        _advTick = DateTime.Now.AddSeconds(31.3);
         Topic t;
         DVar<long> tl;
-        if(Topic.root.Exist("/local/cfg/MQTT-SN.Serial/radius", out t) && t.valueType==typeof(long) && (tl=t as DVar<long>)!=null) {
-          _gwRadius=(byte)tl.value;
-          if(_gwRadius<1 || _gwRadius>3) {
-            _gwRadius=0;
+        if(Topic.root.Exist("/local/cfg/MQTT-SN.Serial/radius", out t) && t.valueType == typeof(long) && (tl = t as DVar<long>) != null) {
+          _gwRadius = (byte)tl.value;
+          if(_gwRadius < 1 || _gwRadius > 3) {
+            _gwRadius = 0;
           }
         } else {
-          _gwRadius=1;
+          _gwRadius = 1;
         }
         ThreadPool.QueueUserWorkItem(CommThread);
       }
@@ -389,27 +299,27 @@ namespace X13.Periphery {
       }
       public byte gwIdx { get; private set; }
       public byte gwRadius { get { return _gwRadius; } }
-      public string name { get { return _port!=null?_port.PortName:string.Empty; } }
+      public string name { get { return _port != null ? _port.PortName : string.Empty; } }
       public string Addr2If(byte[] addr) {
-        return _port!=null?_port.PortName:string.Empty;
+        return _port != null ? _port.PortName : string.Empty;
       }
       public void AddNode(MsDevice dev) {
         _nodes.Add(dev);
       }
       public void RemoveNode(MsDevice dev) {
-        if(_nodes!=null) {
+        if(_nodes != null) {
           _nodes.Remove(dev);
         }
       }
       public void Stop() {
         try {
-          if(_port!=null && _port.IsOpen) {
-            var nodes=_nodes.ToArray();
-            for(int i=0; i<nodes.Length; i++) {
+          if(_port != null && _port.IsOpen) {
+            var nodes = _nodes.ToArray();
+            for(int i = 0; i < nodes.Length; i++) {
               nodes[i].Stop();
             }
             _port.Close();
-            _port=null;
+            _port = null;
           }
         }
         catch(Exception ex) {
@@ -417,52 +327,150 @@ namespace X13.Periphery {
         }
       }
 
-      private void CommThread(object o) {
-        byte[] buf=new byte[256];
-        bool escChar=false;
-        int cnt=-1;
-        int len=-1;
-        MsMessage msg;
-        DateTime busyTime=DateTime.Now;
-        try {
-          while(_port!=null && _port.IsOpen) {
-            if(GetPacket(_port, ref len, buf, ref cnt, ref escChar)) {
-              if(len==5 && buf[1]==(byte)MsMessageType.SUBSCRIBE) {
-                _advTick=DateTime.Now.AddMilliseconds(100);   // Send Advertise
+      private void SendRaw(MsMessage msg, byte[] tmp) {
+        if(_port == null || !_port.IsOpen || msg == null) {
+          return;
+        }
+        byte[] buf = msg.GetBytes();
+        int i, j = 0;
+        byte b;
+        b = (byte)buf.Length;
+        if(_useSlip) {
+          tmp[j++] = 0xC0;
+          if(b == 0xC0 || b == 0xDB) {
+            tmp[j++] = 0xDB;
+            tmp[j++] = (byte)(b ^ 0x20);
+          } else {
+            tmp[j++] = b;
+          }
+          for(i = 0; i < buf.Length; i++) {
+            if(buf[i] == 0xC0 || buf[i] == 0xDB) {
+              tmp[j++] = 0xDB;
+              tmp[j++] = (byte)(buf[i] ^ 0x20);
+            } else {
+              tmp[j++] = buf[i];
+            }
+          }
+          tmp[j++] = 0xC0;
+        } else {
+          tmp[j++] = b;
+          for(i = 0; i < buf.Length; i++) {
+            tmp[j++] = buf[i];
+          }
+        }
+        _port.Write(tmp, 0, j);
+
+        if(_verbose.value) {
+          Log.Debug("s {0}: {1}  {2}", _port.PortName, BitConverter.ToString(buf), msg.ToString());
+        }
+      }
+      private bool GetPacket(ref int length, byte[] buf, ref int cnt, ref bool escChar) {
+        int b;
+        if(_port == null || !_port.IsOpen) {
+          return false;
+        }
+        while(_port.BytesToRead > 0) {
+          b = _port.ReadByte();
+          if(b < 0) {
+            break;
+          }
+          if(_useSlip) {
+            if(b == 0xC0) {
+              escChar = false;
+              if(cnt > 1 && cnt == length) {
+                return true;
+              } else {
+                if(cnt > 1) {
+                  Log.Warning("r  {0}: {1}  size mismatch: {2}/{3}", _port.PortName, BitConverter.ToString(buf, 0, cnt), cnt, length);
+                }
+                cnt = -1;
               }
-              if (!MsDevice.ProcessInPacket(this, _gateAddr, buf, 0, len)){
-                _port.DiscardInBuffer();
-              }
-              cnt=-1;
-              msg=null;
               continue;
             }
-            msg=null;
-            if(busyTime>DateTime.Now) {
+            if(b == 0xDB) {
+              escChar = true;
+              continue;
+            }
+            if(escChar) {
+              b ^= 0x20;
+              escChar = false;
+            }
+            if(cnt == 0x100) {
+              cnt = -1;
+              continue;
+            }
+          }
+          if(cnt >= 0) {
+            buf[cnt++] = (byte)b;
+            if(!_useSlip) {
+              if(cnt == length) {
+                return true;
+              }
+            }
+          } else {
+            if(!_useSlip) {
+              if(b < 2 && b > MsMessage.MSG_MAX_LENGTH) {
+                if(_verbose.value) {
+                  Log.Warning("r {0}:0x{1:X2} wrong length of the packet", _port.PortName, b);
+                }
+                cnt = -1;
+                _port.DiscardInBuffer();
+                return false;
+              }
+            }
+            length = b;
+            cnt++;
+          }
+        }
+        return false;
+      }
+
+      private void CommThread(object o) {
+        byte[] buf = new byte[256];
+        bool escChar = false;
+        int cnt = -1;
+        int len = -1;
+        MsMessage msg;
+        DateTime busyTime = DateTime.Now;
+        try {
+          while(_port != null && _port.IsOpen) {
+            if(GetPacket(ref len, buf, ref cnt, ref escChar)) {
+              if(len == 5 && buf[1] == (byte)MsMessageType.SUBSCRIBE) {
+                _advTick = DateTime.Now.AddMilliseconds(100);   // Send Advertise
+              }
+              if(!MsDevice.ProcessInPacket(this, _gateAddr, buf, 0, len)) {
+                _port.DiscardInBuffer();
+              }
+              cnt = -1;
+              msg = null;
+              continue;
+            }
+            msg = null;
+            if(busyTime > DateTime.Now) {
               Thread.Sleep(0);
               continue;
             }
             lock(_sendQueue) {
-              if(_sendQueue.Count>0) {
-                msg=_sendQueue.Dequeue();
+              if(_sendQueue.Count > 0) {
+                msg = _sendQueue.Dequeue();
               }
             }
-            if(msg!=null) {
-              SendRaw(this, msg, _sndBuf);
-              busyTime=DateTime.Now.AddMilliseconds(msg.IsRequest?20:5);
+            if(msg != null) {
+              SendRaw(msg, _sndBuf);
+              busyTime = DateTime.Now.AddMilliseconds(msg.IsRequest ? 20 : 5);
               continue;
             }
-            if(_gwTopic!=null && _gwTopic.value!=null && (_gwTopic.value.state==State.Disconnected || _gwTopic.value.state==State.Lost)) {
-              _gwTopic=null;
+            if(_gwTopic != null && _gwTopic.value != null && (_gwTopic.value.state == State.Disconnected || _gwTopic.value.state == State.Lost)) {
+              _gwTopic = null;
               Thread.Sleep(500);
               this.Dispose();
               Thread.Sleep(1000);
               _startScan.Set();
               return;
             }
-            if(_advTick<DateTime.Now) {
-              SendRaw(this, new MsAdvertise(gwIdx, 900), _sndBuf);
-              _advTick=DateTime.Now.AddMinutes(15);
+            if(_advTick < DateTime.Now) {
+              SendRaw(new MsAdvertise(gwIdx, 900), _sndBuf);
+              _advTick = DateTime.Now.AddMinutes(15);
             }
             Thread.Sleep(15);
           }
@@ -482,13 +490,13 @@ namespace X13.Periphery {
       }
       private void Dispose() {
         try {
-          if(_port!=null && _port.IsOpen) {
+          if(_port != null && _port.IsOpen) {
             _port.Close();
           }
         }
         catch(Exception) {
         }
-        _port=null;
+        _port = null;
         _gates.Remove(this);
       }
       #endregion instance
