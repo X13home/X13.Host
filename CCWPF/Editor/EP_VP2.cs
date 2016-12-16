@@ -113,7 +113,7 @@ namespace X13.CC {
       foreach(var fv in node.Members.Where(z => z.Value is FunctionDefinition && z.Name is Constant)) {
         var fm = mc.scope.GetProperty((fv.Name as Constant).Value.ToString(), EP_Type.FUNCTION);
         if(fm == null || fm.type != EP_Type.FUNCTION) {
-          throw new ApplicationException("Unknown merker in pass 2: "+ mc.fName+ "." + (fv.Name as Constant).Value.ToString());
+          throw new ApplicationException("Unknown merker in pass 2: " + mc.fName + "." + (fv.Name as Constant).Value.ToString());
         }
         DefineFunction(fv.Value as FunctionDefinition, fm);
       }
@@ -188,15 +188,45 @@ namespace X13.CC {
       Constant c;
       EP_Compiler.Scope sc;
 
-      if((f = node.Source as GetVariable) != null && (m = _compiler.GetMerker(f.Descriptor)).type == EP_Type.REFERENCE) {
-        _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LDI_S4, m), 0, 1);
-        sc = m.scope;
-        //TODO: LDM_xx_C16  (m.addr+offset)
+      if((f = node.Source as GetVariable) != null && (m = _compiler.GetMerker(f.Descriptor)) != null) {
+        switch(m.type) {
+        case EP_Type.REFERENCE:  //TODO: LDM_xx_C16  (m.addr+offset)
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LDI_S4, m), 0, 1);
+          sc = m.scope;
+          break;
+        case EP_Type.U8_CARR:
+          node.FieldName.Visit(this);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.CHECK_IDX, m), 0, 0);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LPM_U1, m, node), 1, 1);
+          return this;
+        case EP_Type.I8_CARR:
+          node.FieldName.Visit(this);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.CHECK_IDX, m), 0, 0);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LPM_S1, m, node), 1, 1);
+          return this;
+        case EP_Type.U16_CARR:
+          node.FieldName.Visit(this);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.CHECK_IDX, m), 0, 0);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LPM_U2, m, node), 1, 1);
+          return this;
+        case EP_Type.I16_CARR:
+          node.FieldName.Visit(this);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.CHECK_IDX, m), 0, 0);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LPM_S2, m, node), 1, 1);
+          return this;
+        case EP_Type.I32_CARR:
+          node.FieldName.Visit(this);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.CHECK_IDX, m), 0, 0);
+          _compiler.cur.AddInst(new EP_Compiler.Instruction(EP_InstCode.LPM_S4, m, node), 1, 1);
+          return this;
+        default:
+          throw new NotSupportedException("P2: " + node.ToString());
+        }
       } else if(node.Source is This) {
         _compiler.cur.AddInst(EP_InstCode.LD_P0, 0, 1);
         sc = _compiler.cur;
       } else {
-        throw new NotSupportedException(node.Source.ToString() + " as object");
+        throw new NotSupportedException("P2: " + node.ToString());
       }
       if((c = node.FieldName as Constant) != null && c.Value != null && c.Value.ValueType == JSValueType.String) {
         string pn = c.Value.ToString();
@@ -427,8 +457,8 @@ namespace X13.CC {
           if(ca.Arguments.Length > 0) {
             ca.Arguments[0].Visit(this);
           } else {
-			_compiler._sp.Pop();
-			return this;
+            _compiler._sp.Pop();
+            return this;
           }
         } else {
           node.Value.Visit(this);
@@ -506,10 +536,10 @@ namespace X13.CC {
       return this;
     }
     protected override EP_VP2 Visit(ConvertToBoolean node) {
-      return Visit(node as Expression);
+      return this;
     }
     protected override EP_VP2 Visit(ConvertToInteger node) {
-      return Visit(node as Expression);
+      return this;
     }
     protected override EP_VP2 Visit(ConvertToNumber node) {
       return Visit(node as Expression);
@@ -657,8 +687,8 @@ namespace X13.CC {
       var cl = new Loop(_compiler._sp.Count, node.Labels.ToArray());
       _compiler.cur.loops.Push(cl);
 
-	  if(node.Initializer != null) {
-		node.Initializer.Visit(this);
+      if(node.Initializer != null) {
+        node.Initializer.Visit(this);
       }
       _compiler.cur.AddInst(cl.L1);
       node.Condition.Visit(this);
@@ -795,9 +825,11 @@ namespace X13.CC {
           if((ca = a1.SecondOperand as Call) != null && ca.CallMode == CallMode.Construct && (f = ca.FirstOperand as GetVariable) != null) {
             if((new string[] { "Boolean", "Int8", "UInt8", "Int16", "UInt16", "Int32" }).Any(z => z == f.Name)) {
               mf = null;
+            } else if((new string[] { "Uint8Array", "Uint16Array", "Int8Array", "Int16Array", "Int32Array"}).Any(z => z == f.Name)) {
+              continue;
             } else {
               mf = _compiler.GetMerker(f.Descriptor);
-              if(mf == null ||( mf.type != EP_Type.FUNCTION && mf.type!=EP_Type.CLASS)) {
+              if(mf == null || (mf.type != EP_Type.FUNCTION && mf.type != EP_Type.CLASS)) {
                 throw new ApplicationException("Unknown merker in pass 2: " + f.Descriptor.Name);
               }
               m.scope = mf.scope;

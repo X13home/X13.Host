@@ -171,6 +171,12 @@ namespace X13.CC {
 
     API=0xC6,
 
+    LPM_S1 = 0xC9,
+    LPM_S2,
+    LPM_S4,
+    LPM_U1,
+    LPM_U2,
+
     SJMP = 0xF0,
     JZ = 0xF1,
     JNZ = 0xF2,
@@ -180,6 +186,7 @@ namespace X13.CC {
 
     LABEL = 0xF8,
 
+    CHECK_IDX = 0xFD,
     TEST_EQ = 0xFE,
     RET = 0xFF,
   }
@@ -191,6 +198,11 @@ namespace X13.CC {
     UINT16,
     SINT16,
     SINT32,
+    U8_CARR,
+    I8_CARR,
+    U16_CARR,
+    I16_CARR,
+    I32_CARR,
     PropB1,
     PropU1,
     PropS1,

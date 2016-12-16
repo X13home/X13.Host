@@ -269,6 +269,8 @@ namespace X13.Periphery {
       SP_OutOfRange = 0x87,
       API_Unknown = 0x88,
 
+      LPM_OutOfRange = 0x90,
+
       WrongState = 0xFA,
       CrcError = 0xFB,
       OutOfRange = 0xFC,

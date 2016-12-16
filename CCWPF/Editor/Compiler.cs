@@ -10,7 +10,19 @@ using System.Text;
 namespace X13.CC {
   internal partial class EP_Compiler {
     private static SortedList<string, EP_Type> _predefs;
+#if !COMPILER_TEST
     private static DVar<bool> _verbose;
+#endif
+    private static bool Verbose {
+      get {
+#if !COMPILER_TEST
+        return _verbose.value;
+#else
+        return true;
+#endif
+      }
+    }
+
 
     static EP_Compiler() {
       _predefs = new SortedList<string, EP_Type>();
@@ -22,14 +34,15 @@ namespace X13.CC {
       _predefs["In"] = EP_Type.INPUT;
       _predefs["Av"] = EP_Type.INPUT;
       _predefs["Ai"] = EP_Type.INPUT;
-
+#if !COMPILER_TEST
       _verbose = Topic.root.Get<bool>("/etc/MQTT-SN/PLC/verbose");
+#endif
     }
 
     internal Stack<Instruction> _sp;
     internal List<Scope> _programm;
     internal Stack<Scope> _scope;
-    public Scope global, cur, initBlock;
+    public Scope global, cur, initBlock, dataBlock;
 
     public SortedList<string, string> varList;
     public List<string> ioList;
@@ -59,6 +72,9 @@ namespace X13.CC {
         global.AddInst(EP_InstCode.NOP);
         global.AddInst(new Instruction(EP_InstCode.JMP) { _ref = ri });
         global.AddInst(EP_InstCode.LABEL);
+
+        dataBlock = new Scope(this, null, null);
+        _programm.Add(dataBlock);
 
         var module = new Module(code, CompilerMessageCallback, Options.SuppressConstantPropogation | Options.SuppressUselessExpressionsElimination);
 
@@ -162,6 +178,9 @@ namespace X13.CC {
           }
           foreach(var c in p.code) {
             c.addr = addr;
+            if(c._blob && c._param != null) {
+              c._param.Addr = c.addr;
+            }
             addr += (uint)c._code.Length;
           }
         }
@@ -175,7 +194,7 @@ namespace X13.CC {
           }
           if(bytes.Count > 0) {
             HexN[p.code.First().addr] = new PLC.ByteArray(bytes.ToArray());
-            if(_verbose.value) {
+            if(Verbose) {
               Log.Debug("{0}", p.ToString());
             }
           }
@@ -481,7 +500,7 @@ namespace X13.CC {
           sb.Append(c.addr.ToString("X4"));
           sb.Append(" ");
           hex = c._code;
-          for(j = 0; j < 5; j++) {
+          for(j = 0; j < 8; j++) {
             if(j < hex.Length) {
               sb.Append(hex[j].ToString("X2"));
               sb.Append(" ");
@@ -491,13 +510,26 @@ namespace X13.CC {
           }
           sb.Append("| ").Append(c.ToString());
           if(c._cn != null) {
-            while((sb.Length - ls) < 46) {
+            while((sb.Length - ls) < 50) {
               sb.Append(" ");
             }
             sb.Append("; ").Append(c._cn.ToString());
           }
           sb.Append("\r\n");
           ls = sb.Length;
+          for(; j < hex.Length; j++) {
+            if((j & 7) == 0) {
+              sb.Append((c.addr + j).ToString("X4"));
+              sb.Append(" ");
+            }
+            sb.Append(hex[j].ToString("X2"));
+            if((j & 7) == 7 || j == hex.Length - 1) {
+              sb.Append("\r\n");
+            } else {
+              sb.Append(" ");
+            }
+          }
+
         }
         return sb.ToString();
       }
@@ -611,16 +643,25 @@ namespace X13.CC {
       internal Merker _param;
       internal CodeNode _cn;
       internal Instruction _ref;
+      internal bool _blob;
 
       public bool canOptimized;
 
       public Instruction(EP_InstCode cmd, Merker param = null, CodeNode cn = null) {
         _param = param;
         _cn = cn;
+        _blob = false;
         Prepare(cmd);
       }
+      public Instruction(byte[] arr) {
+        _blob = true;
+        _code = arr;
+      }
       public bool Link() {
-        if(_param == null && _ref == null) {
+        if((_param == null && _ref == null)) {
+          return true;
+        }
+        if(_blob) {
           return true;
         }
         Prepare((EP_InstCode)_code[0]);
@@ -798,6 +839,12 @@ namespace X13.CC {
         case EP_InstCode.LDM_U2_C16:
         case EP_InstCode.LDM_U2_CS16:
 
+        case EP_InstCode.LPM_S1:
+        case EP_InstCode.LPM_S2:
+        case EP_InstCode.LPM_S4:
+        case EP_InstCode.LPM_U1:
+        case EP_InstCode.LPM_U2:
+
         case EP_InstCode.CALL:
           if(_code == null || _code.Length != 3) {
             _code = new byte[3];
@@ -892,6 +939,14 @@ namespace X13.CC {
           _code[1] = (byte)tmp_D;
           _code[2] = (byte)(tmp_D >> 8);
           break;
+        case EP_InstCode.CHECK_IDX:
+          if(_code == null || _code.Length != 3) {
+            _code = new byte[3];
+          }
+          _code[0] = (byte)cmd;
+          _code[1] = (byte)_param.pOut;
+          _code[2] = (byte)(_param.pOut >> 8);
+          break;
         default:
           throw new NotImplementedException(this.ToString());
         }
@@ -899,14 +954,35 @@ namespace X13.CC {
       public override string ToString() {
         if(_code.Length > 0) {
           StringBuilder sb = new StringBuilder();
-          sb.Append(((EP_InstCode)_code[0]).ToString());
-          if(_code.Length > 1) {
+          if(_blob) {
+            switch(_param.type) {
+            case EP_Type.U8_CARR:
+            case EP_Type.I8_CARR:
+              sb.Append("DB");
+              break;
+            case EP_Type.U16_CARR:
+            case EP_Type.I16_CARR:
+              sb.Append("DW");
+              break;
+            case EP_Type.I32_CARR:
+              sb.Append("DD");
+              break;
+            }
             while(sb.Length < 12) {
               sb.Append(" ");
             }
-            sb.Append("0x");
-            for(int i = _code.Length - 1; i > 0; i--) {
-              sb.Append(_code[i].ToString("X2"));
+            sb.Append(_param.init.ToString());
+          } else {
+            sb.Append(((EP_InstCode)_code[0]).ToString());
+
+            if(_code.Length > 1) {
+              while(sb.Length < 12) {
+                sb.Append(" ");
+              }
+              sb.Append("0x");
+              for(int i = _code.Length - 1; i > 0; i--) {
+                sb.Append(_code[i].ToString("X2"));
+              }
             }
           }
           return sb.ToString();
@@ -915,6 +991,5 @@ namespace X13.CC {
         }
       }
     }
-
   }
 }

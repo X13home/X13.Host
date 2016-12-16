@@ -321,10 +321,10 @@ namespace X13.CC {
       return this;
     }
     protected override EP_VP1 Visit(ConvertToBoolean node) {
-      return Visit(node as Expression);
+      return this;
     }
     protected override EP_VP1 Visit(ConvertToInteger node) {
-      return Visit(node as Expression);
+      return this;
     }
     protected override EP_VP1 Visit(ConvertToNumber node) {
       return Visit(node as Expression);
@@ -451,12 +451,11 @@ namespace X13.CC {
       return Visit(node as CodeNode);
     }
     protected override EP_VP1 Visit(VariableDefinition node) {
-      int i;
       Assignment a1;
       EP_Compiler.Merker m;
       GetVariable v;
 
-      for(i = 0; i < node.Initializers.Length; i++) {
+      for(int i = 0; i < node.Initializers.Length; i++) {
         if((v=node.Initializers[i] as GetVariable)!=null) {
           m = _compiler.DefineMerker(v.Descriptor);
           continue;
@@ -491,6 +490,63 @@ namespace X13.CC {
               case "Int32":
                 t = EP_Type.SINT32;
                 break;
+              case "Uint8Array":
+              case "Uint16Array":
+              case "Int8Array":
+              case "Int16Array":
+              case "Int32Array":
+                if(ca.Arguments.Count() == 1 && ca.Arguments[0] is ArrayDefinition) {
+                  List<byte> narr=new List<byte>();
+                  int cnt = 0;
+                  t = EP_Type.NONE;
+                  switch(f.Name) {
+                  case "Uint8Array":
+                    t = EP_Type.U8_CARR;
+                    foreach(var el in (ca.Arguments[0] as ArrayDefinition).Elements) {
+                      narr.Add((byte)el.Evaluate(null));
+                      cnt++;
+                    }
+                    break;
+                  case "Int8Array":
+                    t = EP_Type.I8_CARR;
+                    foreach(var el in (ca.Arguments[0] as ArrayDefinition).Elements) {
+                      narr.Add((byte)el.Evaluate(null));
+                      cnt++;
+                    }
+                    break;
+                  case "Uint16Array":
+                    t = EP_Type.U16_CARR;
+                    foreach(var el in (ca.Arguments[0] as ArrayDefinition).Elements) {
+                      narr.AddRange(BitConverter.GetBytes((ushort)el.Evaluate(null)));
+                      cnt++;
+                    }
+                    break;
+                  case "Int16Array":
+                    t = EP_Type.I16_CARR;
+                    foreach(var el in (ca.Arguments[0] as ArrayDefinition).Elements) {
+                      narr.AddRange(BitConverter.GetBytes((ushort)el.Evaluate(null)));
+                      cnt++;
+                    }
+                    break;
+                  case "Int32Array":
+                    t = EP_Type.I32_CARR;
+                    foreach(var el in (ca.Arguments[0] as ArrayDefinition).Elements) {
+                      narr.AddRange(BitConverter.GetBytes((int)el.Evaluate(null)));
+                      cnt++;
+                    }
+                    break;
+                  }
+                  EP_Compiler.Instruction i1=new EP_Compiler.Instruction(narr.ToArray());
+                  _compiler.dataBlock.AddInst(i1, 0, 0);
+                  m = _compiler.DefineMerker(v.Descriptor, t);
+                  i1._param = m;
+                  i1._cn = v;
+                  m.init = ca.Arguments[0];
+                  m.pOut = cnt;
+                  continue;
+                } else {
+                  throw new NotSupportedException("P1: " + ca.ToString());
+                }
               default:
                 t = EP_Type.NONE;
                 break;

@@ -158,7 +158,7 @@ namespace X13.Periphery {
               var mt=(MsMessageType)(buf[0]>1?buf[1]:buf[3]);
               if((mt==MsMessageType.CONNECT || mt==MsMessageType.SEARCHGW) && addr.Length==_wla_arr.Length) {
                 for(int i=addr.Length-1; i>=0; i--) {
-                  if((addr[i] & _wlm_arr[i])!=_wla_arr[i]) {
+                  if((addr[i] & _wlm_arr[i]) != (_wla_arr[i] & _wlm_arr[i])) {
                     allow=false;
                     break;
                   }
