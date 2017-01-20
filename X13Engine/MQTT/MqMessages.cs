@@ -172,7 +172,8 @@ namespace X13.MQTT {
     /// <summary>The version of the MQTT protocol we are using</summary>
     private const byte VERSION = 3;
     /// <summary>Constant description of the protocol</summary>
-    private static readonly byte[] protocolDesc = new byte[] { 0, 6, (byte)'M', (byte)'Q', (byte)'I', (byte)'s', (byte)'d', (byte)'p', VERSION };
+    private static readonly byte[] protocolDesc3 = new byte[] { 0, 6, (byte)'M', (byte)'Q', (byte)'I', (byte)'s', (byte)'d', (byte)'p', 3};
+    private static readonly byte[] protocolDesc4 = new byte[] { 0, 4, (byte)'M', (byte)'Q', (byte)'T', (byte)'T', 4 };
 
     public ushort keepAlive { get; set; }
     public string clientId { get; internal set; }
@@ -183,6 +184,7 @@ namespace X13.MQTT {
     public bool cleanSession { get; set; }
     public string userName { get; set; }
     public string userPassword { get; set; }
+    public byte version { get; set; }
 
     public MqConnect()
       : base(MessageType.CONNECT) {
@@ -190,11 +192,26 @@ namespace X13.MQTT {
     public MqConnect(byte header, uint len, Stream str)
       : base(header, len, str) {
       byte b;
-
-      for(int i=0; i<protocolDesc.Length; i++) {
-        b=(byte)str.ReadByte();
-        if(b!=protocolDesc[i]) {
-          throw new ArgumentException();
+      version = 0;
+      int i = 0;
+      while(true) {
+        b = (byte)str.ReadByte();
+        if((version==0 || version==3) && b==protocolDesc3[i]){
+          if(i > 0) {
+            version = 3;
+          }
+          i++;
+          if(i>=protocolDesc3.Length){
+            break;
+          }
+        } else if((version==0 || version==4) && b==protocolDesc4[i]){
+          version=4;
+          i++;
+          if(i>=protocolDesc4.Length){
+            break;
+          }
+        } else {
+          throw new ArgumentException("Connect.ProtocolDescription Error ["+i.ToString()+"]=0x"+b.ToString("X2"));
         }
       }
       byte connectFlags=(byte)str.ReadByte();
@@ -223,7 +240,7 @@ namespace X13.MQTT {
       byte _connectFlags=(byte)((cleanSession ? 0x02 : 0)); // Clean Start
 
       base.variableHeaderLength = (uint)(
-        protocolDesc.Length         //Length of the protocol description
+        version==4? protocolDesc4.Length:protocolDesc3.Length         //Length of the protocol description
         +3                          //Connect Flags + Keep alive
         +enc.GetByteCount(clientId) // Length of the client ID string
         +2                          // The length of the length of the clientID
@@ -243,7 +260,7 @@ namespace X13.MQTT {
       }
 
       base.Serialise(str);
-      str.Write(protocolDesc, 0, protocolDesc.Length);
+      str.Write(version == 4 ? protocolDesc4 : protocolDesc3, 0, (version == 4 ? protocolDesc4 : protocolDesc3).Length);
       str.WriteByte(_connectFlags);
       // Write the keep alive value
       WriteToStream(str, this.keepAlive);

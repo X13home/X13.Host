@@ -112,7 +112,6 @@ Global
 		{F2F3F521-C815-4E90-8197-EC1311226A5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F2F3F521-C815-4E90-8197-EC1311226A5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F2F3F521-C815-4E90-8197-EC1311226A5E}.Release_ejs|Any CPU.ActiveCfg = Release|Any CPU
-		{F2F3F521-C815-4E90-8197-EC1311226A5E}.Release_ejs|Any CPU.Build.0 = Release|Any CPU
 		{F2F3F521-C815-4E90-8197-EC1311226A5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F2F3F521-C815-4E90-8197-EC1311226A5E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection

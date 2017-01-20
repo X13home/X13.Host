@@ -194,77 +194,77 @@ namespace X13.MQTT {
         try {
           do {
             if(first) {
-              first=false;
+              first = false;
             } else {
-              _rcvBuf[0]=(byte)_stream.ReadByte();
+              _rcvBuf[0] = (byte)_stream.ReadByte();
             }
             switch(_rcvState) {
             case 0:           // header
-              _rcvHeader=_rcvBuf[0];
-              _rcvLengt=0;
-              _rcvLengthPos=0;
+              _rcvHeader = _rcvBuf[0];
+              _rcvLengt = 0;
+              _rcvLengthPos = 0;
               _rcvState++;
               break;
             case 1: {
-                _rcvLengt+=(uint)((_rcvBuf[0] & 0x7F) << (7*_rcvLengthPos));
+                _rcvLengt += (uint)((_rcvBuf[0] & 0x7F) << (7 * _rcvLengthPos));
                 _rcvLengthPos++;
-                if((_rcvBuf[0]&0x80)==0) {
+                if((_rcvBuf[0] & 0x80) == 0) {
                   _rcvState++;
-                  _rcvLengthPos=0;
-                  if(_rcvLengt==0) {
+                  _rcvLengthPos = 0;
+                  if(_rcvLengt == 0) {
                     goto case 2;
                   }
                 }
               }
               break;
             case 2:
-              if(_rcvMemoryStream.Position<_rcvLengt) {
+              if(_rcvMemoryStream.Position < _rcvLengt) {
                 _rcvMemoryStream.WriteByte(_rcvBuf[0]);
               }
-              if(_rcvMemoryStream.Position>=_rcvLengt) {
+              if(_rcvMemoryStream.Position >= _rcvLengt) {
                 _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
-                MqMessage msg=MqMessage.Parse(_rcvHeader, _rcvLengt, _rcvMemoryStream);
-                if(msg==null) {
+                MqMessage msg = MqMessage.Parse(_rcvHeader, _rcvLengt, _rcvMemoryStream);
+                if(msg == null) {
                   Log.Warning("unrecognized message from {0}={1:X2}[{2}]", ((IPEndPoint)Socket.Client.RemoteEndPoint), _rcvHeader, _rcvLengt);
                   _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
-                  _rcvState=0;
+                  _rcvState = 0;
                 } else {
                   _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
                   _rcvMemoryStream.SetLength(0);
-                  _rcvState=0;
+                  _rcvState = 0;
 
-                  if(msg.MessageID!=0) {
-                    if(msg.Reason!=MessageType.NONE) {
-                      _waitAck.RemoveAll(wm => wm.msg.MessageID==msg.MessageID && wm.msg.MsgType==msg.Reason);
+                  if(msg.MessageID != 0) {
+                    if(msg.Reason != MessageType.NONE) {
+                      _waitAck.RemoveAll(wm => wm.msg.MessageID == msg.MessageID && wm.msg.MsgType == msg.Reason);
                     } else {
-                      int nid=msg.MessageID+1;
-                      if(nid==0x10000) {
+                      int nid = msg.MessageID + 1;
+                      if(nid == 0x10000) {
                         nid++;
                       }
                       if(!Topic.brokerMode) {
-                        nid^=0x8000;
+                        nid ^= 0x8000;
                       }
-                      if(nid>(int)_messageIdGen || (nid>0xFF00 && _messageIdGen<0x0100)) {
-                        _messageIdGen=(ushort)nid;      // synchronize messageId
+                      if(nid > (int)_messageIdGen || (nid > 0xFF00 && _messageIdGen < 0x0100)) {
+                        _messageIdGen = (ushort)nid;      // synchronize messageId
                       }
                     }
                   }
-                  if(_rcvCallback!=null) {
+                  if(_rcvCallback != null) {
                     _rcvCallback(msg);
                   }
                 }
 
-                if(_waitAck.Count>0) {
+                if(_waitAck.Count > 0) {
                   _sendTimer.Change(900, Timeout.Infinite); // connection is busy
                 }
               }
               break;
             default:
-              _rcvState=0;
+              _rcvState = 0;
               break;
             }
           } while(_stream.DataAvailable);
-          if(_rcvState!=0) {
+          if(_rcvState != 0) {
             _rcvTimer.Change(100, Timeout.Infinite);
           } else {
             _rcvTimer.Change(Timeout.Infinite, Timeout.Infinite);
@@ -273,9 +273,14 @@ namespace X13.MQTT {
         catch(ObjectDisposedException) {
           return;
         }
+        catch(ArgumentException ex) {
+          _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
+          _rcvState = 0;
+          Log.Warning(ex.Message);
+        }
         catch(Exception ex) {
           _rcvMemoryStream.Seek(0, SeekOrigin.Begin);
-          _rcvState=0;
+          _rcvState = 0;
           Log.Warning(ex.ToString());
         }
       } else {

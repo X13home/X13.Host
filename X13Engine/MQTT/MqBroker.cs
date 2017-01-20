@@ -226,6 +226,12 @@ namespace X13.MQTT {
       switch(msg.MsgType) {
       case MessageType.CONNECT:
         ConnInfo=msg as MqConnect;
+        if(ConnInfo.version != 3 && ConnInfo.version != 4) {
+          _stream.Send(new MqConnack(MqConnack.MqttConnectionResponse.UnacceptableProtocolVersion));
+          Log.Warning("UnacceptableProtocolVersion {0}:{1}@{2}", ConnInfo.userName, ConnInfo.userPassword, ConnInfo.clientId);
+          this.Disconnect();
+          break;
+        }
         bool cup=false;
         if(string.IsNullOrWhiteSpace(ConnInfo.clientId) || ConnInfo.clientId.Contains('/')) {
           _stream.Send(new MqConnack(MqConnack.MqttConnectionResponse.IdentifierRejected));
