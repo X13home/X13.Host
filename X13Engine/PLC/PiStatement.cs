@@ -142,8 +142,13 @@ namespace X13.PLC {
         _initDelay.Change(Timeout.Infinite, Timeout.Infinite);
         _initDelay=null;
         if(_st!=null && _owner!=null) {
-          _st.Init(_owner);
-          _owner.Subscribe("+", _owner_changed);
+          try {
+            _st.Init(_owner);
+            _owner.Subscribe("+", _owner_changed);
+          }
+          catch(Exception ex) {
+            Log.Warning("{0}.Init({1}) - {2}", _owner.path, _declarer, ex.Message);
+          }
         }
       }
     }
@@ -173,10 +178,10 @@ namespace X13.PLC {
             _st.Calculate(_owner, param.Source);
           }
           catch(NullReferenceException ex) {
-            Log.Debug("{0}.calculate - {1}", _owner.path, ex.Message);
+            Log.Debug("{0}.calculate({1}) - {2}", _owner.path, _declarer, ex.Message);
           }
           catch(Exception ex) {
-            Log.Warning("{0}.calculate - {1}", _owner.path, ex.Message);
+            Log.Warning("{0}.calculate({1}) - {2}", _owner.path, _declarer, ex.Message);
           }
         }
       }
