@@ -48,10 +48,6 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="websocket-sharp, Version=1.0.2.36589, Culture=neutral, PublicKeyToken=5660b08a1845a91e, processorArchitecture=MSIL">
-      <HintPath>..\packages\WebSocketSharp.1.0.3-rc9\lib\websocket-sharp.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -61,6 +57,18 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="..\Agent2\MQTT\MqClient.cs">
+      <Link>MQTT\MqClient.cs</Link>
+    </Compile>
+    <Compile Include="..\Agent2\MQTT\MqMessages.cs">
+      <Link>MQTT\MqMessages.cs</Link>
+    </Compile>
+    <Compile Include="..\Agent2\MQTT\MqStreamer.cs">
+      <Link>MQTT\MqStreamer.cs</Link>
+    </Compile>
+    <Compile Include="..\Agent2\MQTT\Subscription.cs">
+      <Link>MQTT\Subscription.cs</Link>
+    </Compile>
     <Compile Include="..\X13Engine\Properties\VersionInfo.cs">
       <Link>Properties\VersionInfo.cs</Link>
     </Compile>
@@ -73,9 +81,6 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Compile Include="..\Agent2\Client.cs">
-      <Link>Client.cs</Link>
-    </Compile>
     <Compile Include="..\Agent2\Log.cs">
       <Link>Log.cs</Link>
     </Compile>

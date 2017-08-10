@@ -28,7 +28,7 @@ namespace X13.Agent2 {
   public partial class MainWindow : Window {
     private System.Windows.Forms.NotifyIcon notifyIcon;
     private SayTimeRu _st;
-    private Client _cl;
+    private X13.MQTT.MqClient _cl;
 
     public MainWindow() {
       InitializeComponent();
@@ -40,7 +40,7 @@ namespace X13.Agent2 {
     private void Window_Loaded(object sender, RoutedEventArgs e) {
       notifyIcon.Visible = true;
       this.ShowInTaskbar = false;
-      _cl=new Client(new Uri("ws://local@localhost/"));
+      _cl=new X13.MQTT.MqClient("mqtt://air:bRutt0@asgard/");
       _st=new SayTimeRu();
       _cl.Subscribe("/var/events/saytime", (p, j) => { if(j=="true") { _st.SayTime(); } });
       _cl.Subscribe("/var/events/door41/opened", (p, j) => { if(j=="true") { SayTimeRu.PlayWav("Door41Opened"); } });

@@ -49,9 +49,6 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="websocket-sharp">
-      <HintPath>..\packages\WebSocketSharp.1.0.3-rc9\lib\websocket-sharp.dll</HintPath>
-    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -68,8 +65,11 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Client.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="MQTT\MqClient.cs" />
+    <Compile Include="MQTT\MqMessages.cs" />
+    <Compile Include="MQTT\MqStreamer.cs" />
+    <Compile Include="MQTT\Subscription.cs" />
     <Compile Include="SayTimeRu.cs" />
   </ItemGroup>
   <ItemGroup>

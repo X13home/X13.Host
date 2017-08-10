@@ -6,11 +6,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using X13.Agent2;
 
 namespace X13.Agent3 {
   internal class TopicSrc : INotifyPropertyChanged {
-    private static Client _cl;
+    private static MQTT.MqClient _cl;
     private static Dictionary<string, TopicSrc> _rep;
     static TopicSrc() {
       _rep = new Dictionary<string, TopicSrc>();
@@ -24,14 +23,14 @@ namespace X13.Agent3 {
       var urlT = TopicSrc.Get("/local/cfg/Client/URL");
       string url;
       if(urlT == null || (url = urlT.value as string) == null) {
-        url = "ws://local@localhost/";
+        url = "mqtt://air:bRutt0@asgard/";
       }
-      _cl = new Client(new Uri(url));
+      _cl = new MQTT.MqClient(url);
     }
     public static void Close() {
-      if(_cl != null) {
-        _cl.Close();
-        _cl = null;
+      var cl = System.Threading.Interlocked.Exchange(ref _cl, null);
+      if(cl != null) {
+        cl.Dispose();
       }
     }
     private static void Import(string fileName) {
@@ -221,6 +220,9 @@ namespace X13.Agent3 {
 
     public IEnumerable<TopicSrc> children { get { return _children.Values; } }
     private void OnChange(string path, string value) {
+      if(path!=this.path) {
+        return; // name collision
+      }
       if(!string.IsNullOrWhiteSpace(value)) {
         try {
           _value = Newtonsoft.Json.JsonConvert.DeserializeObject(value);

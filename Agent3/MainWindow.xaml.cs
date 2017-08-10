@@ -17,7 +17,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml;
-using X13.Agent2;
 
 namespace X13.Agent3 {
   /// <summary>
