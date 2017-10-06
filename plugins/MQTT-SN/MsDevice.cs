@@ -224,7 +224,6 @@ namespace X13.Periphery {
     private List<Topic.Subscription> _subsscriptions;
     private Queue<MsMessage> _sendQueue;
     private string _declarer = "MQTTS";
-    private int _tryCounter;
     private int _messageIdGen = 0;
     private DVar<bool> _present;
     private IMsGate _gate;
@@ -753,6 +752,9 @@ namespace X13.Periphery {
         if(_statistic.value) {
           StatConnectTime();
         }
+      } else if(state == State.Lost || state == State.Disconnected) {
+        Send(new MsDisconnect());
+        return;
       }
       _duration = msg.Duration * 1100;
       ResetTimer();
@@ -859,7 +861,6 @@ namespace X13.Periphery {
         }
         ResetTimer(3100 + duration * 1550);  // t_wakeup
         this.Send(new MsDisconnect());
-        _tryCounter = 0;
         state = State.ASleep;
         var st = Owner.Get<long>(".cfg/XD_SleepTime", Owner);
         st.saved = true;
@@ -872,6 +873,14 @@ namespace X13.Periphery {
           if(Owner != null) {
             Log.Info("{0} Disconnected", Owner.path);
           }
+        }
+        foreach(var s in _subsscriptions) {
+          s.owner.Unsubscribe(s.path, s.func);
+        }
+        _subsscriptions.Clear();
+        _topics.Clear();
+        lock(_sendQueue) {
+          _sendQueue.Clear();
         }
       }
       _waitAck = false;
@@ -1180,13 +1189,10 @@ namespace X13.Periphery {
       if(msg == null && !_waitAck && state == State.AWake) {
         ReisePool(null);
         if(_waitAck) {
-          return; // sended from pool
+          return; // is busy
         }
       }
       if(msg != null || state == State.AWake) {
-        if(msg != null && msg.IsRequest) {
-          _tryCounter = 2;
-        }
         SendIntern(msg);
       } else if(!_waitAck) {
         ResetTimer();
@@ -1205,9 +1211,6 @@ namespace X13.Periphery {
           }
         }
         if(send) {
-          if(msg.IsRequest) {
-            _tryCounter = 2;
-          }
           SendIntern(msg);
         }
       }
@@ -1220,6 +1223,9 @@ namespace X13.Periphery {
               Stat(true, msg.MsgTyp, ((msg is MsPublish && (msg as MsPublish).Dup) || (msg is MsSubscribe && (msg as MsSubscribe).dup)));
             }
             try {
+              if(msg.IsRequest) {
+                msg.tryCnt--;
+              }
               _gate.SendGw(this, msg);
             }
             catch(ArgumentOutOfRangeException ex) {
@@ -1236,7 +1242,7 @@ namespace X13.Periphery {
             }
           }
           if(msg != null && msg.IsRequest) {
-            ResetTimer(_rand.Next(ACK_TIMEOUT, ACK_TIMEOUT * 5 / 3) / (_tryCounter + 1));  // 600, 1000
+            ResetTimer(_rand.Next(ACK_TIMEOUT, ACK_TIMEOUT * 5 / 3) / (msg.tryCnt + 1));  // 333, 500, 1000
             _waitAck = true;
             break;
           }
@@ -1273,7 +1279,6 @@ namespace X13.Periphery {
           period = _rand.Next(ACK_TIMEOUT * 3 / 4, ACK_TIMEOUT);  // 450, 600
         } else if(_duration > 0) {
           period = _duration;
-          _tryCounter = 1;
         }
       }
       //Log.Debug("$ {0}._activeTimer={1}", Owner.name, period);
@@ -1281,7 +1286,7 @@ namespace X13.Periphery {
     }
     private void TimeOut(object o) {
       //Log.Debug("$ {0}.TimeOut _tryCounter={1}", Owner.name, _tryCounter);
-      if(_tryCounter > 0) {
+      if(state != State.Lost && state != State.Disconnected) {
         MsMessage msg = null;
         lock(_sendQueue) {
           if(_sendQueue.Count > 0) {
@@ -1289,14 +1294,15 @@ namespace X13.Periphery {
           }
         }
         _waitAck = false;
-        if(msg != null) {
-          _tryCounter--;
-          SendIntern(msg);
-        } else {
+        if(msg == null) {
           ResetTimer();
-          _tryCounter = 0;
+          return;
+        } else {
+          if(!msg.IsRequest || msg.tryCnt > 0) {
+            SendIntern(msg);
+            return;
+          }
         }
-        return;
       }
       state = State.Lost;
       if(Owner != null) {

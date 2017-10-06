@@ -112,6 +112,7 @@ namespace X13.Periphery {
     public bool IsRequest { get; protected set; }        // response is required 
     public MsMessageType ReqTyp { get; protected set; }  // message is a response to
     public ushort MessageId { get; set; }
+    public int tryCnt;
 
     protected MsMessage(byte[] buf, int start, int end) {
       if(buf[start+0]>1) {
@@ -132,6 +133,7 @@ namespace X13.Periphery {
       case MsMessageType.WILLMSGREQ:
       case MsMessageType.WILLTOPICREQ:
         this.IsRequest=true;
+        this.tryCnt = 3;
         break;
       }
       _sendBuf=null;
@@ -355,6 +357,7 @@ namespace X13.Periphery {
       this.TopicId=topicId;
       this.TopicPath=topicPath;
       this.IsRequest=true;
+      this.tryCnt = 3;
     }
     public MsRegister(byte[] buf, int start, int end)
       : base(buf, start, end) {
@@ -424,7 +427,12 @@ namespace X13.Periphery {
 
     public MsPublish(Topic val, ushort topicId, QoS qualityOfService)
       : base(MsMessageType.PUBLISH) {
-      this.IsRequest=qualityOfService!=QoS.AtMostOnce;
+        if(qualityOfService != QoS.AtMostOnce) {
+          this.tryCnt = 3;
+          this.IsRequest = true;
+        } else {
+          this.IsRequest=false;
+        }
       this.qualityOfService=qualityOfService;
       this.TopicId=topicId;
       this._val=val;

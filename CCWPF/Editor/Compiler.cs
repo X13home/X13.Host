@@ -171,12 +171,16 @@ namespace X13.CC {
               }
             }
           }
+        }
+
+        foreach(var p in _programm) {
           p.Optimize();
           addr += (32 - (addr % 32)) % 32;
           if(p.fm != null) {
             p.fm.Addr = addr;
           }
           foreach(var c in p.code) {
+            c.Link();  // update size for LDI_*
             c.addr = addr;
             if(c._blob && c._param != null) {
               c._param.Addr = c.addr;

@@ -52,7 +52,10 @@ namespace X13.Periphery {
       }
       bool processed = false;
 
-      if(_st == 2 && msgData[0] == (byte)Cmd.GetCRCResp) {
+       if(msgData[0] == (byte)Cmd.Idle) {
+         _plcStoped = false;
+        processed = true;
+      } else if(_st == 2 && msgData[0] == (byte)Cmd.GetCRCResp) {
         if(_curChunk != null && msgData.Length == 4 && msgData[1] == 0) {
           _curChunk.crcDev = (msgData[3] << 8) | msgData[2];
           if(_curChunk.crcDev == _curChunk.crcCur) {
