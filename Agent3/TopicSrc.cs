@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using TinyJson;
 
 namespace X13.Agent3 {
   internal class TopicSrc : INotifyPropertyChanged {
@@ -23,7 +24,7 @@ namespace X13.Agent3 {
       var urlT = TopicSrc.Get("/local/cfg/Client/URL");
       string url;
       if(urlT == null || (url = urlT.value as string) == null) {
-        url = "mqtt://air:bRutt0@asgard/";
+        url = "mqtt://olymp/";
       }
       _cl = new MQTT.MqClient(url);
     }
@@ -68,7 +69,7 @@ namespace X13.Agent3 {
     private static void Write(TopicSrc t) {
       int i;
       try {
-        string json = Newtonsoft.Json.JsonConvert.SerializeObject(t.value);
+        string json = t.value.ToJson();
         Log.Debug("TopicSrc.Write({0}, {1})", t.path, json);
         var ns = t.path.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
 
@@ -180,7 +181,7 @@ namespace X13.Agent3 {
       : this(path, true) {
       if(!string.IsNullOrWhiteSpace(json)) {
         try {
-          _value = Newtonsoft.Json.JsonConvert.DeserializeObject(json);
+          _value = json.FromJson<object>();
         }
         catch(Exception ex) {
           _value = null;
@@ -199,7 +200,7 @@ namespace X13.Agent3 {
         _value = value;
 
         if(!_local) {
-          _cl.Publish(path, Newtonsoft.Json.JsonConvert.SerializeObject(_value));
+          _cl.Publish(path, _value.ToJson());
         } else if(saved) {
           Write(this);
         }
@@ -225,7 +226,7 @@ namespace X13.Agent3 {
       }
       if(!string.IsNullOrWhiteSpace(value)) {
         try {
-          _value = Newtonsoft.Json.JsonConvert.DeserializeObject(value);
+          _value = value.FromJson<object>();
         }
         catch(Exception ex) {
           _value = null;

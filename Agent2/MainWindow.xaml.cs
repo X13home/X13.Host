@@ -40,12 +40,11 @@ namespace X13.Agent2 {
     private void Window_Loaded(object sender, RoutedEventArgs e) {
       notifyIcon.Visible = true;
       this.ShowInTaskbar = false;
-      _cl=new X13.MQTT.MqClient("mqtt://air:bRutt0@asgard/");
+      _cl=new X13.MQTT.MqClient("mqtt://olymp/");
       _st=new SayTimeRu();
-      _cl.Subscribe("/var/events/saytime", (p, j) => { if(j=="true") { _st.SayTime(); } });
-      _cl.Subscribe("/var/events/door41/opened", (p, j) => { if(j=="true") { SayTimeRu.PlayWav("Door41Opened"); } });
-      _cl.Subscribe("/var/events/door41/closed", (p, j) => { if(j=="true") { SayTimeRu.PlayWav("Door41Closed"); } });
-	  _cl.Subscribe("/var/Hall/muted", (p, j) => { SayTimeRu.instance.Muted=(j=="true"); });
+      _cl.Subscribe("/var/Events/saytime", (p, j) => { if(j=="true") { _st.SayTime(); } });
+      _cl.Subscribe("/var/Events/doorOpened", (p, j) => { if(j=="true") { SayTimeRu.PlayWav("Door41Opened"); } });
+      _cl.Subscribe("/var/Events/doorClosed", (p, j) => { if(j=="true") { SayTimeRu.PlayWav("Door41Closed"); } });
 	}
 
     void notifyIcon_Click(object sender, EventArgs e) {

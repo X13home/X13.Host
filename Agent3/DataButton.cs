@@ -97,13 +97,23 @@ namespace X13.Agent3 {
 
 	private void MouseDownFunc(object sender, System.Windows.Input.MouseButtonEventArgs e) {
 	  if(_TonClick!=null) {
-		_TonClick.value=true;
+        try {
+          _TonClick.value=true;
+        }
+        catch(Exception ex) {
+          MessageBox.Show(ex.Message, "Exception", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK, MessageBoxOptions.None);
+        }
 	  }
 	}
 	private void MouseUpFunc(object sender, System.Windows.Input.MouseButtonEventArgs e) {
 	  if(_TonClick!=null) {
-		_TonClick.value=false;
-	  }
+        try {
+          _TonClick.value=false;
+        }
+        catch(Exception ex) {
+          MessageBox.Show(ex.Message, "Exception", MessageBoxButton.OK, MessageBoxImage.Warning, MessageBoxResult.OK, MessageBoxOptions.None);
+        }
+      }
 	}
 
 	private void _TValue_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e) {

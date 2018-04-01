@@ -28,6 +28,7 @@ namespace X13.Agent3 {
     private DateTime _today;
     private string _lfPath;
     private DateTime _firstDT;
+    private TopicSrc _outdoorHistory;
 
     public MainWindow() {
       if(!Directory.Exists("../log")) {
@@ -37,6 +38,7 @@ namespace X13.Agent3 {
       AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(CurrentDomain_UnhandledException);
 
       TopicSrc.Get("/local");
+      _outdoorHistory = new TopicSrc("/var/Outdoor/history");
       InitializeComponent();
       _1sek = new Timer(Tick, null, 500, 1000);
     }
@@ -101,7 +103,7 @@ namespace X13.Agent3 {
             string wfDTStr = string.Format("{0}-{1}-{2} {3}:00", n.Attributes["year"].Value, n.Attributes["month"].Value, n.Attributes["day"].Value, n.Attributes["hour"].Value);
             DateTime wfDT = DateTime.ParseExact(wfDTStr, "yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
             double x = 48.0 + (wfDT - curDT).TotalHours;
-            StringBuilder url = new StringBuilder(@"http://i.gismeteo.com/static/images/icons/new/");
+            StringBuilder url = new StringBuilder(@"https://st6.gismeteo.ru/static/images/icons/new/");
             url.Append(dict0[int.Parse(n.Attributes["tod"].Value)]);
             XmlNode n1 = n.SelectSingleNode("PHENOMENA");
             int c = int.Parse(n1.Attributes["cloudiness"].Value);
@@ -128,28 +130,36 @@ namespace X13.Agent3 {
             xMax = x;
             i++;
           }
-          string wlPath = TopicSrc.Get("/local/cfg/Broker/_path", true).value as string;
-          if(string.IsNullOrEmpty(wlPath)) {
-            wlPath = @"..\log\weather.log";
-          } else {
-            wlPath = System.IO.Path.Combine(wlPath, @"..\log\weather.log");
-          }
+          try {
+            curDT = DateTime.UtcNow;
+            var wh = _outdoorHistory.value as List<object>;
+            object tmp;
+            string dt_s;
+            if(wh!=null) {
+              for(int l = wh.Count - 1; l > 0; l--) {
+                var c = wh[l] as Dictionary<string, object>;
+                if(c==null || c.Count!=3) {
+                  continue;
+                }
+                DateTime wfDT;
+                if(!c.TryGetValue("t", out tmp) || string.IsNullOrEmpty(dt_s = tmp as string) ||  !DateTime.TryParseExact(dt_s, "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'", CultureInfo.InvariantCulture, DateTimeStyles.None, out wfDT)) {
+                  continue;
+                }
+                double x = 48.0 + ( wfDT - curDT ).TotalHours;
+                if(c.TryGetValue("a", out tmp) && tmp is double) {
+                  t.AddNode(x, (double)tmp);
+                }
+                if(c.TryGetValue("b", out tmp) && tmp is double) {
+                  pr.AddNode(x, (double)tmp);
+                }
+              }
 
-          if(File.Exists(wlPath)) {
-            var csv = File.ReadAllLines(wlPath);
-            for(int l = csv.Length - 1; l > 0; l--) {
-              var c_i = csv[l].Split(',');
-              DateTime wfDT = DateTime.ParseExact(c_i[0], "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture).AddMinutes(-30);
-              double x = 48.0 + (wfDT - curDT).TotalHours;
-              double y;
-              if(double.TryParse(c_i[1], NumberStyles.Float, CultureInfo.InvariantCulture, out y)) {
-                t.AddNode(x, y);
-              }
-              if(double.TryParse(c_i[2], NumberStyles.Float, CultureInfo.InvariantCulture, out y)) {
-                pr.AddNode(x, y);
-              }
             }
           }
+          catch(Exception ex) {
+            Log.Warning("Outdoor/history - {0}", ex.ToString());
+          }
+
           int cnt = (int)(xMax * 2) - 1;
           double[] t_v = new double[cnt];
           double[] p_v = new double[cnt];

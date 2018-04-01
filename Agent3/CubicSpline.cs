@@ -10,6 +10,7 @@ namespace X13.Agent3 {
   internal class CubicSpline {
     private List<SplineTuple> _splines; // Сплайн
     private bool _builded;
+    private double _max, _min;
 
     public CubicSpline() {
       _splines=new List<SplineTuple>();
@@ -37,6 +38,8 @@ namespace X13.Agent3 {
     private void BuildSpline() {
       int n=_splines.Count;
       _splines.Sort(SplineTuple.Compare);
+      _max = _splines.Select(z => z.a).Max()+1;
+      _min = _splines.Select(z => z.a).Min()-1;
 
       // Решение СЛАУ относительно коэффициентов сплайнов c[i] методом прогонки для трехдиагональных матриц
       // Вычисление прогоночных коэффициентов - прямой ход метода прогонки
@@ -108,7 +111,14 @@ namespace X13.Agent3 {
 
       double dx = (x - s.x);
       // Вычисляем значение сплайна в заданной точке по схеме Горнера (в принципе, "умный" компилятор применил бы схему Горнера сам, но ведь не все так умны, как кажутся)
-      return s.a + (s.b + (s.c / 2.0 + s.d * dx / 6.0) * dx) * dx;
+      double rez = s.a + (s.b + (s.c / 2.0 + s.d * dx / 6.0) * dx) * dx;
+      if(rez<_min){
+        return _min;
+      }
+      if(rez>_max){
+        return _max;
+      }
+      return rez;
     }
   }
 }
